@@ -41,6 +41,9 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .cal-day{background:var(--surface);padding:10px 12px;min-height:88px;cursor:pointer;transition:background 0.12s;display:flex;flex-direction:column;gap:3px;position:relative;}
 .cal-day:hover{background:#F0EBE5;}
 .cal-day.empty{background:var(--bg);cursor:default;}
+.cal-day.other-month{background:rgba(252,250,248,0.52);cursor:pointer;}
+.cal-day.other-month:hover{background:rgba(240,235,229,0.7);}
+.cal-day.other-month .cal-day-num{color:rgba(122,129,108,0.42);}
 .cal-day.today{outline:2px solid var(--rust);outline-offset:-2px;}
 .cal-day.has-data{background:#FBF6F3;}
 .cal-day-num{font-family:'Noto Sans Mono',sans-serif;font-size:12px;font-weight:600;color:var(--text-mid);}
@@ -247,6 +250,18 @@ function render(){
       (entry.gmv?'<div class="cal-gmv">'+fmtMoney(entry.gmv)+'</div>':'')+
       (entry.comm?'<div class="cal-comm">'+fmtMoney(entry.comm)+'</div>':'')+
       '<div class="cal-dot"></div>'):'');
+    grid.appendChild(cell);
+  }
+  const filled=firstDay+daysInMonth;
+  const trailing=(7-(filled%7))%7;
+  const nextYear=viewMonth===11?viewYear+1:viewYear;
+  const nextMonth=viewMonth===11?0:viewMonth+1;
+  for(let d=1;d<=trailing;d++){
+    const key=`${nextYear}-${String(nextMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const cell=document.createElement('div');
+    cell.className='cal-day other-month';
+    cell.onclick=()=>{viewYear=nextYear;viewMonth=nextMonth;loadMonth().then(()=>openModal(key,d));};
+    cell.innerHTML='<div class="cal-day-num">'+d+'</div>';
     grid.appendChild(cell);
   }
   let mUnits=0,mGmv=0,mComm=0,daysLogged=0;
