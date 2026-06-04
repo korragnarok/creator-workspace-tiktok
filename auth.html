@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F8F5F1">
+<title>Sign In — Creator Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Mozilla+Text:wght@100..900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#F8F5F1;--bg-lift:#FCFAF8;--sage:#7A816C;--rose:#D1A9A5;--rust:#AE6965;
+  --tan:#A58B71;--sand:#E5DFD6;--ink:#2A2725;
+  --surface:#FCFAF8;--border:rgba(42,39,37,0.1);--border-mid:rgba(42,39,37,0.15);
+  --text:#2A2725;--text-mid:#7A816C;--text-muted:#A58B71;
+  --r:12px;--shadow-md:0 4px 20px rgba(42,39,37,0.09);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px 40px;width:100%;max-width:420px;box-shadow:var(--shadow-md);}
+.logo{font-family:'Stack Sans Notch',sans-serif;font-size:28px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.tagline{font-size:13px;color:var(--text-muted);margin-bottom:36px;}
+.tabs{display:flex;gap:0;margin-bottom:28px;border-bottom:1px solid var(--border);}
+.tab{flex:1;padding:10px;text-align:center;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;}
+.tab.active{color:var(--rust);border-bottom-color:var(--rust);}
+.form-group{margin-bottom:16px;}
+.form-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-mid);margin-bottom:6px;}
+.form-input{width:100%;padding:11px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:14px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;}
+.form-input:focus{border-color:var(--rust);}
+.btn{width:100%;padding:13px;border:none;border-radius:var(--r);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;margin-top:8px;}
+.btn-primary{background:var(--rust);color:#fff;}
+.btn-primary:hover{background:#9a5a57;}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed;}
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--text-muted);font-size:12px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.msg{padding:10px 14px;border-radius:var(--r);font-size:13px;margin-bottom:16px;display:none;}
+.msg.error{background:rgba(174,105,101,0.1);color:var(--rust);border:1px solid rgba(174,105,101,0.2);}
+.msg.success{background:rgba(122,129,108,0.1);color:var(--sage);border:1px solid rgba(122,129,108,0.2);}
+.magic-hint{font-size:12px;color:var(--text-muted);text-align:center;margin-top:14px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Creator Hub</div>
+  <div class="tagline">TikTok Shop creator workspace</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="setTab('signin')">Sign In</div>
+    <div class="tab" onclick="setTab('signup')">Sign Up</div>
+  </div>
+
+  <div id="msg" class="msg"></div>
+
+  <!-- SIGN IN -->
+  <div id="signinForm">
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="siEmail" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="siPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')signIn()">
+    </div>
+    <button class="btn btn-primary" id="siBtn" onclick="signIn()">Sign In</button>
+    <div class="divider">or</div>
+    <button class="btn" style="background:var(--sand);color:var(--ink);" onclick="magicLink()">Send Magic Link</button>
+    <div class="magic-hint">We'll email you a one-click sign-in link — no password needed.</div>
+  </div>
+
+  <!-- SIGN UP -->
+  <div id="signupForm" style="display:none;">
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="suEmail" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="suPass" placeholder="Min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')signUp()">
+    </div>
+    <button class="btn btn-primary" id="suBtn" onclick="signUp()">Create Account</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://mlsckxjksxmavzzhcdfs.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sc2NreGprc3htYXZ6emhjZGZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTQzMzgsImV4cCI6MjA5NjE3MDMzOH0.tQpHwJcTraZjK8TUkeGbnUZWTAQ8cJ5TL6eZt0TSHT0';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// If already logged in, go home
+db.auth.getSession().then(({ data: { session } }) => {
+  if (session) window.location.href = 'index.html';
+});
+
+// Handle magic link callback
+db.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) window.location.href = 'index.html';
+});
+
+function setTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='signin')||(i===1&&tab==='signup')));
+  document.getElementById('signinForm').style.display = tab === 'signin' ? '' : 'none';
+  document.getElementById('signupForm').style.display = tab === 'signup' ? '' : 'none';
+  showMsg('', '');
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg' + (type ? ' ' + type : '');
+  el.style.display = text ? 'block' : 'none';
+}
+
+async function signIn() {
+  const email = document.getElementById('siEmail').value.trim();
+  const pass = document.getElementById('siPass').value;
+  if (!email || !pass) { showMsg('Please fill in all fields.', 'error'); return; }
+  const btn = document.getElementById('siBtn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  const { error } = await db.auth.signInWithPassword({ email, password: pass });
+  if (error) { showMsg(error.message, 'error'); btn.disabled = false; btn.textContent = 'Sign In'; }
+  else window.location.href = 'index.html';
+}
+
+async function signUp() {
+  const email = document.getElementById('suEmail').value.trim();
+  const pass = document.getElementById('suPass').value;
+  if (!email || !pass) { showMsg('Please fill in all fields.', 'error'); return; }
+  if (pass.length < 6) { showMsg('Password must be at least 6 characters.', 'error'); return; }
+  const btn = document.getElementById('suBtn');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  const { error } = await db.auth.signUp({ email, password: pass });
+  if (error) { showMsg(error.message, 'error'); btn.disabled = false; btn.textContent = 'Create Account'; }
+  else showMsg('Check your email to confirm your account!', 'success');
+}
+
+async function magicLink() {
+  const email = document.getElementById('siEmail').value.trim();
+  if (!email) { showMsg('Enter your email above first.', 'error'); return; }
+  const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + '/notion-embeds/index.html' } });
+  if (error) showMsg(error.message, 'error');
+  else showMsg('Magic link sent! Check your inbox.', 'success');
+}
+</script>
+</body>
+</html>

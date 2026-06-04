@@ -10,20 +10,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Mozilla+Text:wght@100..900&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#F8F5F1;--bg-lift:#FCFAF8;--sage:#7A816C;--rose:#D1A9A5;--rust:#AE6965;
-  --tan:#A58B71;--sand:#E5DFD6;--ink:#2A2725;
-  --surface:#FCFAF8;--surface-2:#EDE8E1;--border:rgba(42,39,37,0.1);--border-mid:rgba(42,39,37,0.15);
-  --text:#2A2725;--text-mid:#7A816C;--text-muted:#A58B71;
-  --r:12px;--shadow-sm:0 1px 4px rgba(42,39,37,0.07);--shadow-md:0 4px 20px rgba(42,39,37,0.09);
-}
+:root{--bg:#F8F5F1;--bg-lift:#FCFAF8;--sage:#7A816C;--rose:#D1A9A5;--rust:#AE6965;--tan:#A58B71;--sand:#E5DFD6;--ink:#2A2725;--surface:#FCFAF8;--surface-2:#EDE8E1;--border:rgba(42,39,37,0.1);--border-mid:rgba(42,39,37,0.15);--text:#2A2725;--text-mid:#7A816C;--text-muted:#A58B71;--r:12px;--shadow-sm:0 1px 4px rgba(42,39,37,0.07);--shadow-md:0 4px 20px rgba(42,39,37,0.09);}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;}
 html,body{overflow-x:hidden;max-width:100vw;}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 a{text-decoration:none;color:inherit;}
-
-/* NAV */
 nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 48px;height:64px;display:flex;align-items:center;}
 .nav-brand{font-family:'Stack Sans Notch',sans-serif;font-size:22px;font-weight:700;color:var(--ink);margin-right:48px;flex-shrink:0;}
 .nav-links{display:flex;gap:32px;flex:1;align-items:center;}
@@ -31,18 +22,15 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .nav-link:hover{color:var(--ink);}
 .nav-link.active{color:var(--rust);}
 .nav-link.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--rust);border-radius:1px;}
-
-/* PAGE */
+.nav-user{font-family:'Stack Sans Notch',sans-serif;font-size:11px;color:var(--text-muted);margin-left:auto;display:flex;align-items:center;gap:12px;}
+.nav-signout{background:none;border:1px solid var(--border-mid);border-radius:8px;padding:5px 12px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all 0.15s;}
+.nav-signout:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
 .page{max-width:1080px;margin:0 auto;padding:0 40px 80px;}
-
-/* HERO */
 .hero{padding:52px 0 44px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
 .hero-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:14px;}
 .hero-headline{font-family:'IBM Plex Serif',serif;font-size:clamp(56px,8vw,84px);font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);margin-bottom:18px;}
 .hero-headline em{font-style:italic;color:var(--rust);}
 .hero-desc{font-size:14px;line-height:1.8;color:var(--text-mid);max-width:380px;}
-
-/* STAT CARDS */
 .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-self:center;}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:var(--shadow-sm);}
 .stat-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
@@ -51,8 +39,6 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .stat-level{display:flex;align-items:center;gap:8px;}
 .stat-level-icon{width:28px;height:28px;object-fit:contain;}
 .stat-level-name{font-family:'Stack Sans Notch',sans-serif;font-size:22px;font-weight:700;line-height:1;}
-
-/* CHART */
 .chart-section{margin-top:40px;}
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
 .section-title{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);}
@@ -61,8 +47,6 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;box-shadow:var(--shadow-sm);}
 .chart-wrap{position:relative;height:220px;}
-
-/* LEVEL LADDER */
 .level-section{margin-top:44px;}
 .level-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm);}
 .level-header{padding:22px 24px 18px;border-bottom:1px solid var(--border);}
@@ -81,7 +65,6 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .progress-bar-fill{height:6px;border-radius:100px;transition:width 0.8s ease;}
 .progress-labels{display:flex;justify-content:space-between;font-family:'Stack Sans Notch',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.04em;padding:0 0 12px;}
 .level-cta{padding:14px 24px;font-size:13px;color:var(--text-mid);font-style:italic;border-top:1px solid var(--border);background:var(--bg);}
-.level-list{padding:0;}
 .level-row{display:flex;align-items:center;gap:12px;padding:12px 24px;border-bottom:1px solid var(--border);transition:background 0.1s;}
 .level-row:last-child{border-bottom:none;}
 .level-row.current{background:#FBF6F3;}
@@ -90,42 +73,23 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .level-row-name{font-family:'Stack Sans Notch',sans-serif;font-size:14px;font-weight:700;color:var(--ink);flex:1;letter-spacing:0.02em;}
 .level-row-range{font-family:'Mozilla Text',sans-serif;font-size:12px;color:var(--text-muted);}
 .level-row-status{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;min-width:80px;text-align:right;}
-
-/* QUICK GRID */
 .quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:40px;}
 .quick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 18px;box-shadow:var(--shadow-sm);transition:all 0.15s;display:flex;flex-direction:column;gap:10px;}
 .quick-card:hover{border-color:var(--rose);box-shadow:var(--shadow-md);transform:translateY(-1px);}
-.quick-icon{line-height:1;}
 .quick-icon img{width:26px;height:26px;object-fit:contain;}
 .quick-name{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink);}
 .quick-desc{font-size:12px;color:var(--text-mid);line-height:1.5;}
-
-/* FOOTER */
 footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-items:center;justify-content:space-between;}
 .footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:18px;font-weight:700;color:var(--ink);}
 .footer-note{font-size:11px;color:var(--text-muted);}
-
-/* TAB BAR */
 .tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(248,245,241,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
 .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
 .tab-item.active{color:var(--rust);}
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
-.icon-sm{width:20px;height:20px;object-fit:contain;display:inline-block;vertical-align:middle;}
-
-@media(max-width:768px){
-  nav{padding:0 20px;height:56px;}.nav-links{display:none;}
-  .page{padding:0 20px 80px;}
-  .hero{grid-template-columns:1fr;gap:28px;padding:36px 0 32px;}
-  .stat-row{grid-template-columns:repeat(2,1fr);}
-  .quick-grid{grid-template-columns:repeat(2,1fr);}
-  .level-stats{grid-template-columns:1fr;}
-  .level-stat:first-child{border-right:none;border-bottom:1px solid var(--border);}
-  .tab-bar{display:flex;}
-}
+@media(max-width:768px){nav{padding:0 20px;height:56px;}.nav-links{display:none;}.page{padding:0 20px 80px;}.hero{grid-template-columns:1fr;gap:28px;padding:36px 0 32px;}.stat-row{grid-template-columns:repeat(2,1fr);}.quick-grid{grid-template-columns:repeat(2,1fr);}.level-stats{grid-template-columns:1fr;}.level-stat:first-child{border-right:none;border-bottom:1px solid var(--border);}.tab-bar{display:flex;}}
 </style>
 </head>
 <body>
-
 <nav>
   <div class="nav-brand">Creator Hub</div>
   <div class="nav-links">
@@ -137,6 +101,10 @@ footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-i
     <a href="hooks.html" class="nav-link">Hooks</a>
     <a href="scripts.html" class="nav-link">Scripts</a>
   </div>
+  <div class="nav-user">
+    <span id="navEmail"></span>
+    <button class="nav-signout" onclick="signOut()">Sign Out</button>
+  </div>
 </nav>
 
 <div class="page">
@@ -144,7 +112,7 @@ footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-i
     <div>
       <div class="hero-eyebrow">Your Creator Hub</div>
       <div class="hero-headline">Let's <em>make</em> content.</div>
-      <p class="hero-desc">Track your products, plan your scripts, and log your sales — all in one place. Everything saves locally to your browser.</p>
+      <p class="hero-desc">Track your products, plan your scripts, and log your sales — all in one place.</p>
     </div>
     <div class="stat-row">
       <div class="stat-card">
@@ -163,14 +131,13 @@ footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-i
           <img id="s-level-icon" src="icons/levels/bronze.png" class="stat-level-icon" alt="">
           <div>
             <div class="stat-level-name" id="s-level-name">Bronze</div>
-            <div class="stat-sub" id="s-level-sub">based on GMV</div>
+            <div class="stat-sub">based on GMV</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- CHART -->
   <div class="chart-section">
     <div class="section-header">
       <div class="section-title">Last 30 Days</div>
@@ -182,12 +149,9 @@ footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-i
         <a href="sales-calendar.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);">Log today →</a>
       </div>
     </div>
-    <div class="chart-card">
-      <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
-    </div>
+    <div class="chart-card"><div class="chart-wrap"><canvas id="salesChart"></canvas></div></div>
   </div>
 
-  <!-- LEVEL LADDER -->
   <div class="level-section">
     <div class="section-header">
       <div class="section-title">Level Ladder</div>
@@ -205,62 +169,31 @@ footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-i
         </div>
       </div>
       <div class="level-stats">
-        <div class="level-stat">
-          <div class="level-stat-label">GMV This Month</div>
-          <div class="level-stat-val" id="lc-gmv">$0</div>
-        </div>
-        <div class="level-stat">
-          <div class="level-stat-label" id="lc-togo-label">To Silver</div>
-          <div class="level-stat-val" id="lc-togo">$1,000</div>
-        </div>
+        <div class="level-stat"><div class="level-stat-label">GMV This Month</div><div class="level-stat-val" id="lc-gmv">$0</div></div>
+        <div class="level-stat"><div class="level-stat-label" id="lc-togo-label">To Silver</div><div class="level-stat-val" id="lc-togo">$1,000</div></div>
       </div>
       <div class="progress-wrap">
         <div class="progress-bar-bg"><div class="progress-bar-fill" id="lc-progress" style="width:0%;background:#c9a87a;"></div></div>
         <div class="progress-labels"><span id="lc-pct">0% through this tier</span><span id="lc-range"></span></div>
       </div>
       <div class="level-cta" id="lc-cta"></div>
-      <div class="level-list" id="lc-list"></div>
+      <div id="lc-list"></div>
     </div>
   </div>
 
-  <!-- QUICK LINKS -->
   <div class="quick-grid">
-    <a href="daily-todo.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/todo.png" alt="To Do"></div>
-      <div class="quick-name">To Do</div>
-      <div class="quick-desc">Daily content tasks and filming checklist</div>
-    </a>
-    <a href="sales-calendar.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/sales.png" alt="Sales"></div>
-      <div class="quick-name">Sales Log</div>
-      <div class="quick-desc">Log units sold, GMV, and commissions daily</div>
-    </a>
-    <a href="products.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/products.png" alt="Products"></div>
-      <div class="quick-name">Products</div>
-      <div class="quick-desc">Your product database with talking points</div>
-    </a>
-    <a href="video-tracker.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/video.png" alt="Video"></div>
-      <div class="quick-name">Videos</div>
-      <div class="quick-desc">Track posted videos and performance notes</div>
-    </a>
-    <a href="hooks.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/hooks.png" alt="Hooks"></div>
-      <div class="quick-name">Hook Bank</div>
-      <div class="quick-desc">Saved hooks by category, ready to swipe</div>
-    </a>
-    <a href="scripts.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/scripts.png" alt="Scripts"></div>
-      <div class="quick-name">Scripts</div>
-      <div class="quick-desc">Paste and save scripts for any product</div>
-    </a>
+    <a href="daily-todo.html" class="quick-card"><div class="quick-icon"><img src="icons/todo.png" alt="To Do"></div><div class="quick-name">To Do</div><div class="quick-desc">Daily filming queue built from your product bank</div></a>
+    <a href="sales-calendar.html" class="quick-card"><div class="quick-icon"><img src="icons/sales.png" alt="Sales"></div><div class="quick-name">Sales Log</div><div class="quick-desc">Log units sold, GMV, and commissions daily</div></a>
+    <a href="products.html" class="quick-card"><div class="quick-icon"><img src="icons/products.png" alt="Products"></div><div class="quick-name">Products</div><div class="quick-desc">Your product database with talking points</div></a>
+    <a href="video-tracker.html" class="quick-card"><div class="quick-icon"><img src="icons/video.png" alt="Video"></div><div class="quick-name">Videos</div><div class="quick-desc">Track posted videos and performance notes</div></a>
+    <a href="hooks.html" class="quick-card"><div class="quick-icon"><img src="icons/hooks.png" alt="Hooks"></div><div class="quick-name">Hook Bank</div><div class="quick-desc">Saved hooks by category, ready to swipe</div></a>
+    <a href="scripts.html" class="quick-card"><div class="quick-icon"><img src="icons/scripts.png" alt="Scripts"></div><div class="quick-name">Scripts</div><div class="quick-desc">Paste and save scripts for any product</div></a>
   </div>
 </div>
 
 <footer>
   <div class="footer-brand">Creator Hub</div>
-  <div class="footer-note">All data stored locally · No account needed</div>
+  <div class="footer-note">TikTok Shop Creator Workspace</div>
 </footer>
 
 <div class="tab-bar">
@@ -271,141 +204,97 @@ footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-i
   <a href="hooks.html" class="tab-item"><div><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div>Hooks</div></a>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 <script>
-const LEVELS = [
-  {name:'Bronze',  icon:'bronze',   min:0,       max:999,      color:'#c9a87a'},
-  {name:'Silver',  icon:'silver',   min:1000,    max:4999,     color:'#9a9890'},
-  {name:'Gold',    icon:'gold',     min:5000,    max:24999,    color:'#ba7517'},
-  {name:'Platinum',icon:'platinum', min:25000,   max:59999,    color:'#7a9e7e'},
-  {name:'Ruby',    icon:'ruby',     min:60000,   max:149999,   color:'#b86040'},
-  {name:'Emerald', icon:'emerald',  min:150000,  max:399999,   color:'#4a6040'},
-  {name:'Sapphire',icon:'sapphire', min:400000,  max:1499999,  color:'#185fa5'},
-  {name:'Diamond', icon:'diamond',  min:1500000, max:999999999,color:'#4a4a5a'},
-];
+const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
+function fmtMoney(n){if(!n||n===0)return'$0';return'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function fmtDec(n){return'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
-function getSales(){ try{ return JSON.parse(localStorage.getItem('hub_sales')||'{}'); }catch(e){ return {}; } }
-function fmtMoney(n){ if(!n||n===0) return '$0'; return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
-function fmtMoneyDec(n){ return '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+async function init() {
+  const user = await requireAuth();
+  if (!user) return;
+  document.getElementById('navEmail').textContent = user.email;
 
-function buildAll() {
-  const sales = getSales();
   const today = new Date();
-  const labels = [], gmvData = [], commData = [];
-  let total30gmv = 0, total30comm = 0;
+  const since = new Date(today); since.setDate(today.getDate() - 29);
+  const sinceStr = since.toISOString().slice(0,10);
 
-  for(let i = 29; i >= 0; i--) {
-    const d = new Date(today); d.setDate(today.getDate() - i);
-    const key = d.toISOString().slice(0,10);
-    const entry = sales[key];
-    const gmv = parseFloat(entry?.gmv) || 0;
-    const comm = parseFloat(entry?.comm) || 0;
-    labels.push(d.toLocaleDateString('en-US', {month:'short', day:'numeric'}));
-    gmvData.push(gmv);
-    commData.push(comm);
-    total30gmv += gmv;
-    total30comm += comm;
+  const { data: rows } = await db.from('sales').select('date,gmv,comm').eq('user_id', user.id).gte('date', sinceStr).order('date');
+
+  // Build 30-day arrays
+  const labels=[], gmvData=[], commData=[];
+  let total30gmv=0, total30comm=0;
+  for(let i=29;i>=0;i--){
+    const d=new Date(today); d.setDate(today.getDate()-i);
+    const key=d.toISOString().slice(0,10);
+    const row=(rows||[]).find(r=>r.date===key);
+    labels.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+    gmvData.push(parseFloat(row?.gmv)||0);
+    commData.push(parseFloat(row?.comm)||0);
+    total30gmv+=parseFloat(row?.gmv)||0;
+    total30comm+=parseFloat(row?.comm)||0;
   }
 
-  // Stats
-  document.getElementById('s-comm').textContent = fmtMoneyDec(total30comm);
+  document.getElementById('s-comm').textContent = fmtDec(total30comm);
   document.getElementById('s-gmv').textContent = fmtMoney(total30gmv);
 
-  // Level based on current month GMV
-  const y = today.getFullYear(), m = today.getMonth();
-  const monthPrefix = `${y}-${String(m+1).padStart(2,'0')}`;
-  let monthGmv = 0;
-  Object.keys(sales).forEach(k => { if(k.startsWith(monthPrefix)) monthGmv += parseFloat(sales[k]?.gmv)||0; });
+  // Month GMV for level
+  const y=today.getFullYear(), m=today.getMonth();
+  const monthStart=`${y}-${String(m+1).padStart(2,'0')}-01`;
+  const { data: monthRows } = await db.from('sales').select('gmv').eq('user_id',user.id).gte('date',monthStart);
+  const monthGmv=(monthRows||[]).reduce((s,r)=>s+(parseFloat(r.gmv)||0),0);
 
-  let lvlIdx = 0;
-  for(let i = LEVELS.length-1; i >= 0; i--){ if(monthGmv >= LEVELS[i].min){ lvlIdx = i; break; } }
-  const lvl = LEVELS[lvlIdx], nextLvl = LEVELS[lvlIdx+1];
+  let lvlIdx=0;
+  for(let i=LEVELS.length-1;i>=0;i--){if(monthGmv>=LEVELS[i].min){lvlIdx=i;break;}}
+  const lvl=LEVELS[lvlIdx], nextLvl=LEVELS[lvlIdx+1];
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-  // Stat card level
-  document.getElementById('s-level-icon').src = `icons/levels/${lvl.icon}.png`;
-  document.getElementById('s-level-name').textContent = lvl.name;
-  document.getElementById('s-level-name').style.color = lvl.color;
+  document.getElementById('s-level-icon').src=`icons/levels/${lvl.icon}.png`;
+  document.getElementById('s-level-name').textContent=lvl.name;
+  document.getElementById('s-level-name').style.color=lvl.color;
+  document.getElementById('lc-icon').src=`icons/levels/${lvl.icon}.png`;
+  document.getElementById('lc-name').textContent=lvl.name.toUpperCase();
+  document.getElementById('lc-name').style.color=lvl.color;
+  document.getElementById('lc-month').textContent=`${MONTHS[m]} ${y}`;
+  document.getElementById('lc-gmv').textContent=fmtDec(monthGmv);
+  document.getElementById('lc-progress').style.background=lvl.color;
 
-  // Level ladder card
-  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('lc-icon').src = `icons/levels/${lvl.icon}.png`;
-  document.getElementById('lc-name').textContent = lvl.name.toUpperCase();
-  document.getElementById('lc-name').style.color = lvl.color;
-  document.getElementById('lc-month').textContent = `${monthNames[m]} ${y}`;
-  document.getElementById('lc-gmv').textContent = fmtMoneyDec(monthGmv);
-  document.getElementById('lc-progress').style.background = lvl.color;
-
-  if(nextLvl) {
-    const pct = Math.min(100, Math.round((monthGmv - lvl.min) / (lvl.max - lvl.min) * 100));
-    document.getElementById('lc-togo-label').textContent = `To ${nextLvl.name}`;
-    document.getElementById('lc-togo').textContent = fmtMoney(nextLvl.min - monthGmv);
-    document.getElementById('lc-progress').style.width = pct + '%';
-    document.getElementById('lc-pct').textContent = `${pct}% through this tier`;
-    document.getElementById('lc-range').textContent = `${fmtMoney(lvl.min)} – ${fmtMoney(lvl.max)}`;
-    document.getElementById('lc-cta').textContent = `Keep going! ${fmtMoney(nextLvl.min - monthGmv)} more in GMV to reach ${nextLvl.name}.`;
+  if(nextLvl){
+    const pct=Math.min(100,Math.round((monthGmv-lvl.min)/(lvl.max-lvl.min)*100));
+    document.getElementById('lc-togo-label').textContent=`To ${nextLvl.name}`;
+    document.getElementById('lc-togo').textContent=fmtMoney(nextLvl.min-monthGmv);
+    document.getElementById('lc-progress').style.width=pct+'%';
+    document.getElementById('lc-pct').textContent=`${pct}% through this tier`;
+    document.getElementById('lc-range').textContent=`${fmtMoney(lvl.min)} – ${fmtMoney(lvl.max)}`;
+    document.getElementById('lc-cta').textContent=`Keep going! ${fmtMoney(nextLvl.min-monthGmv)} more in GMV to reach ${nextLvl.name}.`;
   } else {
-    document.getElementById('lc-togo-label').textContent = 'Status';
-    document.getElementById('lc-togo').textContent = 'MAX';
-    document.getElementById('lc-progress').style.width = '100%';
-    document.getElementById('lc-pct').textContent = '100% — top tier!';
-    document.getElementById('lc-range').textContent = `${fmtMoney(lvl.min)}+`;
-    document.getElementById('lc-cta').textContent = "You've reached Diamond! Top tier. 👸";
+    document.getElementById('lc-togo-label').textContent='Status';
+    document.getElementById('lc-togo').textContent='MAX';
+    document.getElementById('lc-progress').style.width='100%';
+    document.getElementById('lc-pct').textContent='100% — top tier!';
+    document.getElementById('lc-range').textContent=`${fmtMoney(lvl.min)}+`;
+    document.getElementById('lc-cta').textContent="You've reached Diamond! Top tier. 👸";
   }
 
-  // Level list
-  document.getElementById('lc-list').innerHTML = LEVELS.map((l, i) => {
-    const reached = i < lvlIdx, isCurrent = i === lvlIdx, locked = i > lvlIdx;
-    const statusText = reached ? 'Reached ✓' : isCurrent ? 'Current ★' : '—';
-    const statusColor = reached ? 'var(--sage)' : isCurrent ? lvl.color : 'var(--border-mid)';
-    const rangeText = l.max > 999999 ? fmtMoney(l.min)+'+' : fmtMoney(l.min)+' – '+fmtMoney(l.max);
-    return `<div class="level-row ${isCurrent?'current':''} ${locked?'locked':''}">
+  document.getElementById('lc-list').innerHTML=LEVELS.map((l,i)=>{
+    const reached=i<lvlIdx,isCurrent=i===lvlIdx,locked=i>lvlIdx;
+    const statusText=reached?'Reached ✓':isCurrent?'Current ★':'—';
+    const statusColor=reached?'var(--sage)':isCurrent?lvl.color:'var(--border-mid)';
+    return`<div class="level-row ${isCurrent?'current':''} ${locked?'locked':''}">
       <img src="icons/levels/${l.icon}.png" class="level-row-icon" alt="${l.name}">
       <div class="level-row-name" style="${isCurrent?'color:'+l.color:''}">${l.name}</div>
-      <div class="level-row-range">${rangeText}</div>
+      <div class="level-row-range">${l.max>999999?fmtMoney(l.min)+'+':fmtMoney(l.min)+' – '+fmtMoney(l.max)}</div>
       <div class="level-row-status" style="color:${statusColor}">${statusText}</div>
     </div>`;
   }).join('');
 
   // Chart
-  const ctx = document.getElementById('salesChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'GMV',
-          data: gmvData,
-          borderColor: '#AE6965',
-          backgroundColor: 'rgba(174,105,101,0.07)',
-          fill: true, tension: 0.4,
-          pointRadius: gmvData.filter(v=>v>0).length > 15 ? 0 : 3,
-          pointBackgroundColor: '#AE6965',
-          borderWidth: 2,
-        },
-        {
-          label: 'Commission',
-          data: commData,
-          borderColor: '#7A816C',
-          backgroundColor: 'rgba(122,129,108,0.06)',
-          fill: true, tension: 0.4,
-          pointRadius: commData.filter(v=>v>0).length > 15 ? 0 : 3,
-          pointBackgroundColor: '#7A816C',
-          borderWidth: 2,
-        }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { maxTicksLimit: 8, font: { size: 10, family: "'Mozilla Text'" }, color: '#A58B71' }, grid: { display: false }, border: { display: false } },
-        y: { ticks: { font: { size: 10, family: "'Mozilla Text'" }, color: '#A58B71', callback: v => '$'+v }, grid: { color: 'rgba(42,39,37,0.05)' }, border: { display: false }, beginAtZero: true }
-      }
-    }
-  });
+  const ctx=document.getElementById('salesChart').getContext('2d');
+  new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'GMV',data:gmvData,borderColor:'#AE6965',backgroundColor:'rgba(174,105,101,0.07)',fill:true,tension:0.4,pointRadius:gmvData.filter(v=>v>0).length>15?0:3,pointBackgroundColor:'#AE6965',borderWidth:2},{label:'Commission',data:commData,borderColor:'#7A816C',backgroundColor:'rgba(122,129,108,0.06)',fill:true,tension:0.4,pointRadius:commData.filter(v=>v>0).length>15?0:3,pointBackgroundColor:'#7A816C',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:8,font:{size:10,family:"'Mozilla Text'"},color:'#A58B71'},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:10,family:"'Mozilla Text'"},color:'#A58B71',callback:v=>'$'+v},grid:{color:'rgba(42,39,37,0.05)'},border:{display:false},beginAtZero:true}}}});
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script>buildAll();</script>
+<script>init();</script>
 </body>
 </html>

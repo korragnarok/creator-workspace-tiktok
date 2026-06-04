@@ -5,135 +5,118 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#F8F5F1">
-<title>Hook Bank — Creator Hub</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Mozilla+Text:wght@100..900&display=swap" rel="stylesheet">
+<title>Hooks &mdash; Creator Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Mozilla+Text:wght@100..900&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#F8F5F1;--bg-lift:#FCFAF8;--sage:#7A816C;--rose:#D1A9A5;--rust:#AE6965;
-  --tan:#A58B71;--sand:#E5DFD6;--ink:#2A2725;
-  --surface:#FCFAF8;--surface-2:#EDE8E1;--border:rgba(42,39,37,0.1);--border-mid:rgba(42,39,37,0.15);
-  --text:#2A2725;--text-mid:#7A816C;--text-muted:#A58B71;
-  --r:12px;--shadow-sm:0 1px 4px rgba(42,39,37,0.07);--shadow-md:0 4px 20px rgba(42,39,37,0.09);
-}
+
+:root{--bg:#F8F5F1;--bg-lift:#FCFAF8;--sage:#7A816C;--rose:#D1A9A5;--rust:#AE6965;--tan:#A58B71;--sand:#E5DFD6;--ink:#2A2725;--surface:#FCFAF8;--surface-2:#EDE8E1;--border:rgba(42,39,37,0.1);--border-mid:rgba(42,39,37,0.15);--text:#2A2725;--text-mid:#7A816C;--text-muted:#A58B71;--r:12px;--shadow-sm:0 1px 4px rgba(42,39,37,0.07);--shadow-md:0 4px 20px rgba(42,39,37,0.09);}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 a{text-decoration:none;color:inherit;}
 nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 48px;height:64px;display:flex;align-items:center;}
 .nav-brand{font-family:'Stack Sans Notch',sans-serif;font-size:22px;font-weight:700;color:var(--ink);margin-right:48px;flex-shrink:0;}
 .nav-links{display:flex;gap:32px;flex:1;align-items:center;}
-.nav-link{font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);transition:color 0.15s;position:relative;padding-bottom:3px;}
+.nav-link{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);transition:color 0.15s;position:relative;padding-bottom:3px;}
 .nav-link:hover{color:var(--ink);}
 .nav-link.active{color:var(--rust);}
 .nav-link.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--rust);border-radius:1px;}
-.page{max-width:1000px;margin:0 auto;padding:0 40px 100px;}
-.page-header{padding:44px 0 32px;border-bottom:1px solid var(--border-mid);margin-bottom:36px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;}
-.page-eyebrow{font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
-.page-title{font-family:'Stack Sans Notch',sans-serif;font-size:52px;font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);}
+.nav-user{font-family:'Stack Sans Notch',sans-serif;font-size:11px;color:var(--text-muted);margin-left:auto;display:flex;align-items:center;gap:12px;}
+.nav-signout{background:none;border:1px solid var(--border-mid);border-radius:8px;padding:5px 12px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all 0.15s;}
+.nav-signout:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
+.page{max-width:1080px;margin:0 auto;padding:0 40px 100px;}
+.page-header{padding:44px 0 32px;border-bottom:1px solid var(--border-mid);margin-bottom:32px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.page-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
+.page-title{font-family:'IBM Plex Serif',serif;font-size:52px;font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);}
 .page-title em{font-style:italic;color:var(--sage);}
 .page-sub{font-size:13px;color:var(--text-mid);margin-top:8px;}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:0.04em;cursor:pointer;font-family:'IBM Plex Serif',serif;transition:all 0.15s;border:none;}
-.btn-primary{background:var(--rust);color:#fff;}
-.btn-primary:hover{background:#9a5a57;}
-.btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}
-.btn-ghost:hover{background:var(--surface);color:var(--ink);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:0.04em;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;transition:all 0.15s;border:none;text-transform:uppercase;}
+.btn-primary{background:var(--rust);color:#fff;}.btn-primary:hover{background:#9a5a57;}
+.btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}.btn-ghost:hover{background:var(--surface);color:var(--ink);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(42,39,37,0.4);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg-lift);border-radius:16px;padding:32px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(42,39,37,0.15);position:relative;}
+.modal-title{font-family:'IBM Plex Serif',serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:20px;}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);}
+.form-row{margin-bottom:16px;}
+.form-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-mid);margin-bottom:6px;}
+.form-input{width:100%;padding:10px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;}
+.form-input:focus{border-color:var(--rose);}
+.form-textarea{resize:vertical;min-height:80px;}
+.form-row-half{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-actions{display:flex;gap:10px;margin-top:20px;}
+.btn-danger{background:none;border:1px solid rgba(174,105,101,0.3);color:var(--rust);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;transition:all 0.15s;text-transform:uppercase;}
+.btn-danger:hover{background:var(--rust);color:#fff;}
+.filter-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+.pill{background:var(--surface);border:1px solid var(--border-mid);border-radius:100px;padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text-mid);transition:all 0.12px;font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;}
+.pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+.pill:hover:not(.active){background:var(--sand);}
+.search-box{flex:1;min-width:180px;padding:8px 16px;border:1px solid var(--border-mid);border-radius:100px;background:var(--surface);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;}
+.search-box:focus{border-color:var(--rose);}
+.empty{text-align:center;padding:64px 24px;}
+.empty-title{font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:700;color:var(--text-mid);margin-bottom:8px;}
+.empty-sub{font-size:13px;color:var(--text-muted);line-height:1.7;}
+.empty-sub a{color:var(--rust);text-decoration:underline;text-underline-offset:3px;}
+footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-items:center;justify-content:space-between;}
+.footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
+.footer-note{font-size:11px;color:var(--text-muted);}
+.tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(248,245,241,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
+.tab-item.active{color:var(--rust);}
+.tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
+.icon-sm{width:20px;height:20px;object-fit:contain;}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}.tab-bar{display:flex;}}
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.prod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--shadow-sm);transition:all 0.15s;display:flex;flex-direction:column;gap:10px;cursor:pointer;}
+.prod-card:hover{border-color:var(--rose);box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.prod-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--rust);}
+.prod-name{font-family:'IBM Plex Serif',serif;font-size:20px;font-weight:700;color:var(--ink);line-height:1.2;}
+.prod-status{display:inline-block;padding:3px 10px;border-radius:100px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;align-self:flex-start;}
+.status-active{background:rgba(122,129,108,0.15);color:var(--sage);}
+.status-paused{background:rgba(165,139,113,0.15);color:var(--tan);}
+.status-promote{background:rgba(174,105,101,0.15);color:var(--rust);}
+.prod-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.prod-tag{background:var(--sand);color:var(--text-mid);border-radius:100px;padding:2px 9px;font-size:11px;}
+.prod-notes{font-size:12px;color:var(--text-mid);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
 
-/* ADD BAR */
-.add-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:32px;box-shadow:var(--shadow-sm);}
-.add-section-title{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-mid);margin-bottom:14px;}
+.add-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:28px;box-shadow:var(--shadow-sm);}
+.add-section-title{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-mid);margin-bottom:14px;}
 .add-row{display:flex;gap:10px;flex-wrap:wrap;}
 .add-textarea{flex:1;min-width:240px;padding:10px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;resize:none;height:60px;transition:border-color 0.15s;}
 .add-textarea:focus{border-color:var(--rose);}
 .add-controls{display:flex;flex-direction:column;gap:8px;}
-.add-cat-sel{padding:8px 12px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--bg);font-size:12px;font-family:'IBM Plex Serif',serif;color:var(--text-mid);outline:none;cursor:pointer;}
-.add-btn{background:var(--rust);color:#fff;border:none;border-radius:var(--r);padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'IBM Plex Serif',serif;white-space:nowrap;transition:background 0.15s;}
+.add-cat-sel{padding:8px 12px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--bg);font-size:12px;font-family:'Stack Sans Notch',sans-serif;color:var(--text-mid);outline:none;cursor:pointer;}
+.add-btn{background:var(--rust);color:#fff;border:none;border-radius:var(--r);padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;white-space:nowrap;transition:background 0.15s;text-transform:uppercase;letter-spacing:0.04em;}
 .add-btn:hover{background:#9a5a57;}
-
-/* FILTER */
-.filter-bar{display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap;align-items:center;}
-.pill{background:var(--surface);border:1px solid var(--border-mid);border-radius:100px;padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text-mid);transition:all 0.12s;font-family:'IBM Plex Serif',serif;}
-.pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
-.pill:hover:not(.active){background:var(--sand);}
-.search-box{flex:1;min-width:180px;max-width:300px;padding:8px 16px;border:1px solid var(--border-mid);border-radius:100px;background:var(--surface);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;}
-.search-box::placeholder{color:var(--text-muted);}
-.search-box:focus{border-color:var(--rose);}
-
-/* SECTION */
-.section-wrap{margin-bottom:36px;}
+.section-wrap{margin-bottom:32px;}
 .section-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
 .section-title{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink);}
 .section-line{flex:1;height:1px;background:var(--border-mid);}
-.section-count{font-size:11px;color:var(--text-muted);background:var(--sand);border-radius:100px;padding:2px 9px;}
-
-/* HOOK CARDS */
+.section-count{font-size:11px;color:var(--text-muted);background:var(--sand);border-radius:100px;padding:2px 9px;font-family:'Stack Sans Notch',sans-serif;}
 .hooks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;}
 .hook-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px;transition:all 0.12s;position:relative;}
 .hook-card:hover{border-color:var(--rose);box-shadow:var(--shadow-md);}
 .hook-text{font-size:14px;color:var(--text);line-height:1.6;flex:1;}
 .hook-footer{display:flex;align-items:center;gap:8px;}
-.hook-cat{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:2px 9px;border-radius:100px;}
+.hook-cat{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:2px 9px;border-radius:100px;}
 .cat-curiosity{background:rgba(174,105,101,0.12);color:var(--rust);}
 .cat-problem{background:rgba(122,129,108,0.12);color:var(--sage);}
 .cat-identity{background:rgba(165,139,113,0.12);color:var(--tan);}
 .cat-social-proof{background:rgba(209,169,165,0.2);color:#8a5a57;}
 .cat-product{background:var(--sand);color:var(--text-mid);}
 .cat-pattern-interrupt{background:rgba(42,39,37,0.07);color:var(--text-mid);}
-.hook-copy{background:none;border:1px solid var(--border-mid);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-mid);font-family:'IBM Plex Serif',serif;margin-left:auto;transition:all 0.12s;flex-shrink:0;}
+.hook-copy{background:none;border:1px solid var(--border-mid);border-radius:6px;padding:3px 10px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-muted);margin-left:auto;transition:all 0.12s;text-transform:uppercase;letter-spacing:0.04em;}
 .hook-copy:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
 .hook-copy.copied{background:var(--sage);color:#fff;border-color:var(--sage);}
 .hook-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;opacity:0;transition:opacity 0.12s;padding:2px 5px;}
 .hook-card:hover .hook-del{opacity:1;}
-
-.empty{text-align:center;padding:48px 24px;}
-.empty-icon{font-size:36px;margin-bottom:10px;opacity:0.4;}
-.empty-text{font-size:14px;color:var(--text-muted);}
-footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-items:center;justify-content:space-between;}
-.footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
-.footer-note{font-size:11px;color:var(--text-muted);}
-.tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(248,245,241,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
-.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
-.tab-item.active{color:var(--rust);}
-.tab-icon{font-size:18px;line-height:1;}
-@media(max-width:768px){
-  nav{padding:0 20px;}.nav-links{display:none;}
-  .page{padding:0 16px 90px;}
-  .page-title{font-size:40px;}
-  .hooks-grid{grid-template-columns:1fr;}
-  .tab-bar{display:flex;}
-}
-
-.tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
-.icon-sm{width:20px;height:20px;object-fit:contain;display:inline-block;vertical-align:middle;}
-.quick-icon .icon-sm{width:26px;height:26px;}
-
-.stat-value, .sum-val, .cal-units, .modal-input, .log-val { font-family: 'Mozilla Text', sans-serif !important; }
 </style>
 </head>
 <body>
-
-<nav>
-  <a href="index.html" class="nav-brand">Creator Hub</a>
-  <div class="nav-links">
-    <a href="index.html" class="nav-link">Home</a>
-    <a href="daily-todo.html" class="nav-link">To Do</a>
-    <a href="sales-calendar.html" class="nav-link">Sales</a>
-    <a href="products.html" class="nav-link">Products</a>
-    <a href="video-tracker.html" class="nav-link">Videos</a>
-    <a href="hooks.html" class="nav-link active">Hooks</a>
-    <a href="scripts.html" class="nav-link">Scripts</a>
-  </div>
-</nav>
-
-<div class="page">
+<nav><a href="index.html" class="nav-brand">Creator Hub</a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="sales-calendar.html" class="nav-link">Sales</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link active">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a></div><div class="nav-user"><span id="navEmail"></span><button class="nav-signout" onclick="signOut()">Sign Out</button></div></nav>
+<div class="page" style="max-width:960px;">
   <div class="page-header">
-    <div>
-      <div class="page-eyebrow">Swipe File</div>
-      <div class="page-title">Hook <em>Bank</em></div>
-      <p class="page-sub">Save your best hooks by category. Tap to copy instantly.</p>
-    </div>
+    <div><div class="page-eyebrow">Swipe File</div><div class="page-title">Hook <em>Bank</em></div><p class="page-sub">Save your best hooks by category. Tap to copy instantly.</p></div>
   </div>
-
   <div class="add-section">
     <div class="add-section-title">Add a Hook</div>
     <div class="add-row">
@@ -143,7 +126,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
           <option value="curiosity">Curiosity</option>
           <option value="problem">Problem</option>
           <option value="identity">Identity</option>
-          <option value="social-proof"><img src="icons/social-proof.png" class="icon-sm" alt="Social Proof"> Social Proof</option>
+          <option value="social-proof">Social Proof</option>
           <option value="product">Product</option>
           <option value="pattern-interrupt">Pattern Interrupt</option>
         </select>
@@ -151,9 +134,8 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       </div>
     </div>
   </div>
-
   <div class="filter-bar">
-    <input type="text" class="search-box" id="searchBox" placeholder="Search hooks..." oninput="render()">
+    <input type="text" class="search-box" id="searchBox" placeholder="Search hooks..." oninput="renderHooks()">
     <div class="pill active" data-f="all" onclick="setFilter(this,'all')">All</div>
     <div class="pill" data-f="curiosity" onclick="setFilter(this,'curiosity')">Curiosity</div>
     <div class="pill" data-f="problem" onclick="setFilter(this,'problem')">Problem</div>
@@ -162,94 +144,77 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="pill" data-f="product" onclick="setFilter(this,'product')">Product</div>
     <div class="pill" data-f="pattern-interrupt" onclick="setFilter(this,'pattern-interrupt')">Pattern Interrupt</div>
   </div>
-
   <div id="hookList"></div>
 </div>
-
-<footer>
-  <div class="footer-brand">Creator Hub</div>
-  <div class="footer-note">Data stored locally · Your browser only</div>
-</footer>
-
-<div class="tab-bar">
-  <a href="index.html" class="tab-item"><div class="tab-icon"><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a>
-  <a href="daily-todo.html" class="tab-item"><div class="tab-icon"><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
-  <a href="sales-calendar.html" class="tab-item"><div class="tab-icon"><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
-  <a href="products.html" class="tab-item"><div class="tab-icon"><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
-  <a href="hooks.html" class="tab-item active"><div class="tab-icon"><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div>Hooks</div></a>
-</div>
-
+<footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
+<div class="tab-bar"><a href="index.html" class="tab-item"><div><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a><a href="daily-todo.html" class="tab-item"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a><a href="sales-calendar.html" class="tab-item"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a><a href="products.html" class="tab-item"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a><a href="hooks.html" class="tab-item active"><div><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div>Hooks</div></a></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 <script>
-const CAT_LABEL={'curiosity':'Curiosity','problem':'Problem','identity':'Identity','social-proof':'Social Proof','product':'Product','pattern-interrupt':'Pattern Interrupt'};
-const CAT_CLASS={'curiosity':'cat-curiosity','problem':'cat-problem','identity':'cat-identity','social-proof':'cat-social-proof','product':'cat-product','pattern-interrupt':'cat-pattern-interrupt'};
-let activeFilter='all';
+async function init() {
+  const user = await requireAuth();
+  if (!user) return;
+  document.getElementById('navEmail').textContent = user.email;
+  
+  window._user = user;
+  window._filter = 'all';
+  const CAT_LABEL = {curiosity:'Curiosity',problem:'Problem',identity:'Identity','social-proof':'Social Proof',product:'Product','pattern-interrupt':'Pattern Interrupt'};
+  const CAT_CLASS = {curiosity:'cat-curiosity',problem:'cat-problem',identity:'cat-identity','social-proof':'cat-social-proof',product:'cat-product','pattern-interrupt':'cat-pattern-interrupt'};
+  await renderHooks();
 
-function getHooks(){try{return JSON.parse(localStorage.getItem('hub_hooks')||'[]');}catch(e){return[];}}
-function saveHooks(h){localStorage.setItem('hub_hooks',JSON.stringify(h));}
-
-function setFilter(el,f){activeFilter=f;document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.f===f));render();}
-
-function addHook(){
-  const text=document.getElementById('hookInput').value.trim();
-  if(!text) return;
-  const cat=document.getElementById('hookCat').value;
-  const hooks=getHooks();
-  hooks.unshift({id:Date.now(),text,cat});
-  saveHooks(hooks);document.getElementById('hookInput').value='';render();
-}
-
-function deleteHook(id){saveHooks(getHooks().filter(h=>h.id!==id));render();}
-
-function copyHook(id,btn){
-  const hook=getHooks().find(h=>h.id===id);
-  if(!hook)return;
-  navigator.clipboard.writeText(hook.text).then(()=>{
-    btn.textContent='Copied!';btn.classList.add('copied');
-    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000);
-  });
-}
-
-function render(){
-  const q=document.getElementById('searchBox').value.toLowerCase();
-  const hooks=getHooks().filter(h=>{
-    if(activeFilter!=='all'&&h.cat!==activeFilter) return false;
-    if(q) return h.text.toLowerCase().includes(q);
-    return true;
-  });
-
-  if(hooks.length===0){
-    document.getElementById('hookList').innerHTML=`<div class="empty"><div class="empty-icon"><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div class="empty-text">No hooks saved yet. Add your first one above.</div></div>`;
-    return;
-  }
-
-  // Group by cat if "all"
-  if(activeFilter==='all'){
-    const cats=['curiosity','problem','identity','social-proof','product','pattern-interrupt'];
-    let html='';
-    cats.forEach(cat=>{
-      const catHooks=hooks.filter(h=>h.cat===cat);
-      if(!catHooks.length) return;
-      html+=`<div class="section-wrap"><div class="section-head"><div class="section-title">${CAT_LABEL[cat]}</div><div class="section-line"></div><div class="section-count">${catHooks.length}</div></div><div class="hooks-grid">${catHooks.map(h=>hookCard(h)).join('')}</div></div>`;
+  async function renderHooks() {
+    const q = document.getElementById('searchBox').value.toLowerCase();
+    const f = window._filter;
+    let query = db.from('hooks').select('*').eq('user_id', user.id).order('created_at', {ascending:false});
+    const { data: hooks } = await query;
+    const filtered = (hooks||[]).filter(h => {
+      if(f !== 'all' && h.cat !== f) return false;
+      if(q) return h.text.toLowerCase().includes(q);
+      return true;
     });
-    document.getElementById('hookList').innerHTML=html||`<div class="empty"><div class="empty-icon"><img src="icons/research.png" class="icon-sm" alt="Research"></div><div class="empty-text">No hooks match your search.</div></div>`;
-  } else {
-    document.getElementById('hookList').innerHTML=`<div class="hooks-grid">${hooks.map(h=>hookCard(h)).join('')}</div>`;
+    const el = document.getElementById('hookList');
+    if(!filtered.length){ el.innerHTML='<div class="empty"><div class="empty-title">No hooks yet</div><div class="empty-sub">Add your first hook above.</div></div>'; return; }
+
+    function hookCard(h) {
+      return '<div class="hook-card"><button class="hook-del" onclick="delHook(\''+h.id+'\')">&#xD7;</button><div class="hook-text">'+h.text+'</div><div class="hook-footer"><span class="hook-cat '+(CAT_CLASS[h.cat]||'cat-product')+'">'+(CAT_LABEL[h.cat]||h.cat)+'</span><button class="hook-copy" onclick="copyHook(\''+h.id+'\',this)">Copy</button></div></div>';
+    }
+
+    if(f === 'all') {
+      const cats = ['curiosity','problem','identity','social-proof','product','pattern-interrupt'];
+      let html = '';
+      cats.forEach(cat => {
+        const ch = filtered.filter(h => h.cat === cat);
+        if(!ch.length) return;
+        html += '<div class="section-wrap"><div class="section-head"><div class="section-title">'+CAT_LABEL[cat]+'</div><div class="section-line"></div><div class="section-count">'+ch.length+'</div></div><div class="hooks-grid">'+ch.map(hookCard).join('')+'</div></div>';
+      });
+      el.innerHTML = html || '<div class="empty"><div class="empty-title">No results</div></div>';
+    } else {
+      el.innerHTML = '<div class="hooks-grid">'+filtered.map(hookCard).join('')+'</div>';
+    }
   }
-}
 
-function hookCard(h){
-  return`<div class="hook-card">
-    <button class="hook-del" onclick="deleteHook(${h.id})">×</button>
-    <div class="hook-text">${h.text}</div>
-    <div class="hook-footer">
-      <span class="hook-cat ${CAT_CLASS[h.cat]||'cat-product'}">${CAT_LABEL[h.cat]||h.cat}</span>
-      <button class="hook-copy" onclick="copyHook(${h.id},this)">Copy</button>
-    </div>
-  </div>`;
-}
+  window.renderHooks = renderHooks;
+  window.setFilter = function(el, f) { window._filter=f; document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.f===f)); renderHooks(); };
+  window.addHook = async function() {
+    const text = document.getElementById('hookInput').value.trim();
+    if(!text) return;
+    const cat = document.getElementById('hookCat').value;
+    await db.from('hooks').insert({ user_id: user.id, text, cat });
+    document.getElementById('hookInput').value = '';
+    showToast('Hook saved'); renderHooks();
+  };
+  window.delHook = async function(id) {
+    await db.from('hooks').delete().eq('id', id);
+    showToast('Deleted'); renderHooks();
+  };
+  window.copyHook = async function(id, btn) {
+    const { data } = await db.from('hooks').select('text').eq('id',id).single();
+    if(data) { navigator.clipboard.writeText(data.text).then(()=>{ btn.textContent='Copied!'; btn.classList.add('copied'); setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000); }); }
+  };
+  document.getElementById('hookInput').addEventListener('keydown', e => { if(e.key==='Enter'&&e.metaKey) window.addHook(); });
 
-document.getElementById('hookInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.metaKey)addHook();});
-render();
+}
+init();
 </script>
 </body>
 </html>

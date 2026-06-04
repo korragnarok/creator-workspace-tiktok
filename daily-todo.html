@@ -10,19 +10,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Mozilla+Text:wght@100..900&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#F8F5F1;--bg-lift:#FCFAF8;--sage:#7A816C;--rose:#D1A9A5;--rust:#AE6965;
-  --tan:#A58B71;--sand:#E5DFD6;--ink:#2A2725;
-  --surface:#FCFAF8;--surface-2:#EDE8E1;--border:rgba(42,39,37,0.1);--border-mid:rgba(42,39,37,0.15);
-  --text:#2A2725;--text-mid:#7A816C;--text-muted:#A58B71;
-  --r:12px;--shadow-sm:0 1px 4px rgba(42,39,37,0.07);--shadow-md:0 4px 20px rgba(42,39,37,0.09);
-}
+:root{--bg:#F8F5F1;--bg-lift:#FCFAF8;--sage:#7A816C;--rose:#D1A9A5;--rust:#AE6965;--tan:#A58B71;--sand:#E5DFD6;--ink:#2A2725;--surface:#FCFAF8;--border:rgba(42,39,37,0.1);--border-mid:rgba(42,39,37,0.15);--text:#2A2725;--text-mid:#7A816C;--text-muted:#A58B71;--r:12px;--shadow-sm:0 1px 4px rgba(42,39,37,0.07);--shadow-md:0 4px 20px rgba(42,39,37,0.09);}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 a{text-decoration:none;color:inherit;}
-
-/* NAV */
 nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 48px;height:64px;display:flex;align-items:center;}
 .nav-brand{font-family:'Stack Sans Notch',sans-serif;font-size:22px;font-weight:700;color:var(--ink);margin-right:48px;flex-shrink:0;}
 .nav-links{display:flex;gap:32px;flex:1;align-items:center;}
@@ -30,17 +21,14 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .nav-link:hover{color:var(--ink);}
 .nav-link.active{color:var(--rust);}
 .nav-link.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--rust);border-radius:1px;}
-
-/* PAGE */
+.nav-user{font-family:'Stack Sans Notch',sans-serif;font-size:11px;color:var(--text-muted);margin-left:auto;display:flex;align-items:center;gap:12px;}
+.nav-signout{background:none;border:1px solid var(--border-mid);border-radius:8px;padding:5px 12px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all 0.15s;}
+.nav-signout:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
 .page{max-width:900px;margin:0 auto;padding:0 40px 100px;}
-
-/* PAGE HEADER */
 .page-header{padding:44px 0 28px;}
 .page-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
 .page-title{font-family:'IBM Plex Serif',serif;font-size:56px;font-weight:700;line-height:0.95;letter-spacing:-0.02em;color:var(--ink);}
 .page-title em{font-style:italic;color:var(--sage);}
-
-/* WEEK STRIP */
 .week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:28px 0 24px;}
 .week-day{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 8px;text-align:center;cursor:pointer;transition:all 0.15s;position:relative;}
 .week-day:hover{border-color:var(--rose);}
@@ -53,27 +41,19 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .week-day.active .week-day-num{color:#fff;}
 .week-day.today-marker .week-day-num{color:var(--rust);}
 .week-day.active.today-marker .week-day-num{color:#fff;}
-
-/* DIVIDER */
 .strip-divider{height:1px;background:var(--border-mid);margin-bottom:28px;}
-
-/* QUEUE HEADER */
 .queue-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
 .queue-date{font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:600;color:var(--text-mid);}
 .queue-actions{display:flex;gap:8px;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:0.04em;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;transition:all 0.15s;border:none;text-transform:uppercase;}
-.btn-primary{background:var(--rust);color:#fff;}
-.btn-primary:hover{background:#9a5a57;}
-.btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}
-.btn-ghost:hover{background:var(--surface);color:var(--ink);}
-
-/* PRODUCT QUEUE CARDS */
+.btn-primary{background:var(--rust);color:#fff;}.btn-primary:hover{background:#9a5a57;}
+.btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}.btn-ghost:hover{background:var(--surface);color:var(--ink);}
 .queue-list{display:flex;flex-direction:column;gap:10px;}
 .queue-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow-sm);display:flex;align-items:flex-start;gap:14px;transition:all 0.12s;}
 .queue-card:hover{border-color:var(--rose);}
 .queue-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border-mid);background:var(--bg);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.12s;}
 .queue-check.checked{background:var(--rust);border-color:var(--rust);}
-.queue-check.checked::after{content:'✓';color:#fff;font-size:12px;font-weight:700;}
+.queue-check.checked::after{content:'&#x2713;';color:#fff;font-size:12px;font-weight:700;}
 .queue-card.done .queue-name{text-decoration:line-through;opacity:0.5;}
 .queue-body{flex:1;}
 .queue-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--rust);margin-bottom:3px;}
@@ -81,15 +61,11 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .queue-notes{font-size:12px;color:var(--text-mid);margin-top:5px;line-height:1.5;font-style:italic;}
 .queue-remove{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;opacity:0;transition:opacity 0.12s;padding:0 4px;margin-left:auto;flex-shrink:0;line-height:1;}
 .queue-card:hover .queue-remove{opacity:1;}
-
-/* EMPTY STATE */
 .empty-state{text-align:center;padding:64px 24px;}
-.empty-icon{font-size:40px;margin-bottom:16px;opacity:0.3;}
+.empty-icon img{width:48px;height:48px;opacity:0.3;margin-bottom:16px;}
 .empty-title{font-family:'IBM Plex Serif',serif;font-size:24px;font-weight:700;color:var(--text-mid);margin-bottom:8px;}
 .empty-sub{font-size:14px;color:var(--text-muted);margin-bottom:24px;line-height:1.7;}
 .empty-sub a{color:var(--rust);text-decoration:underline;text-underline-offset:3px;}
-
-/* PRODUCT PICKER MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(42,39,37,0.4);z-index:500;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
 .modal-overlay.open{display:flex;}
 .modal{background:var(--bg-lift);border-radius:20px 20px 0 0;padding:28px 28px 40px;width:100%;max-width:680px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 -8px 40px rgba(42,39,37,0.12);}
@@ -103,40 +79,22 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .picker-item.selected{border-color:var(--rust);background:#FBF5F4;}
 .picker-check{width:20px;height:20px;border-radius:5px;border:2px solid var(--border-mid);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.12s;}
 .picker-item.selected .picker-check{background:var(--rust);border-color:var(--rust);}
-.picker-item.selected .picker-check::after{content:'✓';color:#fff;font-size:11px;font-weight:700;}
-.picker-body{flex:1;}
+.picker-item.selected .picker-check::after{content:'&#x2713;';color:#fff;font-size:11px;font-weight:700;}
 .picker-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);}
 .picker-name{font-family:'IBM Plex Serif',serif;font-size:15px;font-weight:600;color:var(--ink);}
 .modal-footer{padding-top:16px;display:flex;gap:10px;border-top:1px solid var(--border);margin-top:16px;}
-.modal-selected-count{font-size:12px;color:var(--text-muted);align-self:center;flex:1;font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;}
-
-/* FOOTER */
+.modal-count{font-family:'Stack Sans Notch',sans-serif;font-size:12px;color:var(--text-muted);align-self:center;flex:1;letter-spacing:0.04em;}
 footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-items:center;justify-content:space-between;}
 .footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
 .footer-note{font-size:11px;color:var(--text-muted);}
-
-/* TAB BAR */
 .tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(248,245,241,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
-.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;font-family:'Stack Sans Notch',sans-serif;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
 .tab-item.active{color:var(--rust);}
-.tab-icon{font-size:18px;line-height:1;}
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
-.icon-sm{width:20px;height:20px;object-fit:contain;display:inline-block;vertical-align:middle;}
-
-@media(max-width:768px){
-  nav{padding:0 20px;}.nav-links{display:none;}
-  .page{padding:0 16px 90px;}
-  .page-title{font-size:40px;}
-  .week-strip{gap:5px;}
-  .week-day{padding:10px 4px;}
-  .week-day-num{font-size:18px;}
-  .modal{border-radius:20px 20px 0 0;}
-  .tab-bar{display:flex;}
-}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:40px;}.week-strip{gap:5px;}.week-day{padding:10px 4px;}.week-day-num{font-size:18px;}.tab-bar{display:flex;}}
 </style>
 </head>
 <body>
-
 <nav>
   <a href="index.html" class="nav-brand">Creator Hub</a>
   <div class="nav-links">
@@ -148,25 +106,22 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <a href="hooks.html" class="nav-link">Hooks</a>
     <a href="scripts.html" class="nav-link">Scripts</a>
   </div>
+  <div class="nav-user"><span id="navEmail"></span><button class="nav-signout" onclick="signOut()">Sign Out</button></div>
 </nav>
-
 <div class="page">
   <div class="page-header">
     <div class="page-eyebrow">Daily Workflow</div>
     <div class="page-title">Today's <em>To Do</em></div>
   </div>
-
   <div class="week-strip" id="weekStrip"></div>
   <div class="strip-divider"></div>
-
   <div class="queue-header">
     <div class="queue-date" id="queueDate"></div>
     <div class="queue-actions">
-      <button class="btn btn-ghost" onclick="clearDoneItems()">Clear Done</button>
+      <button class="btn btn-ghost" onclick="clearDone()">Clear Done</button>
       <button class="btn btn-primary" onclick="openPicker()">+ Add Products</button>
     </div>
   </div>
-
   <div class="queue-list" id="queueList"></div>
 
   <!-- IDEAS SECTION -->
@@ -177,13 +132,13 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <input type="text" id="ideaInput" placeholder="Capture an idea before it disappears..." style="flex:1;padding:10px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;" onkeydown="if(event.key==='Enter')addIdea()" onfocus="this.style.borderColor='var(--rose)'" onblur="this.style.borderColor='var(--border-mid)'">
-      <button onclick="addIdea()" style="background:var(--sage);color:#fff;border:none;border-radius:var(--r);padding:10px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;text-transform:uppercase;transition:opacity 0.15s;white-space:nowrap;" onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">Save Idea</button>
+      <button onclick="addIdea()" style="background:var(--sage);color:#fff;border:none;border-radius:var(--r);padding:10px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;text-transform:uppercase;white-space:nowrap;">Save Idea</button>
     </div>
     <div id="ideaList"></div>
   </div>
 </div>
 
-<!-- PRODUCT PICKER MODAL -->
+<!-- PICKER MODAL -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -191,246 +146,175 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <input type="text" class="modal-search" id="pickerSearch" placeholder="Search your products..." oninput="renderPicker()">
     <div class="modal-list" id="pickerList"></div>
     <div class="modal-footer">
-      <div class="modal-selected-count" id="selectedCount">0 selected</div>
+      <div class="modal-count" id="selectedCount">None selected</div>
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="addSelected()">Add to Queue</button>
     </div>
   </div>
 </div>
 
-<footer>
-  <div class="footer-brand">Creator Hub</div>
-  <div class="footer-note">Data stored locally · Your browser only</div>
-</footer>
-
+<footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
 <div class="tab-bar">
-  <a href="index.html" class="tab-item"><div class="tab-icon"><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a>
-  <a href="daily-todo.html" class="tab-item active"><div class="tab-icon"><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
-  <a href="sales-calendar.html" class="tab-item"><div class="tab-icon"><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
-  <a href="products.html" class="tab-item"><div class="tab-icon"><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
-  <a href="hooks.html" class="tab-item"><div class="tab-icon"><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div>Hooks</div></a>
+  <a href="index.html" class="tab-item"><div><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a>
+  <a href="daily-todo.html" class="tab-item active"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
+  <a href="sales-calendar.html" class="tab-item"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
+  <a href="products.html" class="tab-item"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
+  <a href="hooks.html" class="tab-item"><div><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div>Hooks</div></a>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 <script>
-const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-let selectedDate = new Date();
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+let _user=null, selectedDate=new Date(), pickerSelected=new Set(), _allProds=[], _queueCache=[];
 selectedDate.setHours(0,0,0,0);
-let pickerSelected = new Set();
 
-function dateKey(d){ return d.toISOString().slice(0,10); }
-function getQueue(){ try{ return JSON.parse(localStorage.getItem('hub_queue')||'{}'); }catch(e){ return {}; } }
-function saveQueue(q){ localStorage.setItem('hub_queue', JSON.stringify(q)); }
-function getProds(){ try{ return JSON.parse(localStorage.getItem('hub_products')||'[]'); }catch(e){ return []; } }
+function dateKey(d){return d.toISOString().slice(0,10);}
 
-// ── WEEK STRIP ──────────────────────────────────────────
-function buildWeekStrip(){
-  const today = new Date(); today.setHours(0,0,0,0);
-  const queue = getQueue();
-  // Start from Monday of current week
-  const dow = today.getDay();
-  const monday = new Date(today); monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+async function init(){
+  const user=await requireAuth(); if(!user)return;
+  _user=user;
+  document.getElementById('navEmail').textContent=user.email;
+  const {data}=await db.from('products').select('id,name,brand,notes').eq('user_id',user.id).order('name');
+  _allProds=data||[];
+  await buildWeekStrip();
+  await renderQueue();
+  await renderIdeas();
+}
 
-  const strip = document.getElementById('weekStrip');
-  strip.innerHTML = '';
-  for(let i = 0; i < 7; i++){
-    const d = new Date(monday); d.setDate(monday.getDate() + i);
-    const key = dateKey(d);
-    const isToday = d.getTime() === today.getTime();
-    const isSelected = d.getTime() === selectedDate.getTime();
-    const hasItems = queue[key] && queue[key].length > 0;
-
-    const el = document.createElement('div');
-    el.className = 'week-day' + (isSelected?' active':'') + (isToday?' today-marker':'') + (hasItems?' has-items':'');
-    el.innerHTML = `<div class="week-day-name">${DAYS[d.getDay()]}</div><div class="week-day-num">${d.getDate()}</div>`;
-    el.onclick = () => { selectedDate = d; buildWeekStrip(); renderQueue(); };
+async function buildWeekStrip(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const dow=today.getDay();
+  const monday=new Date(today); monday.setDate(today.getDate()-(dow===0?6:dow-1));
+  // Get queue counts for the week
+  const weekStart=dateKey(monday);
+  const weekEnd=new Date(monday); weekEnd.setDate(monday.getDate()+6);
+  const {data:qrows}=await db.from('queue').select('date').eq('user_id',_user.id).gte('date',weekStart).lte('date',dateKey(weekEnd));
+  const datesWithItems=new Set((qrows||[]).map(r=>r.date));
+  const strip=document.getElementById('weekStrip');
+  strip.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=new Date(monday); d.setDate(monday.getDate()+i);
+    const key=dateKey(d);
+    const isToday=d.getTime()===today.getTime();
+    const isSelected=d.getTime()===selectedDate.getTime();
+    const hasItems=datesWithItems.has(key);
+    const el=document.createElement('div');
+    el.className='week-day'+(isSelected?' active':'')+(isToday?' today-marker':'')+(hasItems?' has-items':'');
+    el.innerHTML='<div class="week-day-name">'+DAYS[d.getDay()]+'</div><div class="week-day-num">'+d.getDate()+'</div>';
+    const captured=new Date(d);
+    el.onclick=()=>{selectedDate=captured;buildWeekStrip();renderQueue();};
     strip.appendChild(el);
   }
 }
 
-// ── QUEUE ───────────────────────────────────────────────
-function renderQueue(){
-  const key = dateKey(selectedDate);
-  const today = new Date(); today.setHours(0,0,0,0);
-  const isToday = selectedDate.getTime() === today.getTime();
-
-  const dateStr = selectedDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  document.getElementById('queueDate').textContent = dateStr;
-
-  const queue = getQueue();
-  const items = queue[key] || [];
-  const listEl = document.getElementById('queueList');
-
-  if(items.length === 0){
-    const prods = getProds();
-    if(prods.length === 0){
-      listEl.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon"><img src="icons/products.png" style="width:48px;height:48px;opacity:0.3;"></div>
-          <div class="empty-title">No products saved yet</div>
-          <div class="empty-sub">Add products to your <a href="products.html">Products</a> page first, then come back to build your filming queue.</div>
-        </div>`;
+async function renderQueue(){
+  const key=dateKey(selectedDate);
+  document.getElementById('queueDate').textContent=selectedDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const {data:items}=await db.from('queue').select('*').eq('user_id',_user.id).eq('date',key).order('sort_order');
+  _queueCache=items||[];
+  const listEl=document.getElementById('queueList');
+  if(!_queueCache.length){
+    if(!_allProds.length){
+      listEl.innerHTML='<div class="empty-state"><div class="empty-icon"><img src="icons/products.png"></div><div class="empty-title">No products saved yet</div><div class="empty-sub">Add products to your <a href="products.html">Products</a> page first, then come back to build your filming queue.</div></div>';
     } else {
-      listEl.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon"><img src="icons/todo.png" style="width:48px;height:48px;opacity:0.3;"></div>
-          <div class="empty-title">Nothing scheduled</div>
-          <div class="empty-sub">Pick products to build your filming queue for this day.</div>
-          <button class="btn btn-primary" onclick="openPicker()">+ Add Products</button>
-        </div>`;
+      listEl.innerHTML='<div class="empty-state"><div class="empty-icon"><img src="icons/todo.png"></div><div class="empty-title">Nothing scheduled</div><div class="empty-sub">Pick products to build your filming queue for this day.</div><button class="btn btn-primary" onclick="openPicker()">+ Add Products</button></div>';
     }
     return;
   }
-
-  listEl.innerHTML = items.map((item, idx) => `
-    <div class="queue-card${item.done?' done':''}">
-      <div class="queue-check${item.done?' checked':''}" onclick="toggleItem('${key}',${idx})"></div>
-      <div class="queue-body">
-        ${item.brand ? `<div class="queue-brand">${item.brand}</div>` : ''}
-        <div class="queue-name">${item.name}</div>
-        ${item.notes ? `<div class="queue-notes">${item.notes.slice(0,120)}${item.notes.length>120?'…':''}</div>` : ''}
-      </div>
-      <button class="queue-remove" onclick="removeItem('${key}',${idx})">×</button>
-    </div>`).join('');
+  listEl.innerHTML=_queueCache.map(item=>
+    '<div class="queue-card'+(item.done?' done':'')+'">'+
+    '<div class="queue-check'+(item.done?' checked':'')+'" onclick="toggleItem(\''+item.id+'\')"></div>'+
+    '<div class="queue-body">'+
+    (item.brand?'<div class="queue-brand">'+item.brand+'</div>':'')+
+    '<div class="queue-name">'+item.name+'</div>'+
+    (item.notes?'<div class="queue-notes">'+item.notes.slice(0,120)+(item.notes.length>120?'&#8230;':'')+'</div>':'')+
+    '</div>'+
+    '<button class="queue-remove" onclick="removeItem(\''+item.id+'\')">&#xD7;</button>'+
+    '</div>'
+  ).join('');
 }
 
-function toggleItem(key, idx){
-  const queue = getQueue();
-  if(!queue[key]) return;
-  queue[key][idx].done = !queue[key][idx].done;
-  saveQueue(queue); renderQueue();
+async function toggleItem(id){
+  const item=_queueCache.find(i=>i.id===id); if(!item)return;
+  await db.from('queue').update({done:!item.done}).eq('id',id);
+  await renderQueue();
+}
+async function removeItem(id){
+  await db.from('queue').delete().eq('id',id);
+  await buildWeekStrip(); await renderQueue();
+}
+async function clearDone(){
+  const doneIds=_queueCache.filter(i=>i.done).map(i=>i.id);
+  if(doneIds.length) await db.from('queue').delete().in('id',doneIds);
+  await buildWeekStrip(); await renderQueue();
 }
 
-function removeItem(key, idx){
-  const queue = getQueue();
-  if(!queue[key]) return;
-  queue[key].splice(idx, 1);
-  saveQueue(queue); buildWeekStrip(); renderQueue();
-}
-
-function clearDoneItems(){
-  const key = dateKey(selectedDate);
-  const queue = getQueue();
-  if(queue[key]) queue[key] = queue[key].filter(i => !i.done);
-  saveQueue(queue); buildWeekStrip(); renderQueue();
-}
-
-// ── PICKER ──────────────────────────────────────────────
 function openPicker(){
-  pickerSelected = new Set();
-  document.getElementById('pickerSearch').value = '';
+  pickerSelected=new Set();
+  document.getElementById('pickerSearch').value='';
   renderPicker();
   document.getElementById('modalOverlay').classList.add('open');
-  setTimeout(() => document.getElementById('pickerSearch').focus(), 100);
+  setTimeout(()=>document.getElementById('pickerSearch').focus(),100);
 }
-
-function closeModal(){
-  document.getElementById('modalOverlay').classList.remove('open');
-}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
 
 function renderPicker(){
-  const q = document.getElementById('pickerSearch').value.toLowerCase();
-  const prods = getProds().filter(p => {
-    if(q) return (p.name + p.brand + (p.tags||'')).toLowerCase().includes(q);
-    return true;
-  });
-
-  const listEl = document.getElementById('pickerList');
-
-  if(prods.length === 0){
-    listEl.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">No products match your search.</div>`;
-    updateCount(); return;
-  }
-
-  listEl.innerHTML = prods.map(p => {
-    const sel = pickerSelected.has(p.id);
-    return `<div class="picker-item${sel?' selected':''}" onclick="togglePick(${p.id})">
-      <div class="picker-check"></div>
-      <div class="picker-body">
-        ${p.brand ? `<div class="picker-brand">${p.brand}</div>` : ''}
-        <div class="picker-name">${p.name}</div>
-      </div>
-    </div>`;
-  }).join('');
-
+  const q=document.getElementById('pickerSearch').value.toLowerCase();
+  const prods=_allProds.filter(p=>!q||(p.name+(p.brand||'')).toLowerCase().includes(q));
+  const el=document.getElementById('pickerList');
+  if(!prods.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">No products match your search.</div>';updateCount();return;}
+  el.innerHTML=prods.map(p=>'<div class="picker-item'+(pickerSelected.has(p.id)?' selected':'')+'" onclick="togglePick(\''+p.id+'\')"><div class="picker-check"></div><div><div class="picker-brand">'+(p.brand||'')+'</div><div class="picker-name">'+p.name+'</div></div></div>').join('');
   updateCount();
 }
-
 function togglePick(id){
-  if(pickerSelected.has(id)) pickerSelected.delete(id);
-  else pickerSelected.add(id);
+  if(pickerSelected.has(id))pickerSelected.delete(id);else pickerSelected.add(id);
   renderPicker();
 }
+function updateCount(){const n=pickerSelected.size;document.getElementById('selectedCount').textContent=n===0?'None selected':n+' selected';}
 
-function updateCount(){
-  const n = pickerSelected.size;
-  document.getElementById('selectedCount').textContent = n === 0 ? 'None selected' : `${n} selected`;
-}
-
-function addSelected(){
-  if(pickerSelected.size === 0){ closeModal(); return; }
-  const prods = getProds();
-  const key = dateKey(selectedDate);
-  const queue = getQueue();
-  if(!queue[key]) queue[key] = [];
-
-  // Avoid duplicates
-  const existingIds = new Set(queue[key].map(i => i.prodId));
-  pickerSelected.forEach(id => {
-    if(existingIds.has(id)) return;
-    const p = prods.find(p => p.id === id);
-    if(p) queue[key].push({ prodId: p.id, name: p.name, brand: p.brand||'', notes: p.notes||'', done: false });
+async function addSelected(){
+  if(!pickerSelected.size){closeModal();return;}
+  const key=dateKey(selectedDate);
+  const existing=new Set(_queueCache.map(i=>i.prod_id));
+  const toInsert=[];
+  let order=_queueCache.length;
+  pickerSelected.forEach(id=>{
+    if(existing.has(id))return;
+    const p=_allProds.find(p=>p.id===id); if(!p)return;
+    toInsert.push({user_id:_user.id,date:key,prod_id:p.id,name:p.name,brand:p.brand||'',notes:p.notes||'',done:false,sort_order:order++});
   });
-
-  saveQueue(queue);
-  closeModal();
-  buildWeekStrip();
-  renderQueue();
+  if(toInsert.length) await db.from('queue').insert(toInsert);
+  closeModal(); await buildWeekStrip(); await renderQueue();
 }
 
-document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
-
-buildWeekStrip();
-renderQueue();
-
-// ── IDEAS ───────────────────────────────────────────────
-function getIdeas(){ try{ return JSON.parse(localStorage.getItem('hub_ideas')||'[]'); }catch(e){ return []; } }
-function saveIdeas(i){ localStorage.setItem('hub_ideas', JSON.stringify(i)); }
-
-function addIdea(){
-  const val = document.getElementById('ideaInput').value.trim();
-  if(!val) return;
-  const ideas = getIdeas();
-  ideas.unshift({id:Date.now(), text:val, date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})});
-  saveIdeas(ideas);
-  document.getElementById('ideaInput').value = '';
-  renderIdeas();
+// ── IDEAS ─────────────────────────────────────────────────
+async function renderIdeas(){
+  const {data}=await db.from('ideas').select('*').eq('user_id',_user.id).order('created_at',{ascending:false});
+  const el=document.getElementById('ideaList');
+  const ideas=data||[];
+  if(!ideas.length){el.innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:8px 0;font-family:\'IBM Plex Serif\',serif;">No ideas saved yet.</p>';return;}
+  el.innerHTML=ideas.map(i=>
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:6px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-sm);">'+
+    '<span style="font-size:11px;color:var(--text-muted);min-width:80px;font-family:\'Stack Sans Notch\',sans-serif;letter-spacing:0.04em;">'+new Date(i.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</span>'+
+    '<div style="flex:1;font-size:13px;color:var(--text);font-family:\'IBM Plex Serif\',serif;">'+i.text+'</div>'+
+    '<button onclick="deleteIdea(\''+i.id+'\')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;padding:0 4px;opacity:0.5;transition:opacity 0.12s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">&#xD7;</button>'+
+    '</div>'
+  ).join('');
+}
+async function addIdea(){
+  const val=document.getElementById('ideaInput').value.trim(); if(!val)return;
+  await db.from('ideas').insert({user_id:_user.id,text:val});
+  document.getElementById('ideaInput').value='';
+  showToast('Idea saved'); renderIdeas();
+}
+async function deleteIdea(id){
+  await db.from('ideas').delete().eq('id',id); renderIdeas();
 }
 
-function deleteIdea(id){
-  saveIdeas(getIdeas().filter(i => i.id !== id));
-  renderIdeas();
-}
-
-function renderIdeas(){
-  const ideas = getIdeas();
-  const el = document.getElementById('ideaList');
-  if(ideas.length === 0){
-    el.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:8px 0;font-family:'IBM Plex Serif',serif;">No ideas saved yet.</p>`;
-    return;
-  }
-  el.innerHTML = ideas.map(i => `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:6px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-sm);">
-      <span style="font-size:11px;color:var(--text-muted);min-width:52px;font-family:'Stack Sans Notch',sans-serif;">${i.date}</span>
-      <div style="flex:1;font-size:13px;color:var(--text);font-family:'IBM Plex Serif',serif;">${i.text}</div>
-      <button onclick="deleteIdea(${i.id})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;padding:0 4px;opacity:0.5;transition:opacity 0.12s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">×</button>
-    </div>`).join('');
-}
-
-renderIdeas();
-
+document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+init();
 </script>
 </body>
 </html>
