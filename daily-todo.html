@@ -294,7 +294,7 @@ async function buildWeekStrip(){
   // Get queue counts for the week
   const weekStart=dateKey(monday);
   const weekEnd=new Date(monday); weekEnd.setDate(monday.getDate()+6);
-  const {data:qrows}=await db.from('queue').select('date').eq('user_id',_user.id).gte('date',weekStart).lte('date',dateKey(weekEnd));
+  const {data:qrows}=await db.from('queue').select('date').eq('user_id',_user.id).eq('done',false).gte('date',weekStart).lte('date',dateKey(weekEnd));
   const datesWithItems=new Set((qrows||[]).map(r=>r.date));
   const strip=document.getElementById('weekStrip');
   strip.innerHTML='';
@@ -316,7 +316,7 @@ async function buildWeekStrip(){
 async function renderQueue(){
   const key=dateKey(selectedDate);
   document.getElementById('queueDate').textContent=selectedDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  const {data:items}=await db.from('queue').select('*').eq('user_id',_user.id).eq('date',key).order('sort_order');
+  const {data:items}=await db.from('queue').select('*').eq('user_id',_user.id).eq('date',key).eq('done',false).order('sort_order');
   _queueCache=items||[];
   const listEl=document.getElementById('queueList');
   if(!_queueCache.length){
@@ -349,7 +349,10 @@ function formatQueueNotes(notes){
 
 async function toggleItem(id){
   const item=_queueCache.find(i=>i.id===id); if(!item)return;
-  await db.from('queue').update({done:!item.done}).eq('id',id);
+  await logQueueItemToTracker(item);
+  await db.from('queue').update({done:true}).eq('id',id);
+  showToast('Saved to Content Tracker');
+  await buildWeekStrip();
   await renderQueue();
 }
 async function removeItem(id){
@@ -360,6 +363,29 @@ async function clearDone(){
   const doneIds=_queueCache.filter(i=>i.done).map(i=>i.id);
   if(doneIds.length) await db.from('queue').delete().in('id',doneIds);
   await buildWeekStrip(); await renderQueue();
+}
+
+function queueHook(item){
+  const lines=String(item.notes||'').split('\n').map(line=>line.trim()).filter(Boolean);
+  const line=lines.find(value=>/^Hook:/i.test(value));
+  return line ? line.replace(/^Hook:\s*/i,'').trim() : '';
+}
+function localDateKey(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+async function logQueueItemToTracker(item){
+  const hook=queueHook(item);
+  const notes=['Product: '+item.name];
+  if(hook)notes.push('Hook: '+hook);
+  await db.from('videos').insert({
+    user_id:_user.id,
+    title:hook||item.name,
+    brand:item.name,
+    date:localDateKey(),
+    status:'live',
+    notes:notes.join('\n')
+  });
 }
 
 function openPicker(){
