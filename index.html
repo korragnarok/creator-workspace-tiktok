@@ -69,8 +69,9 @@ button,input{font:inherit;}
 .level-icon-lg{width:42px;height:42px;object-fit:contain;}
 .level-message strong{display:block;color:#fff;margin-bottom:2px;}
 .level-message span{color:#DED5C9;font-size:13px;}
-.tier-line{display:grid;grid-template-columns:repeat(4,1fr);align-items:start;position:relative;gap:0;padding-top:18px;}
+.tier-line{display:grid;grid-template-columns:repeat(4,1fr);align-items:start;position:relative;gap:18px 0;padding-top:18px;}
 .tier-line::before{content:'';position:absolute;top:26px;left:8%;right:8%;height:2px;background:rgba(248,245,241,0.45);}
+.tier-line::after{content:'';position:absolute;top:101px;left:8%;right:8%;height:2px;background:rgba(248,245,241,0.28);}
 .tier{position:relative;text-align:center;color:#DFD7CC;}
 .tier-dot{width:12px;height:12px;border-radius:50%;background:#C9C8C1;border:2px solid #4F5543;margin:2px auto 12px;position:relative;z-index:1;}
 .tier.current .tier-dot{width:22px;height:22px;margin-top:-3px;margin-bottom:9px;background:#E1BD64;box-shadow:0 0 0 6px rgba(225,189,100,0.18);}
@@ -191,7 +192,11 @@ button,input{font:inherit;}
               <div class="tier" data-tier="Bronze"><div class="tier-dot"></div><div class="tier-name">Bronze</div><div class="tier-range">$0 - $999</div></div>
               <div class="tier" data-tier="Silver"><div class="tier-dot"></div><div class="tier-name">Silver</div><div class="tier-range">$1,000 - $4,999</div></div>
               <div class="tier" data-tier="Gold"><div class="tier-dot"></div><div class="tier-name">Gold</div><div class="tier-range">$5,000 - $24,999</div></div>
-              <div class="tier" data-tier="Platinum"><div class="tier-dot"></div><div class="tier-name">Platinum</div><div class="tier-range">$25,000+</div></div>
+              <div class="tier" data-tier="Platinum"><div class="tier-dot"></div><div class="tier-name">Platinum</div><div class="tier-range">$25,000 - $59,999</div></div>
+              <div class="tier" data-tier="Ruby"><div class="tier-dot"></div><div class="tier-name">Ruby</div><div class="tier-range">$60,000 - $149,999</div></div>
+              <div class="tier" data-tier="Emerald"><div class="tier-dot"></div><div class="tier-name">Emerald</div><div class="tier-range">$150,000 - $399,999</div></div>
+              <div class="tier" data-tier="Sapphire"><div class="tier-dot"></div><div class="tier-name">Sapphire</div><div class="tier-range">$400,000+</div></div>
+              <div class="tier" data-tier="Diamond"><div class="tier-dot"></div><div class="tier-name">Diamond</div><div class="tier-range">$1,500,000+</div></div>
             </div>
           </div>
         </section>
@@ -336,7 +341,7 @@ async function init() {
   document.getElementById('s-level-name').textContent=lvl.name;
   document.getElementById('s-level-name').style.color=lvl.color;
   document.getElementById('lc-icon').src=`icons/levels/${lvl.icon}.png`;
-  document.querySelectorAll('.tier').forEach(t=>t.classList.toggle('current', t.dataset.tier===lvl.name || (lvlIdx>3 && t.dataset.tier==='Platinum')));
+  document.querySelectorAll('.tier').forEach(t=>t.classList.toggle('current', t.dataset.tier===lvl.name));
   if(nextLvl){
     setText('lc-cta', `${fmtMoney(nextLvl.min-monthGmv)} more in GMV to reach ${nextLvl.name}.`);
   } else {
