@@ -8,7 +8,6 @@
 <title>Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 :root{
   --bg:#F8F5F1;--bg-lift:#FCFAF8;--sage:#7A816C;--rose:#D1A9A5;--rust:#AE6965;
@@ -222,7 +221,8 @@ function buildChart() {
   for (let i = 29; i >= 0; i--) {
     const d = new Date(today); d.setDate(today.getDate() - i);
     const key = d.toISOString().slice(0,10);
-    const val = sales[key] || 0;
+    const entry = sales[key];
+    const val = entry ? (entry.units || 0) : 0;
     labels.push(d.toLocaleDateString('en-US', {month:'short', day:'numeric'}));
     data.push(val);
     total30 += val;
@@ -230,7 +230,8 @@ function buildChart() {
   }
 
   const todayKey = today.toISOString().slice(0,10);
-  document.getElementById('s-today').textContent = (sales[todayKey] || 0).toLocaleString();
+  const todayEntry = sales[todayKey];
+  document.getElementById('s-today').textContent = (todayEntry ? todayEntry.units || 0 : 0).toLocaleString();
   document.getElementById('s-30').textContent = total30.toLocaleString();
   document.getElementById('s-best').textContent = bestVal > 0 ? bestVal.toLocaleString() : '—';
   document.getElementById('s-best-date').textContent = bestVal > 0 ? bestDate : 'no data yet';
@@ -262,7 +263,9 @@ function buildChart() {
   });
 }
 
-buildChart();
+// called after Chart.js loads
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>buildChart();</script>
 </body>
 </html>
