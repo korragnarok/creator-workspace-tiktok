@@ -149,7 +149,13 @@ async function loadUserPrefs(userId) {
     .select('display_name, core5, theme')
     .eq('user_id', userId)
     .maybeSingle();
-  return data || { display_name: null, core5: [], theme: DEFAULT_THEME };
+  if (data) return data;
+  // First login — create the row so future saves have somewhere to upsert into
+  await db.from('user_prefs').upsert(
+    { user_id: userId, display_name: '', core5: [], theme: DEFAULT_THEME },
+    { onConflict: 'user_id' }
+  );
+  return { display_name: null, core5: [], theme: DEFAULT_THEME };
 }
 
 async function saveUserPrefs(userId, patch) {
@@ -175,7 +181,7 @@ async function initDisplayName(user, prefs) {
   const name = prefs.display_name || _emailFallbackName(user.email);
   _applyDisplayName(name);
   const modal = document.getElementById('nameModal');
-  if (modal && !prefs.display_name) {
+  if (modal && !prefs.display_name?.trim()) {
     modal.classList.add('open');
     setTimeout(() => document.getElementById('displayNameInput')?.focus(), 80);
   }
@@ -184,7 +190,7 @@ async function initDisplayName(user, prefs) {
 
 async function saveDisplayName(userId) {
   const input = document.getElementById('displayNameInput');
-  const name = input?.value.trim();
+  const name = (input?.value || '').trim();
   if (!name) { input?.focus(); return; }
   await saveUserPrefs(userId, { display_name: name });
   _applyDisplayName(name);

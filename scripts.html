@@ -133,6 +133,8 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .view-modal-actions{display:flex;gap:10px;margin-top:28px;padding-top:20px;border-top:1px solid var(--border);}
 .form-script{font-family:'IBM Plex Serif',serif;font-size:13px;line-height:1.8;resize:vertical;min-height:280px;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 </head>
 <body>
 <aside class="desktop-sidebar">
@@ -209,8 +211,6 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div>Settings</div>
   </a>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
 <script>
 async function init() {
   const user = await requireAuth();
