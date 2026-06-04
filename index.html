@@ -59,14 +59,15 @@ button,input{font:inherit;}
 .hero-sub strong{color:var(--rust);}
 .top-layout{display:grid;grid-template-columns:minmax(390px,0.82fr) minmax(430px,1.18fr);gap:14px;margin-bottom:16px;}
 .stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow-sm);min-height:116px;display:flex;align-items:center;gap:14px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow-sm);min-height:116px;display:flex;align-items:center;gap:14px;min-width:0;}
 .stat-icon{width:44px;height:44px;border-radius:8px;background:rgba(209,169,165,0.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .stat-icon.sage{background:rgba(122,129,108,0.18);}
 .stat-icon.gold{background:rgba(201,168,122,0.22);}
 .stat-icon img{width:27px;height:27px;object-fit:contain;}
 .stat-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);margin-bottom:2px;}
 .stat-icon.sage+.stat-body .stat-label{color:var(--sage);}
-.stat-value{font-family:'Noto Sans Mono',sans-serif;font-size:28px;font-weight:800;color:var(--ink);line-height:1.05;}
+.stat-body{min-width:0;}
+.stat-value{font-family:'Noto Sans Mono',sans-serif;font-size:clamp(21px,1.65vw,28px);font-weight:800;color:var(--ink);line-height:1.05;max-width:100%;overflow-wrap:anywhere;}
 .stat-sub{font-size:12px;color:var(--text-mid);margin-top:3px;}
 .level-feature{background:#4F5543;color:var(--bg);border:1px solid rgba(42,39,37,0.14);border-radius:var(--r);box-shadow:var(--shadow-md);padding:22px;min-height:248px;}
 .level-feature-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
@@ -134,7 +135,9 @@ button,input{font:inherit;}
 .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
 .tab-item.active{color:var(--rust);}
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
+@media(max-width:1420px) and (min-width:1181px){.content{max-width:1080px;}.top-layout,.lower-grid{grid-template-columns:1fr;}.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));}.stat-card{padding:15px;gap:10px;}.stat-icon{width:36px;height:36px;}.stat-icon img{width:22px;height:22px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}}
 @media(max-width:1180px){.app-shell{grid-template-columns:1fr;}.sidebar{display:none;}.top-layout,.lower-grid{grid-template-columns:1fr;}}
+@media(max-width:980px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:768px){.topbar{padding:0 16px;height:auto;min-height:58px;flex-wrap:wrap;gap:8px;padding-top:10px;padding-bottom:10px;}.content{width:100%;padding:24px 14px 88px;overflow:hidden;}.welcome{font-size:36px;}.stats-grid{grid-template-columns:1fr;}.lower-grid{width:100%;grid-template-columns:minmax(0,1fr);}.card{width:100%;min-width:0;padding:14px;}.card-head,.chart-top{align-items:flex-start;flex-wrap:wrap;}.empty-box{width:100%;min-width:0;}.add-bar{max-width:100%;}.chart-metrics{gap:18px;flex-wrap:wrap;}.chart-card{overflow:hidden;}.chart-wrap{width:100%;height:180px;}.tier-line{grid-template-columns:repeat(4,1fr);gap:14px 0;}.tier-line::before{display:none;}.tier-range{display:none;}.tab-bar{display:flex;}}
 </style>
 </head>
@@ -284,8 +287,7 @@ button,input{font:inherit;}
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0;
-function fmtMoney(n){if(!n||n===0)return'$0';return'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
-function fmtDec(n){return'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtMoney(n){if(!n||n===0)return'$0';return'$'+Math.ceil(Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
 function displayName(email){const raw=(email||'Creator').split('@')[0].split(/[._-]/)[0]||'Creator';return raw.charAt(0).toUpperCase()+raw.slice(1);}
 function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
@@ -369,7 +371,7 @@ async function init() {
     total30comm+=comm;
   }
 
-  setText('s-comm', fmtDec(total30comm));
+  setText('s-comm', fmtMoney(total30comm));
   setText('s-gmv', fmtMoney(total30gmv));
   setText('m-comm', fmtMoney(total30comm));
   setText('m-gmv', fmtMoney(total30gmv));
