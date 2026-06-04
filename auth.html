@@ -89,6 +89,7 @@ const SUPABASE_URL = 'https://mlsckxjksxmavzzhcdfs.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sc2NreGprc3htYXZ6emhjZGZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTQzMzgsImV4cCI6MjA5NjE3MDMzOH0.tQpHwJcTraZjK8TUkeGbnUZWTAQ8cJ5TL6eZt0TSHT0';
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+const AUTH_REDIRECT_URL = new URL('auth.html', window.location.href).href;
 
 // If already logged in, go home
 db.auth.getSession().then(({ data: { session } }) => {
@@ -132,7 +133,7 @@ async function signUp() {
   if (pass.length < 6) { showMsg('Password must be at least 6 characters.', 'error'); return; }
   const btn = document.getElementById('suBtn');
   btn.disabled = true; btn.textContent = 'Creating account...';
-  const { error } = await db.auth.signUp({ email, password: pass });
+  const { error } = await db.auth.signUp({ email, password: pass, options: { emailRedirectTo: AUTH_REDIRECT_URL } });
   if (error) { showMsg(error.message, 'error'); btn.disabled = false; btn.textContent = 'Create Account'; }
   else showMsg('Check your email to confirm your account!', 'success');
 }
@@ -140,7 +141,7 @@ async function signUp() {
 async function magicLink() {
   const email = document.getElementById('siEmail').value.trim();
   if (!email) { showMsg('Enter your email above first.', 'error'); return; }
-  const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + '/notion-embeds/index.html' } });
+  const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: AUTH_REDIRECT_URL } });
   if (error) showMsg(error.message, 'error');
   else showMsg('Magic link sent! Check your inbox.', 'success');
 }
