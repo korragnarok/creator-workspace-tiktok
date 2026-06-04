@@ -222,7 +222,7 @@ function buildChart() {
     const d = new Date(today); d.setDate(today.getDate() - i);
     const key = d.toISOString().slice(0,10);
     const entry = sales[key];
-    const val = entry ? (entry.units || 0) : 0;
+    const val = parseInt(entry?.units) || 0;
     labels.push(d.toLocaleDateString('en-US', {month:'short', day:'numeric'}));
     data.push(val);
     total30 += val;
@@ -230,9 +230,9 @@ function buildChart() {
   }
 
   const todayKey = today.toISOString().slice(0,10);
-  const todayEntry = sales[todayKey];
-  document.getElementById('s-today').textContent = (todayEntry ? todayEntry.units || 0 : 0).toLocaleString();
-  document.getElementById('s-30').textContent = total30.toLocaleString();
+  const todayUnits = parseInt(sales[todayKey]?.units) || 0;
+  document.getElementById('s-today').textContent = todayUnits.toLocaleString();
+  document.getElementById('s-30').textContent = (parseInt(total30) || 0).toLocaleString();
   document.getElementById('s-best').textContent = bestVal > 0 ? bestVal.toLocaleString() : '—';
   document.getElementById('s-best-date').textContent = bestVal > 0 ? bestDate : 'no data yet';
 
