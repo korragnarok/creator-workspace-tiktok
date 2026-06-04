@@ -58,7 +58,9 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .queue-body{flex:1;}
 .queue-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--rust);margin-bottom:3px;}
 .queue-name{font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:600;color:var(--ink);line-height:1.3;}
-.queue-notes{font-size:12px;color:var(--text-mid);margin-top:5px;line-height:1.5;font-style:italic;}
+.queue-notes{font-size:12px;color:var(--text-mid);margin-top:8px;line-height:1.5;}
+.queue-note-line{margin-top:3px;}
+.queue-note-label{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);margin-right:6px;font-style:normal;}
 .queue-remove{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;opacity:0;transition:opacity 0.12s;padding:0 4px;margin-left:auto;flex-shrink:0;line-height:1;}
 .queue-card:hover .queue-remove{opacity:1;}
 .empty-state{text-align:center;padding:64px 24px;}
@@ -311,24 +313,31 @@ async function renderQueue(){
   _queueCache=items||[];
   const listEl=document.getElementById('queueList');
   if(!_queueCache.length){
-    if(!_allProds.length){
-      listEl.innerHTML='<div class="empty-state"><div class="empty-icon"><img src="icons/products.png"></div><div class="empty-title">No products saved yet</div><div class="empty-sub">Add products to your <a href="products.html">Products</a> page first, then come back to build your filming queue.</div></div>';
-    } else {
-      listEl.innerHTML='<div class="empty-state"><div class="empty-icon"><img src="icons/todo.png"></div><div class="empty-title">Nothing scheduled</div><div class="empty-sub">Add a video idea to start planning this day.</div><button class="btn btn-primary" onclick="openIdeaModal()">+ Add Video Idea</button></div>';
-    }
+    listEl.innerHTML='<div class="empty-state"><div class="empty-icon"><img src="icons/todo.png" alt=""></div><div class="empty-title">Nothing scheduled</div><div class="empty-sub">Add a video idea to start planning this day.</div><button class="btn btn-primary" onclick="openIdeaModal()">+ Add Video Idea</button></div>';
     return;
   }
   listEl.innerHTML=_queueCache.map(item=>
     '<div class="queue-card'+(item.done?' done':'')+'">'+
     '<div class="queue-check'+(item.done?' checked':'')+'" onclick="toggleItem(\''+item.id+'\')"></div>'+
     '<div class="queue-body">'+
-    (item.brand?'<div class="queue-brand">'+item.brand+'</div>':'')+
-    '<div class="queue-name">'+item.name+'</div>'+
-    (item.notes?'<div class="queue-notes">'+item.notes.slice(0,120)+(item.notes.length>120?'&#8230;':'')+'</div>':'')+
+    (item.brand?'<div class="queue-brand">'+esc(item.brand)+'</div>':'')+
+    '<div class="queue-name">'+esc(item.name)+'</div>'+
+    formatQueueNotes(item.notes)+
     '</div>'+
     '<button class="queue-remove" onclick="removeItem(\''+item.id+'\')">&#xD7;</button>'+
     '</div>'
   ).join('');
+}
+
+function formatQueueNotes(notes){
+  const text=String(notes||'').trim();
+  if(!text)return'';
+  const lines=text.split('\n').map(line=>line.trim()).filter(Boolean);
+  return '<div class="queue-notes">'+lines.map(line=>{
+    const match=line.match(/^([^:]{2,18}):\s*(.*)$/);
+    if(!match)return '<div class="queue-note-line">'+esc(line)+'</div>';
+    return '<div class="queue-note-line"><span class="queue-note-label">'+esc(match[1])+'</span>'+esc(match[2])+'</div>';
+  }).join('')+'</div>';
 }
 
 async function toggleItem(id){
@@ -463,17 +472,27 @@ async function saveBuiltIdea(){
     if(data){_allScripts=[data,..._allScripts];script=data;}
   }
 
-  const productText=newProduct||product?.name;
-  const hookText=newHook||hook?.text;
-  const scriptText=newScript||(script?(script.title||script.script):'');
-  const parts=[];
-  if(productText)parts.push('Product: '+productText);
-  if(hookText)parts.push('Hook: '+hookText);
-  if(scriptText)parts.push('Script: '+scriptText);
-  if(notes)parts.push('Notes: '+notes);
-  await db.from('ideas').insert({user_id:_user.id,text:parts.join('\n')});
-  showToast('Video idea saved');
+  const productText=newProduct||product?.name||'Video Idea';
+  const hookText=newHook||hook?.text||'';
+  const scriptText=newScript||(script?(script.script||script.title):'');
+  const queueNotes=[];
+  if(hookText)queueNotes.push('Hook: '+hookText);
+  if(scriptText)queueNotes.push('Script: '+scriptText);
+  if(notes)queueNotes.push('Notes: '+notes);
+  await db.from('queue').insert({
+    user_id:_user.id,
+    date:dateKey(selectedDate),
+    prod_id:product?.id||null,
+    name:productText,
+    brand:product?.brand||'',
+    notes:queueNotes.join('\n'),
+    done:false,
+    sort_order:_queueCache.length
+  });
+  showToast('Video idea added');
   closeIdeaModal();
+  await buildWeekStrip();
+  await renderQueue();
 }
 
 document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
