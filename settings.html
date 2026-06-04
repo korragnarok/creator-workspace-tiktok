@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1C2130">
+<title>Settings — Creator Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+nav{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb,28,33,48),0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 48px;height:64px;display:flex;align-items:center;}
+.nav-brand{font-family:'Stack Sans Notch',sans-serif;font-size:22px;font-weight:700;color:var(--ink);margin-right:48px;}
+.nav-links{display:flex;gap:32px;flex:1;align-items:center;}
+.nav-link{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);transition:color 0.15s;}
+.nav-link:hover{color:var(--ink);}
+.nav-link.active{color:var(--rust);}
+.nav-user{font-family:'Stack Sans Notch',sans-serif;font-size:11px;color:var(--text-muted);margin-left:auto;display:flex;align-items:center;gap:12px;}
+.nav-signout{background:none;border:1px solid var(--border-mid);border-radius:8px;padding:5px 12px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all 0.15s;}
+.nav-signout:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
+
+.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:rgba(var(--bg-rgb,28,33,48),0.72);padding:28px 18px;z-index:260;flex-direction:column;gap:28px;}
+.side-brand{font-family:'Stack Sans Notch',sans-serif;font-size:31px;font-weight:800;line-height:0.92;color:var(--ink);}
+.side-brand span{display:block;font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:400;color:var(--rust);line-height:1.2;}
+.side-nav{display:flex;flex-direction:column;gap:10px;}
+.side-link{display:flex;align-items:center;gap:12px;border-radius:8px;padding:10px 12px;color:var(--text-mid);font-weight:700;transition:background 0.15s,color 0.15s;}
+.side-link.active{background:rgba(var(--rust-rgb,212,120,120),0.2);color:var(--ink);}
+.side-link:hover{background:var(--surface);color:var(--ink);}
+.nav-icon{width:28px;height:28px;border:1px solid var(--border-mid);border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-icon img{width:19px;height:19px;object-fit:contain;}
+.nav-icon svg{width:16px;height:16px;color:var(--text-mid);}
+.side-profile{margin-top:auto;border:1px solid var(--border);border-radius:var(--r,12px);background:var(--surface);padding:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color 0.15s;}
+.side-profile:hover{border-color:var(--rust);}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--sage);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.profile-name{font-weight:700;line-height:1.1;color:var(--ink);}
+.profile-role{font-size:11px;color:var(--text-muted);}
+
+.page{max-width:680px;margin:0 auto;padding:0 40px 100px;}
+.page-header{padding:44px 0 32px;}
+.page-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
+.page-title{font-family:'IBM Plex Serif',serif;font-size:48px;font-weight:700;line-height:0.95;letter-spacing:-0.02em;color:var(--ink);}
+.page-title em{font-style:italic;color:var(--sage);}
+
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:16px;}
+.section-title{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--rust);margin-bottom:20px;}
+.form-group{margin-bottom:18px;}
+.form-group:last-child{margin-bottom:0;}
+.form-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-mid);margin-bottom:7px;}
+.form-input{width:100%;padding:11px 14px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;}
+.form-input:focus{border-color:var(--rust);}
+.form-hint{font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.5;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:var(--rust);color:#fff;}
+.btn-primary:hover{opacity:0.88;}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}
+.btn-ghost:hover{background:var(--surface-2);color:var(--ink);}
+
+/* Theme picker */
+.theme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.theme-card{border:2px solid var(--border-mid);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:12px;}
+.theme-card:hover{border-color:var(--rust);}
+.theme-card.active{border-color:var(--rust);background:rgba(var(--rust-rgb,212,120,120),0.08);}
+.theme-swatches{display:flex;gap:3px;flex-shrink:0;}
+.theme-swatch{width:14px;height:28px;border-radius:4px;}
+.theme-name{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);}
+.theme-check{margin-left:auto;width:18px;height:18px;border-radius:50%;border:2px solid var(--border-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+.theme-card.active .theme-check{background:var(--rust);border-color:var(--rust);}
+.theme-card.active .theme-check::after{content:'✓';color:#fff;font-size:10px;font-weight:800;font-family:'Stack Sans Notch',sans-serif;}
+
+/* Danger zone */
+.danger-zone{border-color:rgba(200,60,50,0.2);}
+.danger-title{color:#C83C32;}
+.danger-btn{background:rgba(200,60,50,0.1);color:#C83C32;border:1px solid rgba(200,60,50,0.2);}
+.danger-btn:hover{background:#C83C32;color:#fff;border-color:#C83C32;}
+
+.tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(var(--bg-rgb,28,33,48),0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
+.tab-item.active{color:var(--rust);}
+.tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
+.tab-icon-svg{width:22px;height:22px;display:block;}
+
+@media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:36px;}.theme-grid{grid-template-columns:1fr;}.tab-bar{display:flex;}}
+</style>
+</head>
+<body>
+
+<aside class="desktop-sidebar">
+  <a href="index.html" class="side-brand">creator <span>workspace</span></a>
+  <div class="side-nav">
+    <a href="index.html" class="side-link"><span class="nav-icon"><img src="icons/home.png" alt=""></span>Home</a>
+    <a href="daily-todo.html" class="side-link"><span class="nav-icon"><img src="icons/todo.png" alt=""></span>Daily To Do</a>
+    <a href="video-tracker.html" class="side-link"><span class="nav-icon"><img src="icons/video.png" alt=""></span>Content Tracker</a>
+    <a href="hooks.html" class="side-link"><span class="nav-icon"><img src="icons/hooks.png" alt=""></span>Hooks</a>
+    <a href="products.html" class="side-link"><span class="nav-icon"><img src="icons/products.png" alt=""></span>Products</a>
+    <a href="scripts.html" class="side-link"><span class="nav-icon"><img src="icons/scripts.png" alt=""></span>Scripts</a>
+    <a href="sales-calendar.html" class="side-link"><span class="nav-icon"><img src="icons/sales.png" alt=""></span>Sales Log</a>
+    <a href="settings.html" class="side-link active">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings
+    </a>
+  </div>
+  <div class="side-profile">
+    <div class="avatar" id="sideAvatar">K</div>
+    <div><div class="profile-name" id="sideProfileName">Creator</div><div class="profile-role">Creator</div></div>
+  </div>
+</aside>
+
+<nav>
+  <a href="index.html" class="nav-brand">Creator Hub</a>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="daily-todo.html" class="nav-link">To Do</a>
+    <a href="products.html" class="nav-link">Products</a>
+    <a href="video-tracker.html" class="nav-link">Videos</a>
+    <a href="hooks.html" class="nav-link">Hooks</a>
+    <a href="scripts.html" class="nav-link">Scripts</a>
+    <a href="sales-calendar.html" class="nav-link">Sales Log</a>
+    <a href="settings.html" class="nav-link active">Settings</a>
+  </div>
+  <div class="nav-user"><span id="navEmail"></span><button class="nav-signout" onclick="signOut()">Sign Out</button></div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div class="page-eyebrow">Your Account</div>
+    <div class="page-title">Set<em>tings</em></div>
+  </div>
+
+  <!-- Display Name -->
+  <div class="settings-section">
+    <div class="section-title">Display Name</div>
+    <div class="form-group">
+      <label class="form-label">Your Name</label>
+      <input type="text" class="form-input" id="nameInput" placeholder="What should we call you?">
+      <div class="form-hint">Shows in your dashboard greeting and sidebar.</div>
+    </div>
+    <button class="btn btn-primary" id="saveNameBtn" onclick="saveName()">Save Name</button>
+  </div>
+
+  <!-- Theme -->
+  <div class="settings-section">
+    <div class="section-title">Color Theme</div>
+    <div class="theme-grid" id="themeGrid"></div>
+  </div>
+
+  <!-- Password -->
+  <div class="settings-section">
+    <div class="section-title">Change Password</div>
+    <div class="form-group">
+      <label class="form-label">New Password</label>
+      <input type="password" class="form-input" id="newPass" placeholder="Min 6 characters" autocomplete="new-password">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirm New Password</label>
+      <input type="password" class="form-input" id="confirmPass" placeholder="Repeat password" autocomplete="new-password">
+    </div>
+    <button class="btn btn-primary" id="savePassBtn" onclick="savePassword()">Update Password</button>
+  </div>
+
+  <!-- Danger zone -->
+  <div class="settings-section danger-zone">
+    <div class="section-title danger-title">Sign Out</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">Sign out of your account on this device.</p>
+    <button class="btn danger-btn" onclick="signOut()">Sign Out</button>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <a href="index.html" class="tab-item"><div><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a>
+  <a href="daily-todo.html" class="tab-item"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
+  <a href="sales-calendar.html" class="tab-item"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
+  <a href="products.html" class="tab-item"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
+  <a href="settings.html" class="tab-item active">
+    <div><svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+    <div>Settings</div>
+  </a>
+</div>
+
+<script>
+let _user = null, _prefs = null;
+
+function buildThemeGrid(activeKey) {
+  const grid = document.getElementById('themeGrid');
+  grid.innerHTML = Object.entries(THEMES).map(([key, theme]) => `
+    <div class="theme-card${activeKey === key ? ' active' : ''}" data-theme="${key}" onclick="selectTheme('${key}')">
+      <div class="theme-swatches">
+        ${theme.swatch.map(c => `<div class="theme-swatch" style="background:${c}"></div>`).join('')}
+      </div>
+      <div class="theme-name">${theme.label}</div>
+      <div class="theme-check"></div>
+    </div>
+  `).join('');
+}
+
+async function selectTheme(key) {
+  applyTheme(key);
+  buildThemeGrid(key);
+  await saveUserPrefs(_user.id, { theme: key });
+  showToast('Theme saved');
+}
+
+async function saveName() {
+  const val = document.getElementById('nameInput').value.trim();
+  if (!val) { document.getElementById('nameInput').focus(); return; }
+  const btn = document.getElementById('saveNameBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  await saveUserPrefs(_user.id, { display_name: val });
+  document.querySelectorAll('.profile-name, #sideProfileName').forEach(el => el.textContent = val);
+  document.querySelectorAll('.avatar, #sideAvatar').forEach(el => el.textContent = val.charAt(0).toUpperCase());
+  btn.disabled = false; btn.textContent = 'Save Name';
+  showToast('Name updated');
+}
+
+async function savePassword() {
+  const np = document.getElementById('newPass').value;
+  const cp = document.getElementById('confirmPass').value;
+  if (!np) { showToast('Enter a new password', 'error'); return; }
+  if (np.length < 6) { showToast('Password must be 6+ characters', 'error'); return; }
+  if (np !== cp) { showToast('Passwords don\'t match', 'error'); return; }
+  const btn = document.getElementById('savePassBtn');
+  btn.disabled = true; btn.textContent = 'Updating...';
+  const { error } = await db.auth.updateUser({ password: np });
+  btn.disabled = false; btn.textContent = 'Update Password';
+  if (error) { showToast(error.message, 'error'); return; }
+  document.getElementById('newPass').value = '';
+  document.getElementById('confirmPass').value = '';
+  showToast('Password updated');
+}
+
+async function init() {
+  _user = await requireAuth();
+  if (!_user) return;
+  document.getElementById('navEmail').textContent = _user.email;
+  _prefs = await loadUserPrefs(_user.id);
+  await initDisplayName(_user, _prefs);
+  await initCore5(_user.id, _prefs);
+  await initTheme(_user.id, _prefs);
+  initProfilePopover(_user.id);
+
+  // Pre-fill name input
+  document.getElementById('nameInput').value = _prefs.display_name || '';
+
+  const activeTheme = _prefs.theme || DEFAULT_THEME;
+  buildThemeGrid(activeTheme);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement === document.getElementById('nameInput')) saveName();
+});
+
+init();
+</script>
+</body>
+</html>

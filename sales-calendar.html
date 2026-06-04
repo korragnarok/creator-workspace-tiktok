@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#F8F5F1;--bg-lift:#FCFAF8;--sage:#7A816C;--rose:#D1A9A5;--rust:#AE6965;--tan:#A58B71;--sand:#E5DFD6;--ink:#2A2725;--surface:#FCFAF8;--border:rgba(42,39,37,0.1);--border-mid:rgba(42,39,37,0.15);--text:#2A2725;--text-mid:#7A816C;--text-muted:#A58B71;--r:12px;--shadow-sm:0 1px 4px rgba(42,39,37,0.07);--shadow-md:0 4px 20px rgba(42,39,37,0.09);}
+:root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 a{text-decoration:none;color:inherit;}
@@ -131,6 +131,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <a href="products.html" class="side-link"><span class="nav-icon"><img src="icons/products.png" alt=""></span>Products</a>
     <a href="scripts.html" class="side-link"><span class="nav-icon"><img src="icons/scripts.png" alt=""></span>Scripts</a>
     <a href="sales-calendar.html" class="side-link active"><span class="nav-icon"><img src="icons/sales.png" alt=""></span>Sales Log</a>
+    <a href="settings.html" class="side-link"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings</a>
   </div>
   <div class="core-sidebar">
     <div class="core-sidebar-head"><span>Core 5</span><span class="core-sidebar-count" id="coreCount">0/5</span></div>
@@ -142,7 +143,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       <label class="core-mini-item"><span class="core-mini-num">5</span><input class="core-mini-input" data-core-index="4" placeholder="Product name"></label>
     </div>
   </div>
-  <div class="side-profile"><div class="avatar">K</div><div><div class="profile-name">Kourtney</div><div class="profile-role">Creator</div></div></div>
+  <div class="side-profile" style="cursor:pointer;"><div class="avatar">K</div><div><div class="profile-name">Kourtney</div><div class="profile-role">Creator</div></div></div>
 </aside>
 <nav>
   <a href="index.html" class="nav-brand">Creator Hub</a>
@@ -198,7 +199,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   <a href="daily-todo.html" class="tab-item"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
   <a href="sales-calendar.html" class="tab-item active"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
   <a href="products.html" class="tab-item"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
-  <a href="hooks.html" class="tab-item"><div><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div>Hooks</div></a>
+  <a href="settings.html" class="tab-item">
+    <div><svg class="tab-icon-svg" style="width:22px;height:22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+    <div>Settings</div>
+  </a>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
@@ -214,6 +218,8 @@ async function init(){
   const prefs = await loadUserPrefs(user.id);
   await initDisplayName(user, prefs);
   await initCore5(user.id, prefs);
+  await initTheme(user.id, prefs);
+  initProfilePopover(user.id);
   _user=user;
   document.getElementById('navEmail').textContent=user.email;
   await loadMonth();

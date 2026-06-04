@@ -106,7 +106,10 @@ create table if not exists user_prefs (
   user_id uuid references auth.users(id) on delete cascade primary key,
   display_name text default '',
   core5 jsonb default '[]'::jsonb,
+  theme text default 'dusk',
   updated_at timestamptz default now()
 );
 alter table user_prefs enable row level security;
 create policy "Users manage own prefs" on user_prefs for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+alter table user_prefs add column if not exists theme text default 'dusk';
