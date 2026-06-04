@@ -52,6 +52,34 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .pill:hover:not(.active){background:var(--sand);}
 .search-box{flex:1;min-width:180px;padding:8px 16px;border:1px solid var(--border-mid);border-radius:100px;background:var(--surface);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;}
 .search-box:focus{border-color:var(--rose);}
+.stat-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:24px;}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:18px;}
+.scard-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+.scard-val{font-family:'Noto Sans Mono',sans-serif;font-size:28px;font-weight:800;line-height:1;color:var(--ink);}
+.scard-val.accent{color:var(--rust);}
+.scard-val.sage{color:var(--sage);}
+.scard-sub{font-size:11px;color:var(--text-muted);margin-top:4px;}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);background:rgba(237,232,225,0.35);white-space:nowrap;cursor:pointer;}
+thead th.num{text-align:right;}
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:rgba(209,169,165,0.08);}
+tbody td{padding:13px 14px;font-size:13px;color:var(--text);vertical-align:middle;}
+tbody td.num{text-align:right;font-family:'Noto Sans Mono',sans-serif;font-weight:700;}
+tbody td.muted{color:var(--text-muted);font-size:12px;}
+.tbl-product{font-weight:700;color:var(--ink);line-height:1.25;}
+.tbl-hook{font-size:12px;color:var(--text-mid);margin-top:2px;line-height:1.35;}
+.tbl-action{border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;}
+.tbl-action:hover{border-color:var(--rust);color:var(--rust);}
+.status{display:inline-block;padding:3px 10px;border-radius:100px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;}
+.status-yes{background:rgba(122,129,108,0.15);color:var(--sage);}
+.status-no{background:rgba(174,105,101,0.12);color:var(--rust);}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);}
+.page-btns{display:flex;gap:5px;}
+.page-btn{border:1px solid var(--border-mid);border-radius:6px;background:transparent;color:var(--text-muted);font-family:'Noto Sans Mono',sans-serif;font-size:11px;padding:4px 9px;cursor:pointer;}
+.page-btn.active,.page-btn:hover{background:var(--sage);border-color:var(--sage);color:#fff;}
 .empty{text-align:center;padding:64px 24px;}
 .empty-title{font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:700;color:var(--text-mid);margin-bottom:8px;}
 .empty-sub{font-size:13px;color:var(--text-muted);line-height:1.7;}
@@ -87,7 +115,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .tab-item.active{color:var(--rust);}
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
 .icon-sm{width:20px;height:20px;object-fit:contain;}
-@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}.tab-bar{display:flex;}}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}.stat-row{grid-template-columns:1fr 1fr;}.table-card{overflow-x:auto;}table{min-width:760px;}.tab-bar{display:flex;}}
 .prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
 .prod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--shadow-sm);transition:all 0.15s;display:flex;flex-direction:column;gap:10px;cursor:pointer;}
 .prod-card:hover{border-color:var(--rose);box-shadow:var(--shadow-md);transform:translateY(-1px);}
@@ -149,14 +177,34 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div><div class="page-eyebrow">Content Tracker</div><div class="page-title">Videos <em>&amp;</em> Posts</div><p class="page-sub">Track posted content, views, and what's working.</p></div>
     <button class="btn btn-primary" onclick="openModal()">+ Log Video</button>
   </div>
-  <div class="filter-bar">
-    <input type="text" class="search-box" id="searchBox" placeholder="Search videos..." oninput="renderVids()">
-    <div class="pill active" data-f="all" onclick="setFilter(this,'all')">All</div>
-    <div class="pill" data-f="live" onclick="setFilter(this,'live')">Live</div>
-    <div class="pill" data-f="scheduled" onclick="setFilter(this,'scheduled')">Scheduled</div>
-    <div class="pill" data-f="draft" onclick="setFilter(this,'draft')">Draft</div>
+  <div class="stat-row">
+    <div class="scard"><div class="scard-label">Total Videos</div><div class="scard-val sage" id="sTotal">-</div><div class="scard-sub">all time</div></div>
+    <div class="scard"><div class="scard-label">Got Sales</div><div class="scard-val" id="sSales">-</div><div class="scard-sub" id="sSalesSub">-</div></div>
+    <div class="scard"><div class="scard-label">Avg Views</div><div class="scard-val" id="sViews">-</div><div class="scard-sub">per video</div></div>
+    <div class="scard"><div class="scard-label">This Month</div><div class="scard-val accent" id="sMonth">-</div><div class="scard-sub">videos posted</div></div>
   </div>
-  <div class="vid-list" id="vidList"><p style="color:var(--text-muted);padding:20px;">Loading...</p></div>
+  <div class="filter-bar">
+    <button class="pill active" data-f="all" onclick="setFilter(this,'all')">All</button>
+    <button class="pill" data-f="sales" onclick="setFilter(this,'sales')">Sales</button>
+    <button class="pill" data-f="nosales" onclick="setFilter(this,'nosales')">No Sales</button>
+    <input type="text" class="search-box" id="searchBox" placeholder="Search product, hook, or notes..." oninput="goPage(1)">
+  </div>
+  <div class="table-card">
+    <table>
+      <thead><tr>
+        <th onclick="sortBy('id')">Video ID</th>
+        <th onclick="sortBy('brand')">Product</th>
+        <th onclick="sortBy('date')">Date Posted</th>
+        <th>Hook</th>
+        <th onclick="sortBy('views')" class="num">Views</th>
+        <th onclick="sortBy('units')">Got Sales</th>
+        <th onclick="sortBy('status')">Status</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="tbody"><tr><td colspan="8"><div class="empty">Loading...</div></td></tr></tbody>
+    </table>
+    <div class="pagination"><span id="pageInfo"></span><div class="page-btns" id="pageBtns"></div></div>
+  </div>
 </div>
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
@@ -182,87 +230,147 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <script>
+const PAGE_SIZE=25;
+let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
+
 async function init() {
-  const user = await requireAuth();
+  user = await requireAuth();
   if (!user) return;
   document.getElementById('navEmail').textContent = user.email;
-  
   window._user = user;
-  window._filter = 'all';
-  await renderVids();
+  await loadVideos();
+  document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+}
 
-  function fmt(n){if(!n||n===0)return'&mdash;';if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return n.toLocaleString();}
-  const SL={live:'Live',scheduled:'Scheduled',draft:'Draft'};
-  const SC={live:'status-live',scheduled:'status-scheduled',draft:'status-draft'};
-
-  async function renderVids() {
-    const q = document.getElementById('searchBox').value.toLowerCase();
-    const { data: vids } = await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false});
-    const filtered = (vids||[]).filter(v => {
-      if(window._filter !== 'all' && v.status !== window._filter) return false;
-      if(q) return (v.title+(v.brand||'')+(v.notes||'')).toLowerCase().includes(q);
-      return true;
-    });
-    const el = document.getElementById('vidList');
-    if(!filtered.length){ el.innerHTML='<div class="empty"><div class="empty-title">No videos yet</div><div class="empty-sub">Log your first video above.</div></div>'; return; }
-    el.innerHTML = filtered.map(v =>
-      '<div class="vid-card" onclick="openModal(\''+v.id+'\')">'+
-      '<div class="vid-body">'+
-      '<div class="vid-title">'+v.title+'</div>'+
-      '<div class="vid-meta">'+
-      (v.date ? '<span class="vid-date">'+new Date(v.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span>' : '')+
-      (v.brand ? '<span class="vid-brand">'+v.brand+'</span>' : '')+
-      '<span class="vid-status '+(SC[v.status]||'status-draft')+'">'+(SL[v.status]||'Draft')+'</span>'+
-      '</div>'+
-      ((v.views||v.units) ? '<div class="vid-stats">'+
-        (v.views ? '<span class="vid-stat"><strong>'+fmt(v.views)+'</strong> views</span>' : '')+
-        (v.units ? '<span class="vid-stat"><strong>'+v.units+'</strong> units</span>' : '')+
-      '</div>' : '')+
-      (v.notes ? '<div class="vid-notes">'+v.notes+'</div>' : '')+
-      '</div></div>'
-    ).join('');
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function fmtNum(n){if(!n&&n!==0)return'-';return Number(n||0).toLocaleString('en-US');}
+function fmtDate(s){if(!s)return'-';return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function shortId(id){return String(id||'').slice(0,8);}
+function hookFromVideo(v){
+  const notes=String(v.notes||'');
+  const line=notes.split('\n').find(value=>/^Hook:/i.test(value.trim()));
+  return line ? line.replace(/^Hook:\s*/i,'').trim() : v.title||'';
+}
+async function loadVideos(){
+  const tbody=document.getElementById('tbody');
+  tbody.innerHTML='<tr><td colspan="8"><div class="empty">Loading...</div></td></tr>';
+  const {data,error}=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false});
+  if(error){
+    tbody.innerHTML='<tr><td colspan="8" class="empty">Error loading videos.</td></tr>';
+    return;
   }
-
-  window.renderVids = renderVids;
-  window.setFilter = function(el, f) {
-    window._filter = f;
-    document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.f === f));
-    renderVids();
-  };
-  window.openModal = async function(id) {
-    window._editId = id || null;
-    const v = id ? (await db.from('videos').select('*').eq('id',id).single()).data : null;
-    document.getElementById('modalTitle').textContent = v ? 'Edit Video' : 'Log Video';
-    document.getElementById('fTitle').value = v?.title || '';
-    document.getElementById('fBrand').value = v?.brand || '';
-    document.getElementById('fDate').value = v?.date || new Date().toISOString().slice(0,10);
-    document.getElementById('fStatus').value = v?.status || 'live';
-    document.getElementById('fViews').value = v?.views || '';
-    document.getElementById('fUnits').value = v?.units || '';
-    document.getElementById('fNotes').value = v?.notes || '';
-    document.getElementById('fLink').value = v?.link || '';
-    document.getElementById('deleteBtn').style.display = v ? '' : 'none';
-    document.getElementById('modalOverlay').classList.add('open');
-    setTimeout(() => document.getElementById('fTitle').focus(), 100);
-  };
-  window.closeModal = function() { document.getElementById('modalOverlay').classList.remove('open'); };
-  window.saveVideo = async function() {
-    const title = document.getElementById('fTitle').value.trim();
-    if(!title) { document.getElementById('fTitle').focus(); return; }
-    const row = { user_id: user.id, title, brand: document.getElementById('fBrand').value.trim(), date: document.getElementById('fDate').value || null, status: document.getElementById('fStatus').value, views: parseInt(document.getElementById('fViews').value)||0, units: parseInt(document.getElementById('fUnits').value)||0, notes: document.getElementById('fNotes').value.trim(), link: document.getElementById('fLink').value.trim() };
-    if(window._editId) { await db.from('videos').update(row).eq('id', window._editId); }
-    else { await db.from('videos').insert(row); }
-    showToast(window._editId ? 'Video updated' : 'Video saved');
-    window.closeModal(); renderVids();
-  };
-  window.deleteVideo = async function() {
-    if(!confirm('Delete this video?')) return;
-    await db.from('videos').delete().eq('id', window._editId);
-    showToast('Deleted'); window.closeModal(); renderVids();
-  };
-  document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) window.closeModal(); });
-  document.addEventListener('keydown', e => { if(e.key === 'Escape') window.closeModal(); });
-
+  DATA=data||[];
+  updateStats();
+  goPage(1);
+}
+function updateStats(){
+  const now=new Date();
+  const month=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const sales=DATA.filter(v=>(Number(v.units)||0)>0).length;
+  const viewRows=DATA.filter(v=>(Number(v.views)||0)>0);
+  const avgViews=viewRows.length?Math.round(viewRows.reduce((sum,v)=>sum+(Number(v.views)||0),0)/viewRows.length):0;
+  document.getElementById('sTotal').textContent=DATA.length;
+  document.getElementById('sSales').textContent=sales;
+  document.getElementById('sSalesSub').textContent=DATA.length?Math.round(sales/DATA.length*100)+'% of videos':'-';
+  document.getElementById('sViews').textContent=fmtNum(avgViews);
+  document.getElementById('sMonth').textContent=DATA.filter(v=>String(v.date||'').startsWith(month)).length;
+}
+function setFilter(btn,f){
+  filterStatus=f;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.f===f));
+  goPage(1);
+}
+function sortBy(field){
+  if(sortField===field)sortDir*=-1;else{sortField=field;sortDir=-1;}
+  goPage(1);
+}
+function getFiltered(){
+  const q=document.getElementById('searchBox').value.toLowerCase();
+  return DATA.filter(v=>{
+    const hasSales=(Number(v.units)||0)>0;
+    if(filterStatus==='sales'&&!hasSales)return false;
+    if(filterStatus==='nosales'&&hasSales)return false;
+    if(q&&!((v.title||'')+(v.brand||'')+(v.notes||'')+(v.status||'')).toLowerCase().includes(q))return false;
+    return true;
+  }).sort((a,b)=>{
+    let av=a[sortField]||'',bv=b[sortField]||'';
+    if(sortField==='views'||sortField==='units'){av=Number(av)||0;bv=Number(bv)||0;}
+    return av<bv?-1*sortDir:av>bv?1*sortDir:0;
+  });
+}
+function goPage(page){
+  currentPage=page;
+  renderTable();
+}
+function renderTable(){
+  const filtered=getFiltered();
+  const pages=Math.ceil(filtered.length/PAGE_SIZE)||1;
+  if(currentPage>pages)currentPage=pages;
+  const start=(currentPage-1)*PAGE_SIZE;
+  const rows=filtered.slice(start,start+PAGE_SIZE);
+  document.getElementById('pageInfo').textContent=filtered.length?`Showing ${start+1}-${Math.min(start+PAGE_SIZE,filtered.length)} of ${filtered.length}`:'';
+  const btns=document.getElementById('pageBtns');
+  btns.innerHTML='';
+  for(let i=1;i<=pages;i++){
+    const btn=document.createElement('button');
+    btn.className='page-btn'+(i===currentPage?' active':'');
+    btn.textContent=i;
+    btn.onclick=()=>goPage(i);
+    btns.appendChild(btn);
+  }
+  const tbody=document.getElementById('tbody');
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="8" class="empty">No videos found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=rows.map(v=>{
+    const hook=hookFromVideo(v);
+    const hasSales=(Number(v.units)||0)>0;
+    return `<tr>
+      <td class="muted">${esc(shortId(v.id))}</td>
+      <td><div class="tbl-product">${esc(v.brand||'No product')}</div><div class="tbl-hook">${esc(v.title||'')}</div></td>
+      <td class="muted">${fmtDate(v.date)}</td>
+      <td>${esc(hook||'-')}</td>
+      <td class="num">${fmtNum(v.views)}</td>
+      <td><span class="status ${hasSales?'status-yes':'status-no'}">${hasSales?'Yes':'No'}</span></td>
+      <td><span class="status status-${esc(v.status||'draft')}">${esc(v.status||'draft')}</span></td>
+      <td><button class="tbl-action" onclick="openModal('${v.id}')">Edit</button></td>
+    </tr>`;
+  }).join('');
+}
+async function openModal(id){
+  window._editId=id||null;
+  const v=id?DATA.find(row=>row.id===id):null;
+  document.getElementById('modalTitle').textContent=v?'Edit Video':'Log Video';
+  document.getElementById('fTitle').value=v?.title||'';
+  document.getElementById('fBrand').value=v?.brand||'';
+  document.getElementById('fDate').value=v?.date||new Date().toISOString().slice(0,10);
+  document.getElementById('fStatus').value=v?.status||'live';
+  document.getElementById('fViews').value=v?.views||'';
+  document.getElementById('fUnits').value=v?.units||'';
+  document.getElementById('fNotes').value=v?.notes||'';
+  document.getElementById('fLink').value=v?.link||'';
+  document.getElementById('deleteBtn').style.display=v?'':'none';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('fTitle').focus(),100);
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+async function saveVideo(){
+  const title=document.getElementById('fTitle').value.trim();
+  if(!title){document.getElementById('fTitle').focus();return;}
+  const row={user_id:user.id,title,brand:document.getElementById('fBrand').value.trim(),date:document.getElementById('fDate').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,notes:document.getElementById('fNotes').value.trim(),link:document.getElementById('fLink').value.trim()};
+  if(window._editId)await db.from('videos').update(row).eq('id',window._editId);else await db.from('videos').insert(row);
+  showToast(window._editId?'Video updated':'Video saved');
+  closeModal();
+  await loadVideos();
+}
+async function deleteVideo(){
+  if(!window._editId||!confirm('Delete this video?'))return;
+  await db.from('videos').delete().eq('id',window._editId);
+  showToast('Deleted');
+  closeModal();
+  await loadVideos();
 }
 init();
 </script>
