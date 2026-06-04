@@ -85,6 +85,12 @@ button,input{font:inherit;}
 .saved-count{font-size:12px;color:var(--text-mid);}
 .empty-box{border:1px dashed var(--border-mid);border-radius:8px;padding:14px 16px;color:var(--text-muted);font-size:13px;min-height:62px;}
 .empty-box strong{display:block;color:var(--text-mid);font-weight:400;}
+.today-content-list{border:1px dashed var(--border-mid);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.today-content-item{padding:9px 0;border-bottom:1px solid var(--border);}
+.today-content-item:last-child{border-bottom:none;}
+.today-content-name{font-weight:700;color:var(--ink);line-height:1.25;}
+.today-content-detail{font-size:12px;color:var(--text-muted);line-height:1.45;margin-top:3px;}
+.today-content-label{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);margin-right:6px;}
 .top-product-list{display:flex;flex-direction:column;gap:8px;}
 .top-product-row{border:1px solid var(--border);border-radius:8px;background:rgba(252,250,248,0.78);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .top-product-name{font-weight:700;color:var(--ink);line-height:1.2;}
@@ -271,6 +277,7 @@ function fmtMoney(n){if(!n||n===0)return'$0';return'$'+Number(n).toLocaleString(
 function fmtDec(n){return'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function displayName(email){const raw=(email||'Creator').split('@')[0].split(/[._-]/)[0]||'Creator';return raw.charAt(0).toUpperCase()+raw.slice(1);}
 function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function nameKey(user){return `creatorHub:displayName:${user.email||'local'}`;}
 function storedDisplayName(user){return (localStorage.getItem(nameKey(user))||'').trim();}
 function applyDisplayName(name){
@@ -330,7 +337,7 @@ async function init() {
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
     db.from('products').select('id,name,brand,units_sold').eq('user_id', user.id).order('created_at', { ascending:false }),
     db.from('videos').select('id,title,brand,status').eq('user_id', user.id).order('created_at', { ascending:false }),
-    db.from('queue').select('id,name,brand,done').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
+    db.from('queue').select('id,name,brand,notes,done').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
   ]);
 
   const labels=[], gmvData=[], commData=[];
@@ -361,7 +368,11 @@ async function init() {
   setText('product-saved', `${(products||[]).length} saved`);
 
   if((queue||[]).length){
-    document.getElementById('today-content').innerHTML=(queue||[]).slice(0,3).map(q=>`<strong>${q.name}</strong>${q.brand||'Ready for planning.'}`).join('');
+    document.getElementById('today-content').className='today-content-list';
+    document.getElementById('today-content').innerHTML=(queue||[]).slice(0,3).map(q=>{
+      const detail=queuePreviewDetail(q);
+      return `<div class="today-content-item"><div class="today-content-name">${esc(q.name)}</div>${detail}</div>`;
+    }).join('');
   }
   if((videos||[]).length){
     document.getElementById('content-tracker').innerHTML=(videos||[]).slice(0,2).map(v=>`<strong>${v.title}</strong>${v.brand||v.status||'Tracked content'}`).join('');
@@ -393,6 +404,17 @@ async function init() {
 
   const ctx=document.getElementById('salesChart').getContext('2d');
   new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Commission',data:commData,borderColor:'#AE6965',backgroundColor:'rgba(174,105,101,0.06)',fill:false,tension:0.35,pointRadius:2.5,pointBackgroundColor:'#AE6965',borderWidth:2},{label:'GMV',data:gmvData,borderColor:'#7A816C',backgroundColor:'rgba(122,129,108,0.05)',fill:false,tension:0.35,pointRadius:2.5,pointBackgroundColor:'#7A816C',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{displayColors:false}},scales:{x:{ticks:{maxTicksLimit:2,font:{size:10,family:"'Noto Sans Mono'"},color:'#A58B71'},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:10,family:"'Noto Sans Mono'"},color:'#A58B71',callback:v=>'$'+v},grid:{color:'rgba(42,39,37,0.06)'},border:{display:false},beginAtZero:true}}}});
+}
+function queuePreviewDetail(item){
+  const lines=String(item.notes||'').split('\n').map(line=>line.trim()).filter(Boolean);
+  const chosen=lines.find(line=>/^Hook:/i.test(line))||lines.find(line=>/^Script:/i.test(line))||lines.find(line=>/^Notes:/i.test(line));
+  if(chosen){
+    const match=chosen.match(/^([^:]{2,18}):\s*(.*)$/);
+    if(match)return `<div class="today-content-detail"><span class="today-content-label">${esc(match[1])}</span>${esc(match[2])}</div>`;
+    return `<div class="today-content-detail">${esc(chosen)}</div>`;
+  }
+  if(item.brand)return `<div class="today-content-detail">${esc(item.brand)}</div>`;
+  return '';
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
