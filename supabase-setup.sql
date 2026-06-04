@@ -100,3 +100,13 @@ create table if not exists ideas (
 );
 alter table ideas enable row level security;
 create policy "Users manage own ideas" on ideas for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ── 8. USER PREFS (display name + Core 5) ───────────────────────────────────
+create table if not exists user_prefs (
+  user_id uuid references auth.users(id) on delete cascade primary key,
+  display_name text default '',
+  core5 jsonb default '[]'::jsonb,
+  updated_at timestamptz default now()
+);
+alter table user_prefs enable row level security;
+create policy "Users manage own prefs" on user_prefs for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

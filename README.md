@@ -1,40 +1,50 @@
-# Creator Hub — TikTok Shop Creator Tool
+# Creator Hub — TikTok Shop Creator Workspace
 
-A lightweight, fully local creator hub for TikTok Shop affiliates. No accounts, no backend, no API keys. Everything saves to your browser's localStorage.
+A cloud-synced creator hub for TikTok Shop affiliates. Backed by Supabase — your data follows you across devices and browsers.
 
 ## Pages
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Home — units sold stats + 30-day chart |
-| `sales-calendar.html` | Log units sold per day, monthly calendar view |
-| `daily-todo.html` | Daily task checklist + content ideas |
-| `products.html` | Product database with talking points |
+| `index.html` | Home — stats, 30-day commission/GMV chart, level ladder |
+| `sales-calendar.html` | Log units sold, GMV, and commissions by day |
+| `daily-todo.html` | Daily video queue — plan what to film, check off when done |
+| `products.html` | Product database with talking points and units sold |
 | `video-tracker.html` | Track posted videos and performance |
 | `hooks.html` | Hook swipe file by category |
-| `scripts.html` | Paste & save scripts from your AI of choice |
+| `scripts.html` | Save and search scripts by product or brand |
 
-## How to use
+## Setup
 
-**Option A — Open locally:**
-Download all files to one folder. Open `index.html` in any browser. That's it.
+### 1. Supabase
+1. Create a free project at [supabase.com](https://supabase.com)
+2. Go to **SQL Editor** and run the full contents of `supabase-setup.sql`
+3. Copy your project URL and anon key into `supabase.js`
 
-**Option B — Host on GitHub Pages:**
-1. Create a new GitHub repo
+### 2. Deploy
+**Option A — GitHub Pages:**
+1. Create a new GitHub repo named `creator-workspace-tiktok`
 2. Upload all files
 3. Go to Settings → Pages → Deploy from main branch
-4. Share the URL with others
+4. Your hub will be at `https://yourusername.github.io/creator-workspace-tiktok/`
 
-**Option C — Host anywhere:**
-Drop the files in any static hosting service (Netlify, Vercel, Cloudflare Pages, etc.).
+**Option B — Anywhere:**
+Drop the files on Netlify, Vercel, Cloudflare Pages, etc.
+
+**Option C — Local:**
+Open `index.html` directly in your browser. Auth redirects and magic links won't work locally, but everything else does.
+
+## Auth
+- Sign up with email + password, or use a **Magic Link** (one-click sign-in from your email)
+- Each user's data is completely separate — RLS (Row Level Security) enforced in Supabase
+- Sign out from any page via the nav
 
 ## Data storage
 
-All data is stored in the **browser's localStorage**. This means:
-- Data is private to that browser/device
-- No account or login needed
-- Clearing browser data will erase it
-- Each user who opens the site has their own separate data
+All data lives in **Supabase** — your account, your data:
+- Works across all devices and browsers
+- Display name and Core 5 brands sync automatically
+- Clearing browser data won't affect anything
 
 ## Color Palette
 

@@ -273,8 +273,8 @@ button,input{font:inherit;}
   <div class="name-modal">
     <div class="name-modal-title">What should we call you?</div>
     <p class="name-modal-copy">This is the name we’ll use on your dashboard.</p>
-    <input class="name-input" id="displayNameInput" type="text" placeholder="Your name" autocomplete="given-name" onkeydown="if(event.key==='Enter')saveDisplayName()">
-    <button class="name-save" type="button" onclick="saveDisplayName()">Save Name</button>
+    <input class="name-input" id="displayNameInput" type="text" placeholder="Your name" autocomplete="given-name" onkeydown="if(event.key==='Enter')saveDisplayName(_dashboardUser?.id)">
+    <button class="name-save" type="button" onclick="saveDisplayName(_dashboardUser?.id)">Save Name</button>
   </div>
 </div>
 
@@ -292,59 +292,17 @@ button,input{font:inherit;}
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0;
 function fmtMoney(n){if(!n||n===0)return'$0';return'$'+Math.ceil(Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
-function displayName(email){const raw=(email||'Creator').split('@')[0].split(/[._-]/)[0]||'Creator';return raw.charAt(0).toUpperCase()+raw.slice(1);}
 function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function nameKey(user){return `creatorHub:displayName:${user.email||'local'}`;}
-function storedDisplayName(user){return (localStorage.getItem(nameKey(user))||'').trim();}
-function applyDisplayName(name){
-  setText('welcomeTitle', `welcome back, ${name}`);
-  setText('profileName', name);
-  setText('profileAvatar', name.charAt(0).toUpperCase());
-}
-function askForDisplayName(user){
-  const modal=document.getElementById('nameModal');
-  const input=document.getElementById('displayNameInput');
-  window._nameUser=user;
-  modal.classList.add('open');
-  setTimeout(()=>input.focus(),80);
-}
-function saveDisplayName(){
-  const input=document.getElementById('displayNameInput');
-  const name=input.value.trim();
-  if(!name){input.focus();return;}
-  localStorage.setItem(nameKey(window._nameUser),name);
-  applyDisplayName(name);
-  document.getElementById('nameModal').classList.remove('open');
-}
-function coreKey(user){return `creatorHub:core5:${user.email||'local'}`;}
-function loadCore5(user){
-  let values=[];
-  try{values=JSON.parse(localStorage.getItem(coreKey(user))||'[]');}catch(e){values=[];}
-  document.querySelectorAll('.core-mini-input').forEach(input=>{
-    input.value=values[Number(input.dataset.coreIndex)]||'';
-    input.addEventListener('input',()=>saveCore5(user));
-  });
-  updateCoreCount();
-}
-function saveCore5(user){
-  const values=Array.from(document.querySelectorAll('.core-mini-input')).map(input=>input.value.trim());
-  localStorage.setItem(coreKey(user),JSON.stringify(values));
-  updateCoreCount();
-}
-function updateCoreCount(){
-  const count=Array.from(document.querySelectorAll('.core-mini-input')).filter(input=>input.value.trim()).length;
-  setText('coreCount', `${count}/5`);
-}
+// Display name + Core 5 now handled by supabase.js: initDisplayName() + initCore5()
 
 async function init() {
   const user = await requireAuth();
   if (!user) return;
   _dashboardUser=user;
-  loadCore5(user);
-  const name = storedDisplayName(user) || displayName(user.email);
-  applyDisplayName(name);
-  if(!storedDisplayName(user)) askForDisplayName(user);
+  const prefs = await loadUserPrefs(user.id);
+  await initDisplayName(user, prefs);
+  await initCore5(user.id, prefs);
 
   const today = new Date();
   const since = new Date(today); since.setDate(today.getDate() - 29);

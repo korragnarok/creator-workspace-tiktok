@@ -207,6 +207,9 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 async function init() {
   const user = await requireAuth();
   if (!user) return;
+  const prefs = await loadUserPrefs(user.id);
+  await initDisplayName(user, prefs);
+  await initCore5(user.id, prefs);
   document.getElementById('navEmail').textContent = user.email;
   
   window._user = user;
@@ -268,17 +271,6 @@ async function init() {
 
 }
 init();
-</script>
-<script>
-(function(){
-  function email(){return (document.getElementById('navEmail')?.textContent||'local').trim()||'local';}
-  function key(){return 'creatorHub:core5:'+email();}
-  function inputs(){return Array.from(document.querySelectorAll('.core-mini-input'));}
-  function update(){const count=inputs().filter(i=>i.value.trim()).length;const el=document.getElementById('coreCount');if(el)el.textContent=count+'/5';}
-  function applyName(){const name=(localStorage.getItem('creatorHub:displayName:'+email())||'').trim();if(!name)return;document.querySelectorAll('.profile-name').forEach(el=>el.textContent=name);document.querySelectorAll('.avatar').forEach(el=>el.textContent=name.charAt(0).toUpperCase());}
-  function load(){applyName();let values=[];try{values=JSON.parse(localStorage.getItem(key())||'[]');}catch(e){} inputs().forEach(input=>{input.value=values[Number(input.dataset.coreIndex)]||'';input.oninput=function(){localStorage.setItem(key(),JSON.stringify(inputs().map(i=>i.value.trim())));update();};});update();}
-  let tries=0;const timer=setInterval(()=>{tries++;if(email()!=='local'||tries>20){clearInterval(timer);load();}},100);
-})();
 </script>
 </body>
 </html>
