@@ -59,6 +59,29 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-items:center;justify-content:space-between;}
 .footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
 .footer-note{font-size:11px;color:var(--text-muted);}
+
+.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:rgba(252,250,248,0.72);padding:28px 18px;z-index:260;flex-direction:column;gap:28px;}
+.side-brand{font-family:'Stack Sans Notch',sans-serif;font-size:31px;font-weight:800;line-height:0.92;color:var(--ink);}
+.side-brand span{display:block;font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:400;color:var(--rust);line-height:1.2;}
+.side-nav,.core-sidebar{display:flex;flex-direction:column;gap:10px;}
+.side-link{display:flex;align-items:center;gap:12px;border-radius:8px;padding:10px 12px;color:var(--text-mid);font-weight:700;transition:background 0.15s,color 0.15s;}
+.side-link.active{background:rgba(209,169,165,0.34);color:var(--ink);}
+.side-link:hover{background:var(--surface);color:var(--ink);}
+.nav-icon{width:28px;height:28px;border:1px solid var(--border-mid);border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-icon img{width:19px;height:19px;object-fit:contain;}
+.core-sidebar{border-top:1px solid var(--border);padding-top:18px;}
+.core-sidebar-head{display:flex;align-items:center;justify-content:space-between;color:var(--text-muted);font-size:13px;}
+.core-sidebar-count{font-size:11px;color:var(--text-mid);}
+.core-mini-list{display:flex;flex-direction:column;gap:7px;}
+.core-mini-item{display:grid;grid-template-columns:24px 1fr;gap:7px;align-items:center;}
+.core-mini-num{width:24px;height:24px;border-radius:7px;background:#EFE9E0;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.core-mini-input{min-width:0;width:100%;border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:6px 8px;color:var(--text);font-size:12px;outline:none;}
+.core-mini-input:focus{border-color:var(--rose);}
+.side-profile{margin-top:auto;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);padding:10px;display:flex;align-items:center;gap:10px;}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--sage);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.profile-name{font-weight:700;line-height:1.1;}
+.profile-role{font-size:11px;color:var(--text-muted);}
+@media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}footer{padding-left:40px;padding-right:40px;}}
 .tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(248,245,241,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
 .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
 .tab-item.active{color:var(--rust);}
@@ -112,7 +135,30 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 </style>
 </head>
 <body>
-<nav><a href="index.html" class="nav-brand">Creator Hub</a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="sales-calendar.html" class="nav-link">Sales</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link active">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a></div><div class="nav-user"><span id="navEmail"></span><button class="nav-signout" onclick="signOut()">Sign Out</button></div></nav>
+<aside class="desktop-sidebar">
+  <a href="index.html" class="side-brand">creator <span>workspace</span></a>
+  <div class="side-nav">
+    <a href="index.html" class="side-link"><span class="nav-icon"><img src="icons/home.png" alt=""></span>Home</a>
+    <a href="daily-todo.html" class="side-link"><span class="nav-icon"><img src="icons/todo.png" alt=""></span>Daily To Do</a>
+    <a href="video-tracker.html" class="side-link"><span class="nav-icon"><img src="icons/video.png" alt=""></span>Content Tracker</a>
+    <a href="hooks.html" class="side-link active"><span class="nav-icon"><img src="icons/hooks.png" alt=""></span>Hooks</a>
+    <a href="products.html" class="side-link"><span class="nav-icon"><img src="icons/products.png" alt=""></span>Products</a>
+    <a href="scripts.html" class="side-link"><span class="nav-icon"><img src="icons/scripts.png" alt=""></span>Scripts</a>
+    <a href="sales-calendar.html" class="side-link"><span class="nav-icon"><img src="icons/sales.png" alt=""></span>Sales Log</a>
+  </div>
+  <div class="core-sidebar">
+    <div class="core-sidebar-head"><span>Core 5</span><span class="core-sidebar-count" id="coreCount">0/5</span></div>
+    <div class="core-mini-list">
+      <label class="core-mini-item"><span class="core-mini-num">1</span><input class="core-mini-input" data-core-index="0" placeholder="Product name"></label>
+      <label class="core-mini-item"><span class="core-mini-num">2</span><input class="core-mini-input" data-core-index="1" placeholder="Product name"></label>
+      <label class="core-mini-item"><span class="core-mini-num">3</span><input class="core-mini-input" data-core-index="2" placeholder="Product name"></label>
+      <label class="core-mini-item"><span class="core-mini-num">4</span><input class="core-mini-input" data-core-index="3" placeholder="Product name"></label>
+      <label class="core-mini-item"><span class="core-mini-num">5</span><input class="core-mini-input" data-core-index="4" placeholder="Product name"></label>
+    </div>
+  </div>
+  <div class="side-profile"><div class="avatar">K</div><div><div class="profile-name">Kourtney</div><div class="profile-role">Creator</div></div></div>
+</aside>
+<nav><a href="index.html" class="nav-brand">Creator Hub</a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link active">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div><div class="nav-user"><span id="navEmail"></span><button class="nav-signout" onclick="signOut()">Sign Out</button></div></nav>
 <div class="page" style="max-width:960px;">
   <div class="page-header">
     <div><div class="page-eyebrow">Swipe File</div><div class="page-title">Hook <em>Bank</em></div><p class="page-sub">Save your best hooks by category. Tap to copy instantly.</p></div>
@@ -215,6 +261,16 @@ async function init() {
 
 }
 init();
+</script>
+<script>
+(function(){
+  function email(){return (document.getElementById('navEmail')?.textContent||'local').trim()||'local';}
+  function key(){return 'creatorHub:core5:'+email();}
+  function inputs(){return Array.from(document.querySelectorAll('.core-mini-input'));}
+  function update(){const count=inputs().filter(i=>i.value.trim()).length;const el=document.getElementById('coreCount');if(el)el.textContent=count+'/5';}
+  function load(){let values=[];try{values=JSON.parse(localStorage.getItem(key())||'[]');}catch(e){} inputs().forEach(input=>{input.value=values[Number(input.dataset.coreIndex)]||'';input.oninput=function(){localStorage.setItem(key(),JSON.stringify(inputs().map(i=>i.value.trim())));update();};});update();}
+  let tries=0;const timer=setInterval(()=>{tries++;if(email()!=='local'||tries>20){clearInterval(timer);load();}},100);
+})();
 </script>
 </body>
 </html>
