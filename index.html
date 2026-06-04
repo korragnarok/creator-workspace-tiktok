@@ -25,10 +25,10 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .nav-user{font-family:'Stack Sans Notch',sans-serif;font-size:11px;color:var(--text-muted);margin-left:auto;display:flex;align-items:center;gap:12px;}
 .nav-signout{background:none;border:1px solid var(--border-mid);border-radius:8px;padding:5px 12px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all 0.15s;}
 .nav-signout:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
-.page{max-width:1080px;margin:0 auto;padding:0 40px 80px;}
-.hero{padding:52px 0 44px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
+.page{max-width:1120px;margin:0 auto;padding:0 40px 80px;}
+.hero{padding:44px 0 30px;display:grid;grid-template-columns:minmax(0,0.9fr) minmax(480px,1.1fr);gap:44px;align-items:center;}
 .hero-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:14px;}
-.hero-headline{font-family:'IBM Plex Serif',serif;font-size:clamp(56px,8vw,84px);font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);margin-bottom:18px;}
+.hero-headline{font-family:'IBM Plex Serif',serif;font-size:clamp(52px,7vw,78px);font-weight:700;line-height:0.92;letter-spacing:0;color:var(--ink);margin-bottom:18px;}
 .hero-headline em{font-style:italic;color:var(--rust);}
 .hero-desc{font-size:14px;line-height:1.8;color:var(--text-mid);max-width:380px;}
 .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-self:center;}
@@ -39,7 +39,9 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .stat-level{display:flex;align-items:center;gap:8px;}
 .stat-level-icon{width:28px;height:28px;object-fit:contain;}
 .stat-level-name{font-family:'Stack Sans Notch',sans-serif;font-size:22px;font-weight:700;line-height:1;}
-.chart-section{margin-top:40px;}
+.dashboard-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,0.75fr);gap:22px;align-items:start;margin-top:28px;}
+.main-column,.side-column{display:flex;flex-direction:column;gap:28px;}
+.chart-section{margin-top:0;}
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
 .section-title{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);}
 .chart-legend{display:flex;gap:16px;align-items:center;}
@@ -47,7 +49,7 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;box-shadow:var(--shadow-sm);}
 .chart-wrap{position:relative;height:220px;}
-.level-section{margin-top:44px;}
+.level-section{margin-top:0;}
 .level-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm);}
 .level-header{padding:22px 24px 18px;border-bottom:1px solid var(--border);}
 .level-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
@@ -73,9 +75,10 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 .level-row-name{font-family:'Stack Sans Notch',sans-serif;font-size:14px;font-weight:700;color:var(--ink);flex:1;letter-spacing:0.02em;}
 .level-row-range{font-family:'Mozilla Text',sans-serif;font-size:12px;color:var(--text-muted);}
 .level-row-status{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;min-width:80px;text-align:right;}
-.quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:40px;}
-.quick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 18px;box-shadow:var(--shadow-sm);transition:all 0.15s;display:flex;flex-direction:column;gap:10px;}
+.quick-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:0;}
+.quick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow-sm);transition:all 0.15s;display:grid;grid-template-columns:28px 1fr;column-gap:12px;row-gap:4px;align-items:center;}
 .quick-card:hover{border-color:var(--rose);box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.quick-icon{grid-row:span 2;}
 .quick-icon img{width:26px;height:26px;object-fit:contain;}
 .quick-name{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink);}
 .quick-desc{font-size:12px;color:var(--text-mid);line-height:1.5;}
@@ -86,7 +89,8 @@ footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-i
 .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
 .tab-item.active{color:var(--rust);}
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
-@media(max-width:768px){nav{padding:0 20px;height:56px;}.nav-links{display:none;}.page{padding:0 20px 80px;}.hero{grid-template-columns:1fr;gap:28px;padding:36px 0 32px;}.stat-row{grid-template-columns:repeat(2,1fr);}.quick-grid{grid-template-columns:repeat(2,1fr);}.level-stats{grid-template-columns:1fr;}.level-stat:first-child{border-right:none;border-bottom:1px solid var(--border);}.tab-bar{display:flex;}}
+@media(max-width:980px){.hero{grid-template-columns:1fr;gap:28px;}.dashboard-grid{grid-template-columns:1fr;}.quick-grid{grid-template-columns:repeat(2,1fr);}.quick-card{min-height:102px;}}
+@media(max-width:768px){nav{padding:0 20px;height:56px;}.nav-links{display:none;}.page{padding:0 20px 80px;}.hero{grid-template-columns:1fr;gap:24px;padding:36px 0 28px;}.hero-headline{font-size:clamp(48px,16vw,64px);}.stat-row{grid-template-columns:1fr;}.dashboard-grid{margin-top:20px;}.main-column,.side-column{gap:24px;}.quick-grid{grid-template-columns:1fr;}.level-stats{grid-template-columns:1fr;}.level-stat:first-child{border-right:none;border-bottom:1px solid var(--border);}.tab-bar{display:flex;}}
 </style>
 </head>
 <body>
@@ -138,56 +142,62 @@ footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-i
     </div>
   </div>
 
-  <div class="chart-section">
-    <div class="section-header">
-      <div class="section-title">Last 30 Days</div>
-      <div style="display:flex;align-items:center;gap:16px;">
-        <div class="chart-legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#AE6965;"></div>GMV</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#7A816C;"></div>Commission</div>
-        </div>
-        <a href="sales-calendar.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);">Log today →</a>
-      </div>
-    </div>
-    <div class="chart-card"><div class="chart-wrap"><canvas id="salesChart"></canvas></div></div>
-  </div>
-
-  <div class="level-section">
-    <div class="section-header">
-      <div class="section-title">Level Ladder</div>
-      <a href="sales-calendar.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);">Update GMV →</a>
-    </div>
-    <div class="level-card">
-      <div class="level-header">
-        <div class="level-eyebrow">Current Level</div>
-        <div class="level-current-row">
-          <img id="lc-icon" src="icons/levels/bronze.png" class="level-icon-lg" alt="">
-          <div>
-            <div class="level-name-big" id="lc-name">BRONZE</div>
-            <div class="level-month" id="lc-month"></div>
+  <div class="dashboard-grid">
+    <div class="main-column">
+      <div class="chart-section">
+        <div class="section-header">
+          <div class="section-title">Last 30 Days</div>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div class="chart-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#AE6965;"></div>GMV</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#7A816C;"></div>Commission</div>
+            </div>
+            <a href="sales-calendar.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);">Log today →</a>
           </div>
         </div>
+        <div class="chart-card"><div class="chart-wrap"><canvas id="salesChart"></canvas></div></div>
       </div>
-      <div class="level-stats">
-        <div class="level-stat"><div class="level-stat-label">GMV This Month</div><div class="level-stat-val" id="lc-gmv">$0</div></div>
-        <div class="level-stat"><div class="level-stat-label" id="lc-togo-label">To Silver</div><div class="level-stat-val" id="lc-togo">$1,000</div></div>
-      </div>
-      <div class="progress-wrap">
-        <div class="progress-bar-bg"><div class="progress-bar-fill" id="lc-progress" style="width:0%;background:#c9a87a;"></div></div>
-        <div class="progress-labels"><span id="lc-pct">0% through this tier</span><span id="lc-range"></span></div>
-      </div>
-      <div class="level-cta" id="lc-cta"></div>
-      <div id="lc-list"></div>
     </div>
-  </div>
 
-  <div class="quick-grid">
-    <a href="daily-todo.html" class="quick-card"><div class="quick-icon"><img src="icons/todo.png" alt="To Do"></div><div class="quick-name">To Do</div><div class="quick-desc">Daily filming queue built from your product bank</div></a>
-    <a href="sales-calendar.html" class="quick-card"><div class="quick-icon"><img src="icons/sales.png" alt="Sales"></div><div class="quick-name">Sales Log</div><div class="quick-desc">Log units sold, GMV, and commissions daily</div></a>
-    <a href="products.html" class="quick-card"><div class="quick-icon"><img src="icons/products.png" alt="Products"></div><div class="quick-name">Products</div><div class="quick-desc">Your product database with talking points</div></a>
-    <a href="video-tracker.html" class="quick-card"><div class="quick-icon"><img src="icons/video.png" alt="Video"></div><div class="quick-name">Videos</div><div class="quick-desc">Track posted videos and performance notes</div></a>
-    <a href="hooks.html" class="quick-card"><div class="quick-icon"><img src="icons/hooks.png" alt="Hooks"></div><div class="quick-name">Hook Bank</div><div class="quick-desc">Saved hooks by category, ready to swipe</div></a>
-    <a href="scripts.html" class="quick-card"><div class="quick-icon"><img src="icons/scripts.png" alt="Scripts"></div><div class="quick-name">Scripts</div><div class="quick-desc">Paste and save scripts for any product</div></a>
+    <div class="side-column">
+      <div class="level-section">
+        <div class="section-header">
+          <div class="section-title">Level Ladder</div>
+          <a href="sales-calendar.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);">Update GMV →</a>
+        </div>
+        <div class="level-card">
+          <div class="level-header">
+            <div class="level-eyebrow">Current Level</div>
+            <div class="level-current-row">
+              <img id="lc-icon" src="icons/levels/bronze.png" class="level-icon-lg" alt="">
+              <div>
+                <div class="level-name-big" id="lc-name">BRONZE</div>
+                <div class="level-month" id="lc-month"></div>
+              </div>
+            </div>
+          </div>
+          <div class="level-stats">
+            <div class="level-stat"><div class="level-stat-label">GMV This Month</div><div class="level-stat-val" id="lc-gmv">$0</div></div>
+            <div class="level-stat"><div class="level-stat-label" id="lc-togo-label">To Silver</div><div class="level-stat-val" id="lc-togo">$1,000</div></div>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="lc-progress" style="width:0%;background:#c9a87a;"></div></div>
+            <div class="progress-labels"><span id="lc-pct">0% through this tier</span><span id="lc-range"></span></div>
+          </div>
+          <div class="level-cta" id="lc-cta"></div>
+          <div id="lc-list"></div>
+        </div>
+      </div>
+
+      <div class="quick-grid">
+        <a href="daily-todo.html" class="quick-card"><div class="quick-icon"><img src="icons/todo.png" alt="To Do"></div><div class="quick-name">To Do</div><div class="quick-desc">Daily filming queue built from your product bank</div></a>
+        <a href="sales-calendar.html" class="quick-card"><div class="quick-icon"><img src="icons/sales.png" alt="Sales"></div><div class="quick-name">Sales Log</div><div class="quick-desc">Log units sold, GMV, and commissions daily</div></a>
+        <a href="products.html" class="quick-card"><div class="quick-icon"><img src="icons/products.png" alt="Products"></div><div class="quick-name">Products</div><div class="quick-desc">Your product database with talking points</div></a>
+        <a href="video-tracker.html" class="quick-card"><div class="quick-icon"><img src="icons/video.png" alt="Video"></div><div class="quick-name">Videos</div><div class="quick-desc">Track posted videos and performance notes</div></a>
+        <a href="hooks.html" class="quick-card"><div class="quick-icon"><img src="icons/hooks.png" alt="Hooks"></div><div class="quick-name">Hook Bank</div><div class="quick-desc">Saved hooks by category, ready to swipe</div></a>
+        <a href="scripts.html" class="quick-card"><div class="quick-icon"><img src="icons/scripts.png" alt="Scripts"></div><div class="quick-name">Scripts</div><div class="quick-desc">Paste and save scripts for any product</div></a>
+      </div>
+    </div>
   </div>
 </div>
 
