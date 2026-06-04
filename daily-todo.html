@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F8F5F1">
+<title>To Do — Creator Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8F5F1;--bg-lift:#FCFAF8;--sage:#7A816C;--rose:#D1A9A5;--rust:#AE6965;
+  --tan:#A58B71;--sand:#E5DFD6;--ink:#2A2725;
+  --surface:#FCFAF8;--surface-2:#EDE8E1;--border:rgba(42,39,37,0.1);--border-mid:rgba(42,39,37,0.15);
+  --text:#2A2725;--text-mid:#7A816C;--text-muted:#A58B71;
+  --r:12px;--shadow-sm:0 1px 4px rgba(42,39,37,0.07);--shadow-md:0 4px 20px rgba(42,39,37,0.09);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 48px;height:64px;display:flex;align-items:center;}
+.nav-brand{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--ink);margin-right:48px;flex-shrink:0;}
+.nav-links{display:flex;gap:32px;flex:1;align-items:center;}
+.nav-link{font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);transition:color 0.15s;position:relative;padding-bottom:3px;}
+.nav-link:hover{color:var(--ink);}
+.nav-link.active{color:var(--rust);}
+.nav-link.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--rust);border-radius:1px;}
+.page{max-width:760px;margin:0 auto;padding:0 40px 100px;}
+.page-header{padding:44px 0 32px;border-bottom:1px solid var(--border-mid);margin-bottom:32px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.page-eyebrow{font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);}
+.page-title em{font-style:italic;color:var(--sage);}
+.page-date{font-size:13px;color:var(--text-mid);margin-top:8px;}
+.header-right{display:flex;gap:8px;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:0.04em;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;border:none;}
+.btn-primary{background:var(--rust);color:#fff;}
+.btn-primary:hover{background:#9a5a57;}
+.btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}
+.btn-ghost:hover{background:var(--surface);color:var(--ink);}
+.btn-sage{background:var(--sage);color:#fff;}
+.btn-sage:hover{opacity:0.85;}
+
+/* ADD TASK BAR */
+.add-bar{display:flex;gap:8px;margin-bottom:28px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow-sm);}
+.add-input{flex:1;background:none;border:none;outline:none;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);placeholder-color:var(--text-muted);}
+.add-input::placeholder{color:var(--text-muted);}
+.add-cat{padding:6px 12px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text-mid);outline:none;cursor:pointer;}
+.add-btn{background:var(--rust);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.15s;white-space:nowrap;}
+.add-btn:hover{background:#9a5a57;}
+
+/* PROGRESS */
+.progress-bar-wrap{background:var(--sand);border-radius:100px;height:6px;margin-bottom:28px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:var(--rust);border-radius:100px;transition:width 0.4s ease;}
+.progress-label{font-size:11px;color:var(--text-muted);margin-bottom:8px;}
+
+/* SECTION */
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-top:20px;}
+.section-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-mid);}
+.section-line{flex:1;height:1px;background:var(--border);}
+.section-count{font-size:11px;color:var(--text-muted);background:var(--sand);border-radius:100px;padding:2px 8px;}
+
+/* TASK CARD */
+.task-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:6px;display:flex;align-items:flex-start;gap:12px;transition:all 0.12s;box-shadow:var(--shadow-sm);}
+.task-card:hover{border-color:var(--rose);}
+.task-card.done{opacity:0.5;}
+.task-card.done .task-text{text-decoration:line-through;color:var(--text-muted);}
+.task-check{width:20px;height:20px;border-radius:6px;border:2px solid var(--border-mid);background:var(--bg);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.12s;}
+.task-check.checked{background:var(--rust);border-color:var(--rust);}
+.task-check.checked::after{content:'✓';color:#fff;font-size:11px;font-weight:700;}
+.task-body{flex:1;}
+.task-text{font-size:14px;color:var(--text);line-height:1.5;}
+.task-meta{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;align-items:center;}
+.task-cat{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:100px;}
+.cat-filming{background:rgba(174,105,101,0.12);color:var(--rust);}
+.cat-editing{background:rgba(122,129,108,0.12);color:var(--sage);}
+.cat-posting{background:rgba(165,139,113,0.12);color:var(--tan);}
+.cat-research{background:rgba(209,169,165,0.2);color:#8a5a57;}
+.cat-admin{background:var(--sand);color:var(--text-mid);}
+.task-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;opacity:0;transition:opacity 0.12s;padding:0 4px;margin-left:auto;flex-shrink:0;}
+.task-card:hover .task-del{opacity:1;}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 24px;color:var(--text-muted);}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:0.4;}
+.empty-text{font-size:14px;}
+
+/* IDEAS SECTION */
+.idea-bar{display:flex;gap:8px;margin-bottom:12px;}
+.idea-input{flex:1;padding:10px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}
+.idea-input:focus{border-color:var(--rose);}
+.idea-btn{background:var(--sage);color:#fff;border:none;border-radius:var(--r);padding:10px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity 0.15s;}
+.idea-btn:hover{opacity:0.85;}
+.idea-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:6px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-sm);}
+.idea-text{flex:1;font-size:13px;color:var(--text);}
+.idea-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;opacity:0;transition:opacity 0.12s;}
+.idea-card:hover .idea-del{opacity:1;}
+
+footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-items:center;justify-content:space-between;}
+.footer-brand{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--ink);}
+.footer-note{font-size:11px;color:var(--text-muted);}
+.tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(248,245,241,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
+.tab-item.active{color:var(--rust);}
+.tab-icon{font-size:18px;line-height:1;}
+@media(max-width:768px){
+  nav{padding:0 20px;}.nav-links{display:none;}
+  .page{padding:0 16px 90px;}
+  .page-title{font-size:40px;}
+  .tab-bar{display:flex;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-brand">Creator Hub</a>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="daily-todo.html" class="nav-link active">To Do</a>
+    <a href="sales-calendar.html" class="nav-link">Sales</a>
+    <a href="products.html" class="nav-link">Products</a>
+    <a href="video-tracker.html" class="nav-link">Videos</a>
+    <a href="hooks.html" class="nav-link">Hooks</a>
+    <a href="scripts.html" class="nav-link">Scripts</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Daily Focus</div>
+      <div class="page-title">Today's <em>To Do</em></div>
+      <div class="page-date" id="todayDate"></div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-ghost" onclick="clearDone()">Clear Done</button>
+      <button class="btn btn-ghost" onclick="resetDay()">New Day</button>
+    </div>
+  </div>
+
+  <!-- ADD TASK -->
+  <div class="add-bar">
+    <input type="text" class="add-input" id="newTaskInput" placeholder="Add a task for today..." onkeydown="if(event.key==='Enter')addTask()">
+    <select class="add-cat" id="newTaskCat">
+      <option value="filming">🎬 Filming</option>
+      <option value="editing">✂️ Editing</option>
+      <option value="posting">📱 Posting</option>
+      <option value="research">🔍 Research</option>
+      <option value="admin">📋 Admin</option>
+    </select>
+    <button class="add-btn" onclick="addTask()">+ Add</button>
+  </div>
+
+  <div class="progress-label" id="progressLabel">0 of 0 complete</div>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+
+  <!-- TASKS -->
+  <div id="taskList"></div>
+
+  <!-- IDEAS SECTION -->
+  <div style="margin-top:40px;">
+    <div class="section-head">
+      <div class="section-title">Content Ideas</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="idea-bar">
+      <input type="text" class="idea-input" id="ideaInput" placeholder="Capture an idea before it disappears..." onkeydown="if(event.key==='Enter')addIdea()">
+      <button class="idea-btn" onclick="addIdea()">Save Idea</button>
+    </div>
+    <div id="ideaList"></div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-brand">Creator Hub</div>
+  <div class="footer-note">Data stored locally · Your browser only</div>
+</footer>
+
+<div class="tab-bar">
+  <a href="index.html" class="tab-item"><div class="tab-icon">🏠</div><div>Home</div></a>
+  <a href="daily-todo.html" class="tab-item active"><div class="tab-icon">✅</div><div>To Do</div></a>
+  <a href="sales-calendar.html" class="tab-item"><div class="tab-icon">📅</div><div>Sales</div></a>
+  <a href="products.html" class="tab-item"><div class="tab-icon">📦</div><div>Products</div></a>
+  <a href="hooks.html" class="tab-item"><div class="tab-icon">🪝</div><div>Hooks</div></a>
+</div>
+
+<script>
+const CAT_LABELS = {filming:'🎬 Filming',editing:'✂️ Editing',posting:'📱 Posting',research:'🔍 Research',admin:'📋 Admin'};
+const CAT_CLASS = {filming:'cat-filming',editing:'cat-editing',posting:'cat-posting',research:'cat-research',admin:'cat-admin'};
+
+function getTasks(){ try{return JSON.parse(localStorage.getItem('hub_tasks')||'[]');}catch(e){return[];} }
+function saveTasks(t){ localStorage.setItem('hub_tasks',JSON.stringify(t)); }
+function getIdeas(){ try{return JSON.parse(localStorage.getItem('hub_ideas')||'[]');}catch(e){return[];} }
+function saveIdeas(i){ localStorage.setItem('hub_ideas',JSON.stringify(i)); }
+
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+function addTask(){
+  const val = document.getElementById('newTaskInput').value.trim();
+  if(!val) return;
+  const cat = document.getElementById('newTaskCat').value;
+  const tasks = getTasks();
+  tasks.push({id:Date.now(), text:val, cat, done:false});
+  saveTasks(tasks); document.getElementById('newTaskInput').value=''; render();
+}
+
+function toggleTask(id){
+  const tasks = getTasks().map(t=>t.id===id?{...t,done:!t.done}:t);
+  saveTasks(tasks); render();
+}
+
+function deleteTask(id){
+  saveTasks(getTasks().filter(t=>t.id!==id)); render();
+}
+
+function clearDone(){ saveTasks(getTasks().filter(t=>!t.done)); render(); }
+function resetDay(){ if(confirm('Start a new day? This clears all tasks (ideas are kept).'))saveTasks([]); render(); }
+
+function addIdea(){
+  const val = document.getElementById('ideaInput').value.trim();
+  if(!val) return;
+  const ideas = getIdeas();
+  ideas.unshift({id:Date.now(), text:val, date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})});
+  saveIdeas(ideas); document.getElementById('ideaInput').value=''; renderIdeas();
+}
+function deleteIdea(id){ saveIdeas(getIdeas().filter(i=>i.id!==id)); renderIdeas(); }
+
+function render(){
+  const tasks = getTasks();
+  const done = tasks.filter(t=>t.done).length;
+  const total = tasks.length;
+  document.getElementById('progressLabel').textContent = `${done} of ${total} complete`;
+  document.getElementById('progressFill').style.width = total>0?`${Math.round(done/total*100)}%`:'0%';
+
+  const cats = ['filming','editing','posting','research','admin'];
+  let html = '';
+  cats.forEach(cat=>{
+    const catTasks = tasks.filter(t=>t.cat===cat);
+    if(catTasks.length===0) return;
+    const doneCount = catTasks.filter(t=>t.done).length;
+    html += `<div class="section-head"><div class="section-title">${CAT_LABELS[cat]}</div><div class="section-line"></div><div class="section-count">${doneCount}/${catTasks.length}</div></div>`;
+    catTasks.forEach(t=>{
+      html+=`<div class="task-card${t.done?' done':''}">
+        <div class="task-check${t.done?' checked':''}" onclick="toggleTask(${t.id})"></div>
+        <div class="task-body">
+          <div class="task-text">${t.text}</div>
+          <div class="task-meta"><span class="task-cat ${CAT_CLASS[t.cat]}">${CAT_LABELS[t.cat]}</span></div>
+        </div>
+        <button class="task-del" onclick="deleteTask(${t.id})">×</button>
+      </div>`;
+    });
+  });
+
+  if(tasks.length===0){
+    html='<div class="empty"><div class="empty-icon">✨</div><div class="empty-text">Add your first task above to get started.</div></div>';
+  }
+  document.getElementById('taskList').innerHTML = html;
+}
+
+function renderIdeas(){
+  const ideas = getIdeas();
+  if(ideas.length===0){
+    document.getElementById('ideaList').innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:8px 0;">No ideas saved yet.</p>';
+    return;
+  }
+  document.getElementById('ideaList').innerHTML = ideas.map(i=>`
+    <div class="idea-card">
+      <span style="font-size:10px;color:var(--text-muted);min-width:52px;">${i.date}</span>
+      <div class="idea-text">${i.text}</div>
+      <button class="idea-del" onclick="deleteIdea(${i.id})">×</button>
+    </div>`).join('');
+}
+
+render(); renderIdeas();
+</script>
+</body>
+</html>

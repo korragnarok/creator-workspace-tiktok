@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F8F5F1">
+<title>Creator Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#F8F5F1;--bg-lift:#FCFAF8;--sage:#7A816C;--rose:#D1A9A5;--rust:#AE6965;
+  --tan:#A58B71;--sand:#E5DFD6;--ink:#2A2725;
+  --surface:#FCFAF8;--surface-2:#EDE8E1;--border:rgba(42,39,37,0.1);--border-mid:rgba(42,39,37,0.15);
+  --text:#2A2725;--text-mid:#7A816C;--text-muted:#A58B71;
+  --r:12px;--shadow-sm:0 1px 4px rgba(42,39,37,0.07);--shadow-md:0 4px 20px rgba(42,39,37,0.09);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+html,body{overflow-x:hidden;max-width:100vw;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 48px;height:64px;display:flex;align-items:center;gap:0;}
+.nav-brand{display:flex;flex-direction:column;align-items:flex-start;margin-right:48px;flex-shrink:0;}
+.nav-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;line-height:1;color:var(--ink);letter-spacing:-0.01em;}
+.nav-sub{font-size:9px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;color:var(--text-muted);margin-top:1px;}
+.nav-links{display:flex;gap:32px;flex:1;align-items:center;}
+.nav-link{font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);transition:color 0.15s;position:relative;padding-bottom:3px;}
+.nav-link:hover{color:var(--ink);}
+.nav-link.active{color:var(--rust);}
+.nav-link.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--rust);border-radius:1px;}
+
+/* PAGE */
+.page{max-width:1080px;margin:0 auto;padding:0 40px 80px;}
+
+/* HERO */
+.hero{padding:52px 0 44px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
+.hero-eyebrow{font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:14px;}
+.hero-headline{font-family:'Cormorant Garamond',serif;font-size:clamp(56px,8vw,84px);font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);margin-bottom:18px;}
+.hero-headline em{font-style:italic;color:var(--rust);}
+.hero-desc{font-size:14px;line-height:1.8;color:var(--text-mid);max-width:380px;}
+
+/* STAT CARDS */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:var(--shadow-sm);}
+.stat-label{font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:var(--ink);line-height:1;}
+.stat-sub{font-size:11px;color:var(--text-mid);margin-top:4px;}
+
+/* CHART SECTION */
+.chart-section{margin-top:40px;}
+.section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;}
+.section-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);}
+.section-sub{font-size:12px;color:var(--text-muted);}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;box-shadow:var(--shadow-sm);}
+.chart-wrap{position:relative;height:220px;}
+
+/* QUICK ACTIONS */
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:40px;}
+.quick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 18px;box-shadow:var(--shadow-sm);transition:all 0.15s;display:flex;flex-direction:column;gap:10px;}
+.quick-card:hover{border-color:var(--rose);box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.quick-icon{font-size:22px;line-height:1;}
+.quick-name{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink);}
+.quick-desc{font-size:12px;color:var(--text-mid);line-height:1.5;}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-items:center;justify-content:space-between;}
+.footer-brand{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--ink);}
+.footer-note{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}
+
+/* MOBILE */
+@media(max-width:768px){
+  nav{padding:0 20px;height:56px;}
+  .nav-links{display:none;}
+  .page{padding:0 20px 80px;}
+  .hero{grid-template-columns:1fr;gap:28px;padding:36px 0 32px;}
+  .stat-row{grid-template-columns:repeat(2,1fr);}
+  .quick-grid{grid-template-columns:repeat(2,1fr);}
+  .tab-bar{display:flex;}
+}
+
+/* TAB BAR */
+.tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(248,245,241,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
+.tab-item.active{color:var(--rust);}
+.tab-icon{font-size:18px;line-height:1;}
+@media(max-width:768px){.tab-bar{display:flex;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-title">Creator Hub</div>
+    <div class="nav-sub">TikTok Shop</div>
+  </div>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link active">Home</a>
+    <a href="daily-todo.html" class="nav-link">To Do</a>
+    <a href="sales-calendar.html" class="nav-link">Sales</a>
+    <a href="products.html" class="nav-link">Products</a>
+    <a href="video-tracker.html" class="nav-link">Videos</a>
+    <a href="hooks.html" class="nav-link">Hooks</a>
+    <a href="scripts.html" class="nav-link">Scripts</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow">Your Creator Hub</div>
+      <div class="hero-headline">Let's <em>make</em> content.</div>
+      <p class="hero-desc">Track your products, plan your scripts, and log your sales — all in one place. Everything saves locally to your browser.</p>
+    </div>
+    <div class="stat-row" style="align-self:center;">
+      <div class="stat-card">
+        <div class="stat-label">Units Today</div>
+        <div class="stat-value" id="s-today">—</div>
+        <div class="stat-sub">logged so far</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Last 30 Days</div>
+        <div class="stat-value" id="s-30">—</div>
+        <div class="stat-sub">items sold</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Best Day</div>
+        <div class="stat-value" id="s-best">—</div>
+        <div class="stat-sub" id="s-best-date">this month</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-section">
+    <div class="section-header">
+      <div class="section-title">Items Sold — Last 30 Days</div>
+      <a href="sales-calendar.html" class="section-sub" style="color:var(--rust);font-size:12px;font-weight:600;">Log today →</a>
+    </div>
+    <div class="chart-card">
+      <div class="chart-wrap">
+        <canvas id="salesChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-grid">
+    <a href="daily-todo.html" class="quick-card">
+      <div class="quick-icon">✅</div>
+      <div class="quick-name">To Do</div>
+      <div class="quick-desc">Daily content tasks and filming checklist</div>
+    </a>
+    <a href="sales-calendar.html" class="quick-card">
+      <div class="quick-icon">📅</div>
+      <div class="quick-name">Sales Log</div>
+      <div class="quick-desc">Log units sold each day, view trends</div>
+    </a>
+    <a href="products.html" class="quick-card">
+      <div class="quick-icon">📦</div>
+      <div class="quick-name">Products</div>
+      <div class="quick-desc">Your product database with talking points</div>
+    </a>
+    <a href="video-tracker.html" class="quick-card">
+      <div class="quick-icon">🎬</div>
+      <div class="quick-name">Videos</div>
+      <div class="quick-desc">Track posted videos and performance notes</div>
+    </a>
+    <a href="hooks.html" class="quick-card">
+      <div class="quick-icon">🪝</div>
+      <div class="quick-name">Hook Bank</div>
+      <div class="quick-desc">Saved hooks by category, ready to swipe</div>
+    </a>
+    <a href="scripts.html" class="quick-card">
+      <div class="quick-icon">📝</div>
+      <div class="quick-name">Scripts</div>
+      <div class="quick-desc">Paste and save scripts for any product</div>
+    </a>
+    <a href="daily-todo.html" class="quick-card">
+      <div class="quick-icon">💡</div>
+      <div class="quick-name">Ideas</div>
+      <div class="quick-desc">Capture content ideas before they disappear</div>
+    </a>
+    <a href="video-tracker.html" class="quick-card">
+      <div class="quick-icon">📊</div>
+      <div class="quick-name">Analytics</div>
+      <div class="quick-desc">Notes on video performance and what's working</div>
+    </a>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-brand">Creator Hub</div>
+  <div class="footer-note">All data stored locally · No account needed</div>
+</footer>
+
+<div class="tab-bar">
+  <a href="index.html" class="tab-item active"><div class="tab-icon">🏠</div><div>Home</div></a>
+  <a href="daily-todo.html" class="tab-item"><div class="tab-icon">✅</div><div>To Do</div></a>
+  <a href="sales-calendar.html" class="tab-item"><div class="tab-icon">📅</div><div>Sales</div></a>
+  <a href="products.html" class="tab-item"><div class="tab-icon">📦</div><div>Products</div></a>
+  <a href="hooks.html" class="tab-item"><div class="tab-icon">🪝</div><div>Hooks</div></a>
+</div>
+
+<script>
+function getSalesData() {
+  try { return JSON.parse(localStorage.getItem('hub_sales') || '{}'); } catch(e) { return {}; }
+}
+
+function buildChart() {
+  const sales = getSalesData();
+  const today = new Date();
+  const labels = [], data = [];
+  let total30 = 0, bestVal = 0, bestDate = '';
+
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    const val = sales[key] || 0;
+    labels.push(d.toLocaleDateString('en-US', {month:'short', day:'numeric'}));
+    data.push(val);
+    total30 += val;
+    if (val > bestVal) { bestVal = val; bestDate = d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+  }
+
+  const todayKey = today.toISOString().slice(0,10);
+  document.getElementById('s-today').textContent = (sales[todayKey] || 0).toLocaleString();
+  document.getElementById('s-30').textContent = total30.toLocaleString();
+  document.getElementById('s-best').textContent = bestVal > 0 ? bestVal.toLocaleString() : '—';
+  document.getElementById('s-best-date').textContent = bestVal > 0 ? bestDate : 'no data yet';
+
+  const ctx = document.getElementById('salesChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderColor: '#AE6965',
+        backgroundColor: 'rgba(174,105,101,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: data.filter(v=>v>0).length > 15 ? 0 : 4,
+        pointBackgroundColor: '#AE6965',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, font: { size: 10, family: "'DM Sans'" }, color: '#A58B71' }, grid: { display: false }, border: { display: false } },
+        y: { ticks: { font: { size: 10, family: "'DM Sans'" }, color: '#A58B71', stepSize: 1, callback: v => Math.round(v) == v ? v : '' }, grid: { color: 'rgba(42,39,37,0.06)' }, border: { display: false }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+buildChart();
+</script>
+</body>
+</html>
