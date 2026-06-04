@@ -186,19 +186,6 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     </div>
   </div>
   <div class="queue-list" id="queueList"></div>
-
-  <!-- IDEAS SECTION -->
-  <div style="margin-top:48px;">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-      <div style="font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);">Content Ideas</div>
-      <div style="flex:1;height:1px;background:var(--border-mid);"></div>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:12px;">
-      <input type="text" id="ideaInput" placeholder="Capture an idea before it disappears..." style="flex:1;padding:10px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;" onkeydown="if(event.key==='Enter')addIdea()" onfocus="this.style.borderColor='var(--rose)'" onblur="this.style.borderColor='var(--border-mid)'">
-      <button onclick="addIdea()" style="background:var(--sage);color:#fff;border:none;border-radius:var(--r);padding:10px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;text-transform:uppercase;white-space:nowrap;">Save Idea</button>
-    </div>
-    <div id="ideaList"></div>
-  </div>
 </div>
 
 <!-- PICKER MODAL -->
@@ -289,7 +276,6 @@ async function init(){
   _allScripts=scripts||[];
   await buildWeekStrip();
   await renderQueue();
-  await renderIdeas();
 }
 
 async function buildWeekStrip(){
@@ -398,33 +384,6 @@ async function addSelected(){
   closeModal(); await buildWeekStrip(); await renderQueue();
 }
 
-// ── IDEAS ─────────────────────────────────────────────────
-async function renderIdeas(){
-  const {data}=await db.from('ideas').select('*').eq('user_id',_user.id).order('created_at',{ascending:false});
-  const el=document.getElementById('ideaList');
-  const ideas=data||[];
-  if(!ideas.length){el.innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:8px 0;font-family:\'IBM Plex Serif\',serif;">No ideas saved yet.</p>';return;}
-  el.innerHTML=ideas.map(i=>
-    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:6px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-sm);">'+
-    '<span style="font-size:11px;color:var(--text-muted);min-width:80px;font-family:\'Stack Sans Notch\',sans-serif;letter-spacing:0.04em;">'+new Date(i.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</span>'+
-    '<div style="flex:1;font-size:13px;color:var(--text);font-family:\'IBM Plex Serif\',serif;">'+esc(i.text).replace(/\n/g,'<br>')+'</div>'+
-    '<button onclick="deleteIdea(\''+i.id+'\')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;padding:0 4px;opacity:0.5;transition:opacity 0.12s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">&#xD7;</button>'+
-    '</div>'
-  ).join('');
-}
-async function addIdea(){
-  const val=document.getElementById('ideaInput').value.trim(); if(!val)return;
-  await db.from('ideas').insert({user_id:_user.id,text:val});
-  document.getElementById('ideaInput').value='';
-  showToast('Idea saved'); renderIdeas();
-}
-function focusIdea(){
-  document.getElementById('ideaInput')?.focus();
-}
-async function deleteIdea(id){
-  await db.from('ideas').delete().eq('id',id); renderIdeas();
-}
-
 function openIdeaModal(){
   _ideaPick={product:null,hook:null,script:null};
   ['ideaProductSearch','ideaHookSearch','ideaScriptSearch','ideaNewProduct','ideaNewHook','ideaNewScript','ideaExtraNotes'].forEach(id=>{document.getElementById(id).value='';});
@@ -515,7 +474,6 @@ async function saveBuiltIdea(){
   await db.from('ideas').insert({user_id:_user.id,text:parts.join('\n')});
   showToast('Video idea saved');
   closeIdeaModal();
-  await renderIdeas();
 }
 
 document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
