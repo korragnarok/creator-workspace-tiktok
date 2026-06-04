@@ -96,6 +96,8 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .status-active{background:rgba(122,129,108,0.15);color:var(--sage);}
 .status-paused{background:rgba(165,139,113,0.15);color:var(--tan);}
 .status-promote{background:rgba(174,105,101,0.15);color:var(--rust);}
+.prod-units{font-family:'Noto Sans Mono',sans-serif;font-size:13px;font-weight:700;color:var(--ink);}
+.prod-units span{font-family:'IBM Plex Serif',serif;font-size:12px;font-weight:400;color:var(--text-muted);}
 .prod-tags{display:flex;gap:5px;flex-wrap:wrap;}
 .prod-tag{background:var(--sand);color:var(--text-mid);border-radius:100px;padding:2px 9px;font-size:11px;}
 .prod-notes{font-size:12px;color:var(--text-mid);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
@@ -148,6 +150,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="form-row"><label class="form-label">Brand</label><input type="text" class="form-input" id="fBrand" placeholder="e.g. PetLab Co."></div>
     <div class="form-row"><label class="form-label">Tags (comma separated)</label><input type="text" class="form-input" id="fTags" placeholder="e.g. pet, dental, supplement"></div>
     <div class="form-row"><label class="form-label">TikTok Shop Link</label><input type="url" class="form-input" id="fLink" placeholder="https://..."></div>
+    <div class="form-row"><label class="form-label">Units Sold</label><input type="number" class="form-input" id="fUnitsSold" placeholder="0" min="0" step="1"></div>
     <div class="form-row"><label class="form-label">Status</label><select class="form-input" id="fStatus"><option value="active">Active</option><option value="promote">Promote Now</option><option value="paused">Paused</option></select></div>
     <div class="form-row"><label class="form-label">Talking Points / Notes</label><textarea class="form-input form-textarea" id="fNotes" placeholder="Key benefits, compliance notes, angles that work..."></textarea></div>
     <div class="modal-actions"><button class="btn btn-primary" style="flex:1;" onclick="saveProduct()">Save Product</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-danger" id="deleteBtn" style="display:none;" onclick="deleteProduct()">Delete</button></div>
@@ -183,6 +186,7 @@ async function init() {
       (p.brand ? '<div class="prod-brand">'+p.brand+'</div>' : '')+
       '<div class="prod-name">'+p.name+'</div>'+
       '<div class="prod-status '+(SC[p.status]||'status-active')+'">'+(SL[p.status]||'Active')+'</div>'+
+      '<div class="prod-units">'+(Number(p.units_sold)||0).toLocaleString()+' <span>units sold</span></div>'+
       (p.tags ? '<div class="prod-tags">'+p.tags.split(',').map(t=>'<span class="prod-tag">'+t.trim()+'</span>').join('')+'</div>' : '')+
       (p.notes ? '<div class="prod-notes">'+p.notes+'</div>' : '')+
     '</div>').join('');
@@ -202,6 +206,7 @@ async function init() {
     document.getElementById('fBrand').value = p?.brand || '';
     document.getElementById('fTags').value = p?.tags || '';
     document.getElementById('fLink').value = p?.link || '';
+    document.getElementById('fUnitsSold').value = p?.units_sold || '';
     document.getElementById('fStatus').value = p?.status || 'active';
     document.getElementById('fNotes').value = p?.notes || '';
     document.getElementById('deleteBtn').style.display = p ? '' : 'none';
@@ -212,7 +217,7 @@ async function init() {
   window.saveProduct = async function() {
     const name = document.getElementById('fName').value.trim();
     if(!name) { document.getElementById('fName').focus(); return; }
-    const row = { user_id: user.id, name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), status: document.getElementById('fStatus').value, notes: document.getElementById('fNotes').value.trim() };
+    const row = { user_id: user.id, name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: document.getElementById('fNotes').value.trim() };
     if(window._editId) { await db.from('products').update(row).eq('id', window._editId); }
     else { await db.from('products').insert(row); }
     showToast(window._editId ? 'Product updated' : 'Product saved');

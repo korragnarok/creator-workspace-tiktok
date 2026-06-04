@@ -25,9 +25,11 @@ create table if not exists products (
   tags text default '',
   link text default '',
   status text default 'active',
+  units_sold integer default 0,
   notes text default '',
   created_at timestamptz default now()
 );
+alter table products add column if not exists units_sold integer default 0;
 alter table products enable row level security;
 create policy "Users manage own products" on products for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 

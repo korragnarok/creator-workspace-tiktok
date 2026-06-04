@@ -85,6 +85,12 @@ button,input{font:inherit;}
 .saved-count{font-size:12px;color:var(--text-mid);}
 .empty-box{border:1px dashed var(--border-mid);border-radius:8px;padding:14px 16px;color:var(--text-muted);font-size:13px;min-height:62px;}
 .empty-box strong{display:block;color:var(--text-mid);font-weight:400;}
+.top-product-list{display:flex;flex-direction:column;gap:8px;}
+.top-product-row{border:1px solid var(--border);border-radius:8px;background:rgba(252,250,248,0.78);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.top-product-name{font-weight:700;color:var(--ink);line-height:1.2;}
+.top-product-brand{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.top-product-units{font-family:'Noto Sans Mono',sans-serif;font-size:18px;font-weight:800;color:var(--rust);white-space:nowrap;text-align:right;}
+.top-product-units span{display:block;font-family:'IBM Plex Serif',serif;font-size:11px;font-weight:400;color:var(--text-muted);}
 .add-bar{display:block;width:100%;text-align:center;border:none;border-radius:8px;background:var(--sage);color:#fff;font-weight:800;padding:11px 14px;margin-top:12px;cursor:pointer;}
 .add-bar:hover{background:#697160;}
 .mini-action{border:none;border-radius:8px;background:var(--sage);color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;padding:7px 10px;}
@@ -322,7 +328,7 @@ async function init() {
 
   const [{ data: rows }, { data: products }, { data: videos }, { data: queue }] = await Promise.all([
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
-    db.from('products').select('id,name,brand').eq('user_id', user.id).order('created_at', { ascending:false }),
+    db.from('products').select('id,name,brand,units_sold').eq('user_id', user.id).order('created_at', { ascending:false }),
     db.from('videos').select('id,title,brand,status').eq('user_id', user.id).order('created_at', { ascending:false }),
     db.from('queue').select('id,name,brand,done').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
   ]);
@@ -360,8 +366,10 @@ async function init() {
   if((videos||[]).length){
     document.getElementById('content-tracker').innerHTML=(videos||[]).slice(0,2).map(v=>`<strong>${v.title}</strong>${v.brand||v.status||'Tracked content'}`).join('');
   }
-  if((products||[]).length){
-    document.getElementById('top-products').innerHTML=(products||[]).slice(0,2).map(p=>`<strong>${p.name}</strong>${p.brand||'Product bank'}`).join('');
+  const topProducts=(products||[]).slice().sort((a,b)=>(Number(b.units_sold)||0)-(Number(a.units_sold)||0)).filter(p=>(Number(p.units_sold)||0)>0).slice(0,3);
+  if(topProducts.length){
+    document.getElementById('top-products').className='top-product-list';
+    document.getElementById('top-products').innerHTML=topProducts.map(p=>`<div class="top-product-row"><div><div class="top-product-name">${p.name}</div><div class="top-product-brand">${p.brand||'Product bank'}</div></div><div class="top-product-units">${(Number(p.units_sold)||0).toLocaleString()}<span>sold</span></div></div>`).join('');
   }
 
   const y=today.getFullYear(), m=today.getMonth();
