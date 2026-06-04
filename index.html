@@ -96,9 +96,12 @@ button,input{font:inherit;}
 .today-content-list{border:1px dashed var(--border-mid);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
 .today-content-item{padding:9px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:24px 1fr;gap:9px;align-items:start;}
 .today-content-item:last-child{border-bottom:none;}
-.today-content-check{width:20px;height:20px;border:2px solid var(--border-mid);border-radius:6px;background:var(--surface);cursor:pointer;margin-top:1px;transition:all 0.12s;}
+.today-content-check{width:20px;height:20px;border:2px solid var(--border-mid);border-radius:6px;background:var(--surface);cursor:pointer;margin-top:1px;transition:all 0.12s;display:flex;align-items:center;justify-content:center;}
 .today-content-check:hover{border-color:var(--rust);background:#FBF5F4;}
+.today-content-check.checked{background:var(--rust);border-color:var(--rust);}
+.today-content-check.checked::after{content:'\2713';color:#fff;font-size:12px;font-weight:800;}
 .today-content-check:disabled{cursor:wait;opacity:0.55;}
+.today-content-item.done .today-content-name{text-decoration:line-through;opacity:0.55;}
 .today-content-name{font-weight:700;color:var(--ink);line-height:1.25;}
 .today-content-detail{font-size:12px;color:var(--text-muted);line-height:1.45;margin-top:3px;}
 .today-content-label{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);margin-right:6px;}
@@ -233,6 +236,7 @@ button,input{font:inherit;}
             <div class="card">
               <div class="card-head"><div class="card-title">Today's Content</div><div class="saved-count" id="content-saved">0 saved</div></div>
               <div class="empty-box" id="today-content"><strong>No content scheduled yet.</strong>Add a video idea to start planning today.</div>
+              <button class="add-bar" type="button" onclick="clearDoneToday()">Clear Done</button>
               <a class="add-bar" href="daily-todo.html">+ Add Video Idea</a>
             </div>
             <div class="card">
@@ -353,7 +357,7 @@ async function init() {
     db.from('videos').select('id,title,brand,status').eq('user_id', user.id).order('created_at', { ascending:false }),
     db.from('queue').select('id,name,brand,notes,done').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
   ]);
-  _todayQueue=(queue||[]).filter(q=>!q.done);
+  _todayQueue=queue||[];
   _dashboardVideos=videos||[];
 
   const labels=[], gmvData=[], commData=[];
@@ -376,9 +380,9 @@ async function init() {
   setText('m-comm', fmtMoney(total30comm));
   setText('m-gmv', fmtMoney(total30gmv));
 
-  const doneToday=(queue||[]).filter(q=>q.done).length;
+  const doneToday=_todayQueue.filter(q=>q.done).length;
   _doneToday=doneToday;
-  setText('todo-count', String(_todayQueue.length));
+  setText('todo-count', String(_todayQueue.filter(q=>!q.done).length));
   setText('todo-sub', `${doneToday} done today`);
   setText('content-saved', `${_todayQueue.length} saved`);
   setText('video-saved', `${_dashboardVideos.length} saved`);
@@ -416,9 +420,10 @@ async function init() {
 }
 function renderTodayContent(){
   const el=document.getElementById('today-content');
-  setText('todo-count', String(_todayQueue.length));
+  const openCount=_todayQueue.filter(q=>!q.done).length;
+  setText('todo-count', String(openCount));
   setText('todo-sub', `${_doneToday} done today`);
-  setText('content-saved', `${_todayQueue.length} saved`);
+  setText('content-saved', `${openCount} saved`);
   if(!_todayQueue.length){
     el.className='empty-box';
     el.innerHTML='<strong>No content scheduled yet.</strong>Add a video idea to start planning today.';
@@ -427,7 +432,7 @@ function renderTodayContent(){
   el.className='today-content-list';
   el.innerHTML=_todayQueue.slice(0,3).map(q=>{
     const detail=queuePreviewDetail(q);
-    return `<div class="today-content-item"><button class="today-content-check" type="button" aria-label="Mark ${esc(q.name)} done" onclick="completeTodayItem('${q.id}', this)"></button><div><div class="today-content-name">${esc(q.name)}</div>${detail}</div></div>`;
+    return `<div class="today-content-item${q.done?' done':''}"><button class="today-content-check${q.done?' checked':''}" type="button" aria-label="Mark ${esc(q.name)} done" onclick="toggleTodayItem('${q.id}', this)"></button><div><div class="today-content-name">${esc(q.name)}</div>${detail}</div></div>`;
   }).join('');
 }
 function renderContentTracker(){
@@ -461,26 +466,31 @@ function localDateKey(){
   const d=new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-async function completeTodayItem(id,button){
+async function toggleTodayItem(id,button){
   const item=_todayQueue.find(q=>q.id===id);
   if(!item||!_dashboardUser)return;
   if(button)button.disabled=true;
-  const hook=queueHook(item);
-  const title=hook||item.name;
-  const notes=['Product: '+item.name];
-  if(hook)notes.push('Hook: '+hook);
-  await db.from('videos').insert({
-    user_id:_dashboardUser.id,
-    title,
-    brand:item.name,
-    date:localDateKey(),
-    status:'live',
-    notes:notes.join('\n')
+  const nextDone=!item.done;
+  await db.from('queue').update({done:nextDone}).eq('id',id);
+  item.done=nextDone;
+  _doneToday+=nextDone?1:-1;
+  renderTodayContent();
+}
+async function clearDoneToday(){
+  const doneItems=_todayQueue.filter(q=>q.done);
+  if(!doneItems.length)return;
+  const todayKey=localDateKey();
+  const rows=doneItems.map(item=>{
+    const hook=queueHook(item);
+    const notes=['Product: '+item.name];
+    if(hook)notes.push('Hook: '+hook);
+    return {user_id:_dashboardUser.id,title:hook||item.name,brand:item.name,date:todayKey,status:'live',notes:notes.join('\n')};
   });
-  await db.from('queue').update({done:true}).eq('id',id);
-  _todayQueue=_todayQueue.filter(q=>q.id!==id);
-  _doneToday+=1;
-  _dashboardVideos=[{id:'local-'+id,title,brand:item.name,date:localDateKey(),status:'live',notes:notes.join('\n')},..._dashboardVideos];
+  await db.from('videos').insert(rows);
+  await db.from('queue').delete().in('id',doneItems.map(item=>item.id));
+  _todayQueue=_todayQueue.filter(q=>!q.done);
+  _dashboardVideos=[...rows.map((row,i)=>({id:'local-'+doneItems[i].id,...row})),..._dashboardVideos];
+  _doneToday=0;
   renderTodayContent();
   renderContentTracker();
   showToast('Saved to Content Tracker');
