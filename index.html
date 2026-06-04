@@ -99,6 +99,15 @@ button,input{font:inherit;}
 .metric-label{font-size:11px;color:var(--text-muted);}
 .chart-wrap{position:relative;height:194px;min-width:0;max-width:100%;}
 .chart-wrap canvas{max-width:100%!important;}
+.name-modal-overlay{display:none;position:fixed;inset:0;background:rgba(42,39,37,0.42);z-index:600;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);}
+.name-modal-overlay.open{display:flex;}
+.name-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 20px 60px rgba(42,39,37,0.16);padding:30px;width:min(100%,420px);}
+.name-modal-title{font-size:28px;font-weight:700;color:var(--ink);line-height:1.1;margin-bottom:8px;}
+.name-modal-copy{color:var(--text-mid);font-size:14px;line-height:1.6;margin-bottom:18px;}
+.name-input{width:100%;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--bg);padding:12px 14px;color:var(--text);font-size:16px;outline:none;margin-bottom:12px;}
+.name-input:focus{border-color:var(--rust);}
+.name-save{width:100%;border:none;border-radius:var(--r);background:var(--rust);color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:12px 14px;cursor:pointer;}
+.name-save:hover{background:#9a5a57;}
 .tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(248,245,241,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
 .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
 .tab-item.active{color:var(--rust);}
@@ -231,6 +240,15 @@ button,input{font:inherit;}
   </div>
 </div>
 
+<div class="name-modal-overlay" id="nameModal" aria-modal="true" role="dialog">
+  <div class="name-modal">
+    <div class="name-modal-title">What should we call you?</div>
+    <p class="name-modal-copy">This is the name we’ll use on your dashboard.</p>
+    <input class="name-input" id="displayNameInput" type="text" placeholder="Your name" autocomplete="given-name" onkeydown="if(event.key==='Enter')saveDisplayName()">
+    <button class="name-save" type="button" onclick="saveDisplayName()">Save Name</button>
+  </div>
+</div>
+
 <div class="tab-bar">
   <a href="index.html" class="tab-item active"><div><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a>
   <a href="daily-todo.html" class="tab-item"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
@@ -247,6 +265,28 @@ function fmtMoney(n){if(!n||n===0)return'$0';return'$'+Number(n).toLocaleString(
 function fmtDec(n){return'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function displayName(email){const raw=(email||'Creator').split('@')[0].split(/[._-]/)[0]||'Creator';return raw.charAt(0).toUpperCase()+raw.slice(1);}
 function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
+function nameKey(user){return `creatorHub:displayName:${user.email||'local'}`;}
+function storedDisplayName(user){return (localStorage.getItem(nameKey(user))||'').trim();}
+function applyDisplayName(name){
+  setText('welcomeTitle', `welcome back, ${name}`);
+  setText('profileName', name);
+  setText('profileAvatar', name.charAt(0).toUpperCase());
+}
+function askForDisplayName(user){
+  const modal=document.getElementById('nameModal');
+  const input=document.getElementById('displayNameInput');
+  window._nameUser=user;
+  modal.classList.add('open');
+  setTimeout(()=>input.focus(),80);
+}
+function saveDisplayName(){
+  const input=document.getElementById('displayNameInput');
+  const name=input.value.trim();
+  if(!name){input.focus();return;}
+  localStorage.setItem(nameKey(window._nameUser),name);
+  applyDisplayName(name);
+  document.getElementById('nameModal').classList.remove('open');
+}
 function coreKey(user){return `creatorHub:core5:${user.email||'local'}`;}
 function loadCore5(user){
   let values=[];
@@ -271,10 +311,9 @@ async function init() {
   const user = await requireAuth();
   if (!user) return;
   loadCore5(user);
-  const name = displayName(user.email);
-  setText('welcomeTitle', `welcome back, ${name}`);
-  setText('profileName', name);
-  setText('profileAvatar', name.charAt(0).toUpperCase());
+  const name = storedDisplayName(user) || displayName(user.email);
+  applyDisplayName(name);
+  if(!storedDisplayName(user)) askForDisplayName(user);
 
   const today = new Date();
   const since = new Date(today); since.setDate(today.getDate() - 29);
