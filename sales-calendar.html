@@ -113,6 +113,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   .summary-strip{grid-template-columns:repeat(2,1fr);}
   .tab-bar{display:flex;}
 }
+
+.tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
+.icon-sm{width:20px;height:20px;object-fit:contain;display:inline-block;vertical-align:middle;}
+.quick-icon .icon-sm{width:26px;height:26px;}
 </style>
 </head>
 <body>
@@ -186,11 +190,11 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 </footer>
 
 <div class="tab-bar">
-  <a href="index.html" class="tab-item"><div class="tab-icon">🏠</div><div>Home</div></a>
-  <a href="daily-todo.html" class="tab-item"><div class="tab-icon">✅</div><div>To Do</div></a>
-  <a href="sales-calendar.html" class="tab-item active"><div class="tab-icon">📅</div><div>Sales</div></a>
-  <a href="products.html" class="tab-item"><div class="tab-icon">📦</div><div>Products</div></a>
-  <a href="hooks.html" class="tab-item"><div class="tab-icon">🪝</div><div>Hooks</div></a>
+  <a href="index.html" class="tab-item"><div class="tab-icon"><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a>
+  <a href="daily-todo.html" class="tab-item"><div class="tab-icon"><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
+  <a href="sales-calendar.html" class="tab-item active"><div class="tab-icon"><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
+  <a href="products.html" class="tab-item"><div class="tab-icon"><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
+  <a href="hooks.html" class="tab-item"><div class="tab-icon"><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div>Hooks</div></a>
 </div>
 
 <script>

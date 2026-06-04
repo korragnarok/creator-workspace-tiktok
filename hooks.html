@@ -101,6 +101,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   .hooks-grid{grid-template-columns:1fr;}
   .tab-bar{display:flex;}
 }
+
+.tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
+.icon-sm{width:20px;height:20px;object-fit:contain;display:inline-block;vertical-align:middle;}
+.quick-icon .icon-sm{width:26px;height:26px;}
 </style>
 </head>
 <body>
@@ -133,12 +137,12 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       <textarea class="add-textarea" id="hookInput" placeholder="Type or paste a hook formula or line..."></textarea>
       <div class="add-controls">
         <select class="add-cat-sel" id="hookCat">
-          <option value="curiosity">🤔 Curiosity</option>
-          <option value="problem">😩 Problem</option>
-          <option value="identity">👋 Identity</option>
-          <option value="social-proof">⭐ Social Proof</option>
-          <option value="product">📦 Product</option>
-          <option value="pattern-interrupt">⚡ Pattern Interrupt</option>
+          <option value="curiosity">Curiosity</option>
+          <option value="problem">Problem</option>
+          <option value="identity">Identity</option>
+          <option value="social-proof"><img src="icons/social-proof.png" class="icon-sm" alt="Social Proof"> Social Proof</option>
+          <option value="product">Product</option>
+          <option value="pattern-interrupt">Pattern Interrupt</option>
         </select>
         <button class="add-btn" onclick="addHook()">Save Hook</button>
       </div>
@@ -165,15 +169,15 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 </footer>
 
 <div class="tab-bar">
-  <a href="index.html" class="tab-item"><div class="tab-icon">🏠</div><div>Home</div></a>
-  <a href="daily-todo.html" class="tab-item"><div class="tab-icon">✅</div><div>To Do</div></a>
-  <a href="sales-calendar.html" class="tab-item"><div class="tab-icon">📅</div><div>Sales</div></a>
-  <a href="products.html" class="tab-item"><div class="tab-icon">📦</div><div>Products</div></a>
-  <a href="hooks.html" class="tab-item active"><div class="tab-icon">🪝</div><div>Hooks</div></a>
+  <a href="index.html" class="tab-item"><div class="tab-icon"><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a>
+  <a href="daily-todo.html" class="tab-item"><div class="tab-icon"><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
+  <a href="sales-calendar.html" class="tab-item"><div class="tab-icon"><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
+  <a href="products.html" class="tab-item"><div class="tab-icon"><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
+  <a href="hooks.html" class="tab-item active"><div class="tab-icon"><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div>Hooks</div></a>
 </div>
 
 <script>
-const CAT_LABEL={'curiosity':'🤔 Curiosity','problem':'😩 Problem','identity':'👋 Identity','social-proof':'⭐ Social Proof','product':'📦 Product','pattern-interrupt':'⚡ Pattern Interrupt'};
+const CAT_LABEL={'curiosity':'Curiosity','problem':'Problem','identity':'Identity','social-proof':'Social Proof','product':'Product','pattern-interrupt':'Pattern Interrupt'};
 const CAT_CLASS={'curiosity':'cat-curiosity','problem':'cat-problem','identity':'cat-identity','social-proof':'cat-social-proof','product':'cat-product','pattern-interrupt':'cat-pattern-interrupt'};
 let activeFilter='all';
 
@@ -211,7 +215,7 @@ function render(){
   });
 
   if(hooks.length===0){
-    document.getElementById('hookList').innerHTML=`<div class="empty"><div class="empty-icon">🪝</div><div class="empty-text">No hooks saved yet. Add your first one above.</div></div>`;
+    document.getElementById('hookList').innerHTML=`<div class="empty"><div class="empty-icon"><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div class="empty-text">No hooks saved yet. Add your first one above.</div></div>`;
     return;
   }
 
@@ -224,7 +228,7 @@ function render(){
       if(!catHooks.length) return;
       html+=`<div class="section-wrap"><div class="section-head"><div class="section-title">${CAT_LABEL[cat]}</div><div class="section-line"></div><div class="section-count">${catHooks.length}</div></div><div class="hooks-grid">${catHooks.map(h=>hookCard(h)).join('')}</div></div>`;
     });
-    document.getElementById('hookList').innerHTML=html||`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">No hooks match your search.</div></div>`;
+    document.getElementById('hookList').innerHTML=html||`<div class="empty"><div class="empty-icon"><img src="icons/research.png" class="icon-sm" alt="Research"></div><div class="empty-text">No hooks match your search.</div></div>`;
   } else {
     document.getElementById('hookList').innerHTML=`<div class="hooks-grid">${hooks.map(h=>hookCard(h)).join('')}</div>`;
   }

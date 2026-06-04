@@ -96,6 +96,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   .form-row-half{grid-template-columns:1fr;}
   .tab-bar{display:flex;}
 }
+
+.tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
+.icon-sm{width:20px;height:20px;object-fit:contain;display:inline-block;vertical-align:middle;}
+.quick-icon .icon-sm{width:26px;height:26px;}
 </style>
 </head>
 <body>
@@ -193,11 +197,11 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 </footer>
 
 <div class="tab-bar">
-  <a href="index.html" class="tab-item"><div class="tab-icon">🏠</div><div>Home</div></a>
-  <a href="daily-todo.html" class="tab-item"><div class="tab-icon">✅</div><div>To Do</div></a>
-  <a href="sales-calendar.html" class="tab-item"><div class="tab-icon">📅</div><div>Sales</div></a>
-  <a href="products.html" class="tab-item"><div class="tab-icon">📦</div><div>Products</div></a>
-  <a href="hooks.html" class="tab-item"><div class="tab-icon">🪝</div><div>Hooks</div></a>
+  <a href="index.html" class="tab-item"><div class="tab-icon"><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a>
+  <a href="daily-todo.html" class="tab-item"><div class="tab-icon"><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
+  <a href="sales-calendar.html" class="tab-item"><div class="tab-icon"><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
+  <a href="products.html" class="tab-item"><div class="tab-icon"><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
+  <a href="hooks.html" class="tab-item"><div class="tab-icon"><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div>Hooks</div></a>
 </div>
 
 <script>
@@ -225,12 +229,12 @@ function render(){
   }).sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
 
   if(vids.length===0){
-    document.getElementById('vidList').innerHTML=`<div class="empty"><div class="empty-icon">🎬</div><div class="empty-text">No videos logged yet. Add your first one!</div></div>`;
+    document.getElementById('vidList').innerHTML=`<div class="empty"><div class="empty-icon"><img src="icons/video.png" class="icon-sm" alt="Video"></div><div class="empty-text">No videos logged yet. Add your first one!</div></div>`;
     return;
   }
   document.getElementById('vidList').innerHTML=vids.map(v=>`
     <div class="vid-card" onclick="openModal(${v.id})">
-      <div class="vid-thumb">🎬</div>
+      <div class="vid-thumb"><img src="icons/video.png" class="icon-sm" alt="Video"></div>
       <div class="vid-body">
         <div class="vid-title">${v.title}</div>
         <div class="vid-meta">
