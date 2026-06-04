@@ -418,7 +418,7 @@ function renderIdeas(){
   const ideas = getIdeas();
   const el = document.getElementById('ideaList');
   if(ideas.length === 0){
-    el.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:8px 0;font-family:'IBM Plex Serif',serif;">No ideas saved yet.</p>';
+    el.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:8px 0;font-family:'IBM Plex Serif',serif;">No ideas saved yet.</p>`;
     return;
   }
   el.innerHTML = ideas.map(i => `
