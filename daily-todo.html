@@ -168,6 +168,19 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 
   <div class="queue-list" id="queueList"></div>
+
+  <!-- IDEAS SECTION -->
+  <div style="margin-top:48px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);">Content Ideas</div>
+      <div style="flex:1;height:1px;background:var(--border-mid);"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input type="text" id="ideaInput" placeholder="Capture an idea before it disappears..." style="flex:1;padding:10px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;" onkeydown="if(event.key==='Enter')addIdea()" onfocus="this.style.borderColor='var(--rose)'" onblur="this.style.borderColor='var(--border-mid)'">
+      <button onclick="addIdea()" style="background:var(--sage);color:#fff;border:none;border-radius:var(--r);padding:10px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;text-transform:uppercase;transition:opacity 0.15s;white-space:nowrap;" onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">Save Idea</button>
+    </div>
+    <div id="ideaList"></div>
+  </div>
 </div>
 
 <!-- PRODUCT PICKER MODAL -->
@@ -381,6 +394,43 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); }
 
 buildWeekStrip();
 renderQueue();
+
+// ── IDEAS ───────────────────────────────────────────────
+function getIdeas(){ try{ return JSON.parse(localStorage.getItem('hub_ideas')||'[]'); }catch(e){ return []; } }
+function saveIdeas(i){ localStorage.setItem('hub_ideas', JSON.stringify(i)); }
+
+function addIdea(){
+  const val = document.getElementById('ideaInput').value.trim();
+  if(!val) return;
+  const ideas = getIdeas();
+  ideas.unshift({id:Date.now(), text:val, date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})});
+  saveIdeas(ideas);
+  document.getElementById('ideaInput').value = '';
+  renderIdeas();
+}
+
+function deleteIdea(id){
+  saveIdeas(getIdeas().filter(i => i.id !== id));
+  renderIdeas();
+}
+
+function renderIdeas(){
+  const ideas = getIdeas();
+  const el = document.getElementById('ideaList');
+  if(ideas.length === 0){
+    el.innerHTML = '<p style="font-size:13px;color:var(--text-muted);padding:8px 0;font-family:'IBM Plex Serif',serif;">No ideas saved yet.</p>';
+    return;
+  }
+  el.innerHTML = ideas.map(i => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:6px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-sm);">
+      <span style="font-size:11px;color:var(--text-muted);min-width:52px;font-family:'Stack Sans Notch',sans-serif;">${i.date}</span>
+      <div style="flex:1;font-size:13px;color:var(--text);font-family:'IBM Plex Serif',serif;">${i.text}</div>
+      <button onclick="deleteIdea(${i.id})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;padding:0 4px;opacity:0.5;transition:opacity 0.12s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">×</button>
+    </div>`).join('');
+}
+
+renderIdeas();
+
 </script>
 </body>
 </html>

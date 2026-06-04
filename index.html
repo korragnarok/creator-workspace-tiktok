@@ -24,12 +24,10 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;f
 a{text-decoration:none;color:inherit;}
 
 /* NAV */
-nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 48px;height:64px;display:flex;align-items:center;gap:0;}
-.nav-brand{display:flex;flex-direction:column;align-items:flex-start;margin-right:48px;flex-shrink:0;}
-.nav-title{font-family:'Stack Sans Notch',sans-serif;font-size:26px;font-weight:700;line-height:1;color:var(--ink);letter-spacing:-0.01em;}
-.nav-sub{font-size:9px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;color:var(--text-muted);margin-top:1px;}
+nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 48px;height:64px;display:flex;align-items:center;}
+.nav-brand{font-family:'Stack Sans Notch',sans-serif;font-size:22px;font-weight:700;color:var(--ink);margin-right:48px;flex-shrink:0;}
 .nav-links{display:flex;gap:32px;flex:1;align-items:center;}
-.nav-link{font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);transition:color 0.15s;position:relative;padding-bottom:3px;}
+.nav-link{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);transition:color 0.15s;position:relative;padding-bottom:3px;}
 .nav-link:hover{color:var(--ink);}
 .nav-link.active{color:var(--rust);}
 .nav-link.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--rust);border-radius:1px;}
@@ -39,71 +37,97 @@ nav{position:sticky;top:0;z-index:200;background:rgba(248,245,241,0.92);backdrop
 
 /* HERO */
 .hero{padding:52px 0 44px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
-.hero-eyebrow{font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:14px;}
-.hero-headline{font-family:'Stack Sans Notch',sans-serif;font-size:clamp(56px,8vw,84px);font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);margin-bottom:18px;}
+.hero-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:14px;}
+.hero-headline{font-family:'IBM Plex Serif',serif;font-size:clamp(56px,8vw,84px);font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);margin-bottom:18px;}
 .hero-headline em{font-style:italic;color:var(--rust);}
 .hero-desc{font-size:14px;line-height:1.8;color:var(--text-mid);max-width:380px;}
 
 /* STAT CARDS */
-.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-self:center;}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:var(--shadow-sm);}
-.stat-label{font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
-.stat-value{font-family:'Mozilla Text',sans-serif;font-size:36px;font-weight:700;color:var(--ink);line-height:1;}
+.stat-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+.stat-value{font-family:'Mozilla Text',sans-serif;font-size:32px;font-weight:700;color:var(--ink);line-height:1;}
 .stat-sub{font-size:11px;color:var(--text-mid);margin-top:4px;}
+.stat-level{display:flex;align-items:center;gap:8px;}
+.stat-level-icon{width:28px;height:28px;object-fit:contain;}
+.stat-level-name{font-family:'Stack Sans Notch',sans-serif;font-size:22px;font-weight:700;line-height:1;}
 
-/* CHART SECTION */
+/* CHART */
 .chart-section{margin-top:40px;}
-.section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
 .section-title{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);}
-.section-sub{font-size:12px;color:var(--text-muted);}
+.chart-legend{display:flex;gap:16px;align-items:center;}
+.legend-item{display:flex;align-items:center;gap:6px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mid);}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;box-shadow:var(--shadow-sm);}
 .chart-wrap{position:relative;height:220px;}
 
-/* QUICK ACTIONS */
+/* LEVEL LADDER */
+.level-section{margin-top:44px;}
+.level-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm);}
+.level-header{padding:22px 24px 18px;border-bottom:1px solid var(--border);}
+.level-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
+.level-current-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.level-icon-lg{width:44px;height:44px;object-fit:contain;}
+.level-name-big{font-family:'Stack Sans Notch',sans-serif;font-size:36px;font-weight:700;line-height:1;}
+.level-month{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.level-stats{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.level-stat{padding:16px 24px;}
+.level-stat:first-child{border-right:1px solid var(--border);}
+.level-stat-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;}
+.level-stat-val{font-family:'Mozilla Text',sans-serif;font-size:26px;font-weight:700;color:var(--ink);line-height:1;}
+.progress-wrap{padding:18px 24px 6px;}
+.progress-bar-bg{background:var(--sand);border-radius:100px;height:6px;overflow:hidden;margin-bottom:6px;}
+.progress-bar-fill{height:6px;border-radius:100px;transition:width 0.8s ease;}
+.progress-labels{display:flex;justify-content:space-between;font-family:'Stack Sans Notch',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.04em;padding:0 0 12px;}
+.level-cta{padding:14px 24px;font-size:13px;color:var(--text-mid);font-style:italic;border-top:1px solid var(--border);background:var(--bg);}
+.level-list{padding:0;}
+.level-row{display:flex;align-items:center;gap:12px;padding:12px 24px;border-bottom:1px solid var(--border);transition:background 0.1s;}
+.level-row:last-child{border-bottom:none;}
+.level-row.current{background:#FBF6F3;}
+.level-row.locked{opacity:0.45;}
+.level-row-icon{width:28px;height:28px;object-fit:contain;flex-shrink:0;}
+.level-row-name{font-family:'Stack Sans Notch',sans-serif;font-size:14px;font-weight:700;color:var(--ink);flex:1;letter-spacing:0.02em;}
+.level-row-range{font-family:'Mozilla Text',sans-serif;font-size:12px;color:var(--text-muted);}
+.level-row-status{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;min-width:80px;text-align:right;}
+
+/* QUICK GRID */
 .quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:40px;}
 .quick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 18px;box-shadow:var(--shadow-sm);transition:all 0.15s;display:flex;flex-direction:column;gap:10px;}
 .quick-card:hover{border-color:var(--rose);box-shadow:var(--shadow-md);transform:translateY(-1px);}
-.quick-icon{font-size:22px;line-height:1;}
+.quick-icon{line-height:1;}
+.quick-icon img{width:26px;height:26px;object-fit:contain;}
 .quick-name{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink);}
 .quick-desc{font-size:12px;color:var(--text-mid);line-height:1.5;}
 
 /* FOOTER */
 footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-items:center;justify-content:space-between;}
 .footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:18px;font-weight:700;color:var(--ink);}
-.footer-note{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}
+.footer-note{font-size:11px;color:var(--text-muted);}
 
-/* MOBILE */
+/* TAB BAR */
+.tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(248,245,241,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
+.tab-item.active{color:var(--rust);}
+.tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
+.icon-sm{width:20px;height:20px;object-fit:contain;display:inline-block;vertical-align:middle;}
+
 @media(max-width:768px){
-  nav{padding:0 20px;height:56px;}
-  .nav-links{display:none;}
+  nav{padding:0 20px;height:56px;}.nav-links{display:none;}
   .page{padding:0 20px 80px;}
   .hero{grid-template-columns:1fr;gap:28px;padding:36px 0 32px;}
   .stat-row{grid-template-columns:repeat(2,1fr);}
   .quick-grid{grid-template-columns:repeat(2,1fr);}
+  .level-stats{grid-template-columns:1fr;}
+  .level-stat:first-child{border-right:none;border-bottom:1px solid var(--border);}
   .tab-bar{display:flex;}
 }
-
-/* TAB BAR */
-.tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(248,245,241,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
-.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
-.tab-item.active{color:var(--rust);}
-.tab-icon{font-size:18px;line-height:1;}
-@media(max-width:768px){.tab-bar{display:flex;}}
-
-.tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
-.icon-sm{width:20px;height:20px;object-fit:contain;display:inline-block;vertical-align:middle;}
-.quick-icon .icon-sm{width:26px;height:26px;}
-
-.stat-value, .sum-val, .cal-units, .modal-input, .log-val { font-family: 'Mozilla Text', sans-serif !important; }
 </style>
 </head>
 <body>
 
 <nav>
-  <div class="nav-brand">
-    <div class="nav-title">Creator Hub</div>
-    <div class="nav-sub">TikTok Shop</div>
-  </div>
+  <div class="nav-brand">Creator Hub</div>
   <div class="nav-links">
     <a href="index.html" class="nav-link active">Home</a>
     <a href="daily-todo.html" class="nav-link">To Do</a>
@@ -122,65 +146,112 @@ footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-i
       <div class="hero-headline">Let's <em>make</em> content.</div>
       <p class="hero-desc">Track your products, plan your scripts, and log your sales — all in one place. Everything saves locally to your browser.</p>
     </div>
-    <div class="stat-row" style="align-self:center;">
+    <div class="stat-row">
       <div class="stat-card">
-        <div class="stat-label">Units Today</div>
-        <div class="stat-value" id="s-today">—</div>
-        <div class="stat-sub">logged so far</div>
+        <div class="stat-label">Commission</div>
+        <div class="stat-value" id="s-comm">—</div>
+        <div class="stat-sub">last 30 days</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Last 30 Days</div>
-        <div class="stat-value" id="s-30">—</div>
-        <div class="stat-sub">items sold</div>
+        <div class="stat-label">GMV</div>
+        <div class="stat-value" id="s-gmv">—</div>
+        <div class="stat-sub">last 30 days</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Best Day</div>
-        <div class="stat-value" id="s-best">—</div>
-        <div class="stat-sub" id="s-best-date">this month</div>
+        <div class="stat-label">Level</div>
+        <div class="stat-level">
+          <img id="s-level-icon" src="icons/levels/bronze.png" class="stat-level-icon" alt="">
+          <div>
+            <div class="stat-level-name" id="s-level-name">Bronze</div>
+            <div class="stat-sub" id="s-level-sub">based on GMV</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- CHART -->
   <div class="chart-section">
     <div class="section-header">
-      <div class="section-title">Items Sold — Last 30 Days</div>
-      <a href="sales-calendar.html" class="section-sub" style="color:var(--rust);font-size:12px;font-weight:600;">Log today →</a>
+      <div class="section-title">Last 30 Days</div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#AE6965;"></div>GMV</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#7A816C;"></div>Commission</div>
+        </div>
+        <a href="sales-calendar.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);">Log today →</a>
+      </div>
     </div>
     <div class="chart-card">
-      <div class="chart-wrap">
-        <canvas id="salesChart"></canvas>
-      </div>
+      <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
     </div>
   </div>
 
+  <!-- LEVEL LADDER -->
+  <div class="level-section">
+    <div class="section-header">
+      <div class="section-title">Level Ladder</div>
+      <a href="sales-calendar.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);">Update GMV →</a>
+    </div>
+    <div class="level-card">
+      <div class="level-header">
+        <div class="level-eyebrow">Current Level</div>
+        <div class="level-current-row">
+          <img id="lc-icon" src="icons/levels/bronze.png" class="level-icon-lg" alt="">
+          <div>
+            <div class="level-name-big" id="lc-name">BRONZE</div>
+            <div class="level-month" id="lc-month"></div>
+          </div>
+        </div>
+      </div>
+      <div class="level-stats">
+        <div class="level-stat">
+          <div class="level-stat-label">GMV This Month</div>
+          <div class="level-stat-val" id="lc-gmv">$0</div>
+        </div>
+        <div class="level-stat">
+          <div class="level-stat-label" id="lc-togo-label">To Silver</div>
+          <div class="level-stat-val" id="lc-togo">$1,000</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="lc-progress" style="width:0%;background:#c9a87a;"></div></div>
+        <div class="progress-labels"><span id="lc-pct">0% through this tier</span><span id="lc-range"></span></div>
+      </div>
+      <div class="level-cta" id="lc-cta"></div>
+      <div class="level-list" id="lc-list"></div>
+    </div>
+  </div>
+
+  <!-- QUICK LINKS -->
   <div class="quick-grid">
     <a href="daily-todo.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div>
+      <div class="quick-icon"><img src="icons/todo.png" alt="To Do"></div>
       <div class="quick-name">To Do</div>
       <div class="quick-desc">Daily content tasks and filming checklist</div>
     </a>
     <a href="sales-calendar.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div>
+      <div class="quick-icon"><img src="icons/sales.png" alt="Sales"></div>
       <div class="quick-name">Sales Log</div>
-      <div class="quick-desc">Log units sold each day, view trends</div>
+      <div class="quick-desc">Log units sold, GMV, and commissions daily</div>
     </a>
     <a href="products.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/products.png" class="tab-icon-img" alt="Products"></div>
+      <div class="quick-icon"><img src="icons/products.png" alt="Products"></div>
       <div class="quick-name">Products</div>
       <div class="quick-desc">Your product database with talking points</div>
     </a>
     <a href="video-tracker.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/video.png" class="icon-sm" alt="Video"></div>
+      <div class="quick-icon"><img src="icons/video.png" alt="Video"></div>
       <div class="quick-name">Videos</div>
       <div class="quick-desc">Track posted videos and performance notes</div>
     </a>
     <a href="hooks.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div>
+      <div class="quick-icon"><img src="icons/hooks.png" alt="Hooks"></div>
       <div class="quick-name">Hook Bank</div>
       <div class="quick-desc">Saved hooks by category, ready to swipe</div>
     </a>
     <a href="scripts.html" class="quick-card">
-      <div class="quick-icon"><img src="icons/scripts.png" class="icon-sm" alt="Scripts"></div>
+      <div class="quick-icon"><img src="icons/scripts.png" alt="Scripts"></div>
       <div class="quick-name">Scripts</div>
       <div class="quick-desc">Paste and save scripts for any product</div>
     </a>
@@ -193,72 +264,148 @@ footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;align-i
 </footer>
 
 <div class="tab-bar">
-  <a href="index.html" class="tab-item active"><div class="tab-icon"><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a>
-  <a href="daily-todo.html" class="tab-item"><div class="tab-icon"><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
-  <a href="sales-calendar.html" class="tab-item"><div class="tab-icon"><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
-  <a href="products.html" class="tab-item"><div class="tab-icon"><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
-  <a href="hooks.html" class="tab-item"><div class="tab-icon"><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div>Hooks</div></a>
+  <a href="index.html" class="tab-item active"><div><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a>
+  <a href="daily-todo.html" class="tab-item"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
+  <a href="sales-calendar.html" class="tab-item"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
+  <a href="products.html" class="tab-item"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
+  <a href="hooks.html" class="tab-item"><div><img src="icons/hooks.png" class="tab-icon-img" alt="Hooks"></div><div>Hooks</div></a>
 </div>
 
 <script>
-function getSalesData() {
-  try { return JSON.parse(localStorage.getItem('hub_sales') || '{}'); } catch(e) { return {}; }
-}
+const LEVELS = [
+  {name:'Bronze',  icon:'bronze',   min:0,       max:999,      color:'#c9a87a'},
+  {name:'Silver',  icon:'silver',   min:1000,    max:4999,     color:'#9a9890'},
+  {name:'Gold',    icon:'gold',     min:5000,    max:24999,    color:'#ba7517'},
+  {name:'Platinum',icon:'platinum', min:25000,   max:59999,    color:'#7a9e7e'},
+  {name:'Ruby',    icon:'ruby',     min:60000,   max:149999,   color:'#b86040'},
+  {name:'Emerald', icon:'emerald',  min:150000,  max:399999,   color:'#4a6040'},
+  {name:'Sapphire',icon:'sapphire', min:400000,  max:1499999,  color:'#185fa5'},
+  {name:'Diamond', icon:'diamond',  min:1500000, max:999999999,color:'#4a4a5a'},
+];
 
-function buildChart() {
-  const sales = getSalesData();
+function getSales(){ try{ return JSON.parse(localStorage.getItem('hub_sales')||'{}'); }catch(e){ return {}; } }
+function fmtMoney(n){ if(!n||n===0) return '$0'; return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+function fmtMoneyDec(n){ return '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function buildAll() {
+  const sales = getSales();
   const today = new Date();
-  const labels = [], data = [];
-  let total30 = 0, bestVal = 0, bestDate = '';
+  const labels = [], gmvData = [], commData = [];
+  let total30gmv = 0, total30comm = 0;
 
-  for (let i = 29; i >= 0; i--) {
+  for(let i = 29; i >= 0; i--) {
     const d = new Date(today); d.setDate(today.getDate() - i);
     const key = d.toISOString().slice(0,10);
     const entry = sales[key];
-    const val = parseInt(entry?.units) || 0;
+    const gmv = parseFloat(entry?.gmv) || 0;
+    const comm = parseFloat(entry?.comm) || 0;
     labels.push(d.toLocaleDateString('en-US', {month:'short', day:'numeric'}));
-    data.push(val);
-    total30 += val;
-    if (val > bestVal) { bestVal = val; bestDate = d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+    gmvData.push(gmv);
+    commData.push(comm);
+    total30gmv += gmv;
+    total30comm += comm;
   }
 
-  const todayKey = today.toISOString().slice(0,10);
-  const todayUnits = parseInt(sales[todayKey]?.units) || 0;
-  document.getElementById('s-today').textContent = todayUnits.toLocaleString();
-  document.getElementById('s-30').textContent = (parseInt(total30) || 0).toLocaleString();
-  document.getElementById('s-best').textContent = bestVal > 0 ? bestVal.toLocaleString() : '—';
-  document.getElementById('s-best-date').textContent = bestVal > 0 ? bestDate : 'no data yet';
+  // Stats
+  document.getElementById('s-comm').textContent = fmtMoneyDec(total30comm);
+  document.getElementById('s-gmv').textContent = fmtMoney(total30gmv);
 
+  // Level based on current month GMV
+  const y = today.getFullYear(), m = today.getMonth();
+  const monthPrefix = `${y}-${String(m+1).padStart(2,'0')}`;
+  let monthGmv = 0;
+  Object.keys(sales).forEach(k => { if(k.startsWith(monthPrefix)) monthGmv += parseFloat(sales[k]?.gmv)||0; });
+
+  let lvlIdx = 0;
+  for(let i = LEVELS.length-1; i >= 0; i--){ if(monthGmv >= LEVELS[i].min){ lvlIdx = i; break; } }
+  const lvl = LEVELS[lvlIdx], nextLvl = LEVELS[lvlIdx+1];
+
+  // Stat card level
+  document.getElementById('s-level-icon').src = `icons/levels/${lvl.icon}.png`;
+  document.getElementById('s-level-name').textContent = lvl.name;
+  document.getElementById('s-level-name').style.color = lvl.color;
+
+  // Level ladder card
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('lc-icon').src = `icons/levels/${lvl.icon}.png`;
+  document.getElementById('lc-name').textContent = lvl.name.toUpperCase();
+  document.getElementById('lc-name').style.color = lvl.color;
+  document.getElementById('lc-month').textContent = `${monthNames[m]} ${y}`;
+  document.getElementById('lc-gmv').textContent = fmtMoneyDec(monthGmv);
+  document.getElementById('lc-progress').style.background = lvl.color;
+
+  if(nextLvl) {
+    const pct = Math.min(100, Math.round((monthGmv - lvl.min) / (lvl.max - lvl.min) * 100));
+    document.getElementById('lc-togo-label').textContent = `To ${nextLvl.name}`;
+    document.getElementById('lc-togo').textContent = fmtMoney(nextLvl.min - monthGmv);
+    document.getElementById('lc-progress').style.width = pct + '%';
+    document.getElementById('lc-pct').textContent = `${pct}% through this tier`;
+    document.getElementById('lc-range').textContent = `${fmtMoney(lvl.min)} – ${fmtMoney(lvl.max)}`;
+    document.getElementById('lc-cta').textContent = `Keep going! ${fmtMoney(nextLvl.min - monthGmv)} more in GMV to reach ${nextLvl.name}.`;
+  } else {
+    document.getElementById('lc-togo-label').textContent = 'Status';
+    document.getElementById('lc-togo').textContent = 'MAX';
+    document.getElementById('lc-progress').style.width = '100%';
+    document.getElementById('lc-pct').textContent = '100% — top tier!';
+    document.getElementById('lc-range').textContent = `${fmtMoney(lvl.min)}+`;
+    document.getElementById('lc-cta').textContent = "You've reached Diamond! Top tier. 👸";
+  }
+
+  // Level list
+  document.getElementById('lc-list').innerHTML = LEVELS.map((l, i) => {
+    const reached = i < lvlIdx, isCurrent = i === lvlIdx, locked = i > lvlIdx;
+    const statusText = reached ? 'Reached ✓' : isCurrent ? 'Current ★' : '—';
+    const statusColor = reached ? 'var(--sage)' : isCurrent ? lvl.color : 'var(--border-mid)';
+    const rangeText = l.max > 999999 ? fmtMoney(l.min)+'+' : fmtMoney(l.min)+' – '+fmtMoney(l.max);
+    return `<div class="level-row ${isCurrent?'current':''} ${locked?'locked':''}">
+      <img src="icons/levels/${l.icon}.png" class="level-row-icon" alt="${l.name}">
+      <div class="level-row-name" style="${isCurrent?'color:'+l.color:''}">${l.name}</div>
+      <div class="level-row-range">${rangeText}</div>
+      <div class="level-row-status" style="color:${statusColor}">${statusText}</div>
+    </div>`;
+  }).join('');
+
+  // Chart
   const ctx = document.getElementById('salesChart').getContext('2d');
   new Chart(ctx, {
     type: 'line',
     data: {
       labels,
-      datasets: [{
-        data,
-        borderColor: '#AE6965',
-        backgroundColor: 'rgba(174,105,101,0.08)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: data.filter(v=>v>0).length > 15 ? 0 : 4,
-        pointBackgroundColor: '#AE6965',
-        borderWidth: 2,
-      }]
+      datasets: [
+        {
+          label: 'GMV',
+          data: gmvData,
+          borderColor: '#AE6965',
+          backgroundColor: 'rgba(174,105,101,0.07)',
+          fill: true, tension: 0.4,
+          pointRadius: gmvData.filter(v=>v>0).length > 15 ? 0 : 3,
+          pointBackgroundColor: '#AE6965',
+          borderWidth: 2,
+        },
+        {
+          label: 'Commission',
+          data: commData,
+          borderColor: '#7A816C',
+          backgroundColor: 'rgba(122,129,108,0.06)',
+          fill: true, tension: 0.4,
+          pointRadius: commData.filter(v=>v>0).length > 15 ? 0 : 3,
+          pointBackgroundColor: '#7A816C',
+          borderWidth: 2,
+        }
+      ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { maxTicksLimit: 8, font: { size: 10, family: "'IBM Plex Serif'" }, color: '#A58B71' }, grid: { display: false }, border: { display: false } },
-        y: { ticks: { font: { size: 10, family: "'IBM Plex Serif'" }, color: '#A58B71', stepSize: 1, callback: v => Math.round(v) == v ? v : '' }, grid: { color: 'rgba(42,39,37,0.06)' }, border: { display: false }, beginAtZero: true }
+        x: { ticks: { maxTicksLimit: 8, font: { size: 10, family: "'Mozilla Text'" }, color: '#A58B71' }, grid: { display: false }, border: { display: false } },
+        y: { ticks: { font: { size: 10, family: "'Mozilla Text'" }, color: '#A58B71', callback: v => '$'+v }, grid: { color: 'rgba(42,39,37,0.05)' }, border: { display: false }, beginAtZero: true }
       }
     }
   });
 }
-
-// called after Chart.js loads
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script>buildChart();</script>
+<script>buildAll();</script>
 </body>
 </html>
