@@ -111,7 +111,7 @@ button,input{font:inherit;}
 .add-bar{display:block;width:100%;text-align:center;border:none;border-radius:8px;background:var(--sage);color:#fff;font-weight:800;padding:11px 14px;margin-top:12px;cursor:pointer;}
 .add-bar:hover{background:#697160;}
 .mini-action{border:none;border-radius:8px;background:var(--sage);color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;padding:7px 10px;}
-.chart-card{background:rgba(252,250,248,0.86);border-color:rgba(174,105,101,0.24);}
+.chart-card{background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);border-color:color-mix(in srgb,var(--rust) 24%,var(--border) 76%);}
 .chart-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
 .chart-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
 .chart-metrics{display:flex;gap:28px;margin:12px 0 6px;}
@@ -293,6 +293,22 @@ let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0;
 function fmtMoney(n){if(!n||n===0)return'$0';return'$'+Math.ceil(Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
 function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function cssColor(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+function rgbaFromColor(color,alpha){
+  const raw=String(color||'').trim();
+  if(raw.startsWith('#')){
+    let hex=raw.slice(1);
+    if(hex.length===3)hex=hex.split('').map(ch=>ch+ch).join('');
+    const value=parseInt(hex,16);
+    if(!Number.isNaN(value))return `rgba(${(value>>16)&255},${(value>>8)&255},${value&255},${alpha})`;
+  }
+  const rgb=raw.match(/^rgba?\(([^)]+)\)$/i);
+  if(rgb){
+    const parts=rgb[1].split(',').map(part=>part.trim()).slice(0,3);
+    if(parts.length===3)return `rgba(${parts.join(',')},${alpha})`;
+  }
+  return raw;
+}
 // Display name + Core 5 now handled by supabase.js: initDisplayName() + initCore5()
 
 async function init() {
@@ -375,7 +391,11 @@ async function init() {
   }
 
   const ctx=document.getElementById('salesChart').getContext('2d');
-  new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Commission',data:commData,borderColor:'#AE6965',backgroundColor:'rgba(174,105,101,0.06)',fill:false,tension:0.35,pointRadius:2.5,pointBackgroundColor:'#AE6965',borderWidth:2},{label:'GMV',data:gmvData,borderColor:'#7A816C',backgroundColor:'rgba(122,129,108,0.05)',fill:false,tension:0.35,pointRadius:2.5,pointBackgroundColor:'#7A816C',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{displayColors:false}},scales:{x:{ticks:{maxTicksLimit:2,font:{size:10,family:"'Noto Sans Mono'"},color:'#A58B71'},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:10,family:"'Noto Sans Mono'"},color:'#A58B71',callback:v=>'$'+v},grid:{color:'rgba(42,39,37,0.06)'},border:{display:false},beginAtZero:true}}}});
+  const commColor=cssColor('--rust');
+  const gmvColor=cssColor('--sage');
+  const tickColor=cssColor('--text-muted');
+  const gridColor=rgbaFromColor(cssColor('--ink'),0.08);
+  new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Commission',data:commData,borderColor:commColor,backgroundColor:rgbaFromColor(commColor,0.06),fill:false,tension:0.35,pointRadius:2.5,pointBackgroundColor:commColor,borderWidth:2},{label:'GMV',data:gmvData,borderColor:gmvColor,backgroundColor:rgbaFromColor(gmvColor,0.05),fill:false,tension:0.35,pointRadius:2.5,pointBackgroundColor:gmvColor,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{displayColors:false}},scales:{x:{ticks:{maxTicksLimit:2,font:{size:10,family:"'Noto Sans Mono'"},color:tickColor},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:10,family:"'Noto Sans Mono'"},color:tickColor,callback:v=>'$'+v},grid:{color:gridColor},border:{display:false},beginAtZero:true}}}});
 }
 function renderTodayContent(){
   const el=document.getElementById('today-content');

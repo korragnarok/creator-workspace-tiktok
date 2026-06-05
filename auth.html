@@ -79,10 +79,6 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;m
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <script>
-const SUPABASE_URL = 'https://mlsckxjksxmavzzhcdfs.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sc2NreGprc3htYXZ6emhjZGZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTQzMzgsImV4cCI6MjA5NjE3MDMzOH0.tQpHwJcTraZjK8TUkeGbnUZWTAQ8cJ5TL6eZt0TSHT0';
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 // Dynamically build redirect URL from current page location — works on any host/path
 const AUTH_REDIRECT_URL = window.location.href.split('?')[0].split('#')[0];
 

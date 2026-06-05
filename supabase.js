@@ -28,25 +28,25 @@ async function signOut() {
 const THEMES = {
   dusk: {
     label: 'Dusk',
-    swatch: ['#1C2130','#3D4F63','#D47878'],
+    swatch: ['#2A1822','#5A2E42','#E17788'],
     vars: {
-      '--bg':          '#1C2130',
-      '--bg-lift':     '#222A3A',
-      '--surface':     '#273044',
-      '--surface-2':   '#2E3A50',
-      '--border':      'rgba(255,255,255,0.07)',
-      '--border-mid':  'rgba(255,255,255,0.12)',
-      '--text':        '#F2C4C4',
-      '--text-mid':    '#8A96A8',
-      '--text-muted':  '#5E6C80',
-      '--ink':         '#F2E8E8',
-      '--sage':        '#8A96A8',
-      '--rose':        '#E8A0A0',
-      '--rust':        '#D47878',
-      '--tan':         '#8A96A8',
-      '--sand':        '#2E3A50',
-      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.3)',
-      '--shadow-md':   '0 4px 20px rgba(0,0,0,0.4)',
+      '--bg':          '#2A1822',
+      '--bg-lift':     '#341D2A',
+      '--surface':     '#3C2431',
+      '--surface-2':   '#4A2B3B',
+      '--border':      'rgba(255,210,220,0.08)',
+      '--border-mid':  'rgba(255,210,220,0.14)',
+      '--text':        '#F3C7D0',
+      '--text-mid':    '#B98A9A',
+      '--text-muted':  '#8B6674',
+      '--ink':         '#FFF0F3',
+      '--sage':        '#A78C93',
+      '--rose':        '#F0A8B6',
+      '--rust':        '#E17788',
+      '--tan':         '#C79CA7',
+      '--sand':        '#4A2B3B',
+      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.32)',
+      '--shadow-md':   '0 4px 20px rgba(0,0,0,0.42)',
     }
   },
   warm: {
@@ -97,47 +97,55 @@ const THEMES = {
   },
   forest: {
     label: 'Forest',
-    swatch: ['#F5F0E8','#2D5A3D','#A0522D'],
+    swatch: ['#2B1F18','#F5F0E8','#6F8F6B'],
     vars: {
-      '--bg':          '#F5F0E8',
-      '--bg-lift':     '#FAF7F2',
-      '--surface':     '#FAF7F2',
-      '--surface-2':   '#EDE6D8',
-      '--border':      'rgba(30,50,30,0.1)',
-      '--border-mid':  'rgba(30,50,30,0.16)',
-      '--text':        '#1E2820',
-      '--text-mid':    '#4A6650',
-      '--text-muted':  '#7A8A72',
-      '--ink':         '#1E2820',
-      '--sage':        '#2D5A3D',
+      '--bg':          '#2B1F18',
+      '--bg-lift':     '#34261D',
+      '--surface':     '#3C2C22',
+      '--surface-2':   '#493529',
+      '--border':      'rgba(245,240,232,0.09)',
+      '--border-mid':  'rgba(245,240,232,0.15)',
+      '--text':        '#F5F0E8',
+      '--text-mid':    '#CBBDAA',
+      '--text-muted':  '#9B8A78',
+      '--ink':         '#FFF7EC',
+      '--sage':        '#6F8F6B',
       '--rose':        '#C8A878',
-      '--rust':        '#A0522D',
-      '--tan':         '#7A8A72',
-      '--sand':        '#DDD4C0',
-      '--shadow-sm':   '0 1px 4px rgba(30,50,30,0.07)',
-      '--shadow-md':   '0 4px 20px rgba(30,50,30,0.1)',
+      '--rust':        '#E9D7BE',
+      '--tan':         '#F5F0E8',
+      '--sand':        '#493529',
+      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.26)',
+      '--shadow-md':   '0 4px 20px rgba(0,0,0,0.36)',
     }
   }
 };
 
 const DEFAULT_THEME = 'dusk';
 
+function _cachedTheme() {
+  try {
+    const saved = localStorage.getItem('creatorHub:theme') || '';
+    return THEMES[saved] ? saved : '';
+  } catch(e) { return ''; }
+}
+
 function applyTheme(themeKey) {
-  const theme = THEMES[themeKey] || THEMES[DEFAULT_THEME];
+  const resolvedKey = THEMES[themeKey] ? themeKey : DEFAULT_THEME;
+  const theme = THEMES[resolvedKey];
   const root = document.documentElement;
   Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v));
   // Mark active on any theme switcher dots present
   document.querySelectorAll('[data-theme]').forEach(el => {
-    el.classList.toggle('active', el.dataset.theme === themeKey);
+    el.classList.toggle('active', el.dataset.theme === resolvedKey);
   });
   // Store locally so next page load applies before Supabase responds
-  try { localStorage.setItem('creatorHub:theme', themeKey); } catch(e) {}
+  try { localStorage.setItem('creatorHub:theme', resolvedKey); } catch(e) {}
 }
 
 // Call immediately on load using localStorage cache (no flash)
 function applyThemeImmediate() {
   let saved = DEFAULT_THEME;
-  try { saved = localStorage.getItem('creatorHub:theme') || DEFAULT_THEME; } catch(e) {}
+  saved = _cachedTheme() || DEFAULT_THEME;
   applyTheme(saved);
 }
 applyThemeImmediate();
@@ -145,6 +153,7 @@ applyThemeImmediate();
 // ─── User Prefs ───────────────────────────────────────────────────────────────
 
 async function loadUserPrefs(userId) {
+  const theme = _cachedTheme() || DEFAULT_THEME;
   const { data } = await db.from('user_prefs')
     .select('display_name, core5, theme')
     .eq('user_id', userId)
@@ -152,10 +161,10 @@ async function loadUserPrefs(userId) {
   if (data) return data;
   // First login — create the row so future saves have somewhere to upsert into
   await db.from('user_prefs').upsert(
-    { user_id: userId, display_name: '', core5: [], theme: DEFAULT_THEME },
+    { user_id: userId, display_name: '', core5: [], theme },
     { onConflict: 'user_id' }
   );
-  return { display_name: null, core5: [], theme: DEFAULT_THEME };
+  return { display_name: null, core5: [], theme };
 }
 
 async function saveUserPrefs(userId, patch) {
@@ -310,9 +319,10 @@ function initProfilePopover(userId) {
 // ─── Init Theme from Prefs ────────────────────────────────────────────────────
 
 async function initTheme(userId, prefs) {
-  const themeKey = prefs.theme || DEFAULT_THEME;
+  const themeKey = _cachedTheme() || prefs.theme || DEFAULT_THEME;
   try { localStorage.setItem('creatorHub:theme', themeKey); } catch(e) {}
   applyTheme(themeKey);
+  if (userId && prefs.theme !== themeKey) await saveUserPrefs(userId, { theme: themeKey });
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
