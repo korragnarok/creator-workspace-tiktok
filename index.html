@@ -104,7 +104,8 @@ button,input{font:inherit;}
 .today-content-detail{font-size:12px;color:var(--text-muted);line-height:1.45;margin-top:3px;}
 .today-content-label{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);margin-right:6px;}
 .top-product-list{display:flex;flex-direction:column;gap:8px;}
-.top-product-row{border:1px solid var(--border);border-radius:8px;background:rgba(252,250,248,0.78);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.top-product-row{border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;transition:border-color 0.15s;}
+.top-product-row:hover{border-color:var(--rust);}
 .top-product-name{font-weight:700;color:var(--ink);line-height:1.2;}
 .top-product-brand{font-size:12px;color:var(--text-muted);margin-top:2px;}
 .top-product-units{font-family:'Noto Sans Mono',sans-serif;font-size:18px;font-weight:800;color:var(--rust);white-space:nowrap;text-align:right;}
@@ -138,7 +139,7 @@ button,input{font:inherit;}
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
 .tab-profile-avatar{width:24px;height:24px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
 @media(max-width:1420px) and (min-width:1181px){.content{max-width:1080px;}.top-layout,.lower-grid{grid-template-columns:1fr;}.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));}.stat-card{padding:15px;gap:10px;}.stat-icon{width:36px;height:36px;}.stat-icon img{width:22px;height:22px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}}
-@media(max-width:1180px){.app-shell{grid-template-columns:1fr;}.sidebar{display:none;}.top-layout,.lower-grid{grid-template-columns:1fr;}}
+@media(max-width:1180px){.app-shell{grid-template-columns:1fr;}.sidebar{display:none;}.top-layout,.lower-grid{grid-template-columns:1fr;}.topbar .nav-links-inline{display:flex !important;}}
 @media(max-width:980px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:768px){.topbar{padding:0 16px;height:auto;min-height:58px;flex-wrap:wrap;gap:8px;padding-top:10px;padding-bottom:10px;}.content{width:100%;padding:24px 14px 88px;overflow:hidden;}.welcome{font-size:36px;}.stats-grid{grid-template-columns:1fr;}.lower-grid{width:100%;grid-template-columns:minmax(0,1fr);}.card{width:100%;min-width:0;padding:14px;}.card-head,.chart-top{align-items:flex-start;flex-wrap:wrap;}.empty-box{width:100%;min-width:0;}.add-bar{max-width:100%;}.chart-metrics{gap:18px;flex-wrap:wrap;}.chart-card{overflow:hidden;}.chart-wrap{width:100%;height:180px;}.tier-line{grid-template-columns:repeat(4,1fr);gap:14px 0;}.tier-line::before{display:none;}.tier-range{display:none;}.tab-bar{display:flex;}}
 </style>
@@ -177,6 +178,15 @@ button,input{font:inherit;}
   <div class="workspace">
     <div class="topbar">
       <div class="top-spacer"></div>
+      <nav class="nav-links-inline" style="display:none;gap:24px;align-items:center;flex:1;justify-content:center;">
+        <a href="index.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--rust);text-decoration:none;">Home</a>
+        <a href="daily-todo.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">To Do</a>
+        <a href="products.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">Products</a>
+        <a href="video-tracker.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">Videos</a>
+        <a href="hooks.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">Hooks</a>
+        <a href="scripts.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">Scripts</a>
+        <a href="sales-calendar.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">Sales</a>
+      </nav>
     </div>
 
     <main class="content">
@@ -195,7 +205,7 @@ button,input{font:inherit;}
               <div class="stat-body"><div class="stat-label">Total Commission 30d</div><div class="stat-value" id="s-comm">-</div><div class="stat-sub">from all products</div></div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon sage"><img src="icons/dusk/products.png" data-theme-icon alt=""></div>
+              <div class="stat-icon sage"><img src="icons/dusk/gmv.png" data-theme-icon alt=""></div>
               <div class="stat-body"><div class="stat-label">Total GMV 30d</div><div class="stat-value" id="s-gmv">-</div><div class="stat-sub">across all products</div></div>
             </div>
             <div class="stat-card">
@@ -232,8 +242,7 @@ button,input{font:inherit;}
 
         <section class="lower-grid">
           <div class="stack">
-            <div class="card">
-              <div class="card-head"><div class="card-title">Today's Content</div><div class="saved-count" id="content-saved">0 saved</div></div>
+            
               <div class="empty-box" id="today-content"><strong>No content scheduled yet.</strong>Add a video idea to start planning today.</div>
               <button class="add-bar" type="button" onclick="clearDoneToday()">Clear Done</button>
               <a class="add-bar" href="daily-todo.html">+ Add Video Idea</a>
@@ -393,7 +402,7 @@ async function init() {
   const topProducts=(products||[]).slice().sort((a,b)=>(Number(b.units_sold)||0)-(Number(a.units_sold)||0)).filter(p=>(Number(p.units_sold)||0)>0).slice(0,3);
   if(topProducts.length){
     document.getElementById('top-products').className='top-product-list';
-    document.getElementById('top-products').innerHTML=topProducts.map(p=>`<div class="top-product-row"><div><div class="top-product-name">${p.name}</div><div class="top-product-brand">${p.brand||'Product bank'}</div></div><div class="top-product-units">${(Number(p.units_sold)||0).toLocaleString()}<span>sold</span></div></div>`).join('');
+    document.getElementById('top-products').innerHTML=topProducts.map(p=>`<div class="top-product-row" onclick="window.location='products.html?search='+encodeURIComponent(p.name)" title="View in Products"><div><div class="top-product-name">${p.name}</div><div class="top-product-brand">${p.brand||''}</div></div><div class="top-product-units">${(Number(p.units_sold)||0).toLocaleString()}<span>sold</span></div></div>`).join('');
   }
 
   const y=today.getFullYear(), m=today.getMonth();

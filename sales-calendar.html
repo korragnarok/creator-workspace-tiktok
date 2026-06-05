@@ -36,13 +36,13 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;background:var(--border-mid);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm);}
 .cal-dow{background:var(--surface);padding:10px 0;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);text-align:center;}
 .cal-day{background:var(--surface);padding:10px 12px;min-height:88px;cursor:pointer;transition:background 0.12s;display:flex;flex-direction:column;gap:3px;position:relative;}
-.cal-day:hover{background:#F0EBE5;}
+.cal-day:hover{background:color-mix(in srgb,var(--rust) 6%,var(--surface) 94%);}
 .cal-day.empty{background:var(--bg);cursor:default;}
-.cal-day.other-month{background:rgba(252,250,248,0.52);cursor:pointer;}
-.cal-day.other-month:hover{background:rgba(240,235,229,0.7);}
-.cal-day.other-month .cal-day-num{color:rgba(122,129,108,0.42);}
+.cal-day.other-month{background:color-mix(in srgb,var(--bg) 60%,var(--surface) 40%);cursor:pointer;}
+.cal-day.other-month:hover{background:color-mix(in srgb,var(--rust) 4%,var(--surface) 96%);}
+.cal-day.other-month .cal-day-num{color:var(--text-muted);opacity:0.5;}
 .cal-day.today{outline:2px solid var(--rust);outline-offset:-2px;}
-.cal-day.has-data{background:#FBF6F3;}
+.cal-day.has-data{background:color-mix(in srgb,var(--rust) 5%,var(--surface) 95%);}
 .cal-day-num{font-family:'Noto Sans Mono',sans-serif;font-size:12px;font-weight:600;color:var(--text-mid);}
 .cal-day.today .cal-day-num{color:var(--rust);font-weight:700;}
 .cal-units{font-family:'Noto Sans Mono',sans-serif;font-size:12px;font-weight:600;color:var(--ink);}
@@ -54,7 +54,7 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .sum-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
 .sum-val{font-family:'Noto Sans Mono',sans-serif;font-size:26px;font-weight:700;color:var(--ink);line-height:1;}
 .sum-sub{font-size:11px;color:var(--text-mid);margin-top:3px;}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(42,39,37,0.4);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;}
 .modal-overlay.open{display:flex;}
 .modal{background:var(--bg-lift);border-radius:16px;padding:32px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(42,39,37,0.15);position:relative;}
 .modal-title{font-family:'IBM Plex Serif',serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:4px;}
@@ -76,6 +76,8 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .log-comm{font-family:'Noto Sans Mono',sans-serif;font-size:13px;font-weight:600;color:var(--rust);}
 .log-note{font-size:12px;color:var(--text-mid);flex:1;font-style:italic;}
 .log-edit{background:none;border:1px solid var(--border-mid);border-radius:6px;padding:3px 10px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;cursor:pointer;color:var(--text-muted);margin-left:auto;transition:all 0.12s;text-transform:uppercase;}
+.log-delete{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px 6px;font-size:13px;border-radius:6px;transition:all 0.12s;}
+.log-delete:hover{background:rgba(180,50,40,0.15);color:#c83c32;}
 .log-edit:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
 footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-items:center;justify-content:space-between;}
 .footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
@@ -287,8 +289,18 @@ function render(){
       (e.comm?'<div class="log-comm">'+fmtMoney(e.comm)+' comm</div>':'')+
       (e.note?'<div class="log-note">'+e.note+'</div>':'<div class="log-note"></div>')+
       '<button class="log-edit" onclick="openModal(\''+key+'\','+d.getDate()+')">Edit</button>'+
+      '<button class="log-delete" onclick="deleteEntry(\''+key+'\')" title="Delete">✕</button>'+
     '</div>';
   }).join('');
+}
+
+async function deleteEntry(key) {
+  if (!confirm('Delete this entry?')) return;
+  const { error } = await db.from('sales').delete().eq('user_id', _user.id).eq('date', key);
+  if (error) { showToast('Delete failed', 'error'); return; }
+  delete _salesCache[key];
+  renderCalendar();
+  showToast('Entry deleted');
 }
 
 function openModal(key,day){
