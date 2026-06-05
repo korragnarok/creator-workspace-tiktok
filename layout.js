@@ -252,12 +252,77 @@
           grid-column: 2;
         }
       }
-      @media (max-width: 1180px) {
+      @media (max-width: 1280px) and (min-width: 769px) {
+        body:not(.has-app-shell) {
+          padding-left: 76px !important;
+        }
+        .desktop-sidebar.sidebar {
+          width: 76px;
+          padding: 18px 10px;
+          align-items: center;
+          gap: 16px;
+        }
+        .desktop-sidebar.sidebar .side-brand {
+          width: 48px;
+          height: 48px;
+          border: 1px solid var(--border-mid);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          font-size: 0;
+          background: color-mix(in srgb,var(--surface) 76%,var(--bg) 24%);
+        }
+        .desktop-sidebar.sidebar .side-brand::before {
+          content: 'cw';
+          font-family: 'Stack Sans Notch',sans-serif;
+          font-size: 14px;
+          font-weight: 800;
+          color: var(--ink);
+          letter-spacing: 0;
+        }
+        .desktop-sidebar.sidebar .side-brand span,
+        .desktop-sidebar.sidebar .side-link {
+          font-size: 0;
+        }
+        .desktop-sidebar.sidebar .side-nav {
+          align-items: center;
+          width: 100%;
+        }
+        .desktop-sidebar.sidebar .side-link {
+          width: 48px;
+          height: 48px;
+          justify-content: center;
+          padding: 0;
+          gap: 0;
+        }
+        .desktop-sidebar.sidebar .nav-icon {
+          width: 34px;
+          height: 34px;
+        }
+        .desktop-sidebar.sidebar .nav-icon img {
+          width: 21px;
+          height: 21px;
+        }
+        .desktop-sidebar.sidebar .core-sidebar,
+        .desktop-sidebar.sidebar .side-profile {
+          display: none;
+        }
+        .app-shell {
+          grid-template-columns: 76px minmax(0, 1fr);
+        }
         .app-shell > .workspace {
-          grid-column: 1;
+          grid-column: 2;
         }
       }
       @media (max-width: 768px) {
+        .app-shell > .workspace {
+          grid-column: 1;
+        }
+        .desktop-sidebar.sidebar {
+          display: none;
+        }
         body > nav {
           display: none;
         }
@@ -271,6 +336,7 @@
     injectSharedLayoutStyles();
     const page = currentPage();
     const appShell = document.querySelector('.app-shell');
+    if (appShell) document.body.classList.add('has-app-shell');
     const marker = document.createElement('div');
     marker.dataset.sharedLayout = 'true';
     marker.innerHTML = sidebar(page);
