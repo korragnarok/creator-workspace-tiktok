@@ -391,9 +391,10 @@ async function init() {
   initProfilePopover(_user.id);
 
   // Pre-fill name input
-  document.getElementById('nameInput').value = _prefs.display_name || '';
+  const savedName = (_prefs.display_name || '').trim();
+  document.getElementById('nameInput').value = savedName;
   const currentName = document.getElementById('currentDisplayName');
-  if (currentName) currentName.textContent = _prefs.display_name || 'Not set yet';
+  if (currentName) currentName.textContent = savedName || 'Not set yet';
 
   const activeTheme = document.documentElement.dataset.theme || _prefs.theme || DEFAULT_THEME;
   buildThemeGrid(activeTheme);
