@@ -109,6 +109,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .product-bank{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden;}
 table{width:100%;border-collapse:collapse;}
 thead th{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.16em;color:var(--text-muted);padding:13px 16px;text-align:left;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface) 80%,var(--bg) 20%);white-space:nowrap;}
+thead th.sortable{cursor:pointer;user-select:none;}
+thead th.sortable:hover,thead th.sortable.active{color:var(--ink);}
+thead th.sortable.active::after{content:' ↑';color:var(--rust);letter-spacing:0;font-size:10px;}
+thead th.sortable.active[data-dir="desc"]::after{content:' ↓';}
 thead th.num,tbody td.num{text-align:right;}
 tbody tr{border-bottom:1px solid var(--border);transition:background 0.12s;}
 tbody tr:last-child{border-bottom:none;}
@@ -190,11 +194,11 @@ tr.select-mode .tbl-action{display:none;}
     <table>
       <thead>
         <tr>
-          <th>Product</th>
-          <th>Brand</th>
-          <th>Stock</th>
-          <th class="num">Sold</th>
-          <th class="num">GMV</th>
+          <th class="sortable" data-sort="product" onclick="sortProducts('product')">Product</th>
+          <th class="sortable" data-sort="brand" onclick="sortProducts('brand')">Brand</th>
+          <th class="sortable" data-sort="stock" onclick="sortProducts('stock')">Stock</th>
+          <th class="num sortable" data-sort="sold" onclick="sortProducts('sold')">Sold</th>
+          <th class="num sortable" data-sort="gmv" onclick="sortProducts('gmv')">GMV</th>
           <th>Features</th>
           <th>Link</th>
           <th></th>
@@ -229,6 +233,8 @@ let _brandFilter = 'all';
 let _stockFilter = 'all';
 let _allProducts = [];
 let _coreNames = [];
+let _sortField = 'product';
+let _sortDir = 1;
 
 async function init() {
   const user = await requireAuth();
@@ -254,10 +260,10 @@ async function init() {
       if(_stockFilter === 'out' && inStock) return false;
       if(q) return (p.name + (p.brand||'') + (p.tags||'')).toLowerCase().includes(q);
       return true;
-    });
+    }).sort(compareProducts);
     _visibleProductIds = filtered.map(p => p.id);
     const body = document.getElementById('prodBody');
-    if(!filtered.length){ body.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div></td></tr>'; updateEditToolbar(); return; }
+    if(!filtered.length){ body.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div></td></tr>'; updateSortHeaders(); updateEditToolbar(); return; }
     body.innerHTML = filtered.map(p => {
       const selected = _selectedProductIds.has(p.id);
       const inStock = productInStock(p);
@@ -275,6 +281,7 @@ async function init() {
         '<td><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button></td>'+
       '</tr>';
     }).join('');
+    updateSortHeaders();
     updateEditToolbar();
   }
 
@@ -306,6 +313,29 @@ async function init() {
     const name = String(p.name || '').trim().toLowerCase();
     const brand = String(p.brand || '').trim().toLowerCase();
     return _coreNames.includes(name) || _coreNames.includes(brand);
+  }
+  function sortValue(p, field) {
+    if(field === 'product') return String(p.name || '').toLowerCase();
+    if(field === 'brand') return String(p.brand || '').toLowerCase();
+    if(field === 'stock') return productInStock(p) ? 0 : 1;
+    if(field === 'sold') return Number(p.units_sold) || 0;
+    if(field === 'gmv') return productGmv(p);
+    return '';
+  }
+  function compareProducts(a, b) {
+    const av = sortValue(a, _sortField);
+    const bv = sortValue(b, _sortField);
+    let result = 0;
+    if(typeof av === 'number' && typeof bv === 'number') result = av - bv;
+    else result = String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' });
+    return result * _sortDir;
+  }
+  function updateSortHeaders() {
+    document.querySelectorAll('th.sortable').forEach(th => {
+      const active = th.dataset.sort === _sortField;
+      th.classList.toggle('active', active);
+      th.dataset.dir = active ? (_sortDir === 1 ? 'asc' : 'desc') : '';
+    });
   }
   function renderBrandFilters(products) {
     const el = document.getElementById('brandFilter');
@@ -379,6 +409,14 @@ async function init() {
     _stockFilter = stock;
     document.querySelectorAll('.stock-pill').forEach(p => p.classList.toggle('active', p.dataset.stock === stock));
     _selectedProductIds.clear();
+    renderProducts();
+  };
+  window.sortProducts = function(field) {
+    if(_sortField === field) _sortDir *= -1;
+    else {
+      _sortField = field;
+      _sortDir = (field === 'sold' || field === 'gmv') ? -1 : 1;
+    }
     renderProducts();
   };
 

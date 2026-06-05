@@ -369,10 +369,11 @@ function parseCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
   const rawRows = lines.map(parseCSVRow);
-  const propertyValueRows = rawRows.filter(row => row.length >= 2);
-  const propertyNames = new Set(['product','brand','tiktok shop link','status','sold','live talking points','core five','tags','notes']);
-  const propertyStyleCount = propertyValueRows.filter(row => propertyNames.has(cleanKey(row[0]))).length;
-  if (propertyStyleCount >= 2) {
+  let propertyValueRows = rawRows.filter(row => row.length >= 2);
+  if (looksLikePropertyHeader(propertyValueRows[0])) propertyValueRows = propertyValueRows.slice(1);
+  const propertyStyleCount = propertyValueRows.filter(row => isProductPropertyName(row[0])).length;
+  const shortPropertyFile = propertyValueRows.length <= 40;
+  if (shortPropertyFile && propertyStyleCount >= 2 && propertyStyleCount / propertyValueRows.length >= 0.35) {
     const obj = {};
     propertyValueRows.forEach(row => {
       const key = row[0].trim();
@@ -391,6 +392,28 @@ function parseCSV(text) {
 
 function cleanKey(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function looksLikePropertyHeader(row) {
+  if (!row || row.length < 2) return false;
+  const first = cleanKey(row[0]);
+  const second = cleanKey(row[1]);
+  const firstLooksGeneric = ['property','name','product','field','field name'].includes(first);
+  const secondLooksGeneric = ['value','text','values','content','property value'].includes(second);
+  return firstLooksGeneric && secondLooksGeneric;
+}
+
+function isProductPropertyName(value) {
+  return new Set([
+    'product','product name','name','title',
+    'brand','brand name',
+    'tiktok shop link','shop link','product link','link','url',
+    'status','stock','in stock',
+    'sold','units sold','sales',
+    'gmv','total gmv',
+    'live talking points','talking points','features','feature','notes',
+    'core five','core 5','tags'
+  ]).has(cleanKey(value));
 }
 
 function pick(row, aliases) {
@@ -420,11 +443,18 @@ function mapProduct(row) {
     name:       pick(row, ['Product', 'Product Name', 'Name', 'Title']),
     brand:      pick(row, ['Brand', 'Brand Name']),
     link:       pick(row, ['TikTok Shop Link', 'Shop Link', 'Product Link', 'Link', 'URL']),
-    status:     status.toLowerCase(),
+    status:     normalizeProductStatus(status),
     units_sold: parseInt(pick(row, ['Sold', 'Units Sold', 'Sales']) || '0') || 0,
-    notes:      pick(row, ['Live Talking Points', 'Talking Points', 'Notes']),
+    notes:      pick(row, ['Live Talking Points', 'Talking Points', 'Features', 'Notes']),
     tags:       pick(row, ['Core Five', 'Core 5']) ? 'core5' : '',
   };
+}
+
+function normalizeProductStatus(value) {
+  const status = cleanKey(value || 'active');
+  if (status.includes('out') || status === 'paused' || status === 'sold out') return 'paused';
+  if (status.includes('promote')) return 'promote';
+  return 'active';
 }
 
 function mapVideo(row) {
