@@ -4,152 +4,201 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#F8F5F1">
-<title>To Do — Creator Hub</title>
+<meta name="theme-color" content="#2A1822">
+<title>Daily To Do — Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Creator Hub">
+<link rel="apple-touch-icon" href="icons/pwa/icon-192.png">
 <style>
-:root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 a{text-decoration:none;color:inherit;}
+
 nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%,#000 12%);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 48px;height:64px;display:flex;align-items:center;}
-.nav-brand{font-family:'Stack Sans Notch',sans-serif;font-size:22px;font-weight:700;color:var(--ink);margin-right:48px;flex-shrink:0;}
+.nav-brand{font-family:'Stack Sans Notch',sans-serif;font-size:22px;font-weight:700;color:var(--ink);margin-right:48px;}
 .nav-links{display:flex;gap:32px;flex:1;align-items:center;}
-.nav-link{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);transition:color 0.15s;position:relative;padding-bottom:3px;}
+.nav-link{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);transition:color 0.15s;}
 .nav-link:hover{color:var(--ink);}
 .nav-link.active{color:var(--rust);}
-.nav-link.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--rust);border-radius:1px;}
-.page{max-width:900px;margin:0 auto;padding:0 40px 100px;}
-.page-header{padding:44px 0 28px;}
-.page-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
-.page-title{font-family:'IBM Plex Serif',serif;font-size:56px;font-weight:700;line-height:0.95;letter-spacing:-0.02em;color:var(--ink);}
-.page-title em{font-style:italic;color:var(--sage);}
-.week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:28px 0 24px;}
-.week-day{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 8px;text-align:center;cursor:pointer;transition:all 0.15s;position:relative;}
-.week-day:hover{border-color:var(--rose);}
-.week-day.active{background:var(--ink);border-color:var(--ink);}
-.week-day.has-items::after{content:'';position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--rose);}
-.week-day.active.has-items::after{background:var(--rose);}
-.week-day-name{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
-.week-day.active .week-day-name{color:rgba(255,255,255,0.6);}
-.week-day-num{font-family:'Noto Sans Mono',sans-serif;font-size:22px;font-weight:600;color:var(--ink);line-height:1;}
-.week-day.active .week-day-num{color:#fff;}
-.week-day.today-marker .week-day-num{color:var(--rust);}
-.week-day.active.today-marker .week-day-num{color:#fff;}
-.strip-divider{height:1px;background:var(--border-mid);margin-bottom:28px;}
-.queue-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
-.queue-date{font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:600;color:var(--text-mid);}
-.queue-actions{display:flex;gap:8px;}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:0.04em;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;transition:all 0.15s;border:none;text-transform:uppercase;}
-.btn-primary{background:var(--rust);color:#fff;}.btn-primary:hover{background:#9a5a57;}
-.btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}.btn-ghost:hover{background:var(--surface);color:var(--ink);}
-.queue-list{display:flex;flex-direction:column;gap:10px;}
-.queue-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow-sm);display:flex;align-items:flex-start;gap:14px;transition:all 0.12s;}
-.queue-card:hover{border-color:var(--rose);}
-.queue-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border-mid);background:var(--bg);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.12s;}
-.queue-check.checked{background:var(--rust);border-color:var(--rust);}
-.queue-check.checked::after{content:'&#x2713;';color:#fff;font-size:12px;font-weight:700;}
-.queue-card.done .queue-name{text-decoration:line-through;opacity:0.5;}
-.queue-body{flex:1;}
-.queue-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--rust);margin-bottom:3px;}
-.queue-name{font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:600;color:var(--ink);line-height:1.3;}
-.queue-notes{font-size:12px;color:var(--text-mid);margin-top:8px;line-height:1.5;}
-.queue-note-line{margin-top:3px;}
-.queue-note-label{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);margin-right:6px;font-style:normal;}
-.queue-remove{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;opacity:0;transition:opacity 0.12s;padding:0 4px;margin-left:auto;flex-shrink:0;line-height:1;}
-.queue-card:hover .queue-remove{opacity:1;}
-.empty-state{text-align:center;padding:64px 24px;}
-.empty-icon img{width:48px;height:48px;opacity:0.3;margin-bottom:16px;}
-.empty-title{font-family:'IBM Plex Serif',serif;font-size:24px;font-weight:700;color:var(--text-mid);margin-bottom:8px;}
-.empty-sub{font-size:14px;color:var(--text-muted);margin-bottom:24px;line-height:1.7;}
-.empty-sub a{color:var(--rust);text-decoration:underline;text-underline-offset:3px;}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(42,39,37,0.4);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;}
-.modal-overlay.open{display:flex;}
-.modal{background:var(--bg-lift);border-radius:20px;padding:28px;width:100%;max-width:680px;max-height:calc(100vh - 40px);display:flex;flex-direction:column;box-shadow:0 18px 56px rgba(42,39,37,0.14);overflow:hidden;}
-.modal-handle{width:40px;height:4px;border-radius:2px;background:var(--border-mid);margin:0 auto 20px;}
-.modal-title{font-family:'IBM Plex Serif',serif;font-size:24px;font-weight:700;color:var(--ink);margin-bottom:16px;}
-.modal-search{width:100%;padding:10px 16px;border:1px solid var(--border-mid);border-radius:100px;background:var(--surface);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;margin-bottom:16px;transition:border-color 0.15s;}
-.modal-search:focus{border-color:var(--rose);}
-.modal-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;min-height:0;}
-.picker-item{background:var(--surface);border:2px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;gap:12px;}
-.picker-item:hover{border-color:var(--rose);}
-.picker-item.selected{border-color:var(--rust);background:#FBF5F4;}
-.picker-check{width:20px;height:20px;border-radius:5px;border:2px solid var(--border-mid);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.12s;}
-.picker-item.selected .picker-check{background:var(--rust);border-color:var(--rust);}
-.picker-item.selected .picker-check::after{content:'&#x2713;';color:#fff;font-size:11px;font-weight:700;}
-.picker-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);}
-.picker-name{font-family:'IBM Plex Serif',serif;font-size:15px;font-weight:600;color:var(--ink);}
-.modal-footer{padding-top:16px;display:flex;gap:10px;border-top:1px solid var(--border);margin-top:16px;}
-.modal-count{font-family:'Stack Sans Notch',sans-serif;font-size:12px;color:var(--text-muted);align-self:center;flex:1;letter-spacing:0.04em;}
-.idea-modal{max-width:860px;}
-.idea-builder{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;overflow-y:auto;min-height:0;padding-right:2px;}
-.idea-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;min-width:0;display:flex;flex-direction:column;gap:10px;}
-.idea-panel-title{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:var(--rust);}
-.idea-search,.idea-new{width:100%;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);padding:9px 10px;color:var(--text);font-size:13px;outline:none;font-family:'IBM Plex Serif',serif;}
-.idea-search:focus,.idea-new:focus{border-color:var(--rose);}
-.idea-results{display:flex;flex-direction:column;gap:7px;max-height:190px;overflow-y:auto;}
-.idea-option{border:1px solid var(--border);border-radius:8px;background:var(--bg-lift);padding:9px 10px;cursor:pointer;transition:all 0.12s;}
-.idea-option:hover{border-color:var(--rose);}
-.idea-option.selected{border-color:var(--rust);background:#FBF5F4;}
-.idea-option-title{font-weight:700;color:var(--ink);font-size:13px;line-height:1.25;}
-.idea-option-sub{font-size:11px;color:var(--text-muted);line-height:1.35;margin-top:2px;}
-.idea-save-row{display:flex;align-items:center;gap:7px;color:var(--text-mid);font-size:12px;line-height:1.35;}
-.idea-save-row input{accent-color:var(--rust);}
-.idea-notes{margin-top:12px;flex-shrink:0;}
-.idea-notes textarea{width:100%;min-height:72px;resize:vertical;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);padding:10px 12px;color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;}
-.idea-notes textarea:focus{border-color:var(--rose);}
-footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-items:center;justify-content:space-between;}
-.footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
-.footer-note{font-size:11px;color:var(--text-muted);}
 
-.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 82%,#000 18%);padding:28px 18px;z-index:260;flex-direction:column;gap:28px;}
+.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 82%,#000 18%);padding:24px 18px;z-index:260;flex-direction:column;gap:18px;overflow-y:auto;}
 .side-brand{font-family:'Stack Sans Notch',sans-serif;font-size:31px;font-weight:800;line-height:0.92;color:var(--ink);}
 .side-brand span{display:block;font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:400;color:var(--rust);line-height:1.2;}
-.side-nav,.core-sidebar{display:flex;flex-direction:column;gap:10px;}
-.side-link{display:flex;align-items:center;gap:12px;border-radius:8px;padding:10px 12px;color:var(--text-mid);font-weight:700;transition:background 0.15s,color 0.15s;}
+.side-nav,.core-sidebar{display:flex;flex-direction:column;gap:8px;}
+.side-link{display:flex;align-items:center;gap:12px;border-radius:8px;padding:8px 12px;color:var(--text-mid);font-weight:700;transition:background 0.15s,color 0.15s;}
 .side-link.active{background:color-mix(in srgb,var(--rust) 26%,var(--surface) 74%);color:var(--ink);}
 .side-link:hover{background:color-mix(in srgb,var(--surface) 78%,var(--rust) 22%);color:var(--ink);}
 .nav-icon{width:28px;height:28px;border:1px solid var(--border-mid);border-radius:8px;background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .nav-icon img{width:19px;height:19px;object-fit:contain;}
-.core-sidebar{border:1px solid var(--border-mid);border-radius:12px;padding:12px;background:color-mix(in srgb,var(--surface) 74%,var(--bg) 26%);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--ink) 9%,transparent);gap:12px;}
+.nav-icon svg{width:16px;height:16px;color:var(--text-mid);}
+.core-sidebar{border:1px solid var(--border-mid);border-radius:12px;padding:10px;background:color-mix(in srgb,var(--surface) 74%,var(--bg) 26%);gap:9px;}
 .core-sidebar-head{display:flex;align-items:center;justify-content:space-between;color:var(--rust);font-size:15px;}
 .core-sidebar-head span:first-child{font-weight:700;}
 .core-sidebar-count{font-family:'Noto Sans Mono',sans-serif;font-size:10px;font-weight:800;color:var(--ink);background:color-mix(in srgb,var(--sage) 24%,var(--surface) 76%);border:1px solid var(--border-mid);border-radius:999px;padding:3px 7px;}
-.core-mini-list{display:flex;flex-direction:column;gap:7px;}
+.core-mini-list{display:flex;flex-direction:column;gap:6px;}
 .core-mini-item{display:block;position:relative;}
 .core-mini-num{display:none;}
-.core-mini-input{min-width:0;width:100%;border:1px solid var(--border-mid);border-radius:8px;padding:8px 10px;color:var(--ink);font-size:12px;font-weight:700;outline:none;box-shadow:0 2px 7px rgba(0,0,0,0.08);transition:border-color 0.15s,box-shadow 0.15s,transform 0.15s;background:color-mix(in srgb,var(--surface) 75%,var(--sand) 25%);}
+.core-mini-input{min-width:0;width:100%;border:1px solid var(--border-mid);border-radius:8px;padding:7px 10px;color:var(--ink);font-size:12px;font-weight:700;outline:none;transition:border-color 0.15s;background:color-mix(in srgb,var(--surface) 75%,var(--sand) 25%);}
 .core-mini-item:nth-child(1) .core-mini-input{background:color-mix(in srgb,var(--rust) 34%,var(--surface) 66%);}
 .core-mini-item:nth-child(2) .core-mini-input{background:color-mix(in srgb,var(--sage) 34%,var(--surface) 66%);}
 .core-mini-item:nth-child(3) .core-mini-input{background:color-mix(in srgb,var(--tan) 34%,var(--surface) 66%);}
 .core-mini-item:nth-child(4) .core-mini-input{background:color-mix(in srgb,var(--sand) 52%,var(--surface) 48%);}
 .core-mini-item:nth-child(5) .core-mini-input{background:color-mix(in srgb,var(--rose) 34%,var(--surface) 66%);}
 .core-mini-input::placeholder{color:var(--text-mid);font-weight:600;}
-.core-mini-input:focus{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 22%,transparent),0 3px 10px rgba(0,0,0,0.12);transform:translateY(-1px);}
-.side-profile{margin-top:auto;border:1px solid var(--border);border-radius:var(--r);background:color-mix(in srgb,var(--surface) 76%,var(--bg) 24%);padding:10px;display:flex;align-items:center;gap:10px;}
+.core-mini-input:focus{border-color:var(--rust);}
+.side-profile{margin-top:auto;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--surface) 76%,var(--bg) 24%);padding:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color 0.15s;}
+.side-profile:hover{border-color:var(--rust);}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--sage);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
-.avatar-img{width:100%;height:100%;object-fit:cover;display:block;}
-.profile-name{font-weight:700;line-height:1.1;}
+.avatar-img{width:100%;height:100%;object-fit:cover;}
+.profile-name{font-weight:700;line-height:1.1;color:var(--ink);}
 .profile-role{font-size:11px;color:var(--text-muted);}
-@media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}footer{padding-left:40px;padding-right:40px;}}
+
+.page{max-width:820px;margin:0 auto;padding:0 40px 100px;}
+.page-header{padding:40px 0 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.page-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
+.page-title{font-family:'IBM Plex Serif',serif;font-size:48px;font-weight:700;line-height:0.95;letter-spacing:-0.02em;color:var(--ink);}
+.page-title em{font-style:italic;color:var(--sage);}
+.header-actions{display:flex;gap:8px;align-items:center;flex-shrink:0;margin-top:44px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:8px;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:var(--rust);color:#fff;}
+.btn-primary:hover{opacity:0.88;}
+.btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}
+.btn-ghost:hover{background:var(--surface);color:var(--ink);}
+.btn-sm{padding:6px 12px;font-size:11px;}
+.btn-xs{padding:4px 9px;font-size:10px;}
+
+/* Date nav */
+.date-nav{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.date-arrow{background:var(--surface);border:1px solid var(--border-mid);border-radius:8px;padding:7px 14px;font-size:16px;cursor:pointer;color:var(--text-mid);transition:all 0.12s;}
+.date-arrow:hover{border-color:var(--rust);color:var(--rust);}
+.date-label{font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:700;color:var(--ink);min-width:200px;text-align:center;cursor:pointer;}
+.date-badge{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--rust);background:color-mix(in srgb,var(--rust) 12%,transparent);padding:3px 10px;border-radius:100px;}
+
+/* Progress summary */
+.progress-summary{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.progress-text{font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:700;color:var(--ink);}
+.progress-text span{color:var(--rust);}
+.progress-pills{display:flex;gap:8px;align-items:center;}
+.progress-pill{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px 14px;border-radius:100px;border:1px solid var(--border-mid);}
+.pill-filmed{background:color-mix(in srgb,var(--sage) 16%,transparent);color:var(--sage);border-color:color-mix(in srgb,var(--sage) 28%,transparent);}
+.pill-remaining{background:color-mix(in srgb,var(--rust) 14%,transparent);color:var(--rust);border-color:color-mix(in srgb,var(--rust) 24%,transparent);}
+.progress-bar-wrap{width:100%;height:3px;background:var(--border);border-radius:2px;overflow:hidden;flex-basis:100%;}
+.progress-bar-fill{height:100%;background:var(--rust);border-radius:2px;transition:width 0.4s ease;}
+
+/* Brand filter */
+.brand-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+.brand-pill{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:6px 14px;border-radius:100px;border:1px solid var(--border-mid);background:var(--surface);color:var(--text-mid);cursor:pointer;transition:all 0.12s;}
+.brand-pill:hover{border-color:var(--rust);color:var(--rust);}
+.brand-pill.active{background:var(--rust);color:#fff;border-color:var(--rust);}
+
+/* Empty */
+.empty-state{text-align:center;padding:64px 24px;}
+.empty-title{font-family:'IBM Plex Serif',serif;font-size:28px;font-weight:700;color:var(--text-mid);margin-bottom:8px;}
+.empty-sub{font-size:13px;color:var(--text-muted);margin-bottom:24px;line-height:1.6;}
+
+/* Product cards */
+.cards-list{display:flex;flex-direction:column;gap:14px;}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.pcard-header{background:color-mix(in srgb,var(--surface) 55%,var(--bg) 45%);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);}
+.pcard-left{flex:1;min-width:0;}
+.pcard-name{font-family:'Stack Sans Notch',sans-serif;font-size:15px;font-weight:800;color:var(--ink);letter-spacing:0.02em;}
+.pcard-brand{font-size:11px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.07em;text-transform:uppercase;margin-top:2px;}
+.pcard-btns{display:flex;gap:6px;flex-shrink:0;}
+.hbtn{background:color-mix(in srgb,var(--surface) 68%,var(--bg) 32%);border:1px solid var(--border-mid);border-radius:6px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.12s;}
+.hbtn:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
+.hbtn.danger:hover{background:rgba(180,50,40,0.15);color:#c83c32;border-color:rgba(180,50,40,0.3);}
+
+/* Takes */
+.takes-wrap{padding:14px 18px;display:flex;flex-direction:column;gap:10px;}
+.take-card{background:color-mix(in srgb,var(--bg) 55%,var(--surface) 45%);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:opacity 0.15s;}
+.take-card.done{opacity:0.5;}
+.take-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.take-num{color:var(--rust);}
+
+/* Hook display */
+.hook-display{background:var(--surface);border:1px solid var(--border-mid);border-radius:8px;padding:10px 14px;font-size:13px;font-style:italic;color:var(--text-mid);line-height:1.5;margin-bottom:10px;border-left:3px solid var(--rust);cursor:pointer;transition:border-color 0.12s;}
+.hook-display:hover{border-color:var(--rust);}
+.hook-placeholder{color:var(--text-muted);}
+.hook-actions{display:flex;gap:6px;margin-bottom:10px;}
+
+/* Script display */
+.script-display{background:var(--surface);border:1px solid var(--border-mid);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.75;color:var(--text);border-left:3px solid var(--sage);margin-bottom:8px;}
+.script-placeholder{font-style:italic;color:var(--text-muted);}
+.script-textarea{width:100%;padding:10px 12px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;line-height:1.75;font-family:'IBM Plex Serif',serif;outline:none;resize:vertical;min-height:100px;transition:border-color 0.15s;}
+.script-textarea:focus{border-color:var(--rust);}
+.script-actions{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.take-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;padding-top:10px;border-top:1px solid var(--border);}
+.take-status{font-family:'Stack Sans Notch',sans-serif;font-size:11px;color:var(--text-muted);}
+.take-status.filmed{color:var(--sage);}
+.take-footer-btns{display:flex;gap:6px;}
+.tbtn{background:none;border:1px solid var(--border-mid);border-radius:6px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.12s;white-space:nowrap;}
+.tbtn:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
+.tbtn.done-active{background:color-mix(in srgb,var(--sage) 18%,transparent);color:var(--sage);border-color:color-mix(in srgb,var(--sage) 28%,transparent);}
+.tbtn.del:hover{background:rgba(180,50,40,0.12);color:#c83c32;border-color:rgba(180,50,40,0.25);}
+
+.add-take-btn{width:100%;background:none;border:1px dashed var(--border-mid);border-radius:10px;padding:9px;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:'Stack Sans Notch',sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;}
+.add-take-btn:hover{border-color:var(--rust);color:var(--rust);}
+
+/* Modals */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:400;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:24px 24px 0 0;border:1px solid var(--border-mid);border-bottom:none;padding:24px 24px 36px;width:100%;max-width:560px;max-height:88vh;overflow:hidden;box-shadow:0 -20px 60px rgba(0,0,0,0.3);display:flex;flex-direction:column;}
+.modal-handle{width:36px;height:4px;background:var(--border-mid);border-radius:2px;margin:0 auto 20px;}
+.modal-title{font-family:'IBM Plex Serif',serif;font-size:24px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.modal-sub{font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;}
+.modal-search{width:100%;padding:10px 14px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px;font-family:'IBM Plex Serif',serif;outline:none;margin-bottom:12px;}
+.modal-search:focus{border-color:var(--rust);}
+.modal-list{display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:0;}
+.modal-footer{display:flex;gap:8px;margin-top:16px;flex-shrink:0;}
+.modal-cancel{flex:1;background:var(--bg);border:1px solid var(--border-mid);border-radius:10px;padding:12px;font-size:12px;cursor:pointer;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;}
+.modal-confirm{flex:2;background:var(--rust);border:none;border-radius:10px;padding:12px;font-size:12px;cursor:pointer;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;}
+.modal-confirm:hover{opacity:0.88;}
+.modal-confirm:disabled{opacity:0.5;cursor:not-allowed;}
+
+/* Picker items */
+.picker-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer;background:var(--bg);transition:all 0.12s;}
+.picker-item:hover{border-color:var(--rust);}
+.picker-item.selected{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 8%,var(--surface) 92%);}
+.picker-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border-mid);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;transition:all 0.12s;}
+.picker-item.selected .picker-check{background:var(--rust);border-color:var(--rust);}
+.picker-name{font-size:13px;font-weight:600;color:var(--ink);}
+.picker-meta{font-size:11px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;margin-top:2px;}
+
+/* Hook modal items */
+.hook-cat-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);padding:2px 4px;margin-top:6px;}
+.hook-item{padding:10px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--text-mid);line-height:1.5;background:var(--bg);transition:all 0.12s;}
+.hook-item:hover{border-color:var(--rust);color:var(--ink);}
+.custom-hook-area{background:color-mix(in srgb,var(--bg) 60%,var(--surface) 40%);border:1px solid var(--border-mid);border-radius:10px;padding:12px;margin-bottom:12px;}
+.custom-hook-area label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:8px;}
+.custom-hook-row{display:flex;gap:8px;}
+.custom-hook-input{flex:1;min-height:64px;padding:9px 12px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;resize:none;line-height:1.45;}
+.custom-hook-input:focus{border-color:var(--rust);}
+.custom-hook-save{background:var(--rust);border:none;border-radius:8px;padding:10px 12px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;align-self:flex-end;}
+
+/* Script modal items */
+.script-pick-item{padding:12px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer;background:var(--bg);transition:all 0.12s;}
+.script-pick-item:hover{border-color:var(--rust);}
+.script-pick-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);margin-bottom:3px;}
+.script-pick-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+.script-pick-preview{font-size:12px;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
 .tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:color-mix(in srgb,var(--bg) 88%,#000 12%);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
-.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;border:0;background:transparent;cursor:pointer;padding-bottom:4px;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;border:0;background:transparent;cursor:pointer;}
 .tab-item.active{color:var(--rust);}
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
-.tab-profile-avatar{width:24px;height:24px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
-@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:40px;}.week-strip{gap:5px;}.week-day{padding:10px 4px;}.week-day-num{font-size:18px;}.modal-overlay{padding:14px;align-items:center;}.idea-builder{grid-template-columns:1fr;}.modal{padding:22px 16px;max-height:calc(100vh - 28px);border-radius:18px;}.modal-footer{flex-wrap:wrap;}.modal-count{width:100%;flex:auto;}.tab-bar{display:flex;}}
+
+@media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:36px;}.tab-bar{display:flex;}.modal{max-height:calc(100dvh - 72px);}.modal-list{flex:1;max-height:none;}.modal-footer{position:sticky;bottom:0;background:var(--surface);padding-top:10px;}}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Creator Hub">
-<link rel="apple-touch-icon" href="icons/pwa/icon-192.png">
 </head>
 <body>
+
 <aside class="desktop-sidebar">
   <a href="index.html" class="side-brand">creator <span>workspace</span></a>
   <div class="side-nav">
@@ -160,6 +209,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <a href="products.html" class="side-link"><span class="nav-icon"><img src="icons/products.png" alt=""></span>Products</a>
     <a href="scripts.html" class="side-link"><span class="nav-icon"><img src="icons/scripts.png" alt=""></span>Scripts</a>
     <a href="sales-calendar.html" class="side-link"><span class="nav-icon"><img src="icons/sales.png" alt=""></span>Sales Log</a>
+    <a href="settings.html" class="side-link"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings</a>
   </div>
   <div class="core-sidebar">
     <div class="core-sidebar-head"><span>Core 5</span><span class="core-sidebar-count" id="coreCount">0/5</span></div>
@@ -171,8 +221,9 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       <label class="core-mini-item"><span class="core-mini-num">5</span><input class="core-mini-input" data-core-index="4" placeholder="Product name"></label>
     </div>
   </div>
-  <div class="side-profile" style="cursor:pointer;"><div class="avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div><div class="profile-name">Kourtney</div><div class="profile-role">Creator</div></div></div>
+  <div class="side-profile" style="cursor:pointer;"><div class="avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div><div class="profile-name">Creator</div><div class="profile-role">Creator</div></div></div>
 </aside>
+
 <nav>
   <a href="index.html" class="nav-brand">Creator Hub</a>
   <div class="nav-links">
@@ -183,367 +234,603 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <a href="hooks.html" class="nav-link">Hooks</a>
     <a href="scripts.html" class="nav-link">Scripts</a>
     <a href="sales-calendar.html" class="nav-link">Sales Log</a>
-
+    <a href="settings.html" class="nav-link">Settings</a>
   </div>
-
 </nav>
+
 <div class="page">
   <div class="page-header">
-    <div class="page-eyebrow">Daily Workflow</div>
-    <div class="page-title">Today's <em>To Do</em></div>
-  </div>
-  <div class="week-strip" id="weekStrip"></div>
-  <div class="strip-divider"></div>
-  <div class="queue-header">
-    <div class="queue-date" id="queueDate"></div>
-    <div class="queue-actions">
-      <button class="btn btn-ghost" onclick="clearDone()">Clear Done</button>
-      <button class="btn btn-primary" onclick="openIdeaModal()">+ Add Video Idea</button>
+    <div>
+      <div class="page-eyebrow">Daily Workflow</div>
+      <div class="page-title">Today's <em>To Do</em></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="copyAllScripts(this)">📋 Copy All</button>
+      <button class="btn btn-primary" onclick="openPicker()">+ Add Task</button>
     </div>
   </div>
-  <div class="queue-list" id="queueList"></div>
+
+  <div class="date-nav">
+    <button class="date-arrow" onclick="changeDay(-1)">‹</button>
+    <div class="date-label" id="dateLabel" onclick="goToToday()"></div>
+    <button class="date-arrow" onclick="changeDay(1)">›</button>
+    <span class="date-badge" id="dateBadge" style="display:none;"></span>
+  </div>
+
+  <div id="progressArea"></div>
+  <div id="brandFilterArea"></div>
+  <div id="mainContent"><div style="text-align:center;padding:60px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:12px;letter-spacing:0.1em;">Loading...</div></div>
 </div>
 
-<!-- PICKER MODAL -->
-<div class="modal-overlay" id="modalOverlay">
+<!-- PRODUCT PICKER MODAL -->
+<div class="modal-overlay" id="pickerModal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Pick Products to Film</div>
-    <input type="text" class="modal-search" id="pickerSearch" placeholder="Search your products..." oninput="renderPicker()">
+    <div class="modal-title">What are you filming today?</div>
+    <div class="modal-sub">Select one or more products — they'll each get their own card.</div>
+    <input type="text" class="modal-search" id="pickerSearch" placeholder="Search products..." oninput="filterPicker()">
     <div class="modal-list" id="pickerList"></div>
     <div class="modal-footer">
-      <div class="modal-count" id="selectedCount">None selected</div>
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="addSelected()">Add to Queue</button>
+      <button class="modal-cancel" onclick="closePicker()">Cancel</button>
+      <button class="modal-confirm" id="pickerConfirmBtn" onclick="addSelectedProducts()">Add Selected</button>
     </div>
   </div>
 </div>
 
-<!-- VIDEO IDEA MODAL -->
-<div class="modal-overlay" id="ideaModal">
-  <div class="modal idea-modal">
+<!-- HOOK MODAL -->
+<div class="modal-overlay" id="hookModal">
+  <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Add Video Idea</div>
-    <div class="idea-builder">
-      <div class="idea-panel">
-        <div class="idea-panel-title">Product</div>
-        <input type="text" class="idea-search" id="ideaProductSearch" placeholder="Search product bank..." oninput="renderIdeaOptions('product')">
-        <div class="idea-results" id="ideaProductResults"></div>
-        <input type="text" class="idea-new" id="ideaNewProduct" placeholder="Or type a new product">
-        <label class="idea-save-row"><input type="checkbox" id="saveNewProduct"> Save new product to product bank</label>
-      </div>
-      <div class="idea-panel">
-        <div class="idea-panel-title">Hook</div>
-        <input type="text" class="idea-search" id="ideaHookSearch" placeholder="Search saved hooks..." oninput="renderIdeaOptions('hook')">
-        <div class="idea-results" id="ideaHookResults"></div>
-        <input type="text" class="idea-new" id="ideaNewHook" placeholder="Or type a new hook">
-        <label class="idea-save-row"><input type="checkbox" id="saveNewHook"> Save new hook to hook bank</label>
-      </div>
-      <div class="idea-panel">
-        <div class="idea-panel-title">Script</div>
-        <input type="text" class="idea-search" id="ideaScriptSearch" placeholder="Search saved scripts..." oninput="renderIdeaOptions('script')">
-        <div class="idea-results" id="ideaScriptResults"></div>
-        <textarea class="idea-new" id="ideaNewScript" placeholder="Or type a new script" style="min-height:82px;resize:vertical;"></textarea>
-        <label class="idea-save-row"><input type="checkbox" id="saveNewScript"> Save new script to script bank</label>
+    <div class="modal-title">Choose a Hook</div>
+    <div class="modal-sub" id="hookModalSub"></div>
+    <div class="custom-hook-area">
+      <label>Custom hook</label>
+      <div class="custom-hook-row">
+        <textarea class="custom-hook-input" id="customHookInput" placeholder="Type or paste your own hook..."></textarea>
+        <button class="custom-hook-save" onclick="saveCustomHook()">Use</button>
       </div>
     </div>
-    <div class="idea-notes">
-      <textarea id="ideaExtraNotes" placeholder="Optional notes, angle, or filming reminder..."></textarea>
-    </div>
+    <input type="text" class="modal-search" id="hookSearch" placeholder="Search hooks..." oninput="filterHooks()">
+    <div class="modal-list" id="hookList"></div>
     <div class="modal-footer">
-      <div class="modal-count" id="ideaBuildStatus">Choose saved items or type something new.</div>
-      <button class="btn btn-ghost" onclick="closeIdeaModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveBuiltIdea()">Save Idea</button>
+      <button class="modal-cancel" onclick="closeHookModal()">Close</button>
     </div>
   </div>
 </div>
 
-<footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
+<!-- SCRIPT MODAL -->
+<div class="modal-overlay" id="scriptModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Choose a Script</div>
+    <div class="modal-sub" id="scriptModalSub"></div>
+    <input type="text" class="modal-search" id="scriptSearch" placeholder="Search scripts..." oninput="filterScripts()">
+    <div class="modal-list" id="scriptList"></div>
+    <div class="modal-footer">
+      <button class="modal-cancel" onclick="closeScriptModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="tab-bar">
   <a href="index.html" class="tab-item"><div><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a>
   <a href="daily-todo.html" class="tab-item active"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
   <a href="sales-calendar.html" class="tab-item"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
   <a href="products.html" class="tab-item"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
-  <button type="button" class="tab-item profile-trigger" aria-label="Open profile menu"><div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div>User</div></button>
+  <a href="settings.html" class="tab-item">
+    <div><svg style="width:22px;height:22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+    <div>Settings</div>
+  </a>
 </div>
 
 <script>
-const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-let _user=null, selectedDate=new Date(), pickerSelected=new Set(), _allProds=[], _allHooks=[], _allScripts=[], _queueCache=[];
-let _ideaPick={product:null,hook:null,script:null};
-selectedDate.setHours(0,0,0,0);
+let _user = null;
+let ALL_PRODUCTS = [];
+let ALL_HOOKS = [];
+let ALL_SCRIPTS = [];
+let TODO = []; // array of { id, prodId, name, brand, takes:[] }
+let activeBrandFilter = 'All';
+let pickerSelected = new Set();
+let hookTarget = null; // { cardId, takeId }
+let scriptTarget = null; // { cardId, takeId }
 
-function dateKey(d){return d.toISOString().slice(0,10);}
-function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+const today = new Date();
+let currentDate = new Date(today);
 
-async function init(){
-  const user=await requireAuth(); if(!user)return;
-  _user=user;
-  const prefs = await loadUserPrefs(user.id);
-  await initDisplayName(user, prefs);
-  await initCore5(user.id, prefs);
-  await initTheme(user.id, prefs);
-  initProfilePopover(user.id);
-  const [{data:prods},{data:hooks},{data:scripts}]=await Promise.all([
-    db.from('products').select('id,name,brand,notes').eq('user_id',user.id).order('name'),
-    db.from('hooks').select('id,text,cat').eq('user_id',user.id).order('created_at',{ascending:false}),
-    db.from('scripts').select('id,title,brand,script').eq('user_id',user.id).order('created_at',{ascending:false})
-  ]);
-  _allProds=prods||[];
-  _allHooks=hooks||[];
-  _allScripts=scripts||[];
-  await buildWeekStrip();
-  await renderQueue();
+function dateKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
+const todayKey = dateKey(today);
+function currentKey() { return dateKey(currentDate); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function esc(s) { return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-async function buildWeekStrip(){
-  const today=new Date(); today.setHours(0,0,0,0);
-  const dow=today.getDay();
-  const monday=new Date(today); monday.setDate(today.getDate()-(dow===0?6:dow-1));
-  // Get queue counts for the week
-  const weekStart=dateKey(monday);
-  const weekEnd=new Date(monday); weekEnd.setDate(monday.getDate()+6);
-  const {data:qrows}=await db.from('queue').select('date').eq('user_id',_user.id).gte('date',weekStart).lte('date',dateKey(weekEnd));
-  const datesWithItems=new Set((qrows||[]).map(r=>r.date));
-  const strip=document.getElementById('weekStrip');
-  strip.innerHTML='';
-  for(let i=0;i<7;i++){
-    const d=new Date(monday); d.setDate(monday.getDate()+i);
-    const key=dateKey(d);
-    const isToday=d.getTime()===today.getTime();
-    const isSelected=d.getTime()===selectedDate.getTime();
-    const hasItems=datesWithItems.has(key);
-    const el=document.createElement('div');
-    el.className='week-day'+(isSelected?' active':'')+(isToday?' today-marker':'')+(hasItems?' has-items':'');
-    el.innerHTML='<div class="week-day-name">'+DAYS[d.getDay()]+'</div><div class="week-day-num">'+d.getDate()+'</div>';
-    const captured=new Date(d);
-    el.onclick=()=>{selectedDate=captured;buildWeekStrip();renderQueue();};
-    strip.appendChild(el);
-  }
+// ─── DATE NAV ─────────────────────────────────────────────
+
+function updateDateDisplay() {
+  const key = currentKey();
+  const label = currentDate.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
+  document.getElementById('dateLabel').textContent = label;
+  const badge = document.getElementById('dateBadge');
+  if (key === todayKey) { badge.style.display = 'none'; }
+  else { badge.style.display = 'inline-block'; badge.textContent = key > todayKey ? 'Future' : 'Past'; }
 }
 
-async function renderQueue(){
-  const key=dateKey(selectedDate);
-  document.getElementById('queueDate').textContent=selectedDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  const {data:items}=await db.from('queue').select('*').eq('user_id',_user.id).eq('date',key).order('sort_order');
-  _queueCache=items||[];
-  const listEl=document.getElementById('queueList');
-  if(!_queueCache.length){
-    listEl.innerHTML='<div class="empty-state"><div class="empty-icon"><img src="icons/todo.png" alt=""></div><div class="empty-title">Nothing scheduled</div><div class="empty-sub">Add a video idea to start planning this day.</div><button class="btn btn-primary" onclick="openIdeaModal()">+ Add Video Idea</button></div>';
-    return;
-  }
-  listEl.innerHTML=_queueCache.map(item=>
-    '<div class="queue-card'+(item.done?' done':'')+'">'+
-    '<div class="queue-check'+(item.done?' checked':'')+'" onclick="toggleItem(\''+item.id+'\')"></div>'+
-    '<div class="queue-body">'+
-    (item.brand?'<div class="queue-brand">'+esc(item.brand)+'</div>':'')+
-    '<div class="queue-name">'+esc(item.name)+'</div>'+
-    formatQueueNotes(item.notes)+
-    '</div>'+
-    '<button class="queue-remove" onclick="removeItem(\''+item.id+'\')">&#xD7;</button>'+
-    '</div>'
-  ).join('');
+function changeDay(dir) {
+  currentDate = new Date(currentDate);
+  currentDate.setDate(currentDate.getDate() + dir);
+  updateDateDisplay();
+  loadQueue().then(render);
 }
 
-function formatQueueNotes(notes){
-  const text=String(notes||'').trim();
-  if(!text)return'';
-  const lines=text.split('\n').map(line=>line.trim()).filter(Boolean);
-  return '<div class="queue-notes">'+lines.map(line=>{
-    const match=line.match(/^([^:]{2,18}):\s*(.*)$/);
-    if(!match)return '<div class="queue-note-line">'+esc(line)+'</div>';
-    return '<div class="queue-note-line"><span class="queue-note-label">'+esc(match[1])+'</span>'+esc(match[2])+'</div>';
-  }).join('')+'</div>';
+function goToToday() {
+  if (currentKey() === todayKey) return;
+  currentDate = new Date(today);
+  updateDateDisplay();
+  loadQueue().then(render);
 }
 
-async function toggleItem(id){
-  const item=_queueCache.find(i=>i.id===id); if(!item)return;
-  await db.from('queue').update({done:!item.done}).eq('id',id);
-  await renderQueue();
-}
-async function removeItem(id){
-  await db.from('queue').delete().eq('id',id);
-  await buildWeekStrip(); await renderQueue();
-}
-async function clearDone(){
-  const doneItems=_queueCache.filter(i=>i.done);
-  if(doneItems.length){
-    await logQueueItemsToTracker(doneItems);
-    await db.from('queue').delete().in('id',doneItems.map(i=>i.id));
-    showToast('Saved to Content Tracker');
-  }
-  await buildWeekStrip(); await renderQueue();
+// ─── DATA ─────────────────────────────────────────────────
+
+async function loadProducts() {
+  const { data } = await db.from('products').select('id,name,brand,link,notes').eq('user_id', _user.id).order('name');
+  ALL_PRODUCTS = data || [];
 }
 
-function queueHook(item){
-  const lines=String(item.notes||'').split('\n').map(line=>line.trim()).filter(Boolean);
-  const line=lines.find(value=>/^Hook:/i.test(value));
-  return line ? line.replace(/^Hook:\s*/i,'').trim() : '';
+async function loadHooks() {
+  const { data } = await db.from('hooks').select('id,text,cat').eq('user_id', _user.id).order('cat');
+  ALL_HOOKS = data || [];
 }
-function localDateKey(){
-  const d=new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+async function loadScripts() {
+  const { data } = await db.from('scripts').select('id,title,brand,script').eq('user_id', _user.id).order('title');
+  ALL_SCRIPTS = data || [];
 }
-async function logQueueItemsToTracker(items){
-  const rows=items.map(item=>{
-    const hook=queueHook(item);
-    const notes=['Product: '+item.name];
-    if(hook)notes.push('Hook: '+hook);
-    return {
-      user_id:_user.id,
-      title:hook||item.name,
-      brand:item.name,
-      date:localDateKey(),
-      status:'live',
-      notes:notes.join('\n')
-    };
+
+async function loadQueue() {
+  const { data } = await db.from('queue').select('*').eq('user_id', _user.id).eq('date', currentKey()).order('sort_order');
+  const cardMap = {};
+  (data || []).forEach(row => {
+    const key = row.prod_id || ('_name_' + row.name);
+    if (!cardMap[key]) {
+      cardMap[key] = { id: 'c-' + key, prodId: row.prod_id, name: row.name, brand: row.brand || '', takes: [] };
+    }
+    cardMap[key].takes.push({
+      id: 't-' + row.id, queueId: row.id,
+      hookText: row.notes || '',
+      script: row.brand || '', // we'll repurpose brand col for script storage — wait, use notes for hook, need separate field
+      done: row.done, sortOrder: row.sort_order,
+      editingScript: false
+    });
   });
-  if(rows.length)await db.from('videos').insert(rows);
-}
-
-function openPicker(){
-  pickerSelected=new Set();
-  document.getElementById('pickerSearch').value='';
-  renderPicker();
-  document.getElementById('modalOverlay').classList.add('open');
-  setTimeout(()=>document.getElementById('pickerSearch').focus(),100);
-}
-function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
-
-function renderPicker(){
-  const q=document.getElementById('pickerSearch').value.toLowerCase();
-  const prods=_allProds.filter(p=>!q||(p.name+(p.brand||'')).toLowerCase().includes(q));
-  const el=document.getElementById('pickerList');
-  if(!prods.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">No products match your search.</div>';updateCount();return;}
-  el.innerHTML=prods.map(p=>'<div class="picker-item'+(pickerSelected.has(p.id)?' selected':'')+'" onclick="togglePick(\''+p.id+'\')"><div class="picker-check"></div><div><div class="picker-brand">'+(p.brand||'')+'</div><div class="picker-name">'+p.name+'</div></div></div>').join('');
-  updateCount();
-}
-function togglePick(id){
-  if(pickerSelected.has(id))pickerSelected.delete(id);else pickerSelected.add(id);
-  renderPicker();
-}
-function updateCount(){const n=pickerSelected.size;document.getElementById('selectedCount').textContent=n===0?'None selected':n+' selected';}
-
-async function addSelected(){
-  if(!pickerSelected.size){closeModal();return;}
-  const key=dateKey(selectedDate);
-  const existing=new Set(_queueCache.map(i=>i.prod_id));
-  const toInsert=[];
-  let order=_queueCache.length;
-  pickerSelected.forEach(id=>{
-    if(existing.has(id))return;
-    const p=_allProds.find(p=>p.id===id); if(!p)return;
-    toInsert.push({user_id:_user.id,date:key,prod_id:p.id,name:p.name,brand:p.brand||'',notes:p.notes||'',done:false,sort_order:order++});
+  TODO = Object.values(cardMap);
+  // Restore scripts from sessionStorage (not persisted in DB for simplicity)
+  TODO.forEach(card => {
+    const saved = sessionStorage.getItem('script-' + card.id + '-' + currentKey());
+    if (saved) card.script = saved;
+    else card.script = '';
+    card.takes.forEach(take => {
+      const ts = sessionStorage.getItem('takescript-' + take.queueId);
+      if (ts) take.script = ts;
+      else take.script = '';
+    });
   });
-  if(toInsert.length) await db.from('queue').insert(toInsert);
-  closeModal(); await buildWeekStrip(); await renderQueue();
 }
 
-function openIdeaModal(){
-  _ideaPick={product:null,hook:null,script:null};
-  ['ideaProductSearch','ideaHookSearch','ideaScriptSearch','ideaNewProduct','ideaNewHook','ideaNewScript','ideaExtraNotes'].forEach(id=>{document.getElementById(id).value='';});
-  ['saveNewProduct','saveNewHook','saveNewScript'].forEach(id=>{document.getElementById(id).checked=false;});
-  renderIdeaOptions('product');
-  renderIdeaOptions('hook');
-  renderIdeaOptions('script');
-  updateIdeaStatus();
-  document.getElementById('ideaModal').classList.add('open');
-  setTimeout(()=>document.getElementById('ideaProductSearch').focus(),100);
+async function saveQueueRow(card, take) {
+  const payload = {
+    user_id: _user.id,
+    date: currentKey(),
+    prod_id: card.prodId || null,
+    name: card.name,
+    brand: card.brand || '',
+    notes: take.hookText || '',
+    done: take.done || false,
+    sort_order: take.sortOrder || 0
+  };
+  if (take.queueId) {
+    await db.from('queue').update(payload).eq('id', take.queueId);
+  } else {
+    const { data } = await db.from('queue').insert(payload).select('id').single();
+    if (data) take.queueId = data.id;
+  }
 }
-function closeIdeaModal(){document.getElementById('ideaModal').classList.remove('open');}
-function ideaSource(type){
-  if(type==='product')return{items:_allProds,search:'ideaProductSearch',results:'ideaProductResults',label:'products'};
-  if(type==='hook')return{items:_allHooks,search:'ideaHookSearch',results:'ideaHookResults',label:'hooks'};
-  return{items:_allScripts,search:'ideaScriptSearch',results:'ideaScriptResults',label:'scripts'};
-}
-function itemText(type,item){
-  if(type==='hook')return item.text||'';
-  if(type==='script')return item.title||item.script||'';
-  return item.name||'';
-}
-function itemSub(type,item){
-  if(type==='hook')return item.cat||'Saved hook';
-  if(type==='script')return item.brand||((item.script||'').slice(0,70));
-  return item.brand||'Product bank';
-}
-function renderIdeaOptions(type){
-  const cfg=ideaSource(type);
-  const q=document.getElementById(cfg.search).value.toLowerCase();
-  const matches=cfg.items.filter(item=>(itemText(type,item)+itemSub(type,item)).toLowerCase().includes(q)).slice(0,12);
-  const el=document.getElementById(cfg.results);
-  if(!matches.length){el.innerHTML='<div class="idea-option-sub" style="padding:8px 2px;">No saved '+cfg.label+' found.</div>';return;}
-  el.innerHTML=matches.map(item=>
-    '<div class="idea-option '+(_ideaPick[type]===item.id?'selected':'')+'" data-type="'+type+'" data-id="'+item.id+'" onclick="selectIdeaItem(this.dataset.type,this.dataset.id)">'+
-      '<div class="idea-option-title">'+esc(itemText(type,item))+'</div>'+
-      '<div class="idea-option-sub">'+esc(itemSub(type,item))+'</div>'+
-    '</div>'
-  ).join('');
-}
-function selectIdeaItem(type,id){
-  _ideaPick[type]=_ideaPick[type]===id?null:id;
-  renderIdeaOptions(type);
-  updateIdeaStatus();
-}
-function picked(type){
-  const list=type==='product'?_allProds:type==='hook'?_allHooks:_allScripts;
-  return list.find(item=>item.id===_ideaPick[type])||null;
-}
-function updateIdeaStatus(){
-  const count=['product','hook','script'].filter(type=>_ideaPick[type]).length;
-  document.getElementById('ideaBuildStatus').textContent=count?count+' saved item'+(count===1?'':'s')+' selected.':'Choose saved items or type something new.';
-}
-async function saveBuiltIdea(){
-  let product=picked('product'), hook=picked('hook'), script=picked('script');
-  const newProduct=document.getElementById('ideaNewProduct').value.trim();
-  const newHook=document.getElementById('ideaNewHook').value.trim();
-  const newScript=document.getElementById('ideaNewScript').value.trim();
-  const notes=document.getElementById('ideaExtraNotes').value.trim();
 
-  if(!product && !hook && !script && !newProduct && !newHook && !newScript && !notes){
-    document.getElementById('ideaProductSearch').focus();
+async function deleteQueueRow(take) {
+  if (take.queueId) {
+    await db.from('queue').delete().eq('id', take.queueId);
+    sessionStorage.removeItem('takescript-' + take.queueId);
+  }
+}
+
+// ─── RENDER ───────────────────────────────────────────────
+
+function getFilteredCards() {
+  if (activeBrandFilter === 'All') return TODO;
+  return TODO.filter(c => (c.brand || '') === activeBrandFilter);
+}
+
+function render() {
+  const allTakes = TODO.flatMap(c => c.takes);
+  const doneTakes = allTakes.filter(t => t.done).length;
+  const total = allTakes.length;
+
+  // Progress summary
+  const progressArea = document.getElementById('progressArea');
+  if (total > 0) {
+    progressArea.innerHTML = `<div class="progress-summary">
+      <div class="progress-text"><span>${doneTakes}/${total}</span> takes done today</div>
+      <div class="progress-pills">
+        <span class="progress-pill pill-filmed">${doneTakes} Filmed</span>
+        <span class="progress-pill pill-remaining">${total - doneTakes} Remaining</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${total ? (doneTakes/total*100) : 0}%"></div></div>
+    </div>`;
+  } else {
+    progressArea.innerHTML = '';
+  }
+
+  // Brand filter pills
+  const brands = [...new Set(TODO.map(c => c.brand).filter(Boolean))].sort();
+  const filterArea = document.getElementById('brandFilterArea');
+  if (brands.length > 1) {
+    filterArea.innerHTML = `<div class="brand-filter">
+      <button class="brand-pill${activeBrandFilter === 'All' ? ' active' : ''}" onclick="setBrandFilter('All')">All</button>
+      ${brands.map(b => `<button class="brand-pill${activeBrandFilter === b ? ' active' : ''}" onclick="setBrandFilter('${esc(b)}')">${esc(b)}</button>`).join('')}
+    </div>`;
+  } else {
+    filterArea.innerHTML = '';
+  }
+
+  // Cards
+  const main = document.getElementById('mainContent');
+  const filtered = getFilteredCards();
+
+  if (!TODO.length) {
+    main.innerHTML = `<div class="empty-state">
+      <div class="empty-title">Nothing planned yet</div>
+      <div class="empty-sub">Tap "+ Add Task" to pick products you're filming today.<br>Each one gets its own card with hook and script.</div>
+      <button class="btn btn-primary" onclick="openPicker()">+ Add Task</button>
+    </div>`;
     return;
   }
 
-  if(newProduct && document.getElementById('saveNewProduct').checked){
-    const {data}=await db.from('products').insert({user_id:_user.id,name:newProduct,status:'active'}).select('id,name,brand,notes').single();
-    if(data){_allProds=[data,..._allProds];product=data;}
-  }
-  if(newHook && document.getElementById('saveNewHook').checked){
-    const {data}=await db.from('hooks').insert({user_id:_user.id,text:newHook,cat:'curiosity'}).select('id,text,cat').single();
-    if(data){_allHooks=[data,..._allHooks];hook=data;}
-  }
-  if(newScript && document.getElementById('saveNewScript').checked){
-    const title=newScript.split('\n')[0].slice(0,70)||'Video idea script';
-    const {data}=await db.from('scripts').insert({user_id:_user.id,title,script:newScript,cat:'review'}).select('id,title,brand,script').single();
-    if(data){_allScripts=[data,..._allScripts];script=data;}
+  if (!filtered.length) {
+    main.innerHTML = `<div class="empty-state" style="padding:40px 24px;">
+      <div class="empty-title">No ${esc(activeBrandFilter)} products today</div>
+      <button class="btn btn-ghost" onclick="setBrandFilter('All')" style="margin-top:12px;">Show All</button>
+    </div>`;
+    return;
   }
 
-  const productText=newProduct||product?.name||'Video Idea';
-  const hookText=newHook||hook?.text||'';
-  const scriptText=newScript||(script?(script.script||script.title):'');
-  const queueNotes=[];
-  if(hookText)queueNotes.push('Hook: '+hookText);
-  if(scriptText)queueNotes.push('Script: '+scriptText);
-  if(notes)queueNotes.push('Notes: '+notes);
-  await db.from('queue').insert({
-    user_id:_user.id,
-    date:dateKey(selectedDate),
-    prod_id:product?.id||null,
-    name:productText,
-    brand:product?.brand||'',
-    notes:queueNotes.join('\n'),
-    done:false,
-    sort_order:_queueCache.length
+  let html = '<div class="cards-list">';
+  filtered.forEach(card => {
+    const takes = card.takes || [];
+    const done = takes.filter(t => t.done).length;
+    html += `<div class="pcard" id="${esc(card.id)}">
+      <div class="pcard-header">
+        <div class="pcard-left">
+          <div class="pcard-name">${esc(card.name)}</div>
+          ${card.brand ? `<div class="pcard-brand">${esc(card.brand)}</div>` : ''}
+        </div>
+        <div class="pcard-btns">
+          <span style="font-family:'Noto Sans Mono',sans-serif;font-size:11px;color:var(--text-muted);padding:0 4px;">${done}/${takes.length}</span>
+          <button class="hbtn danger" onclick="removeCard('${esc(card.id)}')">Remove</button>
+        </div>
+      </div>
+      <div class="takes-wrap">`;
+
+    takes.forEach((take, i) => {
+      html += `<div class="take-card${take.done ? ' done' : ''}" id="${esc(take.id)}">
+        <div class="take-label">
+          <span class="take-num">Take ${takes.length > 1 ? i+1 : ''}</span>
+          ${take.done ? '<span style="color:var(--sage);font-size:10px;">✓ Filmed</span>' : ''}
+        </div>`;
+
+      // Hook
+      if (take.hookText) {
+        html += `<div class="hook-display" onclick="openHookModal('${esc(card.id)}','${esc(take.id)}')">${esc(take.hookText)}</div>`;
+      } else {
+        html += `<div class="hook-actions">
+          <button class="tbtn" onclick="openHookModal('${esc(card.id)}','${esc(take.id)}')">+ Add Hook</button>
+        </div>`;
+      }
+
+      // Script
+      html += `<div class="script-actions">`;
+      if (take.script) {
+        html += `<button class="btn btn-ghost btn-xs js-copy-take-script" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Copy</button>`;
+      }
+      html += `<button class="btn btn-ghost btn-xs js-toggle-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">${take.script ? (take.editingScript ? 'Cancel' : 'Edit Script') : 'Paste Script'}</button>
+        <button class="btn btn-ghost btn-xs" onclick="openScriptModal('${esc(card.id)}','${esc(take.id)}')">${take.script ? 'Swap' : 'Browse Scripts'}</button>
+      </div>`;
+
+      if (take.editingScript) {
+        html += `<textarea class="script-textarea" id="sta-${esc(take.id)}" placeholder="Paste or type your script...">${esc(take.script)}</textarea>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <button class="btn btn-ghost btn-xs js-cancel-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Cancel</button>
+            <button class="btn btn-primary btn-xs js-save-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Save</button>
+          </div>`;
+      } else if (take.script) {
+        html += `<div class="script-display">${esc(take.script).replace(/\n/g,'<br>')}</div>`;
+      }
+
+      // Footer
+      html += `<div class="take-footer">
+        <span class="take-status${take.done ? ' filmed' : ''}">${take.done ? '✓ Done' : 'Not filmed yet'}</span>
+        <div class="take-footer-btns">
+          <button class="tbtn${take.done ? ' done-active' : ''}" onclick="toggleDone('${esc(card.id)}','${esc(take.id)}')">${take.done ? 'Undo' : 'Mark Done'}</button>
+          ${takes.length > 1 ? `<button class="tbtn del" onclick="removeTake('${esc(card.id)}','${esc(take.id)}')">Remove</button>` : ''}
+        </div>
+      </div>`;
+
+      html += `</div>`; // end take-card
+    });
+
+    html += `<button class="add-take-btn" onclick="addTake('${esc(card.id)}')">+ Add Take</button>
+      </div></div>`; // end takes-wrap + pcard
   });
-  showToast('Video idea added');
-  closeIdeaModal();
-  await buildWeekStrip();
-  await renderQueue();
+
+  html += '</div>';
+  main.innerHTML = html;
 }
 
-document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
-document.getElementById('ideaModal').addEventListener('click',function(e){if(e.target===this)closeIdeaModal();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeIdeaModal();}});
+function setBrandFilter(brand) {
+  activeBrandFilter = brand;
+  render();
+}
+
+// ─── CARD / TAKE ACTIONS ──────────────────────────────────
+
+async function removeCard(cardId) {
+  const card = TODO.find(c => c.id === cardId);
+  if (!card || !confirm('Remove this product and all its takes?')) return;
+  for (const take of card.takes) await deleteQueueRow(take);
+  TODO = TODO.filter(c => c.id !== cardId);
+  render();
+}
+
+async function addTake(cardId) {
+  const card = TODO.find(c => c.id === cardId);
+  if (!card) return;
+  const take = { id: 't-' + uid(), queueId: null, hookText: '', script: '', done: false, sortOrder: card.takes.length, editingScript: false };
+  card.takes.push(take);
+  render();
+  await saveQueueRow(card, take);
+}
+
+async function removeTake(cardId, takeId) {
+  const card = TODO.find(c => c.id === cardId);
+  const take = card?.takes.find(t => t.id === takeId);
+  if (!take) return;
+  await deleteQueueRow(take);
+  card.takes = card.takes.filter(t => t.id !== takeId);
+  render();
+}
+
+async function toggleDone(cardId, takeId) {
+  const card = TODO.find(c => c.id === cardId);
+  const take = card?.takes.find(t => t.id === takeId);
+  if (!take) return;
+  take.done = !take.done;
+  render();
+  if (take.queueId) await db.from('queue').update({ done: take.done }).eq('id', take.queueId);
+}
+
+function copyAllScripts(btn) {
+  const all = [];
+  TODO.forEach(card => {
+    card.takes.forEach((take, i) => {
+      if (take.script) all.push(`${card.name.toUpperCase()}${card.takes.length > 1 ? ' — Take '+(i+1) : ''}\n${take.script}`);
+    });
+  });
+  if (!all.length) { showToast('No scripts yet!'); return; }
+  navigator.clipboard.writeText(all.join('\n\n---\n\n')).then(() => {
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy All', 2000);
+    showToast(`Copied ${all.length} script${all.length > 1 ? 's' : ''}`);
+  });
+}
+
+// ─── DELEGATED EVENTS (script editing) ────────────────────
+
+document.body.addEventListener('click', e => {
+  const toggleBtn = e.target.closest('.js-toggle-script-edit');
+  if (toggleBtn) {
+    const { cid, tid } = toggleBtn.dataset;
+    const card = TODO.find(c => c.id === cid);
+    const take = card?.takes.find(t => t.id === tid);
+    if (take) { take.editingScript = !take.editingScript; render(); }
+    return;
+  }
+  const cancelBtn = e.target.closest('.js-cancel-script-edit');
+  if (cancelBtn) {
+    const { cid, tid } = cancelBtn.dataset;
+    const take = TODO.find(c => c.id === cid)?.takes.find(t => t.id === tid);
+    if (take) { take.editingScript = false; render(); }
+    return;
+  }
+  const saveBtn = e.target.closest('.js-save-script-edit');
+  if (saveBtn) {
+    const { cid, tid } = saveBtn.dataset;
+    const take = TODO.find(c => c.id === cid)?.takes.find(t => t.id === tid);
+    const ta = document.getElementById('sta-' + tid);
+    if (take && ta) {
+      take.script = ta.value.trim();
+      take.editingScript = false;
+      if (take.queueId) sessionStorage.setItem('takescript-' + take.queueId, take.script);
+      render();
+    }
+    return;
+  }
+  const copyBtn = e.target.closest('.js-copy-take-script');
+  if (copyBtn) {
+    const { cid, tid } = copyBtn.dataset;
+    const take = TODO.find(c => c.id === cid)?.takes.find(t => t.id === tid);
+    if (take?.script) navigator.clipboard.writeText(take.script).then(() => showToast('Copied!'));
+    return;
+  }
+});
+
+// ─── PRODUCT PICKER ───────────────────────────────────────
+
+function openPicker() {
+  pickerSelected = new Set(TODO.map(c => c.prodId).filter(Boolean));
+  document.getElementById('pickerSearch').value = '';
+  filterPicker();
+  document.getElementById('pickerModal').classList.add('open');
+  setTimeout(() => document.getElementById('pickerSearch').focus(), 80);
+}
+function closePicker() { document.getElementById('pickerModal').classList.remove('open'); }
+
+function filterPicker() {
+  const q = document.getElementById('pickerSearch').value.toLowerCase();
+  const list = ALL_PRODUCTS.filter(p => !q || p.name.toLowerCase().includes(q) || (p.brand||'').toLowerCase().includes(q));
+  document.getElementById('pickerList').innerHTML = list.map(p => `
+    <div class="picker-item${pickerSelected.has(p.id) ? ' selected' : ''}" onclick="togglePick('${p.id}')">
+      <div class="picker-check">${pickerSelected.has(p.id) ? '✓' : ''}</div>
+      <div>
+        <div class="picker-name">${esc(p.name)}</div>
+        ${p.brand ? `<div class="picker-meta">${esc(p.brand)}</div>` : ''}
+      </div>
+    </div>`).join('') || '<div style="text-align:center;padding:24px;color:var(--text-muted);font-style:italic;">No products found</div>';
+}
+
+function togglePick(id) {
+  if (pickerSelected.has(id)) pickerSelected.delete(id);
+  else pickerSelected.add(id);
+  filterPicker();
+}
+
+async function addSelectedProducts() {
+  const existing = new Set(TODO.map(c => c.prodId).filter(Boolean));
+  const toAdd = [...pickerSelected].filter(id => !existing.has(id));
+  if (!toAdd.length) { closePicker(); return; }
+
+  const btn = document.getElementById('pickerConfirmBtn');
+  btn.disabled = true; btn.textContent = 'Adding...';
+
+  for (const id of toAdd) {
+    const p = ALL_PRODUCTS.find(x => x.id === id);
+    if (!p) continue;
+    const card = { id: 'c-' + uid(), prodId: p.id, name: p.name, brand: p.brand || '', script: '', takes: [] };
+    const take = { id: 't-' + uid(), queueId: null, hookText: '', script: '', done: false, sortOrder: 0, editingScript: false };
+    card.takes.push(take);
+    TODO.push(card);
+    await saveQueueRow(card, take);
+  }
+
+  closePicker();
+  btn.disabled = false; btn.textContent = 'Add Selected';
+  render();
+  showToast(`Added ${toAdd.length} product${toAdd.length > 1 ? 's' : ''}`);
+}
+
+// ─── HOOK PICKER ──────────────────────────────────────────
+
+function openHookModal(cardId, takeId) {
+  hookTarget = { cardId, takeId };
+  const card = TODO.find(c => c.id === cardId);
+  document.getElementById('hookModalSub').textContent = card ? 'For: ' + card.name : '';
+  document.getElementById('customHookInput').value = '';
+  document.getElementById('hookSearch').value = '';
+  filterHooks();
+  document.getElementById('hookModal').classList.add('open');
+}
+function closeHookModal() { document.getElementById('hookModal').classList.remove('open'); }
+
+function filterHooks() {
+  const q = document.getElementById('hookSearch').value.toLowerCase();
+  const filtered = ALL_HOOKS.filter(h => !q || h.text.toLowerCase().includes(q) || (h.cat||'').toLowerCase().includes(q));
+  const grouped = {};
+  filtered.forEach(h => { const cat = h.cat || 'Other'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(h); });
+  let html = '';
+  Object.entries(grouped).forEach(([cat, hooks]) => {
+    html += `<div class="hook-cat-label">${esc(cat)}</div>`;
+    hooks.forEach(h => { html += `<div class="hook-item" onclick="selectHook('${h.id}')">${esc(h.text)}</div>`; });
+  });
+  document.getElementById('hookList').innerHTML = html || '<div style="text-align:center;padding:24px;color:var(--text-muted);font-style:italic;">No hooks yet — add some on the Hooks page!</div>';
+}
+
+async function selectHook(hookId) {
+  const hook = ALL_HOOKS.find(h => h.id === hookId);
+  if (!hook || !hookTarget) return;
+  const take = TODO.find(c => c.id === hookTarget.cardId)?.takes.find(t => t.id === hookTarget.takeId);
+  if (!take) return;
+  take.hookText = hook.text;
+  closeHookModal(); render();
+  if (take.queueId) await db.from('queue').update({ notes: hook.text }).eq('id', take.queueId);
+}
+
+async function saveCustomHook() {
+  const text = document.getElementById('customHookInput').value.trim();
+  if (!text || !hookTarget) return;
+  const take = TODO.find(c => c.id === hookTarget.cardId)?.takes.find(t => t.id === hookTarget.takeId);
+  if (!take) return;
+  take.hookText = text;
+  closeHookModal(); render();
+  if (take.queueId) await db.from('queue').update({ notes: text }).eq('id', take.queueId);
+}
+
+// ─── SCRIPT PICKER ────────────────────────────────────────
+
+function openScriptModal(cardId, takeId) {
+  scriptTarget = { cardId, takeId };
+  const card = TODO.find(c => c.id === cardId);
+  document.getElementById('scriptModalSub').textContent = card ? 'For: ' + card.name : '';
+  document.getElementById('scriptSearch').value = '';
+  filterScripts();
+  document.getElementById('scriptModal').classList.add('open');
+}
+function closeScriptModal() { document.getElementById('scriptModal').classList.remove('open'); }
+
+function filterScripts() {
+  const q = document.getElementById('scriptSearch').value.toLowerCase();
+  const card = TODO.find(c => c.id === scriptTarget?.cardId);
+  const sorted = [...ALL_SCRIPTS].sort((a, b) => {
+    const am = card && (a.brand||'').toLowerCase() === (card.brand||'').toLowerCase();
+    const bm = card && (b.brand||'').toLowerCase() === (card.brand||'').toLowerCase();
+    return bm - am;
+  });
+  const filtered = sorted.filter(s => !q || s.title.toLowerCase().includes(q) || (s.brand||'').toLowerCase().includes(q) || s.script.toLowerCase().includes(q));
+  document.getElementById('scriptList').innerHTML = filtered.map(s => `
+    <div class="script-pick-item" onclick="selectScript('${s.id}')">
+      ${s.brand ? `<div class="script-pick-brand">${esc(s.brand)}</div>` : ''}
+      <div class="script-pick-title">${esc(s.title)}</div>
+      <div class="script-pick-preview">${esc(s.script)}</div>
+    </div>`).join('') || '<div style="text-align:center;padding:24px;color:var(--text-muted);font-style:italic;">No scripts yet — add some on the Scripts page!</div>';
+}
+
+function selectScript(scriptId) {
+  const script = ALL_SCRIPTS.find(s => s.id === scriptId);
+  if (!script || !scriptTarget) return;
+  const take = TODO.find(c => c.id === scriptTarget.cardId)?.takes.find(t => t.id === scriptTarget.takeId);
+  if (!take) return;
+  take.script = script.script;
+  if (take.queueId) sessionStorage.setItem('takescript-' + take.queueId, take.script);
+  closeScriptModal(); render();
+}
+
+// Close modals on backdrop click
+['pickerModal','hookModal','scriptModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+});
+
+// ─── INIT ─────────────────────────────────────────────────
+
+async function init() {
+  _user = await requireAuth();
+  if (!_user) return;
+  const prefs = await loadUserPrefs(_user.id);
+  await initDisplayName(_user, prefs);
+  await initCore5(_user.id, prefs);
+  await initTheme(_user.id, prefs);
+  initProfilePopover(_user.id);
+  updateDateDisplay();
+  await Promise.all([loadProducts(), loadHooks(), loadScripts(), loadQueue()]);
+  render();
+}
+
 init();
 </script>
 <script>
