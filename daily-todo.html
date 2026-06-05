@@ -142,6 +142,20 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .tbtn.done-active{background:color-mix(in srgb,var(--sage) 18%,transparent);color:var(--sage);border-color:color-mix(in srgb,var(--sage) 28%,transparent);}
 .tbtn.del:hover{background:rgba(180,50,40,0.12);color:#c83c32;border-color:rgba(180,50,40,0.25);}
 
+.insp-section{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.insp-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+.insp-links{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0;}
+.insp-link{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid var(--border-mid);border-radius:100px;color:var(--rust);font-size:11px;font-weight:600;font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;max-width:200px;text-decoration:none;transition:border-color 0.12s;}
+.insp-link:hover{border-color:var(--rust);}
+.insp-link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.insp-remove{background:none;border:none;color:var(--text-muted);font-size:14px;line-height:1;cursor:pointer;padding:0;flex-shrink:0;transition:color 0.12s;}
+.insp-remove:hover{color:#c83c32;}
+.insp-add{display:flex;gap:6px;}
+.insp-input{flex:1;min-width:0;padding:7px 11px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-size:12px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;}
+.insp-input::placeholder{color:var(--text-muted);}
+.insp-input:focus{border-color:var(--rust);}
+.insp-add-btn{background:var(--surface);border:1px solid var(--border-mid);border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;color:var(--text-mid);cursor:pointer;font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.05em;text-transform:uppercase;white-space:nowrap;transition:all 0.12s;}
+.insp-add-btn:hover{background:var(--rust);border-color:var(--rust);color:#fff;}
 .add-take-btn{width:100%;background:none;border:1px dashed var(--border-mid);border-radius:10px;padding:9px;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:'Stack Sans Notch',sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;}
 .add-take-btn:hover{border-color:var(--rust);color:var(--rust);}
 
@@ -398,7 +412,8 @@ async function loadQueue() {
     cardMap[key].takes.push({
       id: 't-' + row.id, queueId: row.id,
       hookText: row.notes || '',
-      script: row.brand || '', // we'll repurpose brand col for script storage — wait, use notes for hook, need separate field
+      script: row.brand || '',
+      inspirationLinks: [],
       done: row.done, sortOrder: row.sort_order,
       editingScript: false
     });
@@ -556,6 +571,18 @@ function render() {
       }
 
       // Footer
+      // Inspiration links section
+      html += `<div class="insp-section">
+        <div class="insp-label">Inspiration</div>
+        <div class="insp-links" id="insp-links-${esc(take.id)}">
+          ${(take.inspirationLinks||[]).map((url,li) => `<a href="${esc(url)}" target="_blank" rel="noopener" class="insp-link"><span>${esc(getLinkLabel(url))}</span></a><button class="insp-remove" onclick="removeInspirationLink('${esc(card.id)}','${esc(take.id)}',${li})" title="Remove">×</button>`).join('') || ''}
+        </div>
+        <div class="insp-add">
+          <input type="url" class="insp-input" id="insp-input-${esc(take.id)}" placeholder="Paste a TikTok or inspo link..." onkeydown="if(event.key==='Enter'){event.preventDefault();addInspirationLink('${esc(card.id)}','${esc(take.id)}');}">
+          <button class="insp-add-btn" onclick="addInspirationLink('${esc(card.id)}','${esc(take.id)}')">Add</button>
+        </div>
+      </div>`;
+
       html += `<div class="take-footer">
         <span class="take-status${take.done ? ' filmed' : ''}">${take.done ? '✓ Done' : 'Not filmed yet'}</span>
         <div class="take-footer-btns">
@@ -593,7 +620,7 @@ async function removeCard(cardId) {
 async function addTake(cardId) {
   const card = TODO.find(c => c.id === cardId);
   if (!card) return;
-  const take = { id: 't-' + uid(), queueId: null, hookText: '', script: '', done: false, sortOrder: card.takes.length, editingScript: false };
+  const take = { id: 't-' + uid(), queueId: null, hookText: '', script: '', inspirationLinks: [], done: false, sortOrder: card.takes.length, editingScript: false };
   card.takes.push(take);
   render();
   await saveQueueRow(card, take);
@@ -714,7 +741,7 @@ async function addSelectedProducts() {
     const p = ALL_PRODUCTS.find(x => x.id === id);
     if (!p) continue;
     const card = { id: 'c-' + uid(), prodId: p.id, name: p.name, brand: p.brand || '', script: '', takes: [] };
-    const take = { id: 't-' + uid(), queueId: null, hookText: '', script: '', done: false, sortOrder: 0, editingScript: false };
+    const take = { id: 't-' + uid(), queueId: null, hookText: '', script: '', inspirationLinks: [], done: false, sortOrder: 0, editingScript: false };
     card.takes.push(take);
     TODO.push(card);
     await saveQueueRow(card, take);
@@ -817,6 +844,36 @@ function selectScript(scriptId) {
 });
 
 // ─── INIT ─────────────────────────────────────────────────
+
+function getLinkLabel(url) {
+  try { const u = new URL(url); return u.hostname.replace(/^www\./,'') + (u.pathname.length > 1 ? u.pathname.slice(0,18) : ''); }
+  catch(e) { return url.replace(/^https?:\/\//,'').slice(0,28); }
+}
+
+function normalizeUrl(url) {
+  const t = (url||'').trim();
+  if (!t) return '';
+  return /^https?:\/\//i.test(t) ? t : 'https://' + t;
+}
+
+function addInspirationLink(cardId, takeId) {
+  const input = document.getElementById('insp-input-' + takeId);
+  if (!input) return;
+  const url = normalizeUrl(input.value);
+  if (!url) return;
+  const take = TODO.find(c => c.id === cardId)?.takes.find(t => t.id === takeId);
+  if (!take) return;
+  take.inspirationLinks = [...(take.inspirationLinks || []), url];
+  input.value = '';
+  render();
+}
+
+function removeInspirationLink(cardId, takeId, index) {
+  const take = TODO.find(c => c.id === cardId)?.takes.find(t => t.id === takeId);
+  if (!take) return;
+  take.inspirationLinks = (take.inspirationLinks || []).filter((_,i) => i !== index);
+  render();
+}
 
 async function init() {
   _user = await requireAuth();
