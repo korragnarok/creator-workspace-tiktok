@@ -57,7 +57,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
 .footer-note{font-size:11px;color:var(--text-muted);}
 
-.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 82%,#000 18%);padding:28px 18px;z-index:260;flex-direction:column;gap:28px;}
+.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 82%,#000 18%);padding:20px 14px;z-index:260;flex-direction:column;gap:16px;overflow-y:auto;}
 .side-brand{font-family:'Stack Sans Notch',sans-serif;font-size:31px;font-weight:800;line-height:0.92;color:var(--ink);}
 .side-brand span{display:block;font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:400;color:var(--rust);line-height:1.2;}
 .side-nav,.core-sidebar{display:flex;flex-direction:column;gap:10px;}
@@ -153,11 +153,6 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Creator Hub">
-<link rel="apple-touch-icon" href="icons/pwa/icon-192.png">
 </head>
 <body>
 <aside class="desktop-sidebar">
@@ -358,14 +353,6 @@ async function init() {
 
 }
 init();
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/creator-workspace-tiktok/sw.js')
-      .catch(err => console.warn('SW registration failed:', err));
-  });
-}
 </script>
 </body>
 </html>

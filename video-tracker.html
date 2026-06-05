@@ -94,7 +94,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
 .footer-note{font-size:11px;color:var(--text-muted);}
 
-.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 82%,#000 18%);padding:28px 18px;z-index:260;flex-direction:column;gap:28px;}
+.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 82%,#000 18%);padding:20px 14px;z-index:260;flex-direction:column;gap:16px;overflow-y:auto;}
 .side-brand{font-family:'Stack Sans Notch',sans-serif;font-size:31px;font-weight:800;line-height:0.92;color:var(--ink);}
 .side-brand span{display:block;font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:400;color:var(--rust);line-height:1.2;}
 .side-nav,.core-sidebar{display:flex;flex-direction:column;gap:10px;}
@@ -168,11 +168,6 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Creator Hub">
-<link rel="apple-touch-icon" href="icons/pwa/icon-192.png">
 </head>
 <body>
 <aside class="desktop-sidebar">
@@ -230,9 +225,8 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   <div class="table-card">
     <table>
       <thead><tr>
-        <th onclick="sortBy('id')">Video ID</th>
-        <th onclick="sortBy('brand')">Product</th>
         <th onclick="sortBy('date')">Date Posted</th>
+        <th onclick="sortBy('brand')">Product</th>
         <th>Hook</th>
         <th onclick="sortBy('views')" class="num">Views</th>
         <th onclick="sortBy('units')">Got Sales</th>
@@ -250,7 +244,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="modal-title" id="modalTitle">Log Video</div>
     <div class="form-row"><label class="form-label">Title / Hook *</label><input type="text" class="form-input" id="fTitle" placeholder="What was the hook?"></div>
     <div class="form-row-half">
-      <div class="form-row" style="margin-bottom:0"><label class="form-label">Brand</label><input type="text" class="form-input" id="fBrand" placeholder="e.g. PetLab Co."></div>
+      <div class="form-row" style="margin-bottom:0"><label class="form-label">Product</label><input type="text" class="form-input" id="fBrand" placeholder="e.g. PetLab Co."></div>
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Date Posted</label><input type="date" class="form-input" id="fDate"></div>
     </div>
     <div class="form-row" style="margin-top:16px"><label class="form-label">Status</label><select class="form-input" id="fStatus"><option value="live">Live</option><option value="scheduled">Scheduled</option><option value="draft">Draft</option></select></div>
@@ -374,9 +368,8 @@ function renderTable(){
     const hasSales=(Number(v.units)||0)>0;
     const selected=_selectedVideoIds.has(v.id);
     return `<tr class="${_editVideosMode?'select-mode ':''}${selected?'selected':''}" onclick="handleVideoRowClick('${v.id}')">
-      <td class="muted"><span class="video-select" aria-hidden="true"></span><span class="video-id-text">${esc(shortId(v.id))}</span></td>
-      <td><div class="tbl-product">${esc(v.brand||'No product')}</div><div class="tbl-hook">${esc(v.title||'')}</div></td>
       <td class="muted">${fmtDate(v.date)}</td>
+      <td><div class="tbl-product">${esc(v.brand||'No product')}</div><div class="tbl-hook">${esc(v.title||'')}</div></td>
       <td>${esc(hook||'-')}</td>
       <td class="num">${fmtNum(v.views)}</td>
       <td><span class="status ${hasSales?'status-yes':'status-no'}">${hasSales?'Yes':'No'}</span></td>
@@ -467,14 +460,6 @@ async function deleteVideo(){
   await loadVideos();
 }
 init();
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/creator-workspace-tiktok/sw.js')
-      .catch(err => console.warn('SW registration failed:', err));
-  });
-}
 </script>
 </body>
 </html>

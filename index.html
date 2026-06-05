@@ -389,6 +389,7 @@ async function init() {
   setText('product-saved', `${(products||[]).length} saved`);
 
   renderTodayContent();
+  renderContentTracker();
   const topProducts=(products||[]).slice().sort((a,b)=>(Number(b.units_sold)||0)-(Number(a.units_sold)||0)).filter(p=>(Number(p.units_sold)||0)>0).slice(0,3);
   if(topProducts.length){
     document.getElementById('top-products').className='top-product-list';
@@ -435,7 +436,17 @@ function renderTodayContent(){
     return `<div class="today-content-item${q.done?' done':''}"><button class="today-content-check${q.done?' checked':''}" type="button" aria-label="Mark ${esc(q.name)} done" onclick="toggleTodayItem('${q.id}', this)"></button><div><div class="today-content-name">${esc(q.name)}</div>${detail}</div></div>`;
   }).join('');
 }
-
+function renderContentTracker(){
+  const el=document.getElementById('content-tracker');
+  setText('video-saved', `${_dashboardVideos.length} saved`);
+  if(!_dashboardVideos.length){
+    el.className='empty-box';
+    el.innerHTML='<strong>No content tracked yet.</strong>Track your posts, ideas, and performance.';
+    return;
+  }
+  el.className='empty-box';
+  el.innerHTML=_dashboardVideos.slice(0,2).map(v=>`<strong>${esc(v.title)}</strong>${esc(v.brand||v.status||'Tracked content')}`).join('');
+}
 function queuePreviewDetail(item){
   const lines=String(item.notes||'').split('\n').map(line=>line.trim()).filter(Boolean);
   const chosen=lines.find(line=>/^Hook:/i.test(line))||lines.find(line=>/^Script:/i.test(line))||lines.find(line=>/^Notes:/i.test(line));
@@ -482,6 +493,8 @@ async function clearDoneToday(){
   _dashboardVideos=[...rows.map((row,i)=>({id:'local-'+doneItems[i].id,...row})),..._dashboardVideos];
   _doneToday=0;
   renderTodayContent();
+  renderContentTracker();
+  showToast('Saved to Content Tracker');
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
