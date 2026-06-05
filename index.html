@@ -33,20 +33,14 @@ button,input{font:inherit;}
 .core-mini-list{display:flex;flex-direction:column;gap:6px;}
 .core-mini-item{display:block;position:relative;}
 .core-mini-num{display:none;}
-.core-mini-input{display:none;}
-.core-pill{min-width:0;width:100%;border:1px solid var(--border-mid);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;transition:border-color 0.15s,opacity 0.15s;background:color-mix(in srgb,var(--surface) 75%,var(--sand) 25%);display:flex;align-items:center;}
-.core-pill:hover{border-color:var(--rust);}
-.core-pill-empty{opacity:0.45;cursor:pointer;}
-.core-pill-empty:hover{opacity:0.7;border-color:var(--rust);}
-.core-pill-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);}
-.core-pill-empty .core-pill-text{color:var(--text-muted);font-style:italic;}
+.core-mini-input{min-width:0;width:100%;border:1px solid var(--border-mid);border-radius:8px;padding:7px 10px;color:var(--ink);font-size:12px;font-weight:700;outline:none;box-shadow:0 2px 7px rgba(0,0,0,0.08);transition:border-color 0.15s,box-shadow 0.15s,transform 0.15s;background:color-mix(in srgb,var(--surface) 75%,var(--sand) 25%);}
 .core-mini-item:nth-child(1) .core-mini-input{background:color-mix(in srgb,var(--rust) 34%,var(--surface) 66%);}
 .core-mini-item:nth-child(2) .core-mini-input{background:color-mix(in srgb,var(--sage) 34%,var(--surface) 66%);}
 .core-mini-item:nth-child(3) .core-mini-input{background:color-mix(in srgb,var(--tan) 34%,var(--surface) 66%);}
 .core-mini-item:nth-child(4) .core-mini-input{background:color-mix(in srgb,var(--sand) 52%,var(--surface) 48%);}
 .core-mini-item:nth-child(5) .core-mini-input{background:color-mix(in srgb,var(--rose) 34%,var(--surface) 66%);}
-
-
+.core-mini-input::placeholder{color:var(--text-mid);font-weight:600;}
+.core-mini-input:focus{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 22%,transparent),0 3px 10px rgba(0,0,0,0.12);transform:translateY(-1px);}
 .side-profile{margin-top:0;border:1px solid var(--border);border-radius:var(--r);background:color-mix(in srgb,var(--surface) 76%,var(--bg) 24%);padding:10px;display:flex;align-items:center;gap:10px;}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--sage);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
 .avatar-img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -247,18 +241,23 @@ button,input{font:inherit;}
         </section>
 
         <section class="lower-grid">
+          <!-- Left: Today's To Do -->
           <div class="stack">
-            
-              <div class="empty-box" id="today-content"><strong>No content scheduled yet.</strong>Add a video idea to start planning today.</div>
-              <button class="add-bar" type="button" onclick="clearDoneToday()">Clear Done</button>
-              <a class="add-bar" href="daily-todo.html">+ Add Video Idea</a>
-            </div>
             <div class="card">
-              <div class="card-head"><div class="card-title">Content Tracker</div><div><a class="mini-action" href="video-tracker.html">+ New Entry</a></div></div>
-              <div class="empty-box" id="content-tracker"><strong>No content tracked yet.</strong>Track your posts, ideas, and performance.</div>
+              <div class="card-head">
+                <div class="card-title">Today's To Do</div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <span id="content-saved" style="font-size:12px;color:var(--text-muted);"></span>
+                  <a class="mini-action" href="daily-todo.html">Open</a>
+                </div>
+              </div>
+              <div class="empty-box" id="today-content"><strong>No content scheduled yet.</strong>Add a video idea to start planning today.</div>
+              <button class="add-bar" type="button" onclick="clearDoneToday()" style="margin-top:10px;">Clear Done</button>
+              <a class="add-bar" href="daily-todo.html" style="margin-top:6px;">+ Add Video Idea</a>
             </div>
           </div>
 
+          <!-- Right: Chart + Top Products -->
           <div class="stack">
             <div class="card chart-card">
               <div class="chart-top">
@@ -404,7 +403,6 @@ async function init() {
   setText('product-saved', `${(products||[]).length} saved`);
 
   renderTodayContent();
-  renderContentTracker();
   const topProducts=(products||[]).slice().sort((a,b)=>(Number(b.units_sold)||0)-(Number(a.units_sold)||0)).filter(p=>(Number(p.units_sold)||0)>0).slice(0,3);
   if(topProducts.length){
     document.getElementById('top-products').className='top-product-list';
@@ -450,10 +448,7 @@ function renderTodayContent(){
     const detail=queuePreviewDetail(q);
     return `<div class="today-content-item${q.done?' done':''}"><button class="today-content-check${q.done?' checked':''}" type="button" aria-label="Mark ${esc(q.name)} done" onclick="toggleTodayItem('${q.id}', this)"></button><div><div class="today-content-name">${esc(q.name)}</div>${detail}</div></div>`;
   }).join('');
-}
-function renderContentTracker(){
-  const el=document.getElementById('content-tracker');
-  setText('video-saved', `${_dashboardVideos.length} saved`);
+} saved`);
   if(!_dashboardVideos.length){
     el.className='empty-box';
     el.innerHTML='<strong>No content tracked yet.</strong>Track your posts, ideas, and performance.';
@@ -508,7 +503,6 @@ async function clearDoneToday(){
   _dashboardVideos=[...rows.map((row,i)=>({id:'local-'+doneItems[i].id,...row})),..._dashboardVideos];
   _doneToday=0;
   renderTodayContent();
-  renderContentTracker();
   showToast('Saved to Content Tracker');
 }
 </script>
