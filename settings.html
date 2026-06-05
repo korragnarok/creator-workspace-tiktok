@@ -340,10 +340,12 @@ async function saveName() {
   if (!val) { document.getElementById('nameInput').focus(); return; }
   const btn = document.getElementById('saveNameBtn');
   btn.disabled = true; btn.textContent = 'Saving...';
-  await saveUserPrefs(_user.id, { display_name: val });
+  const { error } = await saveUserPrefs(_user.id, { display_name: val });
+  const { error: metaError } = await db.auth.updateUser({ data: { display_name: val } });
+  try { localStorage.setItem(`creatorHub:displayName:${_user.id}`, val); } catch(e) {}
   document.querySelectorAll('.profile-name, #sideProfileName').forEach(el => el.textContent = val);
   btn.disabled = false; btn.textContent = 'Save Name';
-  showToast('Name updated');
+  showToast(error && metaError ? 'Name saved on this browser only' : 'Name updated', error && metaError ? 'error' : 'success');
 }
 
 async function savePassword() {

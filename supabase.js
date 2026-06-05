@@ -204,28 +204,49 @@ document.addEventListener('DOMContentLoaded', () => applyThemeIcons(_cachedTheme
 
 async function loadUserPrefs(userId) {
   const theme = _cachedTheme() || DEFAULT_THEME;
-  const { data } = await db.from('user_prefs')
+  const { data, error } = await db.from('user_prefs')
     .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
-  if (data) return {
-    ...data,
-    core5: _resolveCore5(userId, data.core5),
-    profile_icon: data.profile_icon || _cachedProfileIcon(userId)
-  };
-  // First login — create the row so future saves have somewhere to upsert into
-  await db.from('user_prefs').upsert(
-    { user_id: userId, display_name: '', core5: [], theme },
-    { onConflict: 'user_id' }
-  );
-  return { display_name: null, core5: _cachedCore5(userId), theme, profile_icon: _cachedProfileIcon(userId) };
+    .eq('user_id', userId);
+  if (error) console.warn('Preference load failed', error);
+  const rows = data || [];
+  if (rows.length) {
+    const merged = {
+      display_name: '',
+      core5: [],
+      theme,
+      profile_icon: _cachedProfileIcon(userId),
+      _isNewPrefs: false
+    };
+    rows.forEach(row => {
+      if ((row.display_name || '').trim()) merged.display_name = row.display_name;
+      if (Array.isArray(row.core5) && row.core5.some(value => String(value || '').trim())) merged.core5 = row.core5;
+      if (THEMES[row.theme]) merged.theme = row.theme;
+      if (row.profile_icon) merged.profile_icon = row.profile_icon;
+    });
+    return { ...merged, core5: _resolveCore5(userId, merged.core5) };
+  }
+  const cachedCore5 = _cachedCore5(userId);
+  await saveUserPrefs(userId, { display_name: '', core5: cachedCore5, theme });
+  return { display_name: null, core5: cachedCore5, theme, profile_icon: _cachedProfileIcon(userId), _isNewPrefs: true };
 }
 
 async function saveUserPrefs(userId, patch) {
-  const { error } = await db.from('user_prefs')
-    .upsert({ user_id: userId, ...patch }, { onConflict: 'user_id' });
-  if (error) console.warn('Preference save failed', error);
-  return { error };
+  if (!userId) return { error: new Error('Missing user id') };
+  const cleanPatch = { ...patch };
+  if ('core5' in cleanPatch) cleanPatch.core5 = _normalizeCore5(cleanPatch.core5);
+  const { data: updated, error: updateError } = await db.from('user_prefs')
+    .update(cleanPatch)
+    .eq('user_id', userId)
+    .select('user_id');
+  if (updateError) {
+    console.warn('Preference update failed', updateError);
+    return { error: updateError };
+  }
+  if (updated && updated.length) return { error: null };
+  const { error: insertError } = await db.from('user_prefs')
+    .insert({ user_id: userId, display_name: '', core5: [], theme: _cachedTheme() || DEFAULT_THEME, ...cleanPatch });
+  if (insertError) console.warn('Preference insert failed', insertError);
+  return { error: insertError || null };
 }
 
 // ─── Display Name ─────────────────────────────────────────────────────────────
@@ -289,13 +310,23 @@ function _cachedDisplayName(userId) {
   catch(e) { return ''; }
 }
 
+function _metadataDisplayName(user) {
+  return String(user?.user_metadata?.display_name || '').trim();
+}
+
+function _isFreshSignup(user) {
+  const created = Date.parse(user?.created_at || '');
+  if (!created) return false;
+  return Date.now() - created < 30 * 60 * 1000;
+}
+
 async function initDisplayName(user, prefs) {
-  const savedName = (prefs.display_name || '').trim() || _cachedDisplayName(user.id);
+  const savedName = (prefs.display_name || '').trim() || _metadataDisplayName(user) || _cachedDisplayName(user.id);
   const name = savedName || _emailFallbackName(user.email);
   _applyDisplayName(name);
   applyProfileIcon(prefs.profile_icon || DEFAULT_PROFILE_ICON);
   const modal = document.getElementById('nameModal');
-  if (modal && !savedName) {
+  if (modal && !savedName && prefs._isNewPrefs && _isFreshSignup(user)) {
     modal.classList.add('open');
     setTimeout(() => document.getElementById('displayNameInput')?.focus(), 80);
   }
@@ -312,9 +343,11 @@ async function saveDisplayName(userId) {
   }
   if (!userId) { input?.focus(); return; }
   try { localStorage.setItem(_displayNameKey(userId), name); } catch(e) {}
-  await saveUserPrefs(userId, { display_name: name });
+  const { error } = await saveUserPrefs(userId, { display_name: name });
+  const { error: metaError } = await db.auth.updateUser({ data: { display_name: name } });
   _applyDisplayName(name);
   document.getElementById('nameModal')?.classList.remove('open');
+  if (error && metaError) showToast('Name saved on this browser only', 'error');
 }
 
 // ─── Core 5 ──────────────────────────────────────────────────────────────────
@@ -332,6 +365,10 @@ function _cachedCore5(userId) {
   try {
     return _normalizeCore5(JSON.parse(localStorage.getItem(_core5Key(userId)) || '[]'));
   } catch(e) { return []; }
+}
+
+function _metadataCore5(user) {
+  return _normalizeCore5(user?.user_metadata?.core5);
 }
 
 function _cacheCore5(userId, values) {
@@ -367,7 +404,11 @@ function _renderCore5Pills(values) {
 }
 
 async function initCore5(userId, prefs) {
-  const values = _resolveCore5(userId, prefs.core5);
+  let values = _resolveCore5(userId, prefs.core5);
+  if (!values.some(Boolean)) {
+    const user = await getUser();
+    values = _metadataCore5(user);
+  }
   _cacheCore5(userId, values);
   _renderCore5Pills(values);
 
@@ -438,8 +479,9 @@ async function saveCore5Modal() {
   _cacheCore5(userId, values);
   _renderCore5Pills(values);
   closeCore5Modal();
-  await saveUserPrefs(userId, { core5: values });
-  showToast('Core 5 saved');
+  const { error } = await saveUserPrefs(userId, { core5: values });
+  const { error: metaError } = await db.auth.updateUser({ data: { core5: values } });
+  showToast(error && metaError ? 'Core 5 saved locally' : 'Core 5 saved', error && metaError ? 'error' : 'success');
 }
 
 // ─── Profile Popover ─────────────────────────────────────────────────────────
