@@ -116,3 +116,18 @@ create policy "Users manage own prefs" on user_prefs for all using (auth.uid() =
 alter table user_prefs add column if not exists theme text default 'dusk';
 
 alter table user_prefs add column if not exists profile_icon text default 'icon-1';
+
+-- ── 9. STORAGE — avatars bucket ─────────────────────────────────────────────
+-- Run this in Supabase SQL Editor (Storage policies need SQL, not the UI).
+insert into storage.buckets (id, name, public)
+  values ('avatars', 'avatars', true)
+  on conflict (id) do nothing;
+
+create policy "Users upload own avatar" on storage.objects
+  for insert with check (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+
+create policy "Users update own avatar" on storage.objects
+  for update using (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+
+create policy "Anyone can view avatars" on storage.objects
+  for select using (bucket_id = 'avatars');

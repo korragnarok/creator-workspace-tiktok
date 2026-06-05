@@ -94,7 +94,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
 .footer-note{font-size:11px;color:var(--text-muted);}
 
-.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 82%,#000 18%);padding:20px 14px;z-index:260;flex-direction:column;gap:16px;overflow-y:auto;}
+.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 82%,#000 18%);padding:28px 18px;z-index:260;flex-direction:column;gap:28px;}
 .side-brand{font-family:'Stack Sans Notch',sans-serif;font-size:31px;font-weight:800;line-height:0.92;color:var(--ink);}
 .side-brand span{display:block;font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:400;color:var(--rust);line-height:1.2;}
 .side-nav,.core-sidebar{display:flex;flex-direction:column;gap:10px;}
@@ -173,13 +173,13 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <aside class="desktop-sidebar">
   <a href="index.html" class="side-brand">creator <span>workspace</span></a>
   <div class="side-nav">
-    <a href="index.html" class="side-link"><span class="nav-icon"><img src="icons/home.png" alt=""></span>Home</a>
-    <a href="daily-todo.html" class="side-link"><span class="nav-icon"><img src="icons/todo.png" alt=""></span>Daily To Do</a>
-    <a href="video-tracker.html" class="side-link active"><span class="nav-icon"><img src="icons/video.png" alt=""></span>Content Tracker</a>
-    <a href="hooks.html" class="side-link"><span class="nav-icon"><img src="icons/hooks.png" alt=""></span>Hooks</a>
-    <a href="products.html" class="side-link"><span class="nav-icon"><img src="icons/products.png" alt=""></span>Products</a>
-    <a href="scripts.html" class="side-link"><span class="nav-icon"><img src="icons/scripts.png" alt=""></span>Scripts</a>
-    <a href="sales-calendar.html" class="side-link"><span class="nav-icon"><img src="icons/sales.png" alt=""></span>Sales Log</a>
+    <a href="index.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/home.png" data-theme-icon alt=""></span>Home</a>
+    <a href="daily-todo.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/todo.png" data-theme-icon alt=""></span>Daily To Do</a>
+    <a href="video-tracker.html" class="side-link active"><span class="nav-icon"><img src="icons/dusk/video.png" data-theme-icon alt=""></span>Content Tracker</a>
+    <a href="hooks.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/hooks.png" data-theme-icon alt=""></span>Hooks</a>
+    <a href="products.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/products.png" data-theme-icon alt=""></span>Products</a>
+    <a href="scripts.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/scripts.png" data-theme-icon alt=""></span>Scripts</a>
+    <a href="sales-calendar.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/sales.png" data-theme-icon alt=""></span>Sales Log</a>
   </div>
   <div class="core-sidebar">
     <div class="core-sidebar-head"><span>Core 5</span><span class="core-sidebar-count" id="coreCount">0/5</span></div>
@@ -258,7 +258,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<div class="tab-bar"><a href="index.html" class="tab-item"><div><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a><a href="daily-todo.html" class="tab-item"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a><a href="sales-calendar.html" class="tab-item"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a><a href="products.html" class="tab-item"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>  <button type="button" class="tab-item profile-trigger" aria-label="Open profile menu"><div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div>User</div></button>
+<div class="tab-bar"><a href="index.html" class="tab-item"><div><img src="icons/dusk/home.png" data-theme-icon class="tab-icon-img" alt="Home"></div><div>Home</div></a><a href="daily-todo.html" class="tab-item"><div><img src="icons/dusk/todo.png" data-theme-icon class="tab-icon-img" alt="To Do"></div><div>To Do</div></a><a href="sales-calendar.html" class="tab-item"><div><img src="icons/dusk/sales.png" data-theme-icon class="tab-icon-img" alt="Sales"></div><div>Sales</div></a><a href="products.html" class="tab-item"><div><img src="icons/dusk/products.png" data-theme-icon class="tab-icon-img" alt="Products"></div><div>Products</div></a>  <button type="button" class="tab-item profile-trigger" aria-label="Open profile menu"><div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div>User</div></button>
 </div>
 <script>
 const PAGE_SIZE=25;

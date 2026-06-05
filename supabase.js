@@ -121,15 +121,7 @@ const THEMES = {
 };
 
 const DEFAULT_THEME = 'dusk';
-const DEFAULT_PROFILE_ICON = 'icon-1';
-const PROFILE_ICONS = [
-  { key: 'icon-1', label: 'Icon 1', src: 'icons/users/icon-1.png' },
-  { key: 'icon-2', label: 'Icon 2', src: 'icons/users/icon-2.png' },
-  { key: 'icon-3', label: 'Icon 3', src: 'icons/users/icon-3.png' },
-  { key: 'icon-4', label: 'Icon 4', src: 'icons/users/icon-4.png' },
-  { key: 'icon-5', label: 'Icon 5', src: 'icons/users/icon-5.png' },
-  { key: 'icon-6', label: 'Icon 6', src: 'icons/users/icon-6.png' }
-];
+const DEFAULT_AVATAR = 'icons/users/avatar.png';
 
 function _cachedTheme() {
   try {
@@ -171,14 +163,14 @@ async function loadUserPrefs(userId) {
   if (data) return {
     ...data,
     core5: _resolveCore5(userId, data.core5),
-    profile_icon: data.profile_icon || _cachedProfileIcon(userId)
+    profile_icon: data.profile_icon || _cachedAvatarUrl(userId)
   };
   // First login — create the row so future saves have somewhere to upsert into
   await db.from('user_prefs').upsert(
     { user_id: userId, display_name: '', core5: [], theme },
     { onConflict: 'user_id' }
   );
-  return { display_name: null, core5: _cachedCore5(userId), theme, profile_icon: _cachedProfileIcon(userId) };
+  return { display_name: null, core5: _cachedCore5(userId), theme, profile_icon: _cachedAvatarUrl(userId) };
 }
 
 async function saveUserPrefs(userId, patch) {
@@ -199,40 +191,48 @@ function _applyDisplayName(name) {
   if (wt) wt.textContent = `welcome back, ${name}`;
 }
 
-function _profileIconByKey(key) {
-  return PROFILE_ICONS.find(icon => icon.key === key) || PROFILE_ICONS[0];
+function _avatarCacheKey(userId) {
+  return `creatorHub:avatarUrl:${userId || 'local'}`;
 }
 
-function _profileIconCacheKey(userId) {
-  return `creatorHub:profileIcon:${userId || 'local'}`;
+function _cachedAvatarUrl(userId) {
+  try { return localStorage.getItem(_avatarCacheKey(userId)) || DEFAULT_AVATAR; }
+  catch(e) { return DEFAULT_AVATAR; }
 }
 
-function _cachedProfileIcon(userId) {
-  try {
-    const saved = localStorage.getItem(_profileIconCacheKey(userId)) || DEFAULT_PROFILE_ICON;
-    return PROFILE_ICONS.some(icon => icon.key === saved) ? saved : DEFAULT_PROFILE_ICON;
-  } catch(e) { return DEFAULT_PROFILE_ICON; }
-}
-
-function applyProfileIcon(key) {
-  const icon = _profileIconByKey(key);
+function applyProfileIcon(urlOrKey) {
+  // Accept either a full URL or legacy key — always resolve to a URL
+  const src = (urlOrKey && !urlOrKey.startsWith('icon-')) ? urlOrKey : DEFAULT_AVATAR;
   document.querySelectorAll('.avatar-img').forEach(img => {
-    img.src = icon.src;
-    img.alt = icon.label;
+    img.src = src;
+    img.alt = 'Avatar';
   });
-  document.querySelectorAll('[data-profile-icon]').forEach(el => {
-    el.classList.toggle('active', el.dataset.profileIcon === icon.key);
-  });
-  return icon.key;
 }
 
-async function saveProfileIcon(userId, key) {
-  const iconKey = applyProfileIcon(key);
-  try { localStorage.setItem(_profileIconCacheKey(userId), iconKey); } catch(e) {}
-  if (userId) {
-    try { await saveUserPrefs(userId, { profile_icon: iconKey }); } catch(e) {}
-  }
-  return iconKey;
+async function uploadAvatar(userId, file) {
+  if (!file || !userId) return null;
+  // Resize/validate
+  if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB', 'error'); return null; }
+
+  const ext = file.name.split('.').pop().toLowerCase() || 'png';
+  const path = `${userId}/avatar.${ext}`;
+
+  const { error } = await db.storage.from('avatars').upload(path, file, {
+    upsert: true,
+    contentType: file.type || 'image/png'
+  });
+
+  if (error) { showToast('Upload failed: ' + error.message, 'error'); return null; }
+
+  const { data: { publicUrl } } = db.storage.from('avatars').getPublicUrl(path);
+  // Cache-bust so browsers reload the new image
+  const url = publicUrl + '?t=' + Date.now();
+
+  try { localStorage.setItem(_avatarCacheKey(userId), url); } catch(e) {}
+  await saveUserPrefs(userId, { profile_icon: url });
+  applyProfileIcon(url);
+  showToast('Avatar updated!');
+  return url;
 }
 
 function _emailFallbackName(email) {
@@ -253,7 +253,7 @@ async function initDisplayName(user, prefs) {
   const savedName = (prefs.display_name || '').trim() || _cachedDisplayName(user.id);
   const name = savedName || _emailFallbackName(user.email);
   _applyDisplayName(name);
-  applyProfileIcon(prefs.profile_icon || DEFAULT_PROFILE_ICON);
+  applyProfileIcon(prefs.profile_icon || DEFAULT_AVATAR);
   const modal = document.getElementById('nameModal');
   if (modal && !savedName) {
     modal.classList.add('open');

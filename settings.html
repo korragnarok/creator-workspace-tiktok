@@ -85,12 +85,12 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .theme-card.active .theme-check{background:var(--rust);border-color:var(--rust);}
 .theme-card.active .theme-check::after{content:'✓';color:#fff;font-size:10px;font-weight:800;font-family:'Stack Sans Notch',sans-serif;}
 
-/* Profile icon picker */
-.icon-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;}
-.icon-choice{border:2px solid var(--border-mid);border-radius:12px;background:var(--bg);padding:9px;aspect-ratio:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
-.icon-choice:hover{border-color:var(--rust);transform:translateY(-1px);}
-.icon-choice.active{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 13%,var(--surface) 87%);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 14%,transparent);}
-.icon-choice img{width:100%;height:100%;object-fit:contain;display:block;}
+/* Avatar upload */
+.avatar-upload-wrap{display:flex;align-items:center;gap:20px;}
+.avatar-preview{width:72px;height:72px;border-radius:50%;overflow:hidden;background:var(--sage);border:2px solid var(--border-mid);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.avatar-preview img{width:100%;height:100%;object-fit:cover;display:block;}
+.avatar-upload-label{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;border:1px solid var(--border-mid);background:transparent;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;}
+.avatar-upload-label:hover{background:var(--surface);color:var(--ink);}
 
 /* Danger zone */
 .danger-zone{border-color:rgba(200,60,50,0.2);}
@@ -110,11 +110,6 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Creator Hub">
-<link rel="apple-touch-icon" href="icons/pwa/icon-192.png">
 </head>
 <body>
 
@@ -183,11 +178,19 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
     <div class="theme-grid" id="themeGrid"></div>
   </div>
 
-  <!-- Profile Icon -->
+  <!-- Avatar -->
   <div class="settings-section">
-    <div class="section-title">Profile Icon</div>
-    <div class="icon-grid" id="profileIconGrid"></div>
-    <div class="form-hint">Add your icon files as icon-1.png, icon-2.png, etc. inside icons/users.</div>
+    <div class="section-title">Profile Photo</div>
+    <div class="avatar-upload-wrap">
+      <div class="avatar-preview"><img id="settingsAvatarPreview" src="icons/users/avatar.png" alt="Avatar"></div>
+      <div>
+        <label class="avatar-upload-label">
+          Upload Photo
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" id="avatarFileInput" style="display:none;" onchange="handleAvatarUpload(this)">
+        </label>
+        <div class="form-hint" style="margin-top:8px;">JPG, PNG or WebP. Max 5MB.</div>
+      </div>
+    </div>
   </div>
 
   <!-- Password -->
@@ -290,13 +293,11 @@ function buildThemeGrid(activeKey) {
   `).join('');
 }
 
-function buildProfileIconGrid(activeKey) {
-  const grid = document.getElementById('profileIconGrid');
-  grid.innerHTML = PROFILE_ICONS.map(icon => `
-    <button class="icon-choice${activeKey === icon.key ? ' active' : ''}" type="button" data-profile-icon="${icon.key}" onclick="selectProfileIcon('${icon.key}')" aria-label="${icon.label}">
-      <img src="${icon.src}" alt="">
-    </button>
-  `).join('');
+function buildProfileIconGrid() {
+  // Preview current avatar
+  const url = _cachedAvatarUrl(_user?.id) || DEFAULT_AVATAR;
+  const preview = document.getElementById('settingsAvatarPreview');
+  if (preview) preview.src = url;
 }
 
 async function selectTheme(key) {
@@ -306,10 +307,15 @@ async function selectTheme(key) {
   showToast('Theme saved');
 }
 
-async function selectProfileIcon(key) {
-  const iconKey = await saveProfileIcon(_user.id, key);
-  buildProfileIconGrid(iconKey);
-  showToast('Icon saved');
+async function handleAvatarUpload(input) {
+  const file = input.files[0];
+  if (!file || !_user) return;
+  // Show local preview immediately
+  const localUrl = URL.createObjectURL(file);
+  document.getElementById('settingsAvatarPreview').src = localUrl;
+  document.querySelectorAll('.avatar-img').forEach(img => img.src = localUrl);
+  // Upload to Supabase Storage
+  await uploadAvatar(_user.id, file);
 }
 
 async function saveName() {
@@ -353,7 +359,7 @@ async function init() {
 
   const activeTheme = _prefs.theme || DEFAULT_THEME;
   buildThemeGrid(activeTheme);
-  buildProfileIconGrid(_prefs.profile_icon || DEFAULT_PROFILE_ICON);
+  buildProfileIconGrid();
 }
 
 document.addEventListener('keydown', e => {
@@ -518,7 +524,8 @@ function mapSales(row) {
 }
 
 function previewImport(type) {
-  const input = document.getElementById(type === 'products' ? 'productCsvInput' : 'videoCsvInput');
+  const inputId = type === 'products' ? 'productCsvInput' : type === 'sales' ? 'salesCsvInput' : 'videoCsvInput';
+  const input = document.getElementById(inputId);
   const file = input.files[0];
   if (!file) return;
   document.getElementById(type === 'products' ? 'productFileName' : 'videoFileName').textContent = file.name;
