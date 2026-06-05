@@ -405,7 +405,8 @@ async function init() {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.activeElement === document.getElementById('nameInput')) saveName();
+  if (document.activeElement === document.getElementById('nameInput')) enterSaves(e, saveName);
+  if (document.activeElement === document.getElementById('newPass') || document.activeElement === document.getElementById('confirmPass')) enterSaves(e, savePassword);
 });
 
 init();

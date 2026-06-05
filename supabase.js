@@ -5,6 +5,18 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
+function enterSaves(e, saveFn) {
+  if (!e || e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return false;
+  const target = e.target;
+  if (!target || !target.matches?.('input, textarea, select')) return false;
+  if (target.type === 'file' || target.type === 'checkbox' || target.type === 'radio') return false;
+  e.preventDefault();
+  if (typeof saveFn === 'function') saveFn();
+  return true;
+}
+
+window.enterSaves = enterSaves;
+
 // ─── Auth Helpers ─────────────────────────────────────────────────────────────
 
 async function requireAuth() {
@@ -516,7 +528,8 @@ function openCore5Modal() {
       <input id="_c5input${i}" type="text" value="${(values[i]||'').replace(/"/g,'&quot;')}"
         placeholder="Product name"
         style="flex:1;padding:9px 12px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;"
-        onfocus="this.style.borderColor='var(--rust)'" onblur="this.style.borderColor='var(--border-mid)'">
+        onfocus="this.style.borderColor='var(--rust)'" onblur="this.style.borderColor='var(--border-mid)'"
+        onkeydown="enterSaves(event, saveCore5Modal)">
       <button onclick="document.getElementById('_c5input${i}').value=''" title="Clear"
         style="background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:4px;line-height:1;transition:color 0.12s;"
         onmouseover="this.style.color='#c83c32'" onmouseout="this.style.color='var(--text-muted)'">×</button>

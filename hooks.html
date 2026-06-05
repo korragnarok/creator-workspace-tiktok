@@ -332,7 +332,7 @@ async function init() {
     const { data } = await db.from('hooks').select('text').eq('id',id).single();
     if(data) { navigator.clipboard.writeText(data.text).then(()=>{ btn.textContent='Copied!'; btn.classList.add('copied'); setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000); }); }
   };
-  document.getElementById('hookInput').addEventListener('keydown', e => { if(e.key==='Enter'&&e.metaKey) window.addHook(); });
+  document.getElementById('hookInput').addEventListener('keydown', e => enterSaves(e, window.addHook));
   await renderHooks();
 
 }

@@ -259,6 +259,7 @@ async function init() {
   window._user = user;
   await loadVideos();
   document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+  document.getElementById('modalOverlay').addEventListener('keydown', e => enterSaves(e, saveVideo));
   document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
 }
 

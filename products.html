@@ -457,6 +457,7 @@ async function init() {
     showToast('Deleted'); window.closeModal(); renderProducts();
   };
   document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) window.closeModal(); });
+  document.getElementById('modalOverlay').addEventListener('keydown', e => enterSaves(e, window.saveProduct));
   document.addEventListener('keydown', e => { if(e.key === 'Escape') window.closeModal(); });
   document.getElementById('searchBox').addEventListener('input', syncProductFiltersUrl);
   applyFiltersFromUrl();

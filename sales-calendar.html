@@ -303,6 +303,7 @@ async function saveEntry(){
 }
 
 document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('modalOverlay').addEventListener('keydown',e=>enterSaves(e,saveEntry));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 init();
 </script>

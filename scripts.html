@@ -361,6 +361,7 @@ async function init() {
   };
   window.editFromView = function() { const id=window._viewId; closeView(); openSaveModal(id); };
   document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)window.closeModal();});
+  document.getElementById('modalOverlay').addEventListener('keydown',e=>enterSaves(e,window.saveScript));
   document.getElementById('viewOverlay').addEventListener('click',function(e){if(e.target===this)window.closeView();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){window.closeModal();window.closeView();}});
   await renderScripts();
