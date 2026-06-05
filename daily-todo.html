@@ -146,10 +146,10 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .add-take-btn:hover{border-color:var(--rust);color:var(--rust);}
 
 /* Modals */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:400;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px;}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--surface);border-radius:24px 24px 0 0;border:1px solid var(--border-mid);border-bottom:none;padding:24px 24px 36px;width:100%;max-width:560px;max-height:88vh;overflow:hidden;box-shadow:0 -20px 60px rgba(0,0,0,0.3);display:flex;flex-direction:column;}
-.modal-handle{width:36px;height:4px;background:var(--border-mid);border-radius:2px;margin:0 auto 20px;}
+.modal{background:var(--surface);border-radius:16px;border:1px solid var(--border-mid);padding:24px;width:100%;max-width:560px;max-height:88vh;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.3);display:flex;flex-direction:column;}
+.modal-handle{display:none;}
 .modal-title{font-family:'IBM Plex Serif',serif;font-size:24px;font-weight:700;color:var(--ink);margin-bottom:4px;}
 .modal-sub{font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;}
 .modal-search{width:100%;padding:10px 14px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px;font-family:'IBM Plex Serif',serif;outline:none;margin-bottom:12px;}
@@ -194,7 +194,7 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
 
 @media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}}
-@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:36px;}.tab-bar{display:flex;}.modal{max-height:calc(100dvh - 72px);}.modal-list{flex:1;max-height:none;}.modal-footer{position:sticky;bottom:0;background:var(--surface);padding-top:10px;}}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:36px;}.tab-bar{display:flex;}.modal{max-height:calc(100dvh - 40px);}.modal-list{flex:1;}}
 </style>
 </head>
 <body>
