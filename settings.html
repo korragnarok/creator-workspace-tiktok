@@ -199,6 +199,44 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
     <button class="btn btn-primary" id="savePassBtn" onclick="savePassword()">Update Password</button>
   </div>
 
+  <!-- Notion CSV Import -->
+  <div class="settings-section">
+    <div class="section-title">Import from Notion</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6;">Export your Notion databases as CSV (··· → Export → CSV), then import them here. Existing data won't be duplicated — imports skip rows that already exist.</p>
+
+    <!-- Products -->
+    <div style="margin-bottom:24px;">
+      <div class="form-label" style="margin-bottom:8px;">Product Database</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Maps: Product → name, Brand → brand, TikTok Shop Link → link, Status → status, Sold → units_sold, Live Talking Points → notes</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label class="btn btn-ghost" style="cursor:pointer;">
+          Choose File <input type="file" accept=".csv" id="productCsvInput" style="display:none;" onchange="previewImport('products')">
+        </label>
+        <span id="productFileName" style="font-size:12px;color:var(--text-muted);">No file chosen</span>
+      </div>
+      <div id="productPreview" style="display:none;margin-top:12px;">
+        <div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;" id="productPreviewCount"></div>
+        <button class="btn btn-primary" id="productImportBtn" onclick="runImport('products')">Import Products</button>
+      </div>
+    </div>
+
+    <!-- Videos -->
+    <div>
+      <div class="form-label" style="margin-bottom:8px;">Video Tracker</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Maps: Video Title / Hook (copy) → title, Product → brand, Date Posted → date, Views (24hr) → views, Sales → units, Video Type + Hook Rating → notes</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label class="btn btn-ghost" style="cursor:pointer;">
+          Choose File <input type="file" accept=".csv" id="videoCsvInput" style="display:none;" onchange="previewImport('videos')">
+        </label>
+        <span id="videoFileName" style="font-size:12px;color:var(--text-muted);">No file chosen</span>
+      </div>
+      <div id="videoPreview" style="display:none;margin-top:12px;">
+        <div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;" id="videoPreviewCount"></div>
+        <button class="btn btn-primary" id="videoImportBtn" onclick="runImport('videos')">Import Videos</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Danger zone -->
   <div class="settings-section danger-zone">
     <div class="section-title danger-title">Sign Out</div>
@@ -302,6 +340,134 @@ document.addEventListener('keydown', e => {
 });
 
 init();
+
+// ─── CSV Import ───────────────────────────────────────────────────────────────
+
+let _parsedProducts = [];
+let _parsedVideos = [];
+
+function parseCSVRow(line) {
+  const result = [];
+  let cur = '', inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(cur); cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+function parseCSV(text) {
+  text = text.replace(/^﻿/, '');
+  const lines = text.split(/?
+/).filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = parseCSVRow(lines[0]);
+  return lines.slice(1).map(line => {
+    const values = parseCSVRow(line);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h.trim()] = (values[i] || '').trim(); });
+    return obj;
+  }).filter(row => Object.values(row).some(v => v));
+}
+
+function parseNotionDate(str) {
+  if (!str) return null;
+  const months = {Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+  const m = str.match(/([A-Za-z]+)\s+(\d+)(?:,\s*(\d{4}))?/);
+  if (!m) return null;
+  const month = months[m[1].slice(0,3)];
+  if (!month) return null;
+  const year = m[3] || new Date().getFullYear();
+  return `${year}-${String(month).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
+}
+
+function mapProduct(row) {
+  return {
+    name:       row['Product'] || '',
+    brand:      row['Brand'] || '',
+    link:       row['TikTok Shop Link'] || '',
+    status:     (row['Status'] || 'active').toLowerCase(),
+    units_sold: parseInt(row['Sold'] || '0') || 0,
+    notes:      row['Live Talking Points'] || '',
+    tags:       row['Core Five'] ? 'core5' : '',
+  };
+}
+
+function mapVideo(row) {
+  const parts = [row['Video Type'], row['Hook Rating'], row['Held Attention?']].filter(Boolean);
+  return {
+    title:  row['Video Title / Hook (copy)'] || `Video ${row['Video ID'] || ''}`,
+    brand:  row['Product'] || '',
+    date:   parseNotionDate(row['Date Posted']),
+    status: 'live',
+    views:  parseInt(row['Views (24hr)'] || '0') || 0,
+    units:  parseInt(row['Sales'] || '0') || 0,
+    notes:  parts.join(' · '),
+    link:   '',
+  };
+}
+
+function previewImport(type) {
+  const input = document.getElementById(type === 'products' ? 'productCsvInput' : 'videoCsvInput');
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById(type === 'products' ? 'productFileName' : 'videoFileName').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const rows = parseCSV(e.target.result);
+    if (type === 'products') {
+      _parsedProducts = rows.map(mapProduct).filter(p => p.name);
+      document.getElementById('productPreviewCount').textContent = `${_parsedProducts.length} products ready to import`;
+      document.getElementById('productPreview').style.display = 'block';
+    } else {
+      _parsedVideos = rows.map(mapVideo).filter(v => v.title);
+      document.getElementById('videoPreviewCount').textContent = `${_parsedVideos.length} videos ready to import`;
+      document.getElementById('videoPreview').style.display = 'block';
+    }
+  };
+  reader.readAsText(file);
+}
+
+async function runImport(type) {
+  if (!_user) return;
+  const btn = document.getElementById(type === 'products' ? 'productImportBtn' : 'videoImportBtn');
+  btn.disabled = true; btn.textContent = 'Importing...';
+  const rows = type === 'products' ? _parsedProducts : _parsedVideos;
+  const table = type === 'products' ? 'products' : 'videos';
+  const nameField = type === 'products' ? 'name' : 'title';
+  const { data: existing } = await db.from(table).select(nameField).eq('user_id', _user.id);
+  const existingNames = new Set((existing || []).map(r => (r[nameField] || '').toLowerCase()));
+  const toInsert = rows
+    .filter(r => !existingNames.has((r[nameField] || '').toLowerCase()))
+    .map(r => ({ ...r, user_id: _user.id }));
+  if (toInsert.length === 0) {
+    showToast('Nothing new to import — all rows already exist');
+    btn.disabled = false; btn.textContent = type === 'products' ? 'Import Products' : 'Import Videos';
+    return;
+  }
+  let imported = 0;
+  for (let i = 0; i < toInsert.length; i += 50) {
+    const { error } = await db.from(table).insert(toInsert.slice(i, i + 50));
+    if (error) { showToast(error.message, 'error'); btn.disabled = false; btn.textContent = type === 'products' ? 'Import Products' : 'Import Videos'; return; }
+    imported += Math.min(50, toInsert.length - i);
+  }
+  showToast(`${imported} ${type} imported!`);
+  btn.textContent = `✓ ${imported} imported`;
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = type === 'products' ? 'Import Products' : 'Import Videos';
+    document.getElementById(type === 'products' ? 'productPreview' : 'videoPreview').style.display = 'none';
+    document.getElementById(type === 'products' ? 'productFileName' : 'videoFileName').textContent = 'No file chosen';
+    if (type === 'products') _parsedProducts = []; else _parsedVideos = [];
+  }, 3000);
+}
+
 </script>
-</body>
-</html>

@@ -107,9 +107,12 @@ create table if not exists user_prefs (
   display_name text default '',
   core5 jsonb default '[]'::jsonb,
   theme text default 'dusk',
+  profile_icon text default 'icon-1',
   updated_at timestamptz default now()
 );
 alter table user_prefs enable row level security;
 create policy "Users manage own prefs" on user_prefs for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 alter table user_prefs add column if not exists theme text default 'dusk';
+
+alter table user_prefs add column if not exists profile_icon text default 'icon-1';
