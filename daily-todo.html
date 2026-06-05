@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js"></script>
+<script src="theme-init.js?v=8"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
+<script src="supabase.js?v=8"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -65,12 +65,13 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .profile-name{font-weight:700;line-height:1.1;color:var(--ink);}
 .profile-role{font-size:11px;color:var(--text-muted);}
 
-.page{max-width:820px;margin:0 auto;padding:0 40px 100px;}
-.page-header{padding:40px 0 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-.page-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
-.page-title{font-family:'IBM Plex Serif',serif;font-size:48px;font-weight:700;line-height:0.95;letter-spacing:-0.02em;color:var(--ink);}
+.page{max-width:1180px;margin:0 auto;padding:0 40px 100px;}
+.page-header{padding:34px 0 28px;border-bottom:1px solid var(--border-mid);margin-bottom:36px;}
+.page-title{font-family:'IBM Plex Serif',serif;font-size:clamp(60px,8vw,104px);font-weight:700;line-height:0.82;letter-spacing:-0.02em;color:var(--ink);}
 .page-title em{font-style:italic;color:var(--sage);}
-.header-actions{display:flex;gap:8px;align-items:center;flex-shrink:0;margin-top:44px;}
+.todo-toolbar{display:grid;grid-template-columns:auto minmax(260px,1fr) auto auto;gap:18px;align-items:center;margin-top:24px;}
+.toolbar-date{display:flex;align-items:center;gap:18px;min-width:0;}
+.header-actions{display:flex;gap:12px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:8px;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;border:none;transition:all 0.15s;}
 .btn-primary{background:var(--rust);color:#fff;}
 .btn-primary:hover{opacity:0.88;}
@@ -79,11 +80,19 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .btn-sm{padding:6px 12px;font-size:11px;}
 .btn-xs{padding:4px 9px;font-size:10px;}
 
-.date-nav{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
-.date-arrow{background:var(--surface);border:1px solid var(--border-mid);border-radius:8px;padding:7px 14px;font-size:16px;cursor:pointer;color:var(--text-mid);transition:all 0.12s;}
-.date-arrow:hover{border-color:var(--rust);color:var(--rust);}
-.date-label{font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:700;color:var(--ink);min-width:200px;text-align:center;cursor:pointer;}
+.date-arrow{width:44px;height:44px;background:color-mix(in srgb,var(--surface) 68%,var(--bg) 32%);border:1px solid var(--border-mid);border-radius:12px;font-family:'Stack Sans Notch',sans-serif;font-size:22px;font-weight:700;cursor:pointer;color:var(--text-mid);transition:all 0.12s;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.date-arrow:hover{border-color:var(--rust);color:var(--rust);background:color-mix(in srgb,var(--surface) 76%,var(--rust) 12%);}
+.date-label{font-family:'Stack Sans Text',sans-serif;font-size:20px;font-weight:800;color:var(--ink);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .date-badge{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--rust);background:color-mix(in srgb,var(--rust) 12%,transparent);padding:3px 10px;border-radius:100px;}
+.week-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin-top:34px;}
+.week-day{min-width:0;min-height:88px;border:1px solid var(--border-mid);border-radius:16px;background:color-mix(in srgb,var(--surface) 68%,var(--bg) 32%);color:var(--text-mid);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:background 0.15s,border-color 0.15s,color 0.15s,transform 0.15s;}
+.week-day:hover{border-color:var(--rust);color:var(--ink);background:color-mix(in srgb,var(--surface) 72%,var(--rust) 10%);}
+.week-day.active{background:var(--ink);border-color:var(--ink);color:var(--bg);box-shadow:var(--shadow-sm);}
+.week-day-dow{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:currentColor;opacity:0.68;}
+.week-day-num{font-family:'Noto Sans Mono',sans-serif;font-size:28px;font-weight:900;line-height:1;color:currentColor;}
+.week-day-dot{width:7px;height:7px;border-radius:50%;background:var(--rust);opacity:0;}
+.week-day.has-items .week-day-dot{opacity:1;}
+.week-day.active .week-day-dot{background:var(--bg);opacity:0.72;}
 
 .progress-summary{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
 .progress-text{font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:700;color:var(--ink);}
@@ -200,7 +209,8 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .tab-profile-avatar{width:24px;height:24px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
 
 @media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}}
-@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:36px;}.tab-bar{display:flex;}.modal{max-height:calc(100dvh - 40px);}.modal-list{flex:1;}}
+@media(max-width:980px){.todo-toolbar{grid-template-columns:auto minmax(0,1fr) auto;}.header-actions{grid-column:1/-1;justify-content:flex-start;}.week-strip{gap:8px;overflow-x:auto;grid-template-columns:repeat(7,minmax(118px,1fr));padding-bottom:4px;scrollbar-width:none;}.week-strip::-webkit-scrollbar{display:none;}}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:50px;}.date-label{font-size:16px;white-space:normal;}.header-actions .btn{flex:1;justify-content:center;}.tab-bar{display:flex;}.modal{max-height:calc(100dvh - 40px);}.modal-list{flex:1;}}
 </style>
 </head>
 <body>
@@ -219,21 +229,22 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 
 <div class="page">
   <div class="page-header">
-    <div>
-      <div class="page-eyebrow">Daily Workflow</div>
-      <div class="page-title">Today's <em>To Do</em></div>
+    <div class="page-title">Today's <em>To Do</em></div>
+    <div class="todo-toolbar">
+      <button class="date-arrow" onclick="changeDay(-1)" aria-label="Previous day">‹</button>
+      <div class="toolbar-date">
+        <div class="date-label" id="dateLabel" onclick="goToToday()"></div>
+        <span class="date-badge" id="dateBadge" style="display:none;"></span>
+      </div>
+      <button class="date-arrow" onclick="changeDay(1)" aria-label="Next day">›</button>
+      <div class="header-actions">
+        <button class="btn btn-ghost" onclick="copyAllScripts(this)">Copy All</button>
+        <button class="btn btn-ghost" onclick="restartDay()">Restart</button>
+        <button class="btn btn-ghost" onclick="refreshDay(this)">Refresh</button>
+        <button class="btn btn-primary" onclick="openPicker()">+ Add Product</button>
+      </div>
     </div>
-    <div class="header-actions">
-      <button class="btn btn-ghost" onclick="copyAllScripts(this)">📋 Copy All</button>
-      <button class="btn btn-primary" onclick="openPicker()">+ Add Task</button>
-    </div>
-  </div>
-
-  <div class="date-nav">
-    <button class="date-arrow" onclick="changeDay(-1)">‹</button>
-    <div class="date-label" id="dateLabel" onclick="goToToday()"></div>
-    <button class="date-arrow" onclick="changeDay(1)">›</button>
-    <span class="date-badge" id="dateBadge" style="display:none;"></span>
+    <div class="week-strip" id="weekStrip"></div>
   </div>
 
   <div id="progressArea"></div>
@@ -288,7 +299,7 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
   </div>
 </div>
 
-<script src="layout.js"></script>
+<script src="layout.js?v=8"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -306,6 +317,7 @@ const todayKey = dateKey(today);
 function currentKey(){return dateKey(currentDate);}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function addDays(date, amount){const d=new Date(date);d.setDate(d.getDate()+amount);return d;}
 
 function getLinkLabel(url){try{const u=new URL(url);return u.hostname.replace(/^www\./,'')+(u.pathname.length>1?u.pathname.slice(0,18):'');}catch(e){return url.replace(/^https?:\/\//,'').slice(0,28);}}
 function normalizeUrl(url){const t=(url||'').trim();if(!t)return '';return /^https?:\/\//i.test(t)?t:'https://'+t;}
@@ -313,13 +325,40 @@ function normalizeUrl(url){const t=(url||'').trim();if(!t)return '';return /^htt
 // ─── DATE NAV ─────────────────────────────────────────────
 function updateDateDisplay(){
   const key=currentKey(),isToday=key===todayKey;
-  document.getElementById('dateLabel').textContent=currentDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const formatted=currentDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('dateLabel').textContent=isToday?`Today — ${formatted}`:formatted;
   const badge=document.getElementById('dateBadge');
   if(isToday){badge.style.display='none';}
   else{badge.style.display='inline-block';badge.textContent=key>todayKey?'Future':'Past';}
+  renderWeekStrip();
 }
 function changeDay(dir){currentDate=new Date(currentDate);currentDate.setDate(currentDate.getDate()+dir);updateDateDisplay();loadQueue().then(render);}
 function goToToday(){if(currentKey()===todayKey)return;currentDate=new Date(today);updateDateDisplay();loadQueue().then(render);}
+function pickWeekDate(offset){currentDate=addDays(currentDate,offset);updateDateDisplay();loadQueue().then(render);}
+function renderWeekStrip(){
+  const strip=document.getElementById('weekStrip');
+  if(!strip)return;
+  const offsets=[-3,-2,-1,0,1,2,3];
+  const active=currentKey();
+  strip.innerHTML=offsets.map(offset=>{
+    const d=addDays(currentDate,offset);
+    const key=dateKey(d);
+    const hasItems=key===active&&TODO.length>0;
+    return `<button class="week-day${key===active?' active':''}${hasItems?' has-items':''}" type="button" onclick="pickWeekDate(${offset})">
+      <span class="week-day-dow">${d.toLocaleDateString('en-US',{weekday:'short'})}</span>
+      <span class="week-day-num">${d.getDate()}</span>
+      <span class="week-day-dot"></span>
+    </button>`;
+  }).join('');
+}
+function restartDay(){goToToday();}
+async function refreshDay(btn){
+  const original=btn?.textContent;
+  if(btn){btn.disabled=true;btn.textContent='Refreshing';}
+  await loadQueue();
+  render();
+  if(btn){btn.disabled=false;btn.textContent=original || 'Refresh';}
+}
 
 // ─── DATA ─────────────────────────────────────────────────
 async function loadProducts(){const{data}=await db.from('products').select('id,name,brand,link,notes').eq('user_id',_user.id).order('name');ALL_PRODUCTS=data||[];}
@@ -353,6 +392,7 @@ async function deleteQueueRow(take){if(take.queueId){await db.from('queue').dele
 function getFilteredCards(){return activeBrandFilter==='All'?TODO:TODO.filter(c=>(c.brand||'')=== activeBrandFilter);}
 
 function render(){
+  renderWeekStrip();
   const allTakes=TODO.flatMap(c=>c.takes),done=allTakes.filter(t=>t.done).length,total=allTakes.length;
   const pArea=document.getElementById('progressArea');
   if(total>0){

@@ -1,5 +1,5 @@
 // ─── Creator Hub Service Worker ───────────────────────────────────────────────
-const CACHE = 'creator-hub-v4';
+const CACHE = 'creator-hub-v8';
 
 // Core files to cache for offline shell
 const PRECACHE = [
@@ -13,7 +13,9 @@ const PRECACHE = [
   '/creator-workspace-tiktok/scripts.html',
   '/creator-workspace-tiktok/settings.html',
   '/creator-workspace-tiktok/video-tracker.html',
+  '/creator-workspace-tiktok/theme-init.js',
   '/creator-workspace-tiktok/supabase.js',
+  '/creator-workspace-tiktok/layout.js',
   '/creator-workspace-tiktok/manifest.json',
 ];
 
@@ -33,7 +35,7 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch — network first for Supabase API calls, cache first for app shell
+// Fetch — network first for app files so Chrome does not keep stale UI code.
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
@@ -44,18 +46,20 @@ self.addEventListener('fetch', e => {
     return; // let browser handle it normally
   }
 
-  // For app shell files — cache first, fall back to network
+  const isAppFile = url.origin === self.location.origin &&
+    url.pathname.startsWith('/creator-workspace-tiktok/');
+
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(response => {
+    fetch(e.request).then(response => {
+      if (isAppFile && e.request.method === 'GET' && response.status === 200) {
+        const clone = response.clone();
+        caches.open(CACHE).then(cache => cache.put(e.request, clone));
+      }
+      return response;
+    }).catch(() => {
+      return caches.match(e.request).then(cached => {
+        if (cached) return cached;
         // Cache successful GET responses
-        if (e.request.method === 'GET' && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE).then(cache => cache.put(e.request, clone));
-        }
-        return response;
-      }).catch(() => {
         // Offline fallback — return index for navigation requests
         if (e.request.mode === 'navigate') {
           return caches.match('/creator-workspace-tiktok/index.html');
