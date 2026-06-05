@@ -617,7 +617,9 @@ function initProfilePopover(userId) {
 async function initTheme(userId, prefs) {
   const user = await getUser();
   const metaTheme = _metadataTheme(user);
-  const themeKey = metaTheme || (THEMES[prefs.theme] ? prefs.theme : (_cachedTheme() || DEFAULT_THEME));
+  const cachedTheme = _cachedTheme();
+  const prefTheme = THEMES[prefs.theme] ? prefs.theme : '';
+  const themeKey = metaTheme || (cachedTheme && cachedTheme !== DEFAULT_THEME ? cachedTheme : '') || prefTheme || cachedTheme || DEFAULT_THEME;
   try { localStorage.setItem('creatorHub:theme', themeKey); } catch(e) {}
   applyTheme(themeKey);
   if (userId && prefs.theme !== themeKey) await saveUserPrefs(userId, { theme: themeKey });
