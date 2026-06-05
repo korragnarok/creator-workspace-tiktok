@@ -168,18 +168,24 @@ async function loadUserPrefs(userId) {
     .select('*')
     .eq('user_id', userId)
     .maybeSingle();
-  if (data) return { ...data, profile_icon: data.profile_icon || _cachedProfileIcon(userId) };
+  if (data) return {
+    ...data,
+    core5: _resolveCore5(userId, data.core5),
+    profile_icon: data.profile_icon || _cachedProfileIcon(userId)
+  };
   // First login — create the row so future saves have somewhere to upsert into
   await db.from('user_prefs').upsert(
     { user_id: userId, display_name: '', core5: [], theme },
     { onConflict: 'user_id' }
   );
-  return { display_name: null, core5: [], theme, profile_icon: _cachedProfileIcon(userId) };
+  return { display_name: null, core5: _cachedCore5(userId), theme, profile_icon: _cachedProfileIcon(userId) };
 }
 
 async function saveUserPrefs(userId, patch) {
-  await db.from('user_prefs')
+  const { error } = await db.from('user_prefs')
     .upsert({ user_id: userId, ...patch }, { onConflict: 'user_id' });
+  if (error) console.warn('Preference save failed', error);
+  return { error };
 }
 
 // ─── Display Name ─────────────────────────────────────────────────────────────
@@ -273,6 +279,31 @@ async function saveDisplayName(userId) {
 
 // ─── Core 5 ──────────────────────────────────────────────────────────────────
 
+function _core5Key(userId) {
+  return `creatorHub:core5:${userId || 'local'}`;
+}
+
+function _normalizeCore5(values) {
+  const arr = Array.isArray(values) ? values : [];
+  return Array.from({ length: 5 }, (_, i) => String(arr[i] || '').trim());
+}
+
+function _cachedCore5(userId) {
+  try {
+    return _normalizeCore5(JSON.parse(localStorage.getItem(_core5Key(userId)) || '[]'));
+  } catch(e) { return []; }
+}
+
+function _cacheCore5(userId, values) {
+  try { localStorage.setItem(_core5Key(userId), JSON.stringify(_normalizeCore5(values))); } catch(e) {}
+}
+
+function _resolveCore5(userId, savedValues) {
+  const saved = _normalizeCore5(savedValues);
+  const cached = _cachedCore5(userId);
+  return saved.some(Boolean) ? saved : cached;
+}
+
 function _updateCoreCount() {
   const count = Array.from(document.querySelectorAll('.core-mini-input'))
     .filter(i => i.value.trim()).length;
@@ -281,20 +312,32 @@ function _updateCoreCount() {
 }
 
 async function initCore5(userId, prefs) {
-  const values = Array.isArray(prefs.core5) ? prefs.core5 : [];
+  const values = _resolveCore5(userId, prefs.core5);
+  _cacheCore5(userId, values);
   let saveTimer = null;
+  let latestValues = values;
+  async function persistCore5(valuesToSave) {
+    latestValues = _normalizeCore5(valuesToSave);
+    _cacheCore5(userId, latestValues);
+    const { error } = await saveUserPrefs(userId, { core5: latestValues });
+    if (error) console.warn('Core 5 save failed; using local cache', error);
+  }
   document.querySelectorAll('.core-mini-input').forEach(input => {
     input.value = values[Number(input.dataset.coreIndex)] || '';
     input.addEventListener('input', () => {
       _updateCoreCount();
+      latestValues = Array.from(document.querySelectorAll('.core-mini-input'))
+        .map(i => i.value.trim());
+      _cacheCore5(userId, latestValues);
       clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => {
-        const current = Array.from(document.querySelectorAll('.core-mini-input'))
-          .map(i => i.value.trim());
-        saveUserPrefs(userId, { core5: current });
-      }, 600);
+      saveTimer = setTimeout(() => persistCore5(latestValues), 500);
+    });
+    input.addEventListener('blur', () => {
+      clearTimeout(saveTimer);
+      persistCore5(latestValues);
     });
   });
+  window.addEventListener('beforeunload', () => _cacheCore5(userId, latestValues));
   _updateCoreCount();
 }
 
