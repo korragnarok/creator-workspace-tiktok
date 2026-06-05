@@ -232,9 +232,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
         <th onclick="sortBy('views')" class="num">Views</th>
         <th onclick="sortBy('units')">Got Sales</th>
         <th onclick="sortBy('status')">Status</th>
+        <th>Link</th>
         <th></th>
       </tr></thead>
-      <tbody id="tbody"><tr><td colspan="8"><div class="empty">Loading...</div></td></tr></tbody>
+      <tbody id="tbody"><tr><td colspan="9"><div class="empty">Loading...</div></td></tr></tbody>
     </table>
     <div class="pagination"><span id="pageInfo"></span><div class="page-btns" id="pageBtns"></div></div>
   </div>
@@ -291,10 +292,10 @@ function hookFromVideo(v){
 }
 async function loadVideos(){
   const tbody=document.getElementById('tbody');
-  tbody.innerHTML='<tr><td colspan="8"><div class="empty">Loading...</div></td></tr>';
+  tbody.innerHTML='<tr><td colspan="9"><div class="empty">Loading...</div></td></tr>';
   const {data,error}=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false});
   if(error){
-    tbody.innerHTML='<tr><td colspan="8" class="empty">Error loading videos.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="9" class="empty">Error loading videos.</td></tr>';
     return;
   }
   DATA=data||[];
@@ -360,7 +361,7 @@ function renderTable(){
   }
   const tbody=document.getElementById('tbody');
   if(!rows.length){
-    tbody.innerHTML='<tr><td colspan="8" class="empty">No videos found.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="9" class="empty">No videos found.</td></tr>';
     updateVideoEditToolbar();
     return;
   }
@@ -376,6 +377,7 @@ function renderTable(){
       <td class="num">${fmtNum(v.views)}</td>
       <td><span class="status ${hasSales?'status-yes':'status-no'}">${hasSales?'Yes':'No'}</span></td>
       <td><span class="status status-${esc(v.status||'draft')}">${esc(v.status||'draft')}</span></td>
+      <td>${v.link ? `<a href="${esc(v.link)}" target="_blank" rel="noopener" style="color:var(--rust);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">↗ View</a>` : '<span style="color:var(--text-muted);font-size:12px;">—</span>'}</td>
       <td><button class="tbl-action" onclick="event.stopPropagation();openModal('${v.id}')">Edit</button></td>
     </tr>`;
   }).join('');
