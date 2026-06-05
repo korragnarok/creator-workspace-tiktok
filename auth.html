@@ -33,6 +33,11 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;m
 .msg.success{background:rgba(122,129,108,0.1);color:var(--sage);border:1px solid rgba(122,129,108,0.2);}
 .magic-hint{font-size:12px;color:var(--text-muted);text-align:center;margin-top:14px;line-height:1.6;}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Creator Hub">
+<link rel="apple-touch-icon" href="icons/pwa/icon-192.png">
 </head>
 <body>
 <div class="card">
@@ -135,6 +140,14 @@ async function magicLink() {
   const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: AUTH_REDIRECT_URL } });
   if (error) showMsg(error.message, 'error');
   else showMsg('Magic link sent! Check your inbox.', 'success');
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/creator-workspace-tiktok/sw.js')
+      .catch(err => console.warn('SW registration failed:', err));
+  });
 }
 </script>
 </body>

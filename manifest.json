@@ -1,0 +1,44 @@
+{
+  "name": "Creator Workspace",
+  "short_name": "Creator Hub",
+  "description": "TikTok Shop creator workspace — products, videos, sales, and scripts.",
+  "start_url": "/creator-workspace-tiktok/index.html",
+  "scope": "/creator-workspace-tiktok/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#2A1822",
+  "theme_color": "#2A1822",
+  "icons": [
+    {
+      "src": "icons/pwa/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/pwa/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["productivity", "business"],
+  "shortcuts": [
+    {
+      "name": "Daily To Do",
+      "url": "/creator-workspace-tiktok/daily-todo.html",
+      "icons": [{ "src": "icons/todo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Products",
+      "url": "/creator-workspace-tiktok/products.html",
+      "icons": [{ "src": "icons/products.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Sales Log",
+      "url": "/creator-workspace-tiktok/sales-calendar.html",
+      "icons": [{ "src": "icons/sales.png", "sizes": "96x96" }]
+    }
+  ]
+}

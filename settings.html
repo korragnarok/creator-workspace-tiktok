@@ -110,6 +110,11 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Creator Hub">
+<link rel="apple-touch-icon" href="icons/pwa/icon-192.png">
 </head>
 <body>
 
@@ -513,8 +518,7 @@ function mapSales(row) {
 }
 
 function previewImport(type) {
-  const inputId = type === 'products' ? 'productCsvInput' : type === 'sales' ? 'salesCsvInput' : 'videoCsvInput';
-  const input = document.getElementById(inputId);
+  const input = document.getElementById(type === 'products' ? 'productCsvInput' : 'videoCsvInput');
   const file = input.files[0];
   if (!file) return;
   document.getElementById(type === 'products' ? 'productFileName' : 'videoFileName').textContent = file.name;

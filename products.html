@@ -141,6 +141,11 @@ tr.select-mode .tbl-action{display:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Creator Hub">
+<link rel="apple-touch-icon" href="icons/pwa/icon-192.png">
 </head>
 <body>
 <aside class="desktop-sidebar">
@@ -456,6 +461,14 @@ async function init() {
 
 }
 init();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/creator-workspace-tiktok/sw.js')
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
 </script>
 </body>
 </html>
