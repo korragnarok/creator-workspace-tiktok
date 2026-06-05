@@ -302,9 +302,45 @@ function buildThemeGrid(activeKey) {
 
 function buildProfileIconGrid() {
   // Show current avatar in preview
-  const url = _cachedAvatarUrl ? _cachedAvatarUrl(_user?.id) : 'icons/users/avatar.png';
+  const url = (_prefs?.profile_icon && _isProfileImageSrc?.(_prefs.profile_icon))
+    ? _prefs.profile_icon
+    : (_cachedAvatarUrl ? _cachedAvatarUrl(_user?.id) : '');
   const preview = document.getElementById('settingsAvatarPreview');
   if (preview) preview.src = url || 'icons/users/avatar.png';
+}
+
+function fileToAvatarDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = () => { img.src = reader.result; };
+    reader.onerror = reject;
+    img.onload = () => {
+      const size = 320;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(size / img.width, size / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function saveAvatarFallback(file) {
+  const dataUrl = await fileToAvatarDataUrl(file);
+  _cacheAvatarUrl?.(_user.id, dataUrl);
+  try { localStorage.setItem(`creatorHub:profileIcon:${_user.id}`, dataUrl); } catch(e) {}
+  const { error } = await saveUserPrefs(_user.id, { profile_icon: dataUrl });
+  const { error: metaError } = await db.auth.updateUser({ data: { profile_icon: dataUrl } });
+  document.getElementById('settingsAvatarPreview').src = dataUrl;
+  document.querySelectorAll('.avatar-img').forEach(img => img.src = dataUrl);
+  return { error: error && metaError ? error : null };
 }
 
 async function selectTheme(key) {
@@ -326,11 +362,16 @@ async function handleAvatarUpload(input) {
   const ext = file.name.split('.').pop().toLowerCase() || 'png';
   const path = `${_user.id}/avatar.${ext}`;
   const { error } = await db.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
-  if (error) { showToast('Upload failed: ' + error.message, 'error'); return; }
+  if (error) {
+    const fallback = await saveAvatarFallback(file);
+    showToast(fallback.error ? 'Photo saved on this browser only' : 'Profile photo saved');
+    return;
+  }
   const { data: { publicUrl } } = db.storage.from('avatars').getPublicUrl(path);
   const url = publicUrl + '?t=' + Date.now();
-  try { localStorage.setItem(`creatorHub:avatarUrl:${_user.id}`, url); } catch(e) {}
+  _cacheAvatarUrl?.(_user.id, url);
   await saveUserPrefs(_user.id, { profile_icon: url });
+  await db.auth.updateUser({ data: { profile_icon: url } });
   document.querySelectorAll('.avatar-img').forEach(img => img.src = url);
   showToast('Profile photo updated!');
 }
