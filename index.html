@@ -133,9 +133,10 @@ button,input{font:inherit;}
 .name-save{width:100%;border:none;border-radius:var(--r);background:var(--rust);color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:12px 14px;cursor:pointer;}
 .name-save:hover{background:#9a5a57;}
 .tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:color-mix(in srgb,var(--bg) 88%,#000 12%);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
-.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;border:0;background:transparent;cursor:pointer;padding-bottom:4px;}
 .tab-item.active{color:var(--rust);}
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
+.tab-profile-avatar{width:24px;height:24px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
 @media(max-width:1420px) and (min-width:1181px){.content{max-width:1080px;}.top-layout,.lower-grid{grid-template-columns:1fr;}.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));}.stat-card{padding:15px;gap:10px;}.stat-icon{width:36px;height:36px;}.stat-icon img{width:22px;height:22px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}}
 @media(max-width:1180px){.app-shell{grid-template-columns:1fr;}.sidebar{display:none;}.top-layout,.lower-grid{grid-template-columns:1fr;}}
 @media(max-width:980px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
@@ -281,10 +282,7 @@ button,input{font:inherit;}
   <a href="daily-todo.html" class="tab-item"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
   <a href="sales-calendar.html" class="tab-item"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
   <a href="products.html" class="tab-item"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
-  <a href="settings.html" class="tab-item">
-    <div><svg class="tab-icon-svg" style="width:22px;height:22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
-    <div>Settings</div>
-  </a>
+  <button type="button" class="tab-item profile-trigger" aria-label="Open profile menu"><div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div>User</div></button>
 </div>
 
 <script>

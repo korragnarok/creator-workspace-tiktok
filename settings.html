@@ -99,9 +99,10 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .danger-btn:hover{background:#C83C32;color:#fff;border-color:#C83C32;}
 
 .tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:color-mix(in srgb,var(--bg) 88%,#000 12%);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
-.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;padding-bottom:4px;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;border:0;background:transparent;cursor:pointer;padding-bottom:4px;}
 .tab-item.active{color:var(--rust);}
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
+.tab-profile-avatar{width:24px;height:24px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
 .tab-icon-svg{width:22px;height:22px;display:block;}
 
 @media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}}
@@ -211,10 +212,7 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
   <a href="daily-todo.html" class="tab-item"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
   <a href="sales-calendar.html" class="tab-item"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
   <a href="products.html" class="tab-item"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>
-  <a href="settings.html" class="tab-item active">
-    <div><svg class="tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
-    <div>Settings</div>
-  </a>
+  <button type="button" class="tab-item profile-trigger" aria-label="Open profile menu"><div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div>User</div></button>
 </div>
 
 <script>
