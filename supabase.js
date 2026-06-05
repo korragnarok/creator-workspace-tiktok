@@ -122,13 +122,6 @@ const THEMES = {
 
 const DEFAULT_THEME = 'dusk';
 const DEFAULT_PROFILE_ICON = 'icon-1';
-const THEME_ICON_NAMES = new Set(['home','todo','video','videos','hooks','products','scripts','sales','gmv','commissions','comission','comissions','commissins']);
-const THEME_ICON_FILES = {
-  dusk: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
-  warm: { video:'videos.png', videos:'videos.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
-  noir: { video:'video.png', videos:'video.png', commissions:'comissions.png', comission:'comissions.png', comissions:'comissions.png', commissins:'comissions.png' },
-  forest: { video:'video.png', videos:'video.png', commissions:'commissins.png', comission:'commissins.png', comissions:'commissins.png', commissins:'commissins.png' }
-};
 const PROFILE_ICONS = [
   { key: 'icon-1', label: 'Icon 1', src: 'icons/users/icon-1.png' },
   { key: 'icon-2', label: 'Icon 2', src: 'icons/users/icon-2.png' },
@@ -149,10 +142,7 @@ function applyTheme(themeKey) {
   const resolvedKey = THEMES[themeKey] ? themeKey : DEFAULT_THEME;
   const theme = THEMES[resolvedKey];
   const root = document.documentElement;
-  root.dataset.theme = resolvedKey;
   Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v));
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.vars['--bg']);
-  applyThemeIcons(resolvedKey);
   // Mark active on any theme switcher dots present
   document.querySelectorAll('[data-theme]').forEach(el => {
     el.classList.toggle('active', el.dataset.theme === resolvedKey);
@@ -170,83 +160,32 @@ function applyThemeImmediate() {
 }
 applyThemeImmediate();
 
-function _themeIconNameFromSrc(src) {
-  const match = String(src || '').match(/(?:^|\/)icons\/(?:(dusk|warm|noir|forest)\/)?([^/?#]+)\.png(?:[?#].*)?$/i);
-  if (!match) return '';
-  const raw = match[2].toLowerCase();
-  if (raw === 'videos') return 'video';
-  if (raw === 'comission' || raw === 'comissions' || raw === 'commissins') return 'commissions';
-  return THEME_ICON_NAMES.has(raw) ? raw : '';
-}
-
-function _themeIconSrc(themeKey, iconName) {
-  const normalized = iconName === 'videos' ? 'video' : iconName;
-  const aliases = THEME_ICON_FILES[themeKey] || {};
-  const file = aliases[normalized] || `${normalized}.png`;
-  return `icons/${themeKey}/${file}`;
-}
-
-function applyThemeIcons(themeKey) {
-  const resolvedKey = THEMES[themeKey] ? themeKey : DEFAULT_THEME;
-  document.querySelectorAll('img').forEach(img => {
-    if (img.closest('.avatar, .tab-profile-avatar, .icon-choice')) return;
-    const iconName = img.dataset.iconName || _themeIconNameFromSrc(img.getAttribute('src'));
-    if (!iconName || !THEME_ICON_NAMES.has(iconName)) return;
-    img.dataset.iconName = iconName === 'videos' ? 'video' : iconName;
-    img.dataset.themeIcon = 'true';
-    img.src = _themeIconSrc(resolvedKey, img.dataset.iconName);
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => applyThemeIcons(_cachedTheme() || DEFAULT_THEME));
-
 // ─── User Prefs ───────────────────────────────────────────────────────────────
 
 async function loadUserPrefs(userId) {
   const theme = _cachedTheme() || DEFAULT_THEME;
-  const { data, error } = await db.from('user_prefs')
+  const { data } = await db.from('user_prefs')
     .select('*')
-    .eq('user_id', userId);
-  if (error) console.warn('Preference load failed', error);
-  const rows = data || [];
-  if (rows.length) {
-    const merged = {
-      display_name: '',
-      core5: [],
-      theme,
-      profile_icon: '',
-      _isNewPrefs: false
-    };
-    rows.forEach(row => {
-      if ((row.display_name || '').trim()) merged.display_name = row.display_name;
-      if (Array.isArray(row.core5) && row.core5.some(value => String(value || '').trim())) merged.core5 = row.core5;
-      if (THEMES[row.theme]) merged.theme = row.theme;
-      if (row.profile_icon) merged.profile_icon = row.profile_icon;
-    });
-    return { ...merged, core5: _resolveCore5(userId, merged.core5) };
-  }
-  const cachedCore5 = _cachedCore5(userId);
-  await saveUserPrefs(userId, { display_name: '', core5: cachedCore5, theme });
-  return { display_name: null, core5: cachedCore5, theme, profile_icon: _cachedAvatarUrl(userId) || _cachedProfileIcon(userId), _isNewPrefs: true };
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (data) return {
+    ...data,
+    core5: _resolveCore5(userId, data.core5),
+    profile_icon: data.profile_icon || _cachedProfileIcon(userId)
+  };
+  // First login — create the row so future saves have somewhere to upsert into
+  await db.from('user_prefs').upsert(
+    { user_id: userId, display_name: '', core5: [], theme },
+    { onConflict: 'user_id' }
+  );
+  return { display_name: null, core5: _cachedCore5(userId), theme, profile_icon: _cachedProfileIcon(userId) };
 }
 
 async function saveUserPrefs(userId, patch) {
-  if (!userId) return { error: new Error('Missing user id') };
-  const cleanPatch = { ...patch };
-  if ('core5' in cleanPatch) cleanPatch.core5 = _normalizeCore5(cleanPatch.core5);
-  const { data: updated, error: updateError } = await db.from('user_prefs')
-    .update(cleanPatch)
-    .eq('user_id', userId)
-    .select('user_id');
-  if (updateError) {
-    console.warn('Preference update failed', updateError);
-    return { error: updateError };
-  }
-  if (updated && updated.length) return { error: null };
-  const { error: insertError } = await db.from('user_prefs')
-    .insert({ user_id: userId, display_name: '', core5: [], theme: _cachedTheme() || DEFAULT_THEME, ...cleanPatch });
-  if (insertError) console.warn('Preference insert failed', insertError);
-  return { error: insertError || null };
+  const { error } = await db.from('user_prefs')
+    .upsert({ user_id: userId, ...patch }, { onConflict: 'user_id' });
+  if (error) console.warn('Preference save failed', error);
+  return { error };
 }
 
 // ─── Display Name ─────────────────────────────────────────────────────────────
@@ -264,61 +203,18 @@ function _profileIconByKey(key) {
   return PROFILE_ICONS.find(icon => icon.key === key) || PROFILE_ICONS[0];
 }
 
-function _isProfileImageSrc(value) {
-  return /^(https?:|data:image\/|blob:)/i.test(String(value || ''));
-}
-
-function _avatarUrlKey(userId) {
-  return `creatorHub:avatarUrl:${userId || 'local'}`;
-}
-
-function _cachedAvatarUrl(userId) {
-  try { return localStorage.getItem(_avatarUrlKey(userId)) || ''; }
-  catch(e) { return ''; }
-}
-
-function _cacheAvatarUrl(userId, url) {
-  try { localStorage.setItem(_avatarUrlKey(userId), url); } catch(e) {}
-}
-
 function _profileIconCacheKey(userId) {
   return `creatorHub:profileIcon:${userId || 'local'}`;
 }
 
 function _cachedProfileIcon(userId) {
   try {
-    const saved = localStorage.getItem(_profileIconCacheKey(userId)) || '';
-    if (_isProfileImageSrc(saved)) return saved;
-    return PROFILE_ICONS.some(icon => icon.key === saved) ? saved : '';
-  } catch(e) { return ''; }
-}
-
-function _resolveProfileIcon(user, prefs) {
-  const prefIcon = prefs?.profile_icon || '';
-  const metaIcon = _metadataProfileIcon(user);
-  const cachedAvatar = _cachedAvatarUrl(user?.id);
-  const cachedIcon = _cachedProfileIcon(user?.id);
-  const imageCandidates = [prefIcon, metaIcon, cachedAvatar, cachedIcon];
-  const imageIcon = imageCandidates.find(value => _isProfileImageSrc(value));
-  if (imageIcon) return imageIcon;
-  const presetCandidates = [
-    prefIcon,
-    metaIcon,
-    cachedIcon,
-    DEFAULT_PROFILE_ICON
-  ];
-  return presetCandidates.find(value => String(value || '').trim()) || DEFAULT_PROFILE_ICON;
+    const saved = localStorage.getItem(_profileIconCacheKey(userId)) || DEFAULT_PROFILE_ICON;
+    return PROFILE_ICONS.some(icon => icon.key === saved) ? saved : DEFAULT_PROFILE_ICON;
+  } catch(e) { return DEFAULT_PROFILE_ICON; }
 }
 
 function applyProfileIcon(key) {
-  if (_isProfileImageSrc(key)) {
-    document.querySelectorAll('.avatar-img').forEach(img => {
-      img.src = key;
-      img.alt = 'Profile photo';
-    });
-    document.querySelectorAll('[data-profile-icon]').forEach(el => el.classList.remove('active'));
-    return key;
-  }
   const icon = _profileIconByKey(key);
   document.querySelectorAll('.avatar-img').forEach(img => {
     img.src = icon.src;
@@ -332,7 +228,6 @@ function applyProfileIcon(key) {
 
 async function saveProfileIcon(userId, key) {
   const iconKey = applyProfileIcon(key);
-  if (_isProfileImageSrc(iconKey)) _cacheAvatarUrl(userId, iconKey);
   try { localStorage.setItem(_profileIconCacheKey(userId), iconKey); } catch(e) {}
   if (userId) {
     try { await saveUserPrefs(userId, { profile_icon: iconKey }); } catch(e) {}
@@ -354,32 +249,13 @@ function _cachedDisplayName(userId) {
   catch(e) { return ''; }
 }
 
-function _metadataDisplayName(user) {
-  return String(user?.user_metadata?.display_name || '').trim();
-}
-
-function _metadataProfileIcon(user) {
-  return String(user?.user_metadata?.profile_icon || '').trim();
-}
-
-function _metadataTheme(user) {
-  const theme = String(user?.user_metadata?.theme || '').trim();
-  return THEMES[theme] ? theme : '';
-}
-
-function _isFreshSignup(user) {
-  const created = Date.parse(user?.created_at || '');
-  if (!created) return false;
-  return Date.now() - created < 30 * 60 * 1000;
-}
-
 async function initDisplayName(user, prefs) {
-  const savedName = (prefs.display_name || '').trim() || _metadataDisplayName(user) || _cachedDisplayName(user.id);
+  const savedName = (prefs.display_name || '').trim() || _cachedDisplayName(user.id);
   const name = savedName || _emailFallbackName(user.email);
   _applyDisplayName(name);
-  applyProfileIcon(_resolveProfileIcon(user, prefs));
+  applyProfileIcon(prefs.profile_icon || DEFAULT_PROFILE_ICON);
   const modal = document.getElementById('nameModal');
-  if (modal && !savedName && prefs._isNewPrefs && _isFreshSignup(user)) {
+  if (modal && !savedName) {
     modal.classList.add('open');
     setTimeout(() => document.getElementById('displayNameInput')?.focus(), 80);
   }
@@ -396,11 +272,9 @@ async function saveDisplayName(userId) {
   }
   if (!userId) { input?.focus(); return; }
   try { localStorage.setItem(_displayNameKey(userId), name); } catch(e) {}
-  const { error } = await saveUserPrefs(userId, { display_name: name });
-  const { error: metaError } = await db.auth.updateUser({ data: { display_name: name } });
+  await saveUserPrefs(userId, { display_name: name });
   _applyDisplayName(name);
   document.getElementById('nameModal')?.classList.remove('open');
-  if (error && metaError) showToast('Name saved on this browser only', 'error');
 }
 
 // ─── Core 5 ──────────────────────────────────────────────────────────────────
@@ -418,10 +292,6 @@ function _cachedCore5(userId) {
   try {
     return _normalizeCore5(JSON.parse(localStorage.getItem(_core5Key(userId)) || '[]'));
   } catch(e) { return []; }
-}
-
-function _metadataCore5(user) {
-  return _normalizeCore5(user?.user_metadata?.core5);
 }
 
 function _cacheCore5(userId, values) {
@@ -445,9 +315,8 @@ function _updateCoreCount() {
 function _renderCore5Pills(values) {
   document.querySelectorAll('.core-mini-item').forEach((item, i) => {
     const val = values[i] || '';
-    const href = `products.html?brand=${encodeURIComponent(val)}`;
     item.innerHTML = val
-      ? `<div class="core-pill" data-value="${val.replace(/"/g,'&quot;')}" title="View ${val} products" onclick="window.location.href='${href.replace(/'/g,"\\'")}'">
+      ? `<div class="core-pill" data-value="${val.replace(/"/g,'&quot;')}" data-search="${encodeURIComponent(val)}" title="Go to ${val}" onclick="window.location='products.html?search='+this.dataset.search">
           <span class="core-pill-text">${val}</span>
          </div>`
       : `<div class="core-pill core-pill-empty" onclick="openCore5Modal()">
@@ -458,21 +327,9 @@ function _renderCore5Pills(values) {
 }
 
 async function initCore5(userId, prefs) {
-  const user = await getUser();
-  const prefValues = _normalizeCore5(prefs.core5);
-  const metaValues = _metadataCore5(user);
-  const cachedValues = _cachedCore5(userId);
-  const values = metaValues.some(Boolean)
-    ? metaValues
-    : (prefValues.some(Boolean) ? prefValues : cachedValues);
+  const values = _resolveCore5(userId, prefs.core5);
   _cacheCore5(userId, values);
   _renderCore5Pills(values);
-  if (userId && JSON.stringify(prefValues) !== JSON.stringify(values)) {
-    await saveUserPrefs(userId, { core5: values });
-  }
-  if (userId && JSON.stringify(metaValues) !== JSON.stringify(values)) {
-    await db.auth.updateUser({ data: { core5: values } });
-  }
 
   // Add edit button to sidebar head if not already there
   const head = document.querySelector('.core-sidebar-head');
@@ -541,9 +398,8 @@ async function saveCore5Modal() {
   _cacheCore5(userId, values);
   _renderCore5Pills(values);
   closeCore5Modal();
-  const { error } = await saveUserPrefs(userId, { core5: values });
-  const { error: metaError } = await db.auth.updateUser({ data: { core5: values } });
-  showToast(error && metaError ? 'Core 5 saved locally' : 'Core 5 saved', error && metaError ? 'error' : 'success');
+  await saveUserPrefs(userId, { core5: values });
+  showToast('Core 5 saved');
 }
 
 // ─── Profile Popover ─────────────────────────────────────────────────────────
@@ -616,15 +472,10 @@ function initProfilePopover(userId) {
 // ─── Init Theme from Prefs ────────────────────────────────────────────────────
 
 async function initTheme(userId, prefs) {
-  const user = await getUser();
-  const metaTheme = _metadataTheme(user);
-  const cachedTheme = _cachedTheme();
-  const prefTheme = THEMES[prefs.theme] ? prefs.theme : '';
-  const themeKey = metaTheme || (cachedTheme && cachedTheme !== DEFAULT_THEME ? cachedTheme : '') || prefTheme || cachedTheme || DEFAULT_THEME;
+  const themeKey = _cachedTheme() || prefs.theme || DEFAULT_THEME;
   try { localStorage.setItem('creatorHub:theme', themeKey); } catch(e) {}
   applyTheme(themeKey);
   if (userId && prefs.theme !== themeKey) await saveUserPrefs(userId, { theme: themeKey });
-  if (userId && metaTheme !== themeKey) await db.auth.updateUser({ data: { theme: themeKey } });
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
