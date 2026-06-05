@@ -214,7 +214,7 @@ async function loadUserPrefs(userId) {
       display_name: '',
       core5: [],
       theme,
-      profile_icon: _cachedProfileIcon(userId),
+      profile_icon: '',
       _isNewPrefs: false
     };
     rows.forEach(row => {
@@ -227,7 +227,7 @@ async function loadUserPrefs(userId) {
   }
   const cachedCore5 = _cachedCore5(userId);
   await saveUserPrefs(userId, { display_name: '', core5: cachedCore5, theme });
-  return { display_name: null, core5: cachedCore5, theme, profile_icon: _cachedProfileIcon(userId), _isNewPrefs: true };
+  return { display_name: null, core5: cachedCore5, theme, profile_icon: _cachedAvatarUrl(userId) || _cachedProfileIcon(userId), _isNewPrefs: true };
 }
 
 async function saveUserPrefs(userId, patch) {
@@ -287,9 +287,27 @@ function _profileIconCacheKey(userId) {
 
 function _cachedProfileIcon(userId) {
   try {
-    const saved = localStorage.getItem(_profileIconCacheKey(userId)) || DEFAULT_PROFILE_ICON;
-    return PROFILE_ICONS.some(icon => icon.key === saved) ? saved : DEFAULT_PROFILE_ICON;
-  } catch(e) { return DEFAULT_PROFILE_ICON; }
+    const saved = localStorage.getItem(_profileIconCacheKey(userId)) || '';
+    if (_isProfileImageSrc(saved)) return saved;
+    return PROFILE_ICONS.some(icon => icon.key === saved) ? saved : '';
+  } catch(e) { return ''; }
+}
+
+function _resolveProfileIcon(user, prefs) {
+  const prefIcon = prefs?.profile_icon || '';
+  const metaIcon = _metadataProfileIcon(user);
+  const cachedAvatar = _cachedAvatarUrl(user?.id);
+  const cachedIcon = _cachedProfileIcon(user?.id);
+  const imageCandidates = [prefIcon, metaIcon, cachedAvatar, cachedIcon];
+  const imageIcon = imageCandidates.find(value => _isProfileImageSrc(value));
+  if (imageIcon) return imageIcon;
+  const presetCandidates = [
+    prefIcon,
+    metaIcon,
+    cachedIcon,
+    DEFAULT_PROFILE_ICON
+  ];
+  return presetCandidates.find(value => String(value || '').trim()) || DEFAULT_PROFILE_ICON;
 }
 
 function applyProfileIcon(key) {
@@ -354,7 +372,7 @@ async function initDisplayName(user, prefs) {
   const savedName = (prefs.display_name || '').trim() || _metadataDisplayName(user) || _cachedDisplayName(user.id);
   const name = savedName || _emailFallbackName(user.email);
   _applyDisplayName(name);
-  applyProfileIcon(prefs.profile_icon || _metadataProfileIcon(user) || _cachedAvatarUrl(user.id) || DEFAULT_PROFILE_ICON);
+  applyProfileIcon(_resolveProfileIcon(user, prefs));
   const modal = document.getElementById('nameModal');
   if (modal && !savedName && prefs._isNewPrefs && _isFreshSignup(user)) {
     modal.classList.add('open');
