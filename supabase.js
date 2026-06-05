@@ -177,11 +177,21 @@ function _emailFallbackName(email) {
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 
+function _displayNameKey(userId) {
+  return `creatorHub:displayName:${userId || 'local'}`;
+}
+
+function _cachedDisplayName(userId) {
+  try { return (localStorage.getItem(_displayNameKey(userId)) || '').trim(); }
+  catch(e) { return ''; }
+}
+
 async function initDisplayName(user, prefs) {
-  const name = prefs.display_name || _emailFallbackName(user.email);
+  const savedName = (prefs.display_name || '').trim() || _cachedDisplayName(user.id);
+  const name = savedName || _emailFallbackName(user.email);
   _applyDisplayName(name);
   const modal = document.getElementById('nameModal');
-  if (modal && !prefs.display_name?.trim()) {
+  if (modal && !savedName) {
     modal.classList.add('open');
     setTimeout(() => document.getElementById('displayNameInput')?.focus(), 80);
   }
@@ -192,6 +202,12 @@ async function saveDisplayName(userId) {
   const input = document.getElementById('displayNameInput');
   const name = (input?.value || '').trim();
   if (!name) { input?.focus(); return; }
+  if (!userId) {
+    const user = await getUser();
+    userId = user?.id;
+  }
+  if (!userId) { input?.focus(); return; }
+  try { localStorage.setItem(_displayNameKey(userId), name); } catch(e) {}
   await saveUserPrefs(userId, { display_name: name });
   _applyDisplayName(name);
   document.getElementById('nameModal')?.classList.remove('open');
