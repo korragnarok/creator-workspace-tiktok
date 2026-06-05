@@ -326,6 +326,13 @@
         body > nav {
           display: none;
         }
+        /* Push content below notch/dynamic island */
+        body {
+          padding-top: env(safe-area-inset-top);
+        }
+        .page, .content {
+          padding-top: max(16px, env(safe-area-inset-top));
+        }
       }
     `;
     document.head.appendChild(style);

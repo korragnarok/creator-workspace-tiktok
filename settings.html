@@ -113,7 +113,7 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .tab-icon-svg{width:22px;height:22px;display:block;}
 
 @media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}}
-@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:36px;}.theme-grid{grid-template-columns:1fr;}.tab-bar{display:flex;}}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:max(env(safe-area-inset-top),16px) 16px 90px;}.page-title{font-size:36px;}.theme-grid{grid-template-columns:1fr;}.tab-bar{display:flex;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=8"></script>
