@@ -147,10 +147,6 @@ function applyTheme(themeKey) {
   document.querySelectorAll('[data-theme]').forEach(el => {
     el.classList.toggle('active', el.dataset.theme === resolvedKey);
   });
-  // Swap theme-aware icons
-  document.querySelectorAll('img[data-theme-icon]').forEach(img => {
-    img.src = img.src.replace(/icons\/(dusk|warm|noir|forest)\//, `icons/${resolvedKey}/`);
-  });
   // Store locally so next page load applies before Supabase responds
   try { localStorage.setItem('creatorHub:theme', resolvedKey); } catch(e) {}
   window.dispatchEvent(new CustomEvent('creator-theme-change', { detail: { theme: resolvedKey } }));
@@ -309,51 +305,101 @@ function _resolveCore5(userId, savedValues) {
 }
 
 function _updateCoreCount() {
-  const count = Array.from(document.querySelectorAll('.core-mini-input'))
-    .filter(i => i.value.trim()).length;
   const el = document.getElementById('coreCount');
-  if (el) el.textContent = `${count}/5`;
+  if (!el) return;
+  const items = document.querySelectorAll('.core-pill');
+  const count = Array.from(items).filter(p => p.dataset.value).length;
+  el.textContent = `${count}/5`;
+}
+
+function _renderCore5Pills(values) {
+  document.querySelectorAll('.core-mini-item').forEach((item, i) => {
+    const val = values[i] || '';
+    item.innerHTML = val
+      ? `<div class="core-pill" data-value="${val.replace(/"/g,'&quot;')}" title="Go to ${val}" onclick="window.location='products.html?search='+encodeURIComponent('${val.replace(/'/g,"\'")}')">
+          <span class="core-pill-text">${val}</span>
+         </div>`
+      : `<div class="core-pill core-pill-empty" onclick="openCore5Modal()">
+          <span class="core-pill-text">Empty slot</span>
+         </div>`;
+  });
+  _updateCoreCount();
 }
 
 async function initCore5(userId, prefs) {
   const values = _resolveCore5(userId, prefs.core5);
   _cacheCore5(userId, values);
-  let saveTimer = null;
-  let latestValues = values;
-  async function persistCore5(valuesToSave) {
-    latestValues = _normalizeCore5(valuesToSave);
-    _cacheCore5(userId, latestValues);
-    const { error } = await saveUserPrefs(userId, { core5: latestValues });
-    if (error) console.warn('Core 5 save failed; using local cache', error);
+  _renderCore5Pills(values);
+
+  // Add edit button to sidebar head if not already there
+  const head = document.querySelector('.core-sidebar-head');
+  if (head && !head.querySelector('.core5-edit-btn')) {
+    const btn = document.createElement('button');
+    btn.className = 'core5-edit-btn';
+    btn.textContent = 'Edit';
+    btn.style.cssText = 'background:none;border:none;font-family:"Stack Sans Notch",sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);cursor:pointer;padding:2px 6px;border-radius:4px;transition:background 0.12s;';
+    btn.onmouseover = () => btn.style.background = 'color-mix(in srgb,var(--rust) 15%,transparent)';
+    btn.onmouseout  = () => btn.style.background = 'none';
+    btn.onclick = () => openCore5Modal();
+    head.appendChild(btn);
   }
-  document.querySelectorAll('.core-mini-input').forEach(input => {
-    input.value = values[Number(input.dataset.coreIndex)] || '';
-    input.addEventListener('input', () => {
-      _updateCoreCount();
-      latestValues = Array.from(document.querySelectorAll('.core-mini-input'))
-        .map(i => i.value.trim());
-      _cacheCore5(userId, latestValues);
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => persistCore5(latestValues), 500);
-    });
-    input.addEventListener('blur', () => {
-      clearTimeout(saveTimer);
-      persistCore5(latestValues);
-      // Restore pointer cursor after editing
-      if (input.value.trim()) input.style.cursor = 'pointer';
-    });
-    // Click to navigate to products page filtered to this product
-    input.addEventListener('click', () => {
-      const val = input.value.trim();
-      if (val && document.activeElement !== input) {
-        window.location.href = 'products.html?search=' + encodeURIComponent(val);
-      }
-    });
-    input.addEventListener('focus', () => { input.style.cursor = 'text'; });
-    if (input.value.trim()) input.style.cursor = 'pointer';
-  });
-  window.addEventListener('beforeunload', () => _cacheCore5(userId, latestValues));
-  _updateCoreCount();
+
+  // Build and inject Core 5 modal into body (once)
+  if (!document.getElementById('_core5Modal')) {
+    const overlay = document.createElement('div');
+    overlay.id = '_core5Modal';
+    overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);';
+    overlay.innerHTML = `
+      <div style="background:var(--surface);border-radius:16px;border:1px solid var(--border-mid);padding:24px;width:100%;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+        <div style="font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px;">Edit Core 5</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:18px;">Your top 5 products. Click any filled slot on the sidebar to go to that product.</div>
+        <div id="_core5Inputs" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="closeCore5Modal()" style="flex:1;padding:11px;border-radius:8px;border:1px solid var(--border-mid);background:transparent;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Cancel</button>
+          <button onclick="saveCore5Modal()" style="flex:2;padding:11px;border-radius:8px;border:none;background:var(--rust);color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Save</button>
+        </div>
+      </div>`;
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeCore5Modal(); });
+    document.body.appendChild(overlay);
+  }
+
+  // Store userId on window for modal use
+  window._core5UserId = userId;
+}
+
+function openCore5Modal() {
+  const modal = document.getElementById('_core5Modal');
+  if (!modal) return;
+  const values = _cachedCore5(window._core5UserId);
+  const container = document.getElementById('_core5Inputs');
+  container.innerHTML = [0,1,2,3,4].map(i => `
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span style="font-family:'Noto Sans Mono',sans-serif;font-size:11px;font-weight:800;color:var(--rust);width:16px;flex-shrink:0;">${i+1}</span>
+      <input id="_c5input${i}" type="text" value="${(values[i]||'').replace(/"/g,'&quot;')}"
+        placeholder="Product name"
+        style="flex:1;padding:9px 12px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;"
+        onfocus="this.style.borderColor='var(--rust)'" onblur="this.style.borderColor='var(--border-mid)'">
+      <button onclick="document.getElementById('_c5input${i}').value=''" title="Clear"
+        style="background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:4px;line-height:1;transition:color 0.12s;"
+        onmouseover="this.style.color='#c83c32'" onmouseout="this.style.color='var(--text-muted)'">×</button>
+    </div>`).join('');
+  modal.style.display = 'flex';
+  document.getElementById('_c5input0')?.focus();
+}
+
+function closeCore5Modal() {
+  const modal = document.getElementById('_core5Modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function saveCore5Modal() {
+  const userId = window._core5UserId;
+  const values = [0,1,2,3,4].map(i => (document.getElementById(`_c5input${i}`)?.value || '').trim());
+  _cacheCore5(userId, values);
+  _renderCore5Pills(values);
+  closeCore5Modal();
+  await saveUserPrefs(userId, { core5: values });
+  showToast('Core 5 saved');
 }
 
 // ─── Profile Popover ─────────────────────────────────────────────────────────

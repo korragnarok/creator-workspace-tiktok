@@ -37,14 +37,20 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .core-mini-list{display:flex;flex-direction:column;gap:6px;}
 .core-mini-item{display:block;position:relative;}
 .core-mini-num{display:none;}
-.core-mini-input{min-width:0;width:100%;border:1px solid var(--border-mid);border-radius:8px;padding:7px 10px;color:var(--ink);font-size:12px;font-weight:700;outline:none;box-shadow:0 2px 7px rgba(0,0,0,0.08);transition:border-color 0.15s,box-shadow 0.15s,transform 0.15s;background:color-mix(in srgb,var(--surface) 75%,var(--sand) 25%);}
+.core-mini-input{display:none;}
+.core-pill{min-width:0;width:100%;border:1px solid var(--border-mid);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;transition:border-color 0.15s,opacity 0.15s;background:color-mix(in srgb,var(--surface) 75%,var(--sand) 25%);display:flex;align-items:center;}
+.core-pill:hover{border-color:var(--rust);}
+.core-pill-empty{opacity:0.45;cursor:pointer;}
+.core-pill-empty:hover{opacity:0.7;border-color:var(--rust);}
+.core-pill-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);}
+.core-pill-empty .core-pill-text{color:var(--text-muted);font-style:italic;}
 .core-mini-item:nth-child(1) .core-mini-input{background:color-mix(in srgb,var(--rust) 34%,var(--surface) 66%);}
 .core-mini-item:nth-child(2) .core-mini-input{background:color-mix(in srgb,var(--sage) 34%,var(--surface) 66%);}
 .core-mini-item:nth-child(3) .core-mini-input{background:color-mix(in srgb,var(--tan) 34%,var(--surface) 66%);}
 .core-mini-item:nth-child(4) .core-mini-input{background:color-mix(in srgb,var(--sand) 52%,var(--surface) 48%);}
 .core-mini-item:nth-child(5) .core-mini-input{background:color-mix(in srgb,var(--rose) 34%,var(--surface) 66%);}
-.core-mini-input::placeholder{color:var(--text-mid);font-weight:600;}
-.core-mini-input:focus{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 22%,transparent),0 3px 10px rgba(0,0,0,0.12);transform:translateY(-1px);}
+
+
 .side-profile{margin-top:0;border:1px solid var(--border);border-radius:var(--r,12px);background:color-mix(in srgb,var(--surface) 76%,var(--bg) 24%);padding:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color 0.15s;}
 .side-profile:hover{border-color:var(--rust);}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--sage);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
@@ -236,22 +242,6 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
       </div>
     </div>
 
-    <!-- Hooks -->
-    <div style="margin-bottom:24px;">
-      <div class="form-label" style="margin-bottom:8px;">Hook Formula Bank</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Maps: Hook Text → text, Category → cat. Any unrecognised columns are ignored — only matching ones import.</div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <label class="btn btn-ghost" style="cursor:pointer;">
-          Choose File <input type="file" accept=".csv" id="hooksCsvInput" style="display:none;" onchange="previewImport('hooks')">
-        </label>
-        <span id="hooksFileName" style="font-size:12px;color:var(--text-muted);">No file chosen</span>
-      </div>
-      <div id="hooksPreview" style="display:none;margin-top:12px;">
-        <div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;" id="hooksPreviewCount"></div>
-        <button class="btn btn-primary" id="hooksImportBtn" onclick="runImport('hooks')">Import Hooks</button>
-      </div>
-    </div>
-
     <!-- Videos -->
     <div>
       <div class="form-label" style="margin-bottom:8px;">Video Tracker</div>
@@ -378,7 +368,6 @@ init();
 let _parsedProducts = [];
 let _parsedVideos = [];
 let _parsedSales = [];
-let _parsedHooks = [];
 
 function parseCSVRow(line) {
   const result = [];
@@ -492,22 +481,16 @@ function normalizeProductStatus(value) {
 }
 
 function mapVideo(row) {
-  const titleRaw = pick(row, ['Video Title / Hook (copy)', 'Video Title', 'Title', 'Hook', 'Name']);
-  const idRaw = pick(row, ['Video ID', 'ID', 'id']);
-  const parts = [
-    pick(row, ['Video Type', 'Type']),
-    pick(row, ['Hook Rating', 'Rating']),
-    pick(row, ['Held Attention?', 'Held Attention'])
-  ].filter(Boolean);
+  const parts = [row['Video Type'], row['Hook Rating'], row['Held Attention?']].filter(Boolean);
   return {
-    title:  titleRaw || (idRaw ? `Video ${idRaw}` : ''),
-    brand:  pick(row, ['Product', 'Brand', 'Product Name']),
-    date:   parseNotionDate(pick(row, ['Date Posted', 'Date', 'Posted'])),
+    title:  row['Video Title / Hook (copy)'] || `Video ${row['Video ID'] || ''}`,
+    brand:  row['Product'] || '',
+    date:   parseNotionDate(row['Date Posted']),
     status: 'live',
-    views:  parseInt(pick(row, ['Views (24hr)', 'Views (48hrs)', 'Views', 'View Count']) || '0') || 0,
-    units:  parseInt(pick(row, ['Sales', 'Units', 'Units Sold']) || '0') || 0,
+    views:  parseInt(row['Views (24hr)'] || '0') || 0,
+    units:  parseInt(row['Sales'] || '0') || 0,
     notes:  parts.join(' · '),
-    link:   pick(row, ['Link', 'URL', 'Video Link', 'TikTok Link']),
+    link:   '',
   };
 }
 
@@ -535,16 +518,8 @@ function mapSales(row) {
   };
 }
 
-function mapHook(row) {
-  const keys = Object.keys(row);
-  function pick(names) { for (const n of names) { const v = (row[n] || '').trim(); if (v) return v; } return ''; }
-  const text = pick(['Hook Text', 'Hook', 'Text', 'Formula', 'Script']) || (row[keys[0]] || '').trim();
-  const cat  = pick(['Category', 'Cat', 'Type', 'Topic', 'Label']) || 'General';
-  return { text, cat };
-}
-
 function previewImport(type) {
-  const inputId = type === 'products' ? 'productCsvInput' : type === 'sales' ? 'salesCsvInput' : type === 'hooks' ? 'hooksCsvInput' : 'videoCsvInput';
+  const inputId = type === 'products' ? 'productCsvInput' : type === 'sales' ? 'salesCsvInput' : 'videoCsvInput';
   const input = document.getElementById(inputId);
   const file = input.files[0];
   if (!file) return;
@@ -560,10 +535,6 @@ function previewImport(type) {
       _parsedSales = rows.map(mapSales).filter(s => s.date);
       document.getElementById('salesPreviewCount').textContent = `${_parsedSales.length} days ready to import`;
       document.getElementById('salesPreview').style.display = 'block';
-    } else if (type === 'hooks') {
-      _parsedHooks = rows.map(mapHook).filter(h => h.text);
-      document.getElementById('hooksPreviewCount').textContent = `${_parsedHooks.length} hooks ready to import`;
-      document.getElementById('hooksPreview').style.display = 'block';
     } else {
       _parsedVideos = rows.map(mapVideo).filter(v => v.title);
       document.getElementById('videoPreviewCount').textContent = `${_parsedVideos.length} videos ready to import`;
@@ -577,37 +548,6 @@ async function runImport(type) {
   if (!_user) return;
   const btn = document.getElementById(type === 'products' ? 'productImportBtn' : 'videoImportBtn');
   btn.disabled = true; btn.textContent = 'Importing...';
-  // Hooks import
-  if (type === 'hooks') {
-    const { data: existing } = await db.from('hooks').select('text').eq('user_id', _user.id);
-    const existingSet = new Set((existing || []).map(h => h.text.toLowerCase().trim()));
-    const toInsert = _parsedHooks
-      .filter(h => !existingSet.has(h.text.toLowerCase()))
-      .map(h => ({ ...h, user_id: _user.id }));
-    if (!toInsert.length) {
-      showToast('Nothing new — all hooks already exist');
-      const b = document.getElementById('hooksImportBtn');
-      b.disabled = false; b.textContent = 'Import Hooks';
-      return;
-    }
-    let imported = 0;
-    for (let i = 0; i < toInsert.length; i += 50) {
-      const { error } = await db.from('hooks').insert(toInsert.slice(i, i + 50));
-      if (error) { showToast(error.message, 'error'); document.getElementById('hooksImportBtn').disabled = false; document.getElementById('hooksImportBtn').textContent = 'Import Hooks'; return; }
-      imported += Math.min(50, toInsert.length - i);
-    }
-    showToast(`${imported} hooks imported!`);
-    const hb = document.getElementById('hooksImportBtn');
-    hb.textContent = `✓ ${imported} imported`;
-    setTimeout(() => {
-      hb.disabled = false; hb.textContent = 'Import Hooks';
-      document.getElementById('hooksPreview').style.display = 'none';
-      document.getElementById('hooksFileName').textContent = 'No file chosen';
-      _parsedHooks = [];
-    }, 3000);
-    return;
-  }
-
   // Sales uses upsert on (user_id, date) — safe to re-import
   if (type === 'sales') {
     const toUpsert = _parsedSales.map(r => ({ ...r, user_id: _user.id }));
