@@ -220,6 +220,22 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
       </div>
     </div>
 
+    <!-- Sales -->
+    <div style="margin-bottom:24px;">
+      <div class="form-label" style="margin-bottom:8px;">Daily Sales Log</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Maps: Date → date, GMV → gmv, Commission → comm, Top Seller → note</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label class="btn btn-ghost" style="cursor:pointer;">
+          Choose File <input type="file" accept=".csv" id="salesCsvInput" style="display:none;" onchange="previewImport('sales')">
+        </label>
+        <span id="salesFileName" style="font-size:12px;color:var(--text-muted);">No file chosen</span>
+      </div>
+      <div id="salesPreview" style="display:none;margin-top:12px;">
+        <div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;" id="salesPreviewCount"></div>
+        <button class="btn btn-primary" id="salesImportBtn" onclick="runImport('sales')">Import Sales</button>
+      </div>
+    </div>
+
     <!-- Videos -->
     <div>
       <div class="form-label" style="margin-bottom:8px;">Video Tracker</div>
@@ -345,41 +361,86 @@ init();
 
 let _parsedProducts = [];
 let _parsedVideos = [];
+let _parsedSales = [];
 
-// RFC 4180 compliant parser — handles multiline quoted fields correctly
-function parseCSV(text) {
-  text = text.replace(/^\uFEFF/, ''); // strip BOM
-  const rows = [];
-  let col = 0, row = [], cur = '', inQ = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    const next = text[i + 1];
-
-    if (inQ) {
-      if (ch === '"' && next === '"') { cur += '"'; i++; }       // escaped quote
-      else if (ch === '"')            { inQ = false; }            // closing quote
-      else                            { cur += ch; }              // char inside quotes
+function parseCSVRow(line) {
+  const result = [];
+  let cur = '', inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(cur); cur = '';
     } else {
-      if      (ch === '"')                         { inQ = true; }
-      else if (ch === ',')                         { row.push(cur); cur = ''; }
-      else if (ch === '\n' || ch === '\r') {
-        if (ch === '\r' && next === '\n') i++;      // CRLF
-        row.push(cur); cur = '';
-        if (row.some(v => v !== '')) rows.push(row);
-        row = [];
-      } else { cur += ch; }
+      cur += ch;
     }
   }
-  if (cur || row.length) { row.push(cur); if (row.some(v => v !== '')) rows.push(row); }
+  result.push(cur);
+  return result;
+}
 
-  if (rows.length < 2) return [];
-  const headers = rows[0].map(h => h.trim());
-  return rows.slice(1).map(values => {
+function parseCSV(text) {
+  text = text.replace(/^﻿/, '');
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const rawRows = lines.map(parseCSVRow);
+  let propertyValueRows = rawRows.filter(row => row.length >= 2);
+  if (looksLikePropertyHeader(propertyValueRows[0])) propertyValueRows = propertyValueRows.slice(1);
+  const propertyStyleCount = propertyValueRows.filter(row => isProductPropertyName(row[0])).length;
+  const shortPropertyFile = propertyValueRows.length <= 40;
+  if (shortPropertyFile && propertyStyleCount >= 2 && propertyStyleCount / propertyValueRows.length >= 0.35) {
     const obj = {};
-    headers.forEach((h, i) => { obj[h] = (values[i] || '').trim(); });
+    propertyValueRows.forEach(row => {
+      const key = row[0].trim();
+      const value = row.slice(1).join(',').trim();
+      if (key) obj[key] = value;
+    });
+    return [obj];
+  }
+  const headers = rawRows[0];
+  return rawRows.slice(1).map(values => {
+    const obj = {};
+    headers.forEach((h, i) => { obj[h.trim()] = (values[i] || '').trim(); });
     return obj;
   }).filter(row => Object.values(row).some(v => v));
+}
+
+function cleanKey(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function looksLikePropertyHeader(row) {
+  if (!row || row.length < 2) return false;
+  const first = cleanKey(row[0]);
+  const second = cleanKey(row[1]);
+  const firstLooksGeneric = ['property','name','product','field','field name'].includes(first);
+  const secondLooksGeneric = ['value','text','values','content','property value'].includes(second);
+  return firstLooksGeneric && secondLooksGeneric;
+}
+
+function isProductPropertyName(value) {
+  return new Set([
+    'product','product name','name','title',
+    'brand','brand name',
+    'tiktok shop link','shop link','product link','link','url',
+    'status','stock','in stock',
+    'sold','units sold','sales',
+    'gmv','total gmv',
+    'live talking points','talking points','features','feature','notes',
+    'core five','core 5','tags'
+  ]).has(cleanKey(value));
+}
+
+function pick(row, aliases) {
+  const normalized = {};
+  Object.entries(row || {}).forEach(([key, value]) => { normalized[cleanKey(key)] = value; });
+  for (const alias of aliases) {
+    const value = normalized[cleanKey(alias)];
+    if (value) return value;
+  }
+  return '';
 }
 
 function parseNotionDate(str) {
@@ -394,31 +455,60 @@ function parseNotionDate(str) {
 }
 
 function mapProduct(row) {
-  // Exact column names from your Notion _all.csv export
-  const statusRaw = (row['Status'] || row['Stock'] || 'In Stock').toLowerCase();
-  const status = statusRaw.includes('out') ? 'paused' : 'active';
+  const status = pick(row, ['Status']) || 'active';
   return {
-    name:       row['Product'] || '',
-    brand:      row['Brand'] || '',
-    link:       row['TikTok Shop Link'] || '',
-    status:     status,
-    units_sold: parseInt(row['Sold'] || '0') || 0,
-    notes:      row['Talking Points/Notes'] || row['Live Talking Points'] || '',
-    tags:       row['Core Five'] ? 'core5' : '',
+    name:       pick(row, ['Product', 'Product Name', 'Name', 'Title']),
+    brand:      pick(row, ['Brand', 'Brand Name']),
+    link:       pick(row, ['TikTok Shop Link', 'Shop Link', 'Product Link', 'Link', 'URL']),
+    status:     normalizeProductStatus(status),
+    units_sold: parseInt(pick(row, ['Sold', 'Units Sold', 'Sales']) || '0') || 0,
+    notes:      pick(row, ['Live Talking Points', 'Talking Points', 'Features', 'Notes']),
+    tags:       pick(row, ['Core Five', 'Core 5']) ? 'core5' : '',
   };
+}
+
+function normalizeProductStatus(value) {
+  const status = cleanKey(value || 'active');
+  if (status.includes('out') || status === 'paused' || status === 'sold out') return 'paused';
+  if (status.includes('promote')) return 'promote';
+  return 'active';
 }
 
 function mapVideo(row) {
   const parts = [row['Video Type'], row['Hook Rating'], row['Held Attention?']].filter(Boolean);
   return {
-    title:  (row['Video Title / Hook (copy)'] || '').trim() || `${row['Product'] || 'Video'} — ${row['Video Type'] || ''} #${row['Video ID'] || ''}`.trim(),
+    title:  row['Video Title / Hook (copy)'] || `Video ${row['Video ID'] || ''}`,
     brand:  row['Product'] || '',
     date:   parseNotionDate(row['Date Posted']),
     status: 'live',
-    views:  parseInt(row['Views (48hrs)'] || row['Views (24hr)'] || '0') || 0,
+    views:  parseInt(row['Views (24hr)'] || '0') || 0,
     units:  parseInt(row['Sales'] || '0') || 0,
     notes:  parts.join(' · '),
     link:   '',
+  };
+}
+
+function parseCurrency(str) {
+  return parseFloat((str || '0').replace(/[$,]/g, '')) || 0;
+}
+
+function mapSales(row) {
+  // Parse "April 24, 2026" → "2026-04-24"
+  const months = {January:1,February:2,March:3,April:4,May:5,June:6,July:7,August:8,September:9,October:10,November:11,December:12};
+  const dateStr = row['Date'] || '';
+  const m = dateStr.match(/([A-Za-z]+)\s+(\d+),?\s*(\d{4})?/);
+  let date = null;
+  if (m) {
+    const month = months[m[1]];
+    const year = m[3] || new Date().getFullYear();
+    if (month) date = `${year}-${String(month).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
+  }
+  return {
+    date:  date,
+    gmv:   parseCurrency(row['GMV']),
+    comm:  parseCurrency(row['Commission']),
+    units: 0,
+    note:  row['Top Seller'] || '',
   };
 }
 
@@ -434,6 +524,10 @@ function previewImport(type) {
       _parsedProducts = rows.map(mapProduct).filter(p => p.name);
       document.getElementById('productPreviewCount').textContent = `${_parsedProducts.length} products ready to import`;
       document.getElementById('productPreview').style.display = 'block';
+    } else if (type === 'sales') {
+      _parsedSales = rows.map(mapSales).filter(s => s.date);
+      document.getElementById('salesPreviewCount').textContent = `${_parsedSales.length} days ready to import`;
+      document.getElementById('salesPreview').style.display = 'block';
     } else {
       _parsedVideos = rows.map(mapVideo).filter(v => v.title);
       document.getElementById('videoPreviewCount').textContent = `${_parsedVideos.length} videos ready to import`;
@@ -447,6 +541,26 @@ async function runImport(type) {
   if (!_user) return;
   const btn = document.getElementById(type === 'products' ? 'productImportBtn' : 'videoImportBtn');
   btn.disabled = true; btn.textContent = 'Importing...';
+  // Sales uses upsert on (user_id, date) — safe to re-import
+  if (type === 'sales') {
+    const toUpsert = _parsedSales.map(r => ({ ...r, user_id: _user.id }));
+    let imported = 0;
+    for (let i = 0; i < toUpsert.length; i += 50) {
+      const { error } = await db.from('sales').upsert(toUpsert.slice(i, i + 50), { onConflict: 'user_id,date' });
+      if (error) { showToast(error.message, 'error'); btn.disabled = false; btn.textContent = 'Import Sales'; return; }
+      imported += Math.min(50, toUpsert.length - i);
+    }
+    showToast(`${imported} days of sales imported!`);
+    btn.textContent = `✓ ${imported} imported`;
+    setTimeout(() => {
+      btn.disabled = false; btn.textContent = 'Import Sales';
+      document.getElementById('salesPreview').style.display = 'none';
+      document.getElementById('salesFileName').textContent = 'No file chosen';
+      _parsedSales = [];
+    }, 3000);
+    return;
+  }
+
   const rows = type === 'products' ? _parsedProducts : _parsedVideos;
   const table = type === 'products' ? 'products' : 'videos';
   const nameField = type === 'products' ? 'name' : 'title';
