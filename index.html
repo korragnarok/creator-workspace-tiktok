@@ -146,7 +146,7 @@ button,input{font:inherit;}
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
 .tab-profile-avatar{width:24px;height:24px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
 @media(max-width:1420px) and (min-width:1181px){.content{max-width:1080px;}.top-layout,.lower-grid{grid-template-columns:1fr;}.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));}.stat-card{padding:15px;gap:10px;}.stat-icon{width:36px;height:36px;}.stat-icon img{width:22px;height:22px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}}
-@media(max-width:1180px){.app-shell{grid-template-columns:1fr;}.sidebar{display:none;}.top-layout,.lower-grid{grid-template-columns:1fr;}.topbar .nav-links-inline{display:flex !important;}}
+@media(max-width:1180px){.app-shell{grid-template-columns:1fr;}.sidebar{display:none;}.top-layout,.lower-grid{grid-template-columns:1fr;}}
 @media(max-width:980px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:768px){.topbar{padding:0 16px;height:auto;min-height:58px;flex-wrap:wrap;gap:8px;padding-top:10px;padding-bottom:10px;}.content{width:100%;padding:24px 14px 88px;overflow:hidden;}.welcome{font-size:36px;}.stats-grid{grid-template-columns:1fr;}.lower-grid{width:100%;grid-template-columns:minmax(0,1fr);}.card{width:100%;min-width:0;padding:14px;}.card-head,.chart-top{align-items:flex-start;flex-wrap:wrap;}.empty-box{width:100%;min-width:0;}.add-bar{max-width:100%;}.chart-metrics{gap:18px;flex-wrap:wrap;}.chart-card{overflow:hidden;}.chart-wrap{width:100%;height:180px;}.tier-line{grid-template-columns:repeat(4,1fr);gap:14px 0;}.tier-line::before{display:none;}.tier-range{display:none;}.tab-bar{display:flex;}}
 </style>
@@ -156,19 +156,6 @@ button,input{font:inherit;}
 <body>
 <div class="app-shell">
 <div class="workspace">
-    <div class="topbar">
-      <div class="top-spacer"></div>
-      <nav class="nav-links-inline" style="display:none;gap:24px;align-items:center;flex:1;justify-content:center;">
-        <a href="index.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--rust);text-decoration:none;">Home</a>
-        <a href="daily-todo.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">To Do</a>
-        <a href="products.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">Products</a>
-        <a href="video-tracker.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">Videos</a>
-        <a href="hooks.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">Hooks</a>
-        <a href="scripts.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">Scripts</a>
-        <a href="sales-calendar.html" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);text-decoration:none;">Sales</a>
-      </nav>
-    </div>
-
     <main class="content">
       <div class="main">
         <div class="hero-row">

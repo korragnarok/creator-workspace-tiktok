@@ -73,8 +73,51 @@
       </div>`;
   }
 
+  function injectSharedLayoutStyles() {
+    if (document.getElementById('sharedLayoutStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'sharedLayoutStyles';
+    style.textContent = `
+      @media (min-width: 769px) {
+        .desktop-sidebar.sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 188px;
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          overflow-y: auto;
+          padding-bottom: max(16px, env(safe-area-inset-bottom));
+        }
+        .desktop-sidebar.sidebar .side-nav {
+          gap: 6px;
+          flex-shrink: 0;
+        }
+        .desktop-sidebar.sidebar .core-sidebar {
+          flex-shrink: 0;
+        }
+        .desktop-sidebar.sidebar .side-profile {
+          margin-top: 0;
+          flex-shrink: 0;
+        }
+        .app-shell > .workspace {
+          grid-column: 2;
+        }
+      }
+      @media (max-width: 1180px) {
+        .app-shell > .workspace {
+          grid-column: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function renderSharedLayout() {
     if (document.querySelector('[data-shared-layout]')) return;
+    injectSharedLayoutStyles();
     const page = currentPage();
     const appShell = document.querySelector('.app-shell');
     const marker = document.createElement('div');
