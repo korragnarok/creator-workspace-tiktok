@@ -362,6 +362,11 @@ function _metadataProfileIcon(user) {
   return String(user?.user_metadata?.profile_icon || '').trim();
 }
 
+function _metadataTheme(user) {
+  const theme = String(user?.user_metadata?.theme || '').trim();
+  return THEMES[theme] ? theme : '';
+}
+
 function _isFreshSignup(user) {
   const created = Date.parse(user?.created_at || '');
   if (!created) return false;
@@ -452,13 +457,21 @@ function _renderCore5Pills(values) {
 }
 
 async function initCore5(userId, prefs) {
-  let values = _resolveCore5(userId, prefs.core5);
-  if (!values.some(Boolean)) {
-    const user = await getUser();
-    values = _metadataCore5(user);
-  }
+  const user = await getUser();
+  const prefValues = _normalizeCore5(prefs.core5);
+  const metaValues = _metadataCore5(user);
+  const cachedValues = _cachedCore5(userId);
+  const values = metaValues.some(Boolean)
+    ? metaValues
+    : (prefValues.some(Boolean) ? prefValues : cachedValues);
   _cacheCore5(userId, values);
   _renderCore5Pills(values);
+  if (userId && JSON.stringify(prefValues) !== JSON.stringify(values)) {
+    await saveUserPrefs(userId, { core5: values });
+  }
+  if (userId && JSON.stringify(metaValues) !== JSON.stringify(values)) {
+    await db.auth.updateUser({ data: { core5: values } });
+  }
 
   // Add edit button to sidebar head if not already there
   const head = document.querySelector('.core-sidebar-head');
@@ -602,10 +615,13 @@ function initProfilePopover(userId) {
 // ─── Init Theme from Prefs ────────────────────────────────────────────────────
 
 async function initTheme(userId, prefs) {
-  const themeKey = THEMES[prefs.theme] ? prefs.theme : (_cachedTheme() || DEFAULT_THEME);
+  const user = await getUser();
+  const metaTheme = _metadataTheme(user);
+  const themeKey = metaTheme || (THEMES[prefs.theme] ? prefs.theme : (_cachedTheme() || DEFAULT_THEME));
   try { localStorage.setItem('creatorHub:theme', themeKey); } catch(e) {}
   applyTheme(themeKey);
   if (userId && prefs.theme !== themeKey) await saveUserPrefs(userId, { theme: themeKey });
+  if (userId && metaTheme !== themeKey) await db.auth.updateUser({ data: { theme: themeKey } });
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────

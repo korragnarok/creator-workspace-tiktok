@@ -346,8 +346,9 @@ async function saveAvatarFallback(file) {
 async function selectTheme(key) {
   applyTheme(key);
   buildThemeGrid(key);
-  await saveUserPrefs(_user.id, { theme: key });
-  showToast('Theme saved');
+  const { error } = await saveUserPrefs(_user.id, { theme: key });
+  const { error: metaError } = await db.auth.updateUser({ data: { theme: key } });
+  showToast(error && metaError ? 'Theme saved on this browser only' : 'Theme saved', error && metaError ? 'error' : 'success');
 }
 
 async function handleAvatarUpload(input) {
@@ -417,7 +418,7 @@ async function init() {
   // Pre-fill name input
   document.getElementById('nameInput').value = _prefs.display_name || '';
 
-  const activeTheme = _prefs.theme || DEFAULT_THEME;
+  const activeTheme = document.documentElement.dataset.theme || _prefs.theme || DEFAULT_THEME;
   buildThemeGrid(activeTheme);
   buildProfileIconGrid();
 }
