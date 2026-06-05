@@ -138,6 +138,18 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .hook-copy.copied{background:var(--sage);color:#fff;border-color:var(--sage);}
 .hook-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;opacity:0;transition:opacity 0.12s;padding:2px 5px;}
 .hook-card:hover .hook-del{opacity:1;}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.edit-toolbar{display:none;align-items:center;justify-content:space-between;gap:12px;margin:-8px 0 18px;padding:12px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);}
+.edit-toolbar.open{display:flex;}
+.edit-count{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);}
+.edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.bank-select{display:none;position:absolute;top:16px;left:16px;width:24px;height:24px;border:2px solid var(--border-mid);border-radius:7px;background:var(--bg-lift);align-items:center;justify-content:center;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;}
+.hook-card.select-mode{padding-left:52px;cursor:pointer;}
+.hook-card.selected{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 16%,transparent),var(--shadow-sm);}
+.hook-card.select-mode .bank-select{display:flex;}
+.hook-card.selected .bank-select{background:var(--rust);border-color:var(--rust);}
+.hook-card.selected .bank-select::after{content:'✓';}
+.hook-card.select-mode .hook-del{display:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
@@ -170,6 +182,9 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <div class="page" style="max-width:960px;">
   <div class="page-header">
     <div><div class="page-eyebrow">Swipe File</div><div class="page-title">Hook <em>Bank</em></div><p class="page-sub">Save your best hooks by category. Tap to copy instantly.</p></div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="editHooksBtn" onclick="toggleHookEditMode()">Edit Hooks</button>
+    </div>
   </div>
   <div class="add-section">
     <div class="add-section-title">Add a Hook</div>
@@ -198,11 +213,23 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="pill" data-f="product" onclick="setFilter(this,'product')">Product</div>
     <div class="pill" data-f="pattern-interrupt" onclick="setFilter(this,'pattern-interrupt')">Pattern Interrupt</div>
   </div>
+  <div class="edit-toolbar" id="hookEditToolbar">
+    <div class="edit-count" id="hookEditCount">0 selected</div>
+    <div class="edit-actions">
+      <button class="btn btn-ghost" onclick="selectAllVisibleHooks()">Select All</button>
+      <button class="btn btn-ghost" onclick="clearHookSelection()">Clear</button>
+      <button class="btn-danger" id="deleteSelectedHooksBtn" onclick="deleteSelectedHooks()">Delete Selected</button>
+    </div>
+  </div>
   <div id="hookList"></div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
 <div class="tab-bar"><a href="index.html" class="tab-item"><div><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a><a href="daily-todo.html" class="tab-item"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a><a href="sales-calendar.html" class="tab-item"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a><a href="products.html" class="tab-item"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a><button type="button" class="tab-item profile-trigger" aria-label="Open profile menu"><div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div>User</div></button></div>
 <script>
+let _editHooksMode = false;
+let _selectedHookIds = new Set();
+let _visibleHookIds = [];
+
 async function init() {
   const user = await requireAuth();
   if (!user) return;
@@ -216,7 +243,6 @@ async function init() {
   window._filter = 'all';
   const CAT_LABEL = {curiosity:'Curiosity',problem:'Problem',identity:'Identity','social-proof':'Social Proof',product:'Product','pattern-interrupt':'Pattern Interrupt'};
   const CAT_CLASS = {curiosity:'cat-curiosity',problem:'cat-problem',identity:'cat-identity','social-proof':'cat-social-proof',product:'cat-product','pattern-interrupt':'cat-pattern-interrupt'};
-  await renderHooks();
 
   async function renderHooks() {
     const q = document.getElementById('searchBox').value.toLowerCase();
@@ -228,11 +254,18 @@ async function init() {
       if(q) return h.text.toLowerCase().includes(q);
       return true;
     });
+    _visibleHookIds = filtered.map(h => h.id);
     const el = document.getElementById('hookList');
-    if(!filtered.length){ el.innerHTML='<div class="empty"><div class="empty-title">No hooks yet</div><div class="empty-sub">Add your first hook above.</div></div>'; return; }
+    if(!filtered.length){ el.innerHTML='<div class="empty"><div class="empty-title">No hooks yet</div><div class="empty-sub">Add your first hook above.</div></div>'; updateHookEditToolbar(); return; }
 
     function hookCard(h) {
-      return '<div class="hook-card"><button class="hook-del" onclick="delHook(\''+h.id+'\')">&#xD7;</button><div class="hook-text">'+h.text+'</div><div class="hook-footer"><span class="hook-cat '+(CAT_CLASS[h.cat]||'cat-product')+'">'+(CAT_LABEL[h.cat]||h.cat)+'</span><button class="hook-copy" onclick="copyHook(\''+h.id+'\',this)">Copy</button></div></div>';
+      const selected = _selectedHookIds.has(h.id);
+      return '<div class="hook-card '+(_editHooksMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleHookCardClick(\''+h.id+'\')">'+
+        '<span class="bank-select" aria-hidden="true"></span>'+
+        '<button class="hook-del" onclick="event.stopPropagation();delHook(\''+h.id+'\')">&#xD7;</button>'+
+        '<div class="hook-text">'+h.text+'</div>'+
+        '<div class="hook-footer"><span class="hook-cat '+(CAT_CLASS[h.cat]||'cat-product')+'">'+(CAT_LABEL[h.cat]||h.cat)+'</span><button class="hook-copy" onclick="event.stopPropagation();copyHook(\''+h.id+'\',this)">Copy</button></div>'+
+      '</div>';
     }
 
     if(f === 'all') {
@@ -247,9 +280,57 @@ async function init() {
     } else {
       el.innerHTML = '<div class="hooks-grid">'+filtered.map(hookCard).join('')+'</div>';
     }
+    updateHookEditToolbar();
   }
 
   window.renderHooks = renderHooks;
+  window.updateHookEditToolbar = function() {
+    const toolbar = document.getElementById('hookEditToolbar');
+    const count = document.getElementById('hookEditCount');
+    const deleteBtn = document.getElementById('deleteSelectedHooksBtn');
+    const editBtn = document.getElementById('editHooksBtn');
+    if(toolbar) toolbar.classList.toggle('open', _editHooksMode);
+    if(count) count.textContent = `${_selectedHookIds.size} selected`;
+    if(deleteBtn) deleteBtn.disabled = _selectedHookIds.size === 0;
+    if(editBtn) editBtn.textContent = _editHooksMode ? 'Done Editing' : 'Edit Hooks';
+  };
+  window.toggleHookEditMode = function() {
+    _editHooksMode = !_editHooksMode;
+    if(!_editHooksMode) _selectedHookIds.clear();
+    renderHooks();
+  };
+  window.handleHookCardClick = function(id) {
+    if(!_editHooksMode) return;
+    if(_selectedHookIds.has(id)) _selectedHookIds.delete(id);
+    else _selectedHookIds.add(id);
+    renderHooks();
+  };
+  window.selectAllVisibleHooks = function() {
+    _visibleHookIds.forEach(id => _selectedHookIds.add(id));
+    renderHooks();
+  };
+  window.clearHookSelection = function() {
+    _selectedHookIds.clear();
+    renderHooks();
+  };
+  window.deleteSelectedHooks = async function() {
+    const ids = Array.from(_selectedHookIds);
+    if(!ids.length) return;
+    if(!confirm(`Delete ${ids.length} selected hook${ids.length === 1 ? '' : 's'}?`)) return;
+    const btn = document.getElementById('deleteSelectedHooksBtn');
+    btn.disabled = true; btn.textContent = 'Deleting...';
+    const { error } = await db.from('hooks').delete().in('id', ids).eq('user_id', user.id);
+    if(error) {
+      showToast(error.message, 'error');
+      btn.disabled = false; btn.textContent = 'Delete Selected';
+      return;
+    }
+    showToast(`${ids.length} hook${ids.length === 1 ? '' : 's'} deleted`);
+    _selectedHookIds.clear();
+    _editHooksMode = false;
+    btn.textContent = 'Delete Selected';
+    renderHooks();
+  };
   window.setFilter = function(el, f) { window._filter=f; document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.f===f)); renderHooks(); };
   window.addHook = async function() {
     const text = document.getElementById('hookInput').value.trim();
@@ -260,7 +341,7 @@ async function init() {
     showToast('Hook saved'); renderHooks();
   };
   window.delHook = async function(id) {
-    await db.from('hooks').delete().eq('id', id);
+    await db.from('hooks').delete().eq('id', id).eq('user_id', user.id);
     showToast('Deleted'); renderHooks();
   };
   window.copyHook = async function(id, btn) {
@@ -268,6 +349,7 @@ async function init() {
     if(data) { navigator.clipboard.writeText(data.text).then(()=>{ btn.textContent='Copied!'; btn.classList.add('copied'); setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000); }); }
   };
   document.getElementById('hookInput').addEventListener('keydown', e => { if(e.key==='Enter'&&e.metaKey) window.addHook(); });
+  await renderHooks();
 
 }
 init();

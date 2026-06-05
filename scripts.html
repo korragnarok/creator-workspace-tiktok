@@ -108,7 +108,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .prod-notes{font-size:12px;color:var(--text-mid);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
 
 .script-grid{display:flex;flex-direction:column;gap:12px;}
-.script-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;box-shadow:var(--shadow-sm);transition:all 0.12s;}
+.script-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;box-shadow:var(--shadow-sm);transition:all 0.12s;position:relative;}
 .script-card:hover{border-color:var(--rose);box-shadow:var(--shadow-md);}
 .script-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
 .script-title{font-family:'IBM Plex Serif',serif;font-size:18px;font-weight:700;color:var(--ink);flex:1;line-height:1.2;}
@@ -131,6 +131,18 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .view-script-body{font-size:15px;line-height:1.9;color:var(--text);white-space:pre-wrap;font-family:'IBM Plex Serif',serif;}
 .view-modal-actions{display:flex;gap:10px;margin-top:28px;padding-top:20px;border-top:1px solid var(--border);}
 .form-script{font-family:'IBM Plex Serif',serif;font-size:13px;line-height:1.8;resize:vertical;min-height:280px;}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.edit-toolbar{display:none;align-items:center;justify-content:space-between;gap:12px;margin:-8px 0 18px;padding:12px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);}
+.edit-toolbar.open{display:flex;}
+.edit-count{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);}
+.edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.bank-select{display:none;position:absolute;top:22px;left:20px;width:24px;height:24px;border:2px solid var(--border-mid);border-radius:7px;background:var(--bg-lift);align-items:center;justify-content:center;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;}
+.script-card.select-mode{padding-left:58px;cursor:pointer;}
+.script-card.selected{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 16%,transparent),var(--shadow-sm);}
+.script-card.select-mode .bank-select{display:flex;}
+.script-card.selected .bank-select{background:var(--rust);border-color:var(--rust);}
+.script-card.selected .bank-select::after{content:'✓';}
+.script-card.select-mode .script-actions{display:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
@@ -163,7 +175,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <div class="page" style="max-width:900px;">
   <div class="page-header">
     <div><div class="page-eyebrow">Script Library</div><div class="page-title">Saved <em>Scripts</em></div><p class="page-sub">Generate scripts with your AI of choice, then paste and save them here.</p></div>
-    <button class="btn btn-primary" onclick="openSaveModal()">+ Save Script</button>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="editScriptsBtn" onclick="toggleScriptEditMode()">Edit Scripts</button>
+      <button class="btn btn-primary" onclick="openSaveModal()">+ Save Script</button>
+    </div>
   </div>
   <div class="filter-bar">
     <input type="text" class="search-box" id="searchBox" placeholder="Search scripts, products, brands..." oninput="renderScripts()">
@@ -173,6 +188,14 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="pill" data-f="unboxing" onclick="setFilter(this,'unboxing')">Unboxing</div>
     <div class="pill" data-f="storytime" onclick="setFilter(this,'storytime')">Storytime</div>
     <div class="pill" data-f="live" onclick="setFilter(this,'live')">Live</div>
+  </div>
+  <div class="edit-toolbar" id="scriptEditToolbar">
+    <div class="edit-count" id="scriptEditCount">0 selected</div>
+    <div class="edit-actions">
+      <button class="btn btn-ghost" onclick="selectAllVisibleScripts()">Select All</button>
+      <button class="btn btn-ghost" onclick="clearScriptSelection()">Clear</button>
+      <button class="btn-danger" id="deleteSelectedScriptsBtn" onclick="deleteSelectedScripts()">Delete Selected</button>
+    </div>
   </div>
   <div class="script-grid" id="scriptGrid"><p style="color:var(--text-muted);padding:20px;">Loading...</p></div>
 </div>
@@ -207,6 +230,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <div class="tab-bar"><a href="index.html" class="tab-item"><div><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a><a href="daily-todo.html" class="tab-item"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a><a href="sales-calendar.html" class="tab-item"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a><a href="products.html" class="tab-item"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>  <button type="button" class="tab-item profile-trigger" aria-label="Open profile menu"><div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div>User</div></button>
 </div>
 <script>
+let _editScriptsMode = false;
+let _selectedScriptIds = new Set();
+let _visibleScriptIds = [];
+
 async function init() {
   const user = await requireAuth();
   if (!user) return;
@@ -219,7 +246,6 @@ async function init() {
   window._user = user;
   window._filter = 'all';
   window._viewId = null;
-  await renderScripts();
 
   async function renderScripts() {
     const q = document.getElementById('searchBox').value.toLowerCase();
@@ -230,10 +256,13 @@ async function init() {
       if(q) return (s.title+(s.brand||'')+(s.script||'')+(s.notes||'')).toLowerCase().includes(q);
       return true;
     });
+    _visibleScriptIds = filtered.map(s => s.id);
     const el = document.getElementById('scriptGrid');
-    if(!filtered.length){ el.innerHTML='<div class="empty"><div class="empty-title">No scripts yet</div><div class="empty-sub">Generate a script with your AI of choice and paste it here.</div></div>'; return; }
-    el.innerHTML = filtered.map(s =>
-      '<div class="script-card">'+
+    if(!filtered.length){ el.innerHTML='<div class="empty"><div class="empty-title">No scripts yet</div><div class="empty-sub">Generate a script with your AI of choice and paste it here.</div></div>'; updateScriptEditToolbar(); return; }
+    el.innerHTML = filtered.map(s => {
+      const selected = _selectedScriptIds.has(s.id);
+      return '<div class="script-card '+(_editScriptsMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleScriptCardClick(\''+s.id+'\')">'+
+      '<span class="bank-select" aria-hidden="true"></span>'+
       '<div class="script-top"><div class="script-title">'+s.title+'</div>'+
       '<div class="script-actions">'+
       '<button class="script-copy" onclick="event.stopPropagation();copyScript(\''+s.id+'\',this)">Copy</button>'+
@@ -245,12 +274,60 @@ async function init() {
       '<span class="script-date">'+new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span>'+
       (s.notes?'<span style="font-size:11px;color:var(--text-muted);font-style:italic;font-family:\'IBM Plex Serif\',serif;">'+s.notes+'</span>':'')+
       '</div>'+
-      '<div class="script-body" onclick="openView(\''+s.id+'\')">'+s.script+'</div>'+
-      '</div>'
-    ).join('');
+      '<div class="script-body" onclick="event.stopPropagation();openView(\''+s.id+'\')">'+s.script+'</div>'+
+      '</div>';
+    }).join('');
+    updateScriptEditToolbar();
   }
 
   window.renderScripts = renderScripts;
+  window.updateScriptEditToolbar = function() {
+    const toolbar = document.getElementById('scriptEditToolbar');
+    const count = document.getElementById('scriptEditCount');
+    const deleteBtn = document.getElementById('deleteSelectedScriptsBtn');
+    const editBtn = document.getElementById('editScriptsBtn');
+    if(toolbar) toolbar.classList.toggle('open', _editScriptsMode);
+    if(count) count.textContent = `${_selectedScriptIds.size} selected`;
+    if(deleteBtn) deleteBtn.disabled = _selectedScriptIds.size === 0;
+    if(editBtn) editBtn.textContent = _editScriptsMode ? 'Done Editing' : 'Edit Scripts';
+  };
+  window.toggleScriptEditMode = function() {
+    _editScriptsMode = !_editScriptsMode;
+    if(!_editScriptsMode) _selectedScriptIds.clear();
+    renderScripts();
+  };
+  window.handleScriptCardClick = function(id) {
+    if(!_editScriptsMode) { openView(id); return; }
+    if(_selectedScriptIds.has(id)) _selectedScriptIds.delete(id);
+    else _selectedScriptIds.add(id);
+    renderScripts();
+  };
+  window.selectAllVisibleScripts = function() {
+    _visibleScriptIds.forEach(id => _selectedScriptIds.add(id));
+    renderScripts();
+  };
+  window.clearScriptSelection = function() {
+    _selectedScriptIds.clear();
+    renderScripts();
+  };
+  window.deleteSelectedScripts = async function() {
+    const ids = Array.from(_selectedScriptIds);
+    if(!ids.length) return;
+    if(!confirm(`Delete ${ids.length} selected script${ids.length === 1 ? '' : 's'}?`)) return;
+    const btn = document.getElementById('deleteSelectedScriptsBtn');
+    btn.disabled = true; btn.textContent = 'Deleting...';
+    const { error } = await db.from('scripts').delete().in('id', ids).eq('user_id', user.id);
+    if(error) {
+      showToast(error.message, 'error');
+      btn.disabled = false; btn.textContent = 'Delete Selected';
+      return;
+    }
+    showToast(`${ids.length} script${ids.length === 1 ? '' : 's'} deleted`);
+    _selectedScriptIds.clear();
+    _editScriptsMode = false;
+    btn.textContent = 'Delete Selected';
+    renderScripts();
+  };
   window.setFilter = function(el, f) { window._filter=f; document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.f===f)); renderScripts(); };
   window.openSaveModal = async function(id) {
     window._editId = id || null;
@@ -278,7 +355,7 @@ async function init() {
   };
   window.deleteScript = async function() {
     if(!confirm('Delete this script?')) return;
-    await db.from('scripts').delete().eq('id', window._editId);
+    await db.from('scripts').delete().eq('id', window._editId).eq('user_id', user.id);
     showToast('Deleted'); window.closeModal(); renderScripts();
   };
   window.copyScript = async function(id, btn) {
@@ -303,6 +380,7 @@ async function init() {
   document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)window.closeModal();});
   document.getElementById('viewOverlay').addEventListener('click',function(e){if(e.target===this)window.closeView();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){window.closeModal();window.closeView();}});
+  await renderScripts();
 
 }
 init();

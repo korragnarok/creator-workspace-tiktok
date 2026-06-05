@@ -204,7 +204,6 @@ async function init() {
   initProfilePopover(user.id);
   
   window._user = user;
-  await renderProducts();
 
   async function renderProducts() {
     const q = document.getElementById('searchBox').value.toLowerCase();
@@ -315,11 +314,12 @@ async function init() {
   };
   window.deleteProduct = async function() {
     if(!confirm('Delete this product?')) return;
-    await db.from('products').delete().eq('id', window._editId);
+    await db.from('products').delete().eq('id', window._editId).eq('user_id', user.id);
     showToast('Deleted'); window.closeModal(); renderProducts();
   };
   document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) window.closeModal(); });
   document.addEventListener('keydown', e => { if(e.key === 'Escape') window.closeModal(); });
+  await renderProducts();
 
 }
 init();
