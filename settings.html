@@ -366,8 +366,7 @@ function parseCSVRow(line) {
 
 function parseCSV(text) {
   text = text.replace(/^﻿/, '');
-  const lines = text.split(/?
-/).filter(l => l.trim());
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
   const headers = parseCSVRow(lines[0]);
   return lines.slice(1).map(line => {
