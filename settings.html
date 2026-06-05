@@ -19,23 +19,36 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .nav-link{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-mid);transition:color 0.15s;}
 .nav-link:hover{color:var(--ink);}
 .nav-link.active{color:var(--rust);}
-.nav-user{font-family:'Stack Sans Notch',sans-serif;font-size:11px;color:var(--text-muted);margin-left:auto;display:flex;align-items:center;gap:12px;}
-.nav-signout{background:none;border:1px solid var(--border-mid);border-radius:8px;padding:5px 12px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all 0.15s;}
-.nav-signout:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
 
-.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 82%,#000 18%);padding:28px 18px;z-index:260;flex-direction:column;gap:28px;}
+.desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 82%,#000 18%);padding:24px 18px;z-index:260;flex-direction:column;gap:18px;overflow-y:auto;}
 .side-brand{font-family:'Stack Sans Notch',sans-serif;font-size:31px;font-weight:800;line-height:0.92;color:var(--ink);}
 .side-brand span{display:block;font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:400;color:var(--rust);line-height:1.2;}
-.side-nav{display:flex;flex-direction:column;gap:10px;}
-.side-link{display:flex;align-items:center;gap:12px;border-radius:8px;padding:10px 12px;color:var(--text-mid);font-weight:700;transition:background 0.15s,color 0.15s;}
+.side-nav,.core-sidebar{display:flex;flex-direction:column;gap:8px;}
+.side-link{display:flex;align-items:center;gap:12px;border-radius:8px;padding:8px 12px;color:var(--text-mid);font-weight:700;transition:background 0.15s,color 0.15s;}
 .side-link.active{background:color-mix(in srgb,var(--rust) 26%,var(--surface) 74%);color:var(--ink);}
 .side-link:hover{background:color-mix(in srgb,var(--surface) 78%,var(--rust) 22%);color:var(--ink);}
 .nav-icon{width:28px;height:28px;border:1px solid var(--border-mid);border-radius:8px;background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .nav-icon img{width:19px;height:19px;object-fit:contain;}
 .nav-icon svg{width:16px;height:16px;color:var(--text-mid);}
+.core-sidebar{border:1px solid var(--border-mid);border-radius:12px;padding:10px;background:color-mix(in srgb,var(--surface) 74%,var(--bg) 26%);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--ink) 9%,transparent);gap:9px;}
+.core-sidebar-head{display:flex;align-items:center;justify-content:space-between;color:var(--rust);font-size:15px;}
+.core-sidebar-head span:first-child{font-weight:700;}
+.core-sidebar-count{font-family:'Noto Sans Mono',sans-serif;font-size:10px;font-weight:800;color:var(--ink);background:color-mix(in srgb,var(--sage) 24%,var(--surface) 76%);border:1px solid var(--border-mid);border-radius:999px;padding:3px 7px;}
+.core-mini-list{display:flex;flex-direction:column;gap:6px;}
+.core-mini-item{display:block;position:relative;}
+.core-mini-num{display:none;}
+.core-mini-input{min-width:0;width:100%;border:1px solid var(--border-mid);border-radius:8px;padding:7px 10px;color:var(--ink);font-size:12px;font-weight:700;outline:none;box-shadow:0 2px 7px rgba(0,0,0,0.08);transition:border-color 0.15s,box-shadow 0.15s,transform 0.15s;background:color-mix(in srgb,var(--surface) 75%,var(--sand) 25%);}
+.core-mini-item:nth-child(1) .core-mini-input{background:color-mix(in srgb,var(--rust) 34%,var(--surface) 66%);}
+.core-mini-item:nth-child(2) .core-mini-input{background:color-mix(in srgb,var(--sage) 34%,var(--surface) 66%);}
+.core-mini-item:nth-child(3) .core-mini-input{background:color-mix(in srgb,var(--tan) 34%,var(--surface) 66%);}
+.core-mini-item:nth-child(4) .core-mini-input{background:color-mix(in srgb,var(--sand) 52%,var(--surface) 48%);}
+.core-mini-item:nth-child(5) .core-mini-input{background:color-mix(in srgb,var(--rose) 34%,var(--surface) 66%);}
+.core-mini-input::placeholder{color:var(--text-mid);font-weight:600;}
+.core-mini-input:focus{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 22%,transparent),0 3px 10px rgba(0,0,0,0.12);transform:translateY(-1px);}
 .side-profile{margin-top:auto;border:1px solid var(--border);border-radius:var(--r,12px);background:color-mix(in srgb,var(--surface) 76%,var(--bg) 24%);padding:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color 0.15s;}
 .side-profile:hover{border-color:var(--rust);}
-.avatar{width:34px;height:34px;border-radius:50%;background:var(--sage);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--sage);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.avatar-img{width:100%;height:100%;object-fit:cover;display:block;}
 .profile-name{font-weight:700;line-height:1.1;color:var(--ink);}
 .profile-role{font-size:11px;color:var(--text-muted);}
 
@@ -72,6 +85,13 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .theme-card.active .theme-check{background:var(--rust);border-color:var(--rust);}
 .theme-card.active .theme-check::after{content:'✓';color:#fff;font-size:10px;font-weight:800;font-family:'Stack Sans Notch',sans-serif;}
 
+/* Profile icon picker */
+.icon-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;}
+.icon-choice{border:2px solid var(--border-mid);border-radius:12px;background:var(--bg);padding:9px;aspect-ratio:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.icon-choice:hover{border-color:var(--rust);transform:translateY(-1px);}
+.icon-choice.active{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 13%,var(--surface) 87%);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 14%,transparent);}
+.icon-choice img{width:100%;height:100%;object-fit:contain;display:block;}
+
 /* Danger zone */
 .danger-zone{border-color:rgba(200,60,50,0.2);}
 .danger-title{color:#C83C32;}
@@ -85,7 +105,7 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .tab-icon-svg{width:22px;height:22px;display:block;}
 
 @media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}}
-@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:36px;}.theme-grid{grid-template-columns:1fr;}.tab-bar{display:flex;}}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:36px;}.theme-grid{grid-template-columns:1fr;}.icon-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.tab-bar{display:flex;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
@@ -106,8 +126,18 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings
     </a>
   </div>
+  <div class="core-sidebar">
+    <div class="core-sidebar-head"><span>Core 5</span><span class="core-sidebar-count" id="coreCount">0/5</span></div>
+    <div class="core-mini-list">
+      <label class="core-mini-item"><span class="core-mini-num">1</span><input class="core-mini-input" data-core-index="0" placeholder="Product name"></label>
+      <label class="core-mini-item"><span class="core-mini-num">2</span><input class="core-mini-input" data-core-index="1" placeholder="Product name"></label>
+      <label class="core-mini-item"><span class="core-mini-num">3</span><input class="core-mini-input" data-core-index="2" placeholder="Product name"></label>
+      <label class="core-mini-item"><span class="core-mini-num">4</span><input class="core-mini-input" data-core-index="3" placeholder="Product name"></label>
+      <label class="core-mini-item"><span class="core-mini-num">5</span><input class="core-mini-input" data-core-index="4" placeholder="Product name"></label>
+    </div>
+  </div>
   <div class="side-profile">
-    <div class="avatar" id="sideAvatar">K</div>
+    <div class="avatar" id="sideAvatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div>
     <div><div class="profile-name" id="sideProfileName">Creator</div><div class="profile-role">Creator</div></div>
   </div>
 </aside>
@@ -124,7 +154,7 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
     <a href="sales-calendar.html" class="nav-link">Sales Log</a>
     <a href="settings.html" class="nav-link active">Settings</a>
   </div>
-  <div class="nav-user"><span id="navEmail"></span><button class="nav-signout" onclick="signOut()">Sign Out</button></div>
+
 </nav>
 
 <div class="page">
@@ -148,6 +178,13 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
   <div class="settings-section">
     <div class="section-title">Color Theme</div>
     <div class="theme-grid" id="themeGrid"></div>
+  </div>
+
+  <!-- Profile Icon -->
+  <div class="settings-section">
+    <div class="section-title">Profile Icon</div>
+    <div class="icon-grid" id="profileIconGrid"></div>
+    <div class="form-hint">Add your icon files as icon-1.png, icon-2.png, etc. inside icons/users.</div>
   </div>
 
   <!-- Password -->
@@ -199,11 +236,26 @@ function buildThemeGrid(activeKey) {
   `).join('');
 }
 
+function buildProfileIconGrid(activeKey) {
+  const grid = document.getElementById('profileIconGrid');
+  grid.innerHTML = PROFILE_ICONS.map(icon => `
+    <button class="icon-choice${activeKey === icon.key ? ' active' : ''}" type="button" data-profile-icon="${icon.key}" onclick="selectProfileIcon('${icon.key}')" aria-label="${icon.label}">
+      <img src="${icon.src}" alt="">
+    </button>
+  `).join('');
+}
+
 async function selectTheme(key) {
   applyTheme(key);
   buildThemeGrid(key);
   await saveUserPrefs(_user.id, { theme: key });
   showToast('Theme saved');
+}
+
+async function selectProfileIcon(key) {
+  const iconKey = await saveProfileIcon(_user.id, key);
+  buildProfileIconGrid(iconKey);
+  showToast('Icon saved');
 }
 
 async function saveName() {
@@ -213,7 +265,6 @@ async function saveName() {
   btn.disabled = true; btn.textContent = 'Saving...';
   await saveUserPrefs(_user.id, { display_name: val });
   document.querySelectorAll('.profile-name, #sideProfileName').forEach(el => el.textContent = val);
-  document.querySelectorAll('.avatar, #sideAvatar').forEach(el => el.textContent = val.charAt(0).toUpperCase());
   btn.disabled = false; btn.textContent = 'Save Name';
   showToast('Name updated');
 }
@@ -237,7 +288,6 @@ async function savePassword() {
 async function init() {
   _user = await requireAuth();
   if (!_user) return;
-  document.getElementById('navEmail').textContent = _user.email;
   _prefs = await loadUserPrefs(_user.id);
   await initDisplayName(_user, _prefs);
   await initCore5(_user.id, _prefs);
@@ -249,6 +299,7 @@ async function init() {
 
   const activeTheme = _prefs.theme || DEFAULT_THEME;
   buildThemeGrid(activeTheme);
+  buildProfileIconGrid(_prefs.profile_icon || DEFAULT_PROFILE_ICON);
 }
 
 document.addEventListener('keydown', e => {

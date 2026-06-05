@@ -121,6 +121,15 @@ const THEMES = {
 };
 
 const DEFAULT_THEME = 'dusk';
+const DEFAULT_PROFILE_ICON = 'icon-1';
+const PROFILE_ICONS = [
+  { key: 'icon-1', label: 'Icon 1', src: 'icons/users/icon-1.png' },
+  { key: 'icon-2', label: 'Icon 2', src: 'icons/users/icon-2.png' },
+  { key: 'icon-3', label: 'Icon 3', src: 'icons/users/icon-3.png' },
+  { key: 'icon-4', label: 'Icon 4', src: 'icons/users/icon-4.png' },
+  { key: 'icon-5', label: 'Icon 5', src: 'icons/users/icon-5.png' },
+  { key: 'icon-6', label: 'Icon 6', src: 'icons/users/icon-6.png' }
+];
 
 function _cachedTheme() {
   try {
@@ -156,16 +165,16 @@ applyThemeImmediate();
 async function loadUserPrefs(userId) {
   const theme = _cachedTheme() || DEFAULT_THEME;
   const { data } = await db.from('user_prefs')
-    .select('display_name, core5, theme')
+    .select('*')
     .eq('user_id', userId)
     .maybeSingle();
-  if (data) return data;
+  if (data) return { ...data, profile_icon: data.profile_icon || _cachedProfileIcon(userId) };
   // First login — create the row so future saves have somewhere to upsert into
   await db.from('user_prefs').upsert(
     { user_id: userId, display_name: '', core5: [], theme },
     { onConflict: 'user_id' }
   );
-  return { display_name: null, core5: [], theme };
+  return { display_name: null, core5: [], theme, profile_icon: _cachedProfileIcon(userId) };
 }
 
 async function saveUserPrefs(userId, patch) {
@@ -177,9 +186,47 @@ async function saveUserPrefs(userId, patch) {
 
 function _applyDisplayName(name) {
   document.querySelectorAll('.profile-name').forEach(el => el.textContent = name);
-  document.querySelectorAll('.avatar').forEach(el => el.textContent = name.charAt(0).toUpperCase());
+  document.querySelectorAll('.avatar').forEach(el => {
+    if (!el.querySelector('.avatar-img')) el.textContent = name.charAt(0).toUpperCase();
+  });
   const wt = document.getElementById('welcomeTitle');
   if (wt) wt.textContent = `welcome back, ${name}`;
+}
+
+function _profileIconByKey(key) {
+  return PROFILE_ICONS.find(icon => icon.key === key) || PROFILE_ICONS[0];
+}
+
+function _profileIconCacheKey(userId) {
+  return `creatorHub:profileIcon:${userId || 'local'}`;
+}
+
+function _cachedProfileIcon(userId) {
+  try {
+    const saved = localStorage.getItem(_profileIconCacheKey(userId)) || DEFAULT_PROFILE_ICON;
+    return PROFILE_ICONS.some(icon => icon.key === saved) ? saved : DEFAULT_PROFILE_ICON;
+  } catch(e) { return DEFAULT_PROFILE_ICON; }
+}
+
+function applyProfileIcon(key) {
+  const icon = _profileIconByKey(key);
+  document.querySelectorAll('.avatar-img').forEach(img => {
+    img.src = icon.src;
+    img.alt = icon.label;
+  });
+  document.querySelectorAll('[data-profile-icon]').forEach(el => {
+    el.classList.toggle('active', el.dataset.profileIcon === icon.key);
+  });
+  return icon.key;
+}
+
+async function saveProfileIcon(userId, key) {
+  const iconKey = applyProfileIcon(key);
+  try { localStorage.setItem(_profileIconCacheKey(userId), iconKey); } catch(e) {}
+  if (userId) {
+    try { await saveUserPrefs(userId, { profile_icon: iconKey }); } catch(e) {}
+  }
+  return iconKey;
 }
 
 function _emailFallbackName(email) {
@@ -200,6 +247,7 @@ async function initDisplayName(user, prefs) {
   const savedName = (prefs.display_name || '').trim() || _cachedDisplayName(user.id);
   const name = savedName || _emailFallbackName(user.email);
   _applyDisplayName(name);
+  applyProfileIcon(prefs.profile_icon || DEFAULT_PROFILE_ICON);
   const modal = document.getElementById('nameModal');
   if (modal && !savedName) {
     modal.classList.add('open');

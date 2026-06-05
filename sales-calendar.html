@@ -21,9 +21,6 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .nav-link:hover{color:var(--ink);}
 .nav-link.active{color:var(--rust);}
 .nav-link.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--rust);border-radius:1px;}
-.nav-user{font-family:'Stack Sans Notch',sans-serif;font-size:11px;color:var(--text-muted);margin-left:auto;display:flex;align-items:center;gap:12px;}
-.nav-signout{background:none;border:1px solid var(--border-mid);border-radius:8px;padding:5px 12px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;transition:all 0.15s;}
-.nav-signout:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
 .page{max-width:900px;margin:0 auto;padding:0 40px 100px;}
 .page-header{padding:44px 0 32px;border-bottom:1px solid var(--border-mid);margin-bottom:36px;}
 .page-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
@@ -109,7 +106,8 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .core-mini-input::placeholder{color:var(--text-mid);font-weight:600;}
 .core-mini-input:focus{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 22%,transparent),0 3px 10px rgba(0,0,0,0.12);transform:translateY(-1px);}
 .side-profile{margin-top:auto;border:1px solid var(--border);border-radius:var(--r);background:color-mix(in srgb,var(--surface) 76%,var(--bg) 24%);padding:10px;display:flex;align-items:center;gap:10px;}
-.avatar{width:34px;height:34px;border-radius:50%;background:var(--sage);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--sage);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.avatar-img{width:100%;height:100%;object-fit:cover;display:block;}
 .profile-name{font-weight:700;line-height:1.1;}
 .profile-role{font-size:11px;color:var(--text-muted);}
 @media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}footer{padding-left:40px;padding-right:40px;}}
@@ -145,7 +143,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       <label class="core-mini-item"><span class="core-mini-num">5</span><input class="core-mini-input" data-core-index="4" placeholder="Product name"></label>
     </div>
   </div>
-  <div class="side-profile" style="cursor:pointer;"><div class="avatar">K</div><div><div class="profile-name">Kourtney</div><div class="profile-role">Creator</div></div></div>
+  <div class="side-profile" style="cursor:pointer;"><div class="avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div><div class="profile-name">Kourtney</div><div class="profile-role">Creator</div></div></div>
 </aside>
 <nav>
   <a href="index.html" class="nav-brand">Creator Hub</a>
@@ -158,7 +156,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <a href="scripts.html" class="nav-link">Scripts</a>
     <a href="sales-calendar.html" class="nav-link active">Sales Log</a>
   </div>
-  <div class="nav-user"><span id="navEmail"></span><button class="nav-signout" onclick="signOut()">Sign Out</button></div>
+
 </nav>
 <div class="page">
   <div class="page-header">
@@ -221,7 +219,6 @@ async function init(){
   await initTheme(user.id, prefs);
   initProfilePopover(user.id);
   _user=user;
-  document.getElementById('navEmail').textContent=user.email;
   await loadMonth();
 }
 
