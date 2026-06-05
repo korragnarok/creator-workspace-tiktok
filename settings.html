@@ -513,7 +513,8 @@ function mapSales(row) {
 }
 
 function previewImport(type) {
-  const input = document.getElementById(type === 'products' ? 'productCsvInput' : 'videoCsvInput');
+  const inputId = type === 'products' ? 'productCsvInput' : type === 'sales' ? 'salesCsvInput' : 'videoCsvInput';
+  const input = document.getElementById(inputId);
   const file = input.files[0];
   if (!file) return;
   document.getElementById(type === 'products' ? 'productFileName' : 'videoFileName').textContent = file.name;
