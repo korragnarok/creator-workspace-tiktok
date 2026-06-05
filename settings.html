@@ -368,13 +368,39 @@ function parseCSV(text) {
   text = text.replace(/^﻿/, '');
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
-  const headers = parseCSVRow(lines[0]);
-  return lines.slice(1).map(line => {
-    const values = parseCSVRow(line);
+  const rawRows = lines.map(parseCSVRow);
+  const propertyValueRows = rawRows.filter(row => row.length >= 2);
+  const propertyNames = new Set(['product','brand','tiktok shop link','status','sold','live talking points','core five','tags','notes']);
+  const propertyStyleCount = propertyValueRows.filter(row => propertyNames.has(cleanKey(row[0]))).length;
+  if (propertyStyleCount >= 2) {
+    const obj = {};
+    propertyValueRows.forEach(row => {
+      const key = row[0].trim();
+      const value = row.slice(1).join(',').trim();
+      if (key) obj[key] = value;
+    });
+    return [obj];
+  }
+  const headers = rawRows[0];
+  return rawRows.slice(1).map(values => {
     const obj = {};
     headers.forEach((h, i) => { obj[h.trim()] = (values[i] || '').trim(); });
     return obj;
   }).filter(row => Object.values(row).some(v => v));
+}
+
+function cleanKey(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function pick(row, aliases) {
+  const normalized = {};
+  Object.entries(row || {}).forEach(([key, value]) => { normalized[cleanKey(key)] = value; });
+  for (const alias of aliases) {
+    const value = normalized[cleanKey(alias)];
+    if (value) return value;
+  }
+  return '';
 }
 
 function parseNotionDate(str) {
@@ -389,14 +415,15 @@ function parseNotionDate(str) {
 }
 
 function mapProduct(row) {
+  const status = pick(row, ['Status']) || 'active';
   return {
-    name:       row['Product'] || '',
-    brand:      row['Brand'] || '',
-    link:       row['TikTok Shop Link'] || '',
-    status:     (row['Status'] || 'active').toLowerCase(),
-    units_sold: parseInt(row['Sold'] || '0') || 0,
-    notes:      row['Live Talking Points'] || '',
-    tags:       row['Core Five'] ? 'core5' : '',
+    name:       pick(row, ['Product', 'Product Name', 'Name', 'Title']),
+    brand:      pick(row, ['Brand', 'Brand Name']),
+    link:       pick(row, ['TikTok Shop Link', 'Shop Link', 'Product Link', 'Link', 'URL']),
+    status:     status.toLowerCase(),
+    units_sold: parseInt(pick(row, ['Sold', 'Units Sold', 'Sales']) || '0') || 0,
+    notes:      pick(row, ['Live Talking Points', 'Talking Points', 'Notes']),
+    tags:       pick(row, ['Core Five', 'Core 5']) ? 'core5' : '',
   };
 }
 

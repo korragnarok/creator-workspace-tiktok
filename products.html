@@ -28,6 +28,11 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:0.04em;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;transition:all 0.15s;border:none;text-transform:uppercase;}
 .btn-primary{background:var(--rust);color:#fff;}.btn-primary:hover{background:#9a5a57;}
 .btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}.btn-ghost:hover{background:var(--surface);color:var(--ink);}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.edit-toolbar{display:none;align-items:center;justify-content:space-between;gap:12px;margin:-8px 0 18px;padding:12px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);}
+.edit-toolbar.open{display:flex;}
+.edit-count{font-size:12px;color:var(--text-mid);}
+.edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(42,39,37,0.4);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;}
 .modal-overlay.open{display:flex;}
 .modal{background:var(--bg-lift);border-radius:16px;padding:32px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(42,39,37,0.15);position:relative;}
@@ -96,6 +101,12 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
 .prod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--shadow-sm);transition:all 0.15s;display:flex;flex-direction:column;gap:10px;cursor:pointer;}
 .prod-card:hover{border-color:var(--rose);box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.prod-card.select-mode{position:relative;padding-left:54px;}
+.prod-card.selected{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 16%,transparent),var(--shadow-sm);}
+.prod-select{display:none;position:absolute;top:18px;left:18px;width:24px;height:24px;border:2px solid var(--border-mid);border-radius:7px;background:var(--bg-lift);align-items:center;justify-content:center;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;}
+.prod-card.select-mode .prod-select{display:flex;}
+.prod-card.selected .prod-select{background:var(--rust);border-color:var(--rust);}
+.prod-card.selected .prod-select::after{content:'✓';}
 .prod-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--rust);}
 .prod-name{font-family:'IBM Plex Serif',serif;font-size:20px;font-weight:700;color:var(--ink);line-height:1.2;}
 .prod-status{display:inline-block;padding:3px 10px;border-radius:100px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;align-self:flex-start;}
@@ -139,7 +150,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <div class="page">
   <div class="page-header">
     <div><div class="page-eyebrow">Your Catalog</div><div class="page-title">Products <em>DB</em></div><p class="page-sub">Add products you promote with talking points, links, and status.</p></div>
-    <button class="btn btn-primary" onclick="openModal()">+ Add Product</button>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="editProductsBtn" onclick="toggleEditMode()">Edit Products</button>
+      <button class="btn btn-primary" onclick="openModal()">+ Add Product</button>
+    </div>
   </div>
   <div class="filter-bar">
     <input type="text" class="search-box" id="searchBox" placeholder="Search products or brands..." oninput="renderProducts()">
@@ -147,6 +161,14 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="pill" data-cat="active" onclick="setCat(this,'active')">Active</div>
     <div class="pill" data-cat="promote" onclick="setCat(this,'promote')">Promote Now</div>
     <div class="pill" data-cat="paused" onclick="setCat(this,'paused')">Paused</div>
+  </div>
+  <div class="edit-toolbar" id="editToolbar">
+    <div class="edit-count" id="editCount">0 selected</div>
+    <div class="edit-actions">
+      <button class="btn btn-ghost" onclick="selectAllVisible()">Select All</button>
+      <button class="btn btn-ghost" onclick="clearSelection()">Clear</button>
+      <button class="btn-danger" id="deleteSelectedBtn" onclick="deleteSelectedProducts()">Delete Selected</button>
+    </div>
   </div>
   <div class="prod-grid" id="prodGrid"><p style="color:var(--text-muted);padding:20px;">Loading...</p></div>
 </div>
@@ -168,6 +190,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <div class="tab-bar"><a href="index.html" class="tab-item"><div><img src="icons/home.png" class="tab-icon-img" alt="Home"></div><div>Home</div></a><a href="daily-todo.html" class="tab-item"><div><img src="icons/todo.png" class="tab-icon-img" alt="To Do"></div><div>To Do</div></a><a href="sales-calendar.html" class="tab-item"><div><img src="icons/sales.png" class="tab-icon-img" alt="Sales"></div><div>Sales</div></a><a href="products.html" class="tab-item active"><div><img src="icons/products.png" class="tab-icon-img" alt="Products"></div><div>Products</div></a>  <button type="button" class="tab-item profile-trigger" aria-label="Open profile menu"><div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div>User</div></button>
 </div>
 <script>
+let _editProductsMode = false;
+let _selectedProductIds = new Set();
+let _visibleProductIds = [];
+
 async function init() {
   const user = await requireAuth();
   if (!user) return;
@@ -189,21 +215,74 @@ async function init() {
       if(q) return (p.name + (p.brand||'') + (p.tags||'')).toLowerCase().includes(q);
       return true;
     });
+    _visibleProductIds = filtered.map(p => p.id);
     const SL = {active:'Active', promote:'Promote Now', paused:'Paused'};
     const SC = {active:'status-active', promote:'status-promote', paused:'status-paused'};
     const grid = document.getElementById('prodGrid');
-    if(!filtered.length){ grid.innerHTML='<div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div>'; return; }
-    grid.innerHTML = filtered.map(p => '<div class="prod-card" onclick="openModal(\''+p.id+'\')">'+
+    if(!filtered.length){ grid.innerHTML='<div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div>'; updateEditToolbar(); return; }
+    grid.innerHTML = filtered.map(p => {
+      const selected = _selectedProductIds.has(p.id);
+      return '<div class="prod-card '+(_editProductsMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleProductCardClick(\''+p.id+'\')">'+
+      '<span class="prod-select" aria-hidden="true"></span>'+
       (p.brand ? '<div class="prod-brand">'+p.brand+'</div>' : '')+
       '<div class="prod-name">'+p.name+'</div>'+
       '<div class="prod-status '+(SC[p.status]||'status-active')+'">'+(SL[p.status]||'Active')+'</div>'+
       '<div class="prod-units">'+(Number(p.units_sold)||0).toLocaleString()+' <span>units sold</span></div>'+
       (p.tags ? '<div class="prod-tags">'+p.tags.split(',').map(t=>'<span class="prod-tag">'+t.trim()+'</span>').join('')+'</div>' : '')+
       (p.notes ? '<div class="prod-notes">'+p.notes+'</div>' : '')+
-    '</div>').join('');
+    '</div>';
+    }).join('');
+    updateEditToolbar();
   }
 
   window.renderProducts = renderProducts;
+  window.updateEditToolbar = function() {
+    const toolbar = document.getElementById('editToolbar');
+    const count = document.getElementById('editCount');
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    const editBtn = document.getElementById('editProductsBtn');
+    if(toolbar) toolbar.classList.toggle('open', _editProductsMode);
+    if(count) count.textContent = `${_selectedProductIds.size} selected`;
+    if(deleteBtn) deleteBtn.disabled = _selectedProductIds.size === 0;
+    if(editBtn) editBtn.textContent = _editProductsMode ? 'Done Editing' : 'Edit Products';
+  };
+  window.toggleEditMode = function() {
+    _editProductsMode = !_editProductsMode;
+    if(!_editProductsMode) _selectedProductIds.clear();
+    renderProducts();
+  };
+  window.handleProductCardClick = function(id) {
+    if(!_editProductsMode) { openModal(id); return; }
+    if(_selectedProductIds.has(id)) _selectedProductIds.delete(id);
+    else _selectedProductIds.add(id);
+    renderProducts();
+  };
+  window.selectAllVisible = function() {
+    _visibleProductIds.forEach(id => _selectedProductIds.add(id));
+    renderProducts();
+  };
+  window.clearSelection = function() {
+    _selectedProductIds.clear();
+    renderProducts();
+  };
+  window.deleteSelectedProducts = async function() {
+    const ids = Array.from(_selectedProductIds);
+    if(!ids.length) return;
+    if(!confirm(`Delete ${ids.length} selected product${ids.length === 1 ? '' : 's'}?`)) return;
+    const btn = document.getElementById('deleteSelectedBtn');
+    btn.disabled = true; btn.textContent = 'Deleting...';
+    const { error } = await db.from('products').delete().in('id', ids).eq('user_id', user.id);
+    if(error) {
+      showToast(error.message, 'error');
+      btn.disabled = false; btn.textContent = 'Delete Selected';
+      return;
+    }
+    showToast(`${ids.length} product${ids.length === 1 ? '' : 's'} deleted`);
+    _selectedProductIds.clear();
+    _editProductsMode = false;
+    btn.textContent = 'Delete Selected';
+    renderProducts();
+  };
   window.setCat = function(el, cat) {
     document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.cat === cat));
     renderProducts();
