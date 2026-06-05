@@ -140,6 +140,7 @@ function applyTheme(themeKey) {
   });
   // Store locally so next page load applies before Supabase responds
   try { localStorage.setItem('creatorHub:theme', resolvedKey); } catch(e) {}
+  window.dispatchEvent(new CustomEvent('creator-theme-change', { detail: { theme: resolvedKey } }));
 }
 
 // Call immediately on load using localStorage cache (no flash)
