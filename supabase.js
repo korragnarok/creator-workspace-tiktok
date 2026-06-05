@@ -445,8 +445,9 @@ function _updateCoreCount() {
 function _renderCore5Pills(values) {
   document.querySelectorAll('.core-mini-item').forEach((item, i) => {
     const val = values[i] || '';
+    const href = `products.html?brand=${encodeURIComponent(val)}`;
     item.innerHTML = val
-      ? `<div class="core-pill" data-value="${val.replace(/"/g,'&quot;')}" title="Go to ${val}" onclick="window.location='products.html?search='+encodeURIComponent('${val.replace(/'/g,"\'")}')">
+      ? `<div class="core-pill" data-value="${val.replace(/"/g,'&quot;')}" title="View ${val} products" onclick="window.location.href='${href.replace(/'/g,"\\'")}'">
           <span class="core-pill-text">${val}</span>
          </div>`
       : `<div class="core-pill core-pill-empty" onclick="openCore5Modal()">

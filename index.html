@@ -149,34 +149,7 @@ button,input{font:inherit;}
 </head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar">
-    <a href="index.html" class="side-brand">creator <span>workspace</span></a>
-    <div class="side-nav">
-      <a href="index.html" class="side-link active"><span class="nav-icon"><img src="icons/dusk/home.png" data-theme-icon alt=""></span>Home</a>
-      <a href="daily-todo.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/todo.png" data-theme-icon alt=""></span>Daily To Do</a>
-      <a href="video-tracker.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/video.png" data-theme-icon alt=""></span>Content Tracker</a>
-      <a href="hooks.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/hooks.png" data-theme-icon alt=""></span>Hooks</a>
-      <a href="products.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/products.png" data-theme-icon alt=""></span>Products</a>
-      <a href="scripts.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/scripts.png" data-theme-icon alt=""></span>Scripts</a>
-      <a href="sales-calendar.html" class="side-link"><span class="nav-icon"><img src="icons/dusk/sales.png" data-theme-icon alt=""></span>Sales Log</a>
-    </div>
-    <div class="core-sidebar">
-      <div class="core-sidebar-head"><span>Core 5</span><span class="core-sidebar-count" id="coreCount">0/5</span></div>
-      <div class="core-mini-list">
-        <label class="core-mini-item"><span class="core-mini-num">1</span><input class="core-mini-input" data-core-index="0" placeholder="Product name"></label>
-        <label class="core-mini-item"><span class="core-mini-num">2</span><input class="core-mini-input" data-core-index="1" placeholder="Product name"></label>
-        <label class="core-mini-item"><span class="core-mini-num">3</span><input class="core-mini-input" data-core-index="2" placeholder="Product name"></label>
-        <label class="core-mini-item"><span class="core-mini-num">4</span><input class="core-mini-input" data-core-index="3" placeholder="Product name"></label>
-        <label class="core-mini-item"><span class="core-mini-num">5</span><input class="core-mini-input" data-core-index="4" placeholder="Product name"></label>
-      </div>
-    </div>
-    <div class="side-profile" style="cursor:pointer;">
-      <div class="avatar" id="profileAvatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div>
-      <div><div class="profile-name" id="profileName">Creator</div><div class="profile-role">Creator</div></div>
-    </div>
-  </aside>
-
-  <div class="workspace">
+<div class="workspace">
     <div class="topbar">
       <div class="top-spacer"></div>
       <nav class="nav-links-inline" style="display:none;gap:24px;align-items:center;flex:1;justify-content:center;">
@@ -292,14 +265,7 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<div class="tab-bar">
-  <a href="index.html" class="tab-item active"><div><img src="icons/dusk/home.png" data-theme-icon class="tab-icon-img" alt="Home"></div><div>Home</div></a>
-  <a href="daily-todo.html" class="tab-item"><div><img src="icons/dusk/todo.png" data-theme-icon class="tab-icon-img" alt="To Do"></div><div>To Do</div></a>
-  <a href="sales-calendar.html" class="tab-item"><div><img src="icons/dusk/sales.png" data-theme-icon class="tab-icon-img" alt="Sales"></div><div>Sales</div></a>
-  <a href="products.html" class="tab-item"><div><img src="icons/dusk/products.png" data-theme-icon class="tab-icon-img" alt="Products"></div><div>Products</div></a>
-  <button type="button" class="tab-item profile-trigger" aria-label="Open profile menu"><div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div>User</div></button>
-</div>
-
+<script src="layout.js"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0;
