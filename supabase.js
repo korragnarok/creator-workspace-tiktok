@@ -122,6 +122,13 @@ const THEMES = {
 
 const DEFAULT_THEME = 'dusk';
 const DEFAULT_PROFILE_ICON = 'icon-1';
+const THEME_ICON_NAMES = new Set(['home','todo','video','videos','hooks','products','scripts','sales','gmv','commissions','comission','comissions','commissins']);
+const THEME_ICON_FILES = {
+  dusk: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
+  warm: { video:'videos.png', videos:'videos.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
+  noir: { video:'video.png', videos:'video.png', commissions:'comissions.png', comission:'comissions.png', comissions:'comissions.png', commissins:'comissions.png' },
+  forest: { video:'video.png', videos:'video.png', commissions:'commissins.png', comission:'commissins.png', comissions:'commissins.png', commissins:'commissins.png' }
+};
 const PROFILE_ICONS = [
   { key: 'icon-1', label: 'Icon 1', src: 'icons/users/icon-1.png' },
   { key: 'icon-2', label: 'Icon 2', src: 'icons/users/icon-2.png' },
@@ -142,7 +149,10 @@ function applyTheme(themeKey) {
   const resolvedKey = THEMES[themeKey] ? themeKey : DEFAULT_THEME;
   const theme = THEMES[resolvedKey];
   const root = document.documentElement;
+  root.dataset.theme = resolvedKey;
   Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.vars['--bg']);
+  applyThemeIcons(resolvedKey);
   // Mark active on any theme switcher dots present
   document.querySelectorAll('[data-theme]').forEach(el => {
     el.classList.toggle('active', el.dataset.theme === resolvedKey);
@@ -159,6 +169,36 @@ function applyThemeImmediate() {
   applyTheme(saved);
 }
 applyThemeImmediate();
+
+function _themeIconNameFromSrc(src) {
+  const match = String(src || '').match(/(?:^|\/)icons\/(?:(dusk|warm|noir|forest)\/)?([^/?#]+)\.png(?:[?#].*)?$/i);
+  if (!match) return '';
+  const raw = match[2].toLowerCase();
+  if (raw === 'videos') return 'video';
+  if (raw === 'comission' || raw === 'comissions' || raw === 'commissins') return 'commissions';
+  return THEME_ICON_NAMES.has(raw) ? raw : '';
+}
+
+function _themeIconSrc(themeKey, iconName) {
+  const normalized = iconName === 'videos' ? 'video' : iconName;
+  const aliases = THEME_ICON_FILES[themeKey] || {};
+  const file = aliases[normalized] || `${normalized}.png`;
+  return `icons/${themeKey}/${file}`;
+}
+
+function applyThemeIcons(themeKey) {
+  const resolvedKey = THEMES[themeKey] ? themeKey : DEFAULT_THEME;
+  document.querySelectorAll('img').forEach(img => {
+    if (img.closest('.avatar, .tab-profile-avatar, .icon-choice')) return;
+    const iconName = img.dataset.iconName || _themeIconNameFromSrc(img.getAttribute('src'));
+    if (!iconName || !THEME_ICON_NAMES.has(iconName)) return;
+    img.dataset.iconName = iconName === 'videos' ? 'video' : iconName;
+    img.dataset.themeIcon = 'true';
+    img.src = _themeIconSrc(resolvedKey, img.dataset.iconName);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => applyThemeIcons(_cachedTheme() || DEFAULT_THEME));
 
 // ─── User Prefs ───────────────────────────────────────────────────────────────
 
@@ -472,7 +512,7 @@ function initProfilePopover(userId) {
 // ─── Init Theme from Prefs ────────────────────────────────────────────────────
 
 async function initTheme(userId, prefs) {
-  const themeKey = _cachedTheme() || prefs.theme || DEFAULT_THEME;
+  const themeKey = THEMES[prefs.theme] ? prefs.theme : (_cachedTheme() || DEFAULT_THEME);
   try { localStorage.setItem('creatorHub:theme', themeKey); } catch(e) {}
   applyTheme(themeKey);
   if (userId && prefs.theme !== themeKey) await saveUserPrefs(userId, { theme: themeKey });

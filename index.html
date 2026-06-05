@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script src="theme-init.js"></script>
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -448,14 +449,6 @@ function renderTodayContent(){
     const detail=queuePreviewDetail(q);
     return `<div class="today-content-item${q.done?' done':''}"><button class="today-content-check${q.done?' checked':''}" type="button" aria-label="Mark ${esc(q.name)} done" onclick="toggleTodayItem('${q.id}', this)"></button><div><div class="today-content-name">${esc(q.name)}</div>${detail}</div></div>`;
   }).join('');
-} saved`);
-  if(!_dashboardVideos.length){
-    el.className='empty-box';
-    el.innerHTML='<strong>No content tracked yet.</strong>Track your posts, ideas, and performance.';
-    return;
-  }
-  el.className='empty-box';
-  el.innerHTML=_dashboardVideos.slice(0,2).map(v=>`<strong>${esc(v.title)}</strong>${esc(v.brand||v.status||'Tracked content')}`).join('');
 }
 function queuePreviewDetail(item){
   const lines=String(item.notes||'').split('\n').map(line=>line.trim()).filter(Boolean);
