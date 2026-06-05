@@ -97,27 +97,43 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
 .tab-profile-avatar{width:24px;height:24px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
 .icon-sm{width:20px;height:20px;object-fit:contain;}
-@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}.tab-bar{display:flex;}}
-.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
-.prod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--shadow-sm);transition:all 0.15s;display:flex;flex-direction:column;gap:10px;cursor:pointer;}
-.prod-card:hover{border-color:var(--rose);box-shadow:var(--shadow-md);transform:translateY(-1px);}
-.prod-card.select-mode{position:relative;padding-left:54px;}
-.prod-card.selected{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 16%,transparent),var(--shadow-sm);}
-.prod-select{display:none;position:absolute;top:18px;left:18px;width:24px;height:24px;border:2px solid var(--border-mid);border-radius:7px;background:var(--bg-lift);align-items:center;justify-content:center;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;}
-.prod-card.select-mode .prod-select{display:flex;}
-.prod-card.selected .prod-select{background:var(--rust);border-color:var(--rust);}
-.prod-card.selected .prod-select::after{content:'✓';}
-.prod-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--rust);}
-.prod-name{font-family:'IBM Plex Serif',serif;font-size:20px;font-weight:700;color:var(--ink);line-height:1.2;}
-.prod-status{display:inline-block;padding:3px 10px;border-radius:100px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;align-self:flex-start;}
-.status-active{background:rgba(122,129,108,0.15);color:var(--sage);}
-.status-paused{background:rgba(165,139,113,0.15);color:var(--tan);}
-.status-promote{background:rgba(174,105,101,0.15);color:var(--rust);}
-.prod-units{font-family:'Noto Sans Mono',sans-serif;font-size:13px;font-weight:700;color:var(--ink);}
-.prod-units span{font-family:'IBM Plex Serif',serif;font-size:12px;font-weight:400;color:var(--text-muted);}
-.prod-tags{display:flex;gap:5px;flex-wrap:wrap;}
-.prod-tag{background:var(--sand);color:var(--text-mid);border-radius:100px;padding:2px 9px;font-size:11px;}
-.prod-notes{font-size:12px;color:var(--text-mid);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}.product-bank{overflow-x:auto;}table{min-width:940px;}.tab-bar{display:flex;}}
+.brand-filter{display:flex;gap:8px;margin-bottom:22px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.brand-filter::-webkit-scrollbar{display:none;}
+.filter-row{display:flex;gap:8px;margin-bottom:20px;align-items:center;flex-wrap:wrap;}
+.filter-row .search-box{max-width:none;}
+.brand-pill,.stock-pill{border:1px solid var(--border-mid);border-radius:100px;background:var(--surface);color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.02em;padding:7px 16px;white-space:nowrap;cursor:pointer;transition:all 0.15s;}
+.brand-pill.active,.stock-pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+.brand-pill:hover:not(.active),.stock-pill:hover:not(.active){background:var(--sand);color:var(--ink);}
+.pill-count{font-family:'Noto Sans Mono',sans-serif;font-size:10px;margin-left:4px;opacity:0.75;}
+.product-bank{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.16em;color:var(--text-muted);padding:13px 16px;text-align:left;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface) 80%,var(--bg) 20%);white-space:nowrap;}
+thead th.num,tbody td.num{text-align:right;}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.12s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:color-mix(in srgb,var(--rose) 10%,transparent);}
+tbody tr.select-mode{cursor:pointer;}
+tbody tr.selected{background:color-mix(in srgb,var(--rust) 14%,transparent);}
+tbody tr.selected:hover{background:color-mix(in srgb,var(--rust) 18%,transparent);}
+tbody td{padding:14px 16px;color:var(--text-mid);vertical-align:middle;}
+.product-cell{display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:800;line-height:1.25;}
+.core-badge{display:inline-flex;align-items:center;border-radius:100px;background:var(--tan);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;padding:2px 7px;text-transform:uppercase;}
+.stock-badge{display:inline-flex;align-items:center;border-radius:6px;padding:3px 8px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.02em;}
+.stock-in{background:color-mix(in srgb,var(--sage) 18%,transparent);color:var(--sage);}
+.stock-out{background:color-mix(in srgb,var(--rust) 14%,transparent);color:var(--rust);}
+.sold-value,.gmv-value{font-family:'Noto Sans Mono',sans-serif;font-weight:800;color:var(--ink);}
+.gmv-value{color:var(--sage);}
+.features-cell{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.shop-link{font-family:'Stack Sans Notch',sans-serif;font-weight:800;color:var(--tan);}
+.shop-link:hover{color:var(--rust);}
+.tbl-action{border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;}
+.tbl-action:hover{border-color:var(--rust);color:var(--rust);}
+.prod-select{display:none;width:22px;height:22px;border:2px solid var(--border-mid);border-radius:7px;background:var(--bg-lift);align-items:center;justify-content:center;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;flex-shrink:0;}
+tr.select-mode .prod-select{display:inline-flex;}
+tr.selected .prod-select{background:var(--rust);border-color:var(--rust);}
+tr.selected .prod-select::after{content:'✓';}
+tr.select-mode .tbl-action{display:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
@@ -155,12 +171,12 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       <button class="btn btn-primary" onclick="openModal()">+ Add Product</button>
     </div>
   </div>
-  <div class="filter-bar">
-    <input type="text" class="search-box" id="searchBox" placeholder="Search products or brands..." oninput="renderProducts()">
-    <div class="pill active" data-cat="all" onclick="setCat(this,'all')">All</div>
-    <div class="pill" data-cat="active" onclick="setCat(this,'active')">Active</div>
-    <div class="pill" data-cat="promote" onclick="setCat(this,'promote')">Promote Now</div>
-    <div class="pill" data-cat="paused" onclick="setCat(this,'paused')">Paused</div>
+  <div class="brand-filter" id="brandFilter"></div>
+  <div class="filter-row">
+    <button class="stock-pill active" data-stock="all" onclick="setStockFilter(this,'all')">All Stock</button>
+    <button class="stock-pill" data-stock="in" onclick="setStockFilter(this,'in')">In Stock</button>
+    <button class="stock-pill" data-stock="out" onclick="setStockFilter(this,'out')">Out of Stock</button>
+    <input type="text" class="search-box" id="searchBox" placeholder="Search products..." oninput="renderProducts()">
   </div>
   <div class="edit-toolbar" id="editToolbar">
     <div class="edit-count" id="editCount">0 selected</div>
@@ -170,7 +186,23 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       <button class="btn-danger" id="deleteSelectedBtn" onclick="deleteSelectedProducts()">Delete Selected</button>
     </div>
   </div>
-  <div class="prod-grid" id="prodGrid"><p style="color:var(--text-muted);padding:20px;">Loading...</p></div>
+  <div class="product-bank">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Brand</th>
+          <th>Stock</th>
+          <th class="num">Sold</th>
+          <th class="num">GMV</th>
+          <th>Features</th>
+          <th>Link</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="prodBody"><tr><td colspan="8"><div class="empty">Loading...</div></td></tr></tbody>
+    </table>
+  </div>
 </div>
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
@@ -181,7 +213,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="form-row"><label class="form-label">Tags (comma separated)</label><input type="text" class="form-input" id="fTags" placeholder="e.g. pet, dental, supplement"></div>
     <div class="form-row"><label class="form-label">TikTok Shop Link</label><input type="url" class="form-input" id="fLink" placeholder="https://..."></div>
     <div class="form-row"><label class="form-label">Units Sold</label><input type="number" class="form-input" id="fUnitsSold" placeholder="0" min="0" step="1"></div>
-    <div class="form-row"><label class="form-label">Status</label><select class="form-input" id="fStatus"><option value="active">Active</option><option value="promote">Promote Now</option><option value="paused">Paused</option></select></div>
+    <div class="form-row"><label class="form-label">Stock</label><select class="form-input" id="fStatus"><option value="active">In Stock</option><option value="paused">Out of Stock</option><option value="promote">Promote Now</option></select></div>
     <div class="form-row"><label class="form-label">Talking Points / Notes</label><textarea class="form-input form-textarea" id="fNotes" placeholder="Key benefits, compliance notes, angles that work..."></textarea></div>
     <div class="modal-actions"><button class="btn btn-primary" style="flex:1;" onclick="saveProduct()">Save Product</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-danger" id="deleteBtn" style="display:none;" onclick="deleteProduct()">Delete</button></div>
   </div>
@@ -193,6 +225,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 let _editProductsMode = false;
 let _selectedProductIds = new Set();
 let _visibleProductIds = [];
+let _brandFilter = 'all';
+let _stockFilter = 'all';
+let _allProducts = [];
+let _coreNames = [];
 
 async function init() {
   const user = await requireAuth();
@@ -204,37 +240,88 @@ async function init() {
   initProfilePopover(user.id);
   
   window._user = user;
+  _coreNames = (prefs.core5 || []).map(value => String(value || '').trim().toLowerCase()).filter(Boolean);
 
   async function renderProducts() {
     const q = document.getElementById('searchBox').value.toLowerCase();
-    const cat = document.querySelector('.pill.active')?.dataset.cat || 'all';
     const { data: prods } = await db.from('products').select('*').eq('user_id', user.id).order('created_at', {ascending: false});
-    const filtered = (prods||[]).filter(p => {
-      if(cat !== 'all' && p.status !== cat) return false;
+    _allProducts = prods || [];
+    renderBrandFilters(_allProducts);
+    const filtered = _allProducts.filter(p => {
+      if(_brandFilter !== 'all' && brandKey(p.brand) !== _brandFilter) return false;
+      const inStock = productInStock(p);
+      if(_stockFilter === 'in' && !inStock) return false;
+      if(_stockFilter === 'out' && inStock) return false;
       if(q) return (p.name + (p.brand||'') + (p.tags||'')).toLowerCase().includes(q);
       return true;
     });
     _visibleProductIds = filtered.map(p => p.id);
-    const SL = {active:'Active', promote:'Promote Now', paused:'Paused'};
-    const SC = {active:'status-active', promote:'status-promote', paused:'status-paused'};
-    const grid = document.getElementById('prodGrid');
-    if(!filtered.length){ grid.innerHTML='<div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div>'; updateEditToolbar(); return; }
-    grid.innerHTML = filtered.map(p => {
+    const body = document.getElementById('prodBody');
+    if(!filtered.length){ body.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div></td></tr>'; updateEditToolbar(); return; }
+    body.innerHTML = filtered.map(p => {
       const selected = _selectedProductIds.has(p.id);
-      return '<div class="prod-card '+(_editProductsMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleProductCardClick(\''+p.id+'\')">'+
-      '<span class="prod-select" aria-hidden="true"></span>'+
-      (p.brand ? '<div class="prod-brand">'+p.brand+'</div>' : '')+
-      '<div class="prod-name">'+p.name+'</div>'+
-      '<div class="prod-status '+(SC[p.status]||'status-active')+'">'+(SL[p.status]||'Active')+'</div>'+
-      '<div class="prod-units">'+(Number(p.units_sold)||0).toLocaleString()+' <span>units sold</span></div>'+
-      (p.tags ? '<div class="prod-tags">'+p.tags.split(',').map(t=>'<span class="prod-tag">'+t.trim()+'</span>').join('')+'</div>' : '')+
-      (p.notes ? '<div class="prod-notes">'+p.notes+'</div>' : '')+
-    '</div>';
+      const inStock = productInStock(p);
+      const gmv = productGmv(p);
+      const hasCore = isCoreProduct(p);
+      const link = String(p.link || '').trim();
+      return '<tr class="'+(_editProductsMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleProductRowClick(\''+p.id+'\')">'+
+        '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span>'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Core</span>':'')+'</div></td>'+
+        '<td>'+esc(p.brand||'-')+'</td>'+
+        '<td><span class="stock-badge '+(inStock?'stock-in':'stock-out')+'">'+(inStock?'In Stock':'Out of Stock')+'</span></td>'+
+        '<td class="num"><span class="sold-value">'+(Number(p.units_sold)||0).toLocaleString()+'</span></td>'+
+        '<td class="num"><span class="gmv-value">'+(gmv?fmtMoney(gmv):'-')+'</span></td>'+
+        '<td><div class="features-cell">'+esc(productFeatures(p))+'</div></td>'+
+        '<td>'+(link?'<a class="shop-link" href="'+escAttr(link)+'" target="_blank" rel="noopener">Shop ↗</a>':'-')+'</td>'+
+        '<td><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button></td>'+
+      '</tr>';
     }).join('');
     updateEditToolbar();
   }
 
   window.renderProducts = renderProducts;
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function escAttr(s) {
+    return esc(s).replace(/`/g, '&#96;');
+  }
+  function brandKey(brand) {
+    return String(brand || 'No Brand').trim().toLowerCase();
+  }
+  function productInStock(p) {
+    return String(p.status || 'active') !== 'paused';
+  }
+  function productGmv(p) {
+    return Number(p.gmv || p.gmv_30d || p.total_gmv || 0);
+  }
+  function fmtMoney(value) {
+    return '$' + Math.round(Number(value) || 0).toLocaleString('en-US');
+  }
+  function productFeatures(p) {
+    const tags = String(p.tags || '').split(',').map(t => t.trim()).filter(Boolean).join(', ');
+    const notes = String(p.notes || '').trim().replace(/\s+/g, ' ');
+    return tags || notes || '-';
+  }
+  function isCoreProduct(p) {
+    const name = String(p.name || '').trim().toLowerCase();
+    const brand = String(p.brand || '').trim().toLowerCase();
+    return _coreNames.includes(name) || _coreNames.includes(brand);
+  }
+  function renderBrandFilters(products) {
+    const el = document.getElementById('brandFilter');
+    const counts = new Map();
+    products.forEach(p => {
+      const label = String(p.brand || 'No Brand').trim() || 'No Brand';
+      const key = brandKey(label);
+      if(!counts.has(key)) counts.set(key, { label, count: 0 });
+      counts.get(key).count += 1;
+    });
+    const brands = Array.from(counts.entries()).sort((a,b) => b[1].count - a[1].count || a[1].label.localeCompare(b[1].label));
+    if(_brandFilter !== 'all' && !counts.has(_brandFilter)) _brandFilter = 'all';
+    el.innerHTML =
+      '<button class="brand-pill '+(_brandFilter==='all'?'active':'')+'" data-brand="all" onclick="setBrandFilter(this,\'all\')">All Brands <span class="pill-count">'+products.length+'</span></button>'+
+      brands.map(([key, item]) => '<button class="brand-pill '+(_brandFilter===key?'active':'')+'" data-brand="'+escAttr(key)+'" onclick="setBrandFilter(this)">'+esc(item.label)+' <span class="pill-count">'+item.count+'</span></button>').join('');
+  }
   window.updateEditToolbar = function() {
     const toolbar = document.getElementById('editToolbar');
     const count = document.getElementById('editCount');
@@ -256,6 +343,7 @@ async function init() {
     else _selectedProductIds.add(id);
     renderProducts();
   };
+  window.handleProductRowClick = window.handleProductCardClick;
   window.selectAllVisible = function() {
     _visibleProductIds.forEach(id => _selectedProductIds.add(id));
     renderProducts();
@@ -282,8 +370,15 @@ async function init() {
     btn.textContent = 'Delete Selected';
     renderProducts();
   };
-  window.setCat = function(el, cat) {
-    document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.cat === cat));
+  window.setBrandFilter = function(el, brand) {
+    _brandFilter = brand || el.dataset.brand || 'all';
+    _selectedProductIds.clear();
+    renderProducts();
+  };
+  window.setStockFilter = function(el, stock) {
+    _stockFilter = stock;
+    document.querySelectorAll('.stock-pill').forEach(p => p.classList.toggle('active', p.dataset.stock === stock));
+    _selectedProductIds.clear();
     renderProducts();
   };
 

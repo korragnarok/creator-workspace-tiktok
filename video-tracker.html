@@ -63,6 +63,9 @@ thead th.num{text-align:right;}
 tbody tr{border-bottom:1px solid var(--border);}
 tbody tr:last-child{border-bottom:none;}
 tbody tr:hover{background:rgba(209,169,165,0.08);}
+tbody tr.select-mode{cursor:pointer;}
+tbody tr.selected{background:color-mix(in srgb,var(--rust) 14%,transparent);}
+tbody tr.selected:hover{background:color-mix(in srgb,var(--rust) 18%,transparent);}
 tbody td{padding:13px 14px;font-size:13px;color:var(--text);vertical-align:middle;}
 tbody td.num{text-align:right;font-family:'Noto Sans Mono',sans-serif;font-weight:700;}
 tbody td.muted{color:var(--text-muted);font-size:12px;}
@@ -70,6 +73,12 @@ tbody td.muted{color:var(--text-muted);font-size:12px;}
 .tbl-hook{font-size:12px;color:var(--text-mid);margin-top:2px;line-height:1.35;}
 .tbl-action{border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;}
 .tbl-action:hover{border-color:var(--rust);color:var(--rust);}
+.video-select{display:none;width:22px;height:22px;border:2px solid var(--border-mid);border-radius:7px;background:var(--bg-lift);align-items:center;justify-content:center;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;}
+tr.select-mode .video-select{display:inline-flex;}
+tr.selected .video-select{background:var(--rust);border-color:var(--rust);}
+tr.selected .video-select::after{content:'✓';}
+tr.select-mode .video-id-text{display:none;}
+tr.select-mode .tbl-action{display:none;}
 .status{display:inline-block;padding:3px 10px;border-radius:100px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;}
 .status-yes{background:rgba(122,129,108,0.15);color:var(--sage);}
 .status-no{background:rgba(174,105,101,0.12);color:var(--rust);}
@@ -151,6 +160,11 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .vid-stat{font-family:'Noto Sans Mono',sans-serif;font-size:12px;color:var(--text-muted);}
 .vid-stat strong{color:var(--ink);}
 .vid-notes{font-size:12px;color:var(--text-mid);font-style:italic;line-height:1.5;}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.edit-toolbar{display:none;align-items:center;justify-content:space-between;gap:12px;margin:-8px 0 18px;padding:12px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);}
+.edit-toolbar.open{display:flex;}
+.edit-count{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);}
+.edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
@@ -183,7 +197,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <div class="page" style="max-width:900px;">
   <div class="page-header">
     <div><div class="page-eyebrow">Content Tracker</div><div class="page-title">Videos <em>&amp;</em> Posts</div><p class="page-sub">Track posted content, views, and what's working.</p></div>
-    <button class="btn btn-primary" onclick="openModal()">+ Log Video</button>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="editVideosBtn" onclick="toggleVideoEditMode()">Edit Videos</button>
+      <button class="btn btn-primary" onclick="openModal()">+ Log Video</button>
+    </div>
   </div>
   <div class="stat-row">
     <div class="scard"><div class="scard-label">Total Videos</div><div class="scard-val sage" id="sTotal">-</div><div class="scard-sub">all time</div></div>
@@ -196,6 +213,14 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <button class="pill" data-f="sales" onclick="setFilter(this,'sales')">Sales</button>
     <button class="pill" data-f="nosales" onclick="setFilter(this,'nosales')">No Sales</button>
     <input type="text" class="search-box" id="searchBox" placeholder="Search product, hook, or notes..." oninput="goPage(1)">
+  </div>
+  <div class="edit-toolbar" id="videoEditToolbar">
+    <div class="edit-count" id="videoEditCount">0 selected</div>
+    <div class="edit-actions">
+      <button class="btn btn-ghost" onclick="selectAllVisibleVideos()">Select All</button>
+      <button class="btn btn-ghost" onclick="clearVideoSelection()">Clear</button>
+      <button class="btn-danger" id="deleteSelectedVideosBtn" onclick="deleteSelectedVideos()">Delete Selected</button>
+    </div>
   </div>
   <div class="table-card">
     <table>
@@ -239,6 +264,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <script>
 const PAGE_SIZE=25;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
+let _editVideosMode=false,_selectedVideoIds=new Set(),_visibleVideoIds=[];
 
 async function init() {
   user = await requireAuth();
@@ -290,6 +316,7 @@ function updateStats(){
 function setFilter(btn,f){
   filterStatus=f;
   document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.f===f));
+  _selectedVideoIds.clear();
   goPage(1);
 }
 function sortBy(field){
@@ -316,6 +343,7 @@ function goPage(page){
 }
 function renderTable(){
   const filtered=getFiltered();
+  _visibleVideoIds=filtered.map(v=>v.id);
   const pages=Math.ceil(filtered.length/PAGE_SIZE)||1;
   if(currentPage>pages)currentPage=pages;
   const start=(currentPage-1)*PAGE_SIZE;
@@ -333,22 +361,72 @@ function renderTable(){
   const tbody=document.getElementById('tbody');
   if(!rows.length){
     tbody.innerHTML='<tr><td colspan="8" class="empty">No videos found.</td></tr>';
+    updateVideoEditToolbar();
     return;
   }
   tbody.innerHTML=rows.map(v=>{
     const hook=hookFromVideo(v);
     const hasSales=(Number(v.units)||0)>0;
-    return `<tr>
-      <td class="muted">${esc(shortId(v.id))}</td>
+    const selected=_selectedVideoIds.has(v.id);
+    return `<tr class="${_editVideosMode?'select-mode ':''}${selected?'selected':''}" onclick="handleVideoRowClick('${v.id}')">
+      <td class="muted"><span class="video-select" aria-hidden="true"></span><span class="video-id-text">${esc(shortId(v.id))}</span></td>
       <td><div class="tbl-product">${esc(v.brand||'No product')}</div><div class="tbl-hook">${esc(v.title||'')}</div></td>
       <td class="muted">${fmtDate(v.date)}</td>
       <td>${esc(hook||'-')}</td>
       <td class="num">${fmtNum(v.views)}</td>
       <td><span class="status ${hasSales?'status-yes':'status-no'}">${hasSales?'Yes':'No'}</span></td>
       <td><span class="status status-${esc(v.status||'draft')}">${esc(v.status||'draft')}</span></td>
-      <td><button class="tbl-action" onclick="openModal('${v.id}')">Edit</button></td>
+      <td><button class="tbl-action" onclick="event.stopPropagation();openModal('${v.id}')">Edit</button></td>
     </tr>`;
   }).join('');
+  updateVideoEditToolbar();
+}
+function updateVideoEditToolbar(){
+  const toolbar=document.getElementById('videoEditToolbar');
+  const count=document.getElementById('videoEditCount');
+  const deleteBtn=document.getElementById('deleteSelectedVideosBtn');
+  const editBtn=document.getElementById('editVideosBtn');
+  if(toolbar)toolbar.classList.toggle('open',_editVideosMode);
+  if(count)count.textContent=`${_selectedVideoIds.size} selected`;
+  if(deleteBtn)deleteBtn.disabled=_selectedVideoIds.size===0;
+  if(editBtn)editBtn.textContent=_editVideosMode?'Done Editing':'Edit Videos';
+}
+function toggleVideoEditMode(){
+  _editVideosMode=!_editVideosMode;
+  if(!_editVideosMode)_selectedVideoIds.clear();
+  renderTable();
+}
+function handleVideoRowClick(id){
+  if(!_editVideosMode)return;
+  if(_selectedVideoIds.has(id))_selectedVideoIds.delete(id);
+  else _selectedVideoIds.add(id);
+  renderTable();
+}
+function selectAllVisibleVideos(){
+  _visibleVideoIds.forEach(id=>_selectedVideoIds.add(id));
+  renderTable();
+}
+function clearVideoSelection(){
+  _selectedVideoIds.clear();
+  renderTable();
+}
+async function deleteSelectedVideos(){
+  const ids=Array.from(_selectedVideoIds);
+  if(!ids.length)return;
+  if(!confirm(`Delete ${ids.length} selected video${ids.length===1?'':'s'}?`))return;
+  const btn=document.getElementById('deleteSelectedVideosBtn');
+  btn.disabled=true;btn.textContent='Deleting...';
+  const {error}=await db.from('videos').delete().in('id',ids).eq('user_id',user.id);
+  if(error){
+    showToast(error.message,'error');
+    btn.disabled=false;btn.textContent='Delete Selected';
+    return;
+  }
+  showToast(`${ids.length} video${ids.length===1?'':'s'} deleted`);
+  _selectedVideoIds.clear();
+  _editVideosMode=false;
+  btn.textContent='Delete Selected';
+  await loadVideos();
 }
 async function openModal(id){
   window._editId=id||null;
@@ -378,7 +456,7 @@ async function saveVideo(){
 }
 async function deleteVideo(){
   if(!window._editId||!confirm('Delete this video?'))return;
-  await db.from('videos').delete().eq('id',window._editId);
+  await db.from('videos').delete().eq('id',window._editId).eq('user_id',user.id);
   showToast('Deleted');
   closeModal();
   await loadVideos();
