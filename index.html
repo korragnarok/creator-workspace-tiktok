@@ -473,7 +473,7 @@ async function init() {
   if(topProducts.length){
     document.getElementById('top-products').className='top-product-list';
     const rankIcons=['icons/top/first.png','icons/top/second.png','icons/top/third.png'];
-    document.getElementById('top-products').innerHTML=topProducts.map((p,i)=>`<div class="top-product-row" onclick="window.location='products.html?search='+encodeURIComponent(p.name)" title="View in Products"><img class="top-product-rank" src="${rankIcons[i]}" alt="${i+1}"><div><div class="top-product-name">${p.name}</div><div class="top-product-brand">${p.brand||''}</div></div><div class="top-product-units">${(Number(p.units_sold)||0).toLocaleString()}<span>sold</span></div></div>`).join('');
+    document.getElementById('top-products').innerHTML=topProducts.map((p,i)=>`<div class="top-product-row" onclick="window.location='products.html?search='+encodeURIComponent(p.name)" title="View in Products"><img class="top-product-rank" src="${rankIcons[i]}" alt="${i+1}"><div style="flex:1;min-width:0;overflow:hidden;"><div class="top-product-name">${p.name}</div><div class="top-product-brand">${p.brand||''}</div></div><div class="top-product-units">${(Number(p.units_sold)||0).toLocaleString()}<span>sold</span></div></div>`).join('');
   }
 
   const y=today.getFullYear(), m=today.getMonth();
