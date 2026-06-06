@@ -462,7 +462,7 @@ function _core5Key(userId) {
 
 function _normalizeCore5(values) {
   const arr = Array.isArray(values) ? values : [];
-  return Array.from({ length: 5 }, (_, i) => String(arr[i] || '').trim());
+  return Array.from({ length: 7 }, (_, i) => String(arr[i] || '').trim());
 }
 
 function _cachedCore5(userId) {
@@ -490,20 +490,22 @@ function _updateCoreCount() {
   if (!el) return;
   const items = document.querySelectorAll('.core-pill');
   const count = Array.from(items).filter(p => p.dataset.value).length;
-  el.textContent = `${count}/5`;
+  el.textContent = `${count}/7`;
 }
 
 function _renderCore5Pills(values) {
   document.querySelectorAll('.core-mini-item').forEach((item, i) => {
     const val = values[i] || '';
     const href = `products.html?brand=${encodeURIComponent(val)}`;
-    item.innerHTML = val
-      ? `<div class="core-pill" data-value="${val.replace(/"/g,'&quot;')}" title="View ${val} products" onclick="window.location.href='${href.replace(/'/g,"\\'")}'">
+    if (val) {
+      item.style.display = '';
+      item.innerHTML = `<div class="core-pill" data-value="${val.replace(/"/g,'&quot;')}" title="View ${val} products" onclick="window.location.href='${href.replace(/'/g,"\'")}'">
           <span class="core-pill-text">${val}</span>
-         </div>`
-      : `<div class="core-pill core-pill-empty" onclick="openCore5Modal()">
-          <span class="core-pill-text">Empty slot</span>
          </div>`;
+    } else {
+      item.style.display = 'none';
+      item.innerHTML = '';
+    }
   });
   _updateCoreCount();
 }
@@ -545,7 +547,7 @@ async function initCore5(userId, prefs) {
     overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);';
     overlay.innerHTML = `
       <div style="background:var(--surface);border-radius:16px;border:1px solid var(--border-mid);padding:24px;width:100%;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
-        <div style="font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px;">Edit Hero Products</div>
+        <div style="font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px;">Edit Hero Brands</div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:18px;">Your top 5 products. Click any filled slot on the sidebar to go to that product.</div>
         <div id="_core5Inputs" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
         <div style="display:flex;gap:8px;">
@@ -566,11 +568,11 @@ function openCore5Modal() {
   if (!modal) return;
   const values = _cachedCore5(window._core5UserId);
   const container = document.getElementById('_core5Inputs');
-  container.innerHTML = [0,1,2,3,4].map(i => `
+  container.innerHTML = [0,1,2,3,4,5,6].map(i => `
     <div style="display:flex;gap:8px;align-items:center;">
       <span style="font-family:'Noto Sans Mono',sans-serif;font-size:11px;font-weight:800;color:var(--rust);width:16px;flex-shrink:0;">${i+1}</span>
       <input id="_c5input${i}" type="text" value="${(values[i]||'').replace(/"/g,'&quot;')}"
-        placeholder="Product name"
+        placeholder="Brand name"
         style="flex:1;padding:9px 12px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;"
         onfocus="this.style.borderColor='var(--rust)'" onblur="this.style.borderColor='var(--border-mid)'"
         onkeydown="enterSaves(event, saveCore5Modal)">
@@ -589,13 +591,13 @@ function closeCore5Modal() {
 
 async function saveCore5Modal() {
   const userId = window._core5UserId;
-  const values = [0,1,2,3,4].map(i => (document.getElementById(`_c5input${i}`)?.value || '').trim());
+  const values = [0,1,2,3,4,5,6].map(i => (document.getElementById(`_c5input${i}`)?.value || '').trim());
   _cacheCore5(userId, values);
   _renderCore5Pills(values);
   closeCore5Modal();
   const { error } = await saveUserPrefs(userId, { core5: values });
   const { error: metaError } = await db.auth.updateUser({ data: { core5: values } });
-  showToast(error && metaError ? 'Hero Products saved locally' : 'Hero Products saved', error && metaError ? 'error' : 'success');
+  showToast(error && metaError ? 'Hero Brands saved locally' : 'Hero Brands saved', error && metaError ? 'error' : 'success');
 }
 
 // ─── Profile Popover ─────────────────────────────────────────────────────────

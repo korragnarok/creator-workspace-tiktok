@@ -27,13 +27,15 @@
   function coreSidebar() {
     return `
       <div class="core-sidebar">
-        <div class="core-sidebar-head"><span>Hero Products</span><span class="core-sidebar-count" id="coreCount">0/5</span></div>
+        <div class="core-sidebar-head"><span>Hero Brands</span><span class="core-sidebar-count" id="coreCount">0/7</span></div>
         <div class="core-mini-list">
-          <label class="core-mini-item"><span class="core-mini-num">1</span><input class="core-mini-input" data-core-index="0" placeholder="Product name"></label>
-          <label class="core-mini-item"><span class="core-mini-num">2</span><input class="core-mini-input" data-core-index="1" placeholder="Product name"></label>
-          <label class="core-mini-item"><span class="core-mini-num">3</span><input class="core-mini-input" data-core-index="2" placeholder="Product name"></label>
-          <label class="core-mini-item"><span class="core-mini-num">4</span><input class="core-mini-input" data-core-index="3" placeholder="Product name"></label>
-          <label class="core-mini-item"><span class="core-mini-num">5</span><input class="core-mini-input" data-core-index="4" placeholder="Product name"></label>
+          <label class="core-mini-item"><span class="core-mini-num">1</span><input class="core-mini-input" data-core-index="0" placeholder="Brand name"></label>
+          <label class="core-mini-item"><span class="core-mini-num">2</span><input class="core-mini-input" data-core-index="1" placeholder="Brand name"></label>
+          <label class="core-mini-item"><span class="core-mini-num">3</span><input class="core-mini-input" data-core-index="2" placeholder="Brand name"></label>
+          <label class="core-mini-item"><span class="core-mini-num">4</span><input class="core-mini-input" data-core-index="3" placeholder="Brand name"></label>
+          <label class="core-mini-item"><span class="core-mini-num">5</span><input class="core-mini-input" data-core-index="4" placeholder="Brand name"></label>
+          <label class="core-mini-item"><span class="core-mini-num">6</span><input class="core-mini-input" data-core-index="5" placeholder="Brand name"></label>
+          <label class="core-mini-item"><span class="core-mini-num">7</span><input class="core-mini-input" data-core-index="6" placeholder="Brand name"></label>
         </div>
       </div>`;
   }
