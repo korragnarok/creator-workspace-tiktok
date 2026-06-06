@@ -64,13 +64,8 @@
 
     return `
       <div class="tab-bar" data-shared-layout="true">
-        <a href="index.html" class="tab-logo-item" style="flex:0 0 auto;display:flex;align-items:center;padding:0 12px 0 16px;text-decoration:none;">
-          <img src="logo.png" alt="Take24" style="height:36px;width:auto;object-fit:contain;">
-        </a>
         ${links}
-        <button type="button" class="tab-item profile-trigger" aria-label="Open profile menu">
-          <div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/avatar.png" alt=""></div><div>User</div>
-        </button>
+
       </div>`;
   }
 
