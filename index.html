@@ -334,7 +334,7 @@ async function init() {
   const today = new Date();
   const since = new Date(today); since.setDate(today.getDate() - 29);
   const sinceStr = since.toISOString().slice(0,10);
-  const todayStr = today.toISOString().slice(0,10);
+  const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
 
   const [{ data: rows }, { data: products }, { data: videos }, { data: queue }] = await Promise.all([
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
