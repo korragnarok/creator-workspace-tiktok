@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1C2130">
-<title>Settings — Take24</title>
+<title>Settings — Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
@@ -22,8 +22,8 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .nav-link.active{color:var(--rust);}
 
 .desktop-sidebar{display:none;position:fixed;top:0;left:0;width:188px;height:100vh;border-right:1px solid var(--border);background:color-mix(in srgb,var(--bg) 82%,#000 18%);padding:24px 18px;z-index:260;flex-direction:column;gap:18px;overflow-y:auto;}
-.side-brand{display:block;padding:4px 0;}
-
+.side-brand{font-family:'Stack Sans Notch',sans-serif;font-size:31px;font-weight:800;line-height:0.92;color:var(--ink);}
+.side-brand span{display:block;font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:400;color:var(--rust);line-height:1.2;}
 .side-nav,.core-sidebar{display:flex;flex-direction:column;gap:8px;}
 .side-link{display:flex;align-items:center;gap:12px;border-radius:8px;padding:8px 12px;color:var(--text-mid);font-weight:700;transition:background 0.15s,color 0.15s;}
 .side-link.active{background:color-mix(in srgb,var(--rust) 26%,var(--surface) 74%);color:var(--ink);}
@@ -113,6 +113,7 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .tab-icon-svg{width:22px;height:22px;display:block;}
 
 @media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}}
+body{overflow-x:hidden;}
 @media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:36px;}.theme-grid{grid-template-columns:1fr;}.tab-bar{display:flex;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -120,7 +121,7 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 </head>
 <body>
 <nav>
-  <a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;vertical-align:middle;"></a>
+  <a href="index.html" class="nav-brand">Creator Hub</a>
   <div class="nav-links">
     <a href="index.html" class="nav-link">Home</a>
     <a href="daily-todo.html" class="nav-link">To Do</a>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#F8F5F1">
-<title>Products — Take24</title>
+<title>Products — Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
 <script src="theme-init.js?v=8"></script>
 <style>
@@ -104,7 +104,8 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
 .tab-profile-avatar{width:24px;height:24px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
 .icon-sm{width:20px;height:20px;object-fit:contain;}
-@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}.product-bank{overflow-x:auto;}table{min-width:940px;}.tab-bar{display:flex;}}
+body{overflow-x:hidden;}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}.product-bank{overflow-x:auto;width:100%;}table{min-width:620px;}.tab-bar{display:flex;}}
 .brand-filter{display:flex;gap:8px;margin-bottom:22px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
 .brand-filter::-webkit-scrollbar{display:none;}
 .filter-row{display:flex;gap:8px;margin-bottom:20px;align-items:center;flex-wrap:wrap;}
@@ -150,7 +151,7 @@ tr.select-mode .tbl-action{display:none;}
 <script src="supabase.js?v=8"></script>
 </head>
 <body>
-<nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link active">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
+<nav><a href="index.html" class="nav-brand">Creator Hub</a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link active">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
 <div class="page">
   <div class="page-header">
     <div><div class="page-eyebrow">Your Catalog</div><div class="page-title">Products <em>DB</em></div><p class="page-sub">Add products you promote with talking points, links, and status.</p></div>
