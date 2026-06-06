@@ -561,16 +561,19 @@ async function renderLineup(userId) {
   let nameImgMap = {};   // name.toLowerCase() → image_url
 
   if(prodIds.length) {
-    const { data: prods } = await db.from('products').select('id,name,image_url').in('id', prodIds).eq('user_id', userId);
+    const { data: prods, error: e1 } = await db.from('products').select('id,name,image_url').in('id', prodIds);
+    console.log('[lineup] by prod_id:', prods, e1);
     (prods || []).forEach(p => {
       if(p.image_url) imgMap[p.id] = p.image_url;
       if(p.image_url) nameImgMap[p.name.toLowerCase()] = p.image_url;
     });
   }
   if(names.length) {
-    const { data: prods } = await db.from('products').select('name,image_url').in('name', names).eq('user_id', userId);
+    const { data: prods, error: e2 } = await db.from('products').select('name,image_url').in('name', names);
+    console.log('[lineup] by name:', prods, e2);
     (prods || []).forEach(p => { if(p.image_url) nameImgMap[p.name.toLowerCase()] = p.image_url; });
   }
+  console.log('[lineup] imgMap:', imgMap, 'nameImgMap:', nameImgMap);
 
   strip.innerHTML = items.map(q => {
     const img = (q.prod_id && imgMap[q.prod_id])
