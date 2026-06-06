@@ -284,7 +284,6 @@ button,input{font:inherit;}
             <div class="card">
               <div class="card-head"><div class="card-title">Top Products Sold</div></div>
               <div class="empty-box" id="top-products"><strong>No products saved yet.</strong>Add products you want to research or promote.</div>
-              <a class="add-bar" href="products.html" style="margin-top:10px;">View All Products</a>
             </div>
           </div>
         </section>
@@ -474,6 +473,13 @@ async function init() {
     document.getElementById('top-products').className='top-product-list';
     const rankIcons=['icons/top/first.png','icons/top/second.png','icons/top/third.png'];
     document.getElementById('top-products').innerHTML=topProducts.map((p,i)=>`<div class="top-product-row" onclick="window.location='products.html?search='+encodeURIComponent(p.name)" title="View in Products"><img class="top-product-rank" src="${rankIcons[i]}" alt="${i+1}"><div style="flex:1;min-width:0;overflow:hidden;"><div class="top-product-name">${p.name}</div><div class="top-product-brand">${p.brand||''}</div></div><div class="top-product-units">${(Number(p.units_sold)||0).toLocaleString()}<span>sold</span></div></div>`).join('');
+    // Append View All after the list
+    const viewAll = document.createElement('a');
+    viewAll.href = 'products.html';
+    viewAll.className = 'add-bar';
+    viewAll.style.marginTop = '10px';
+    viewAll.textContent = 'View All Products';
+    document.getElementById('top-products').after(viewAll);
   }
 
   const y=today.getFullYear(), m=today.getMonth();
