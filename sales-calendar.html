@@ -122,13 +122,13 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .profile-name{font-weight:700;line-height:1.1;}
 .profile-role{font-size:11px;color:var(--text-muted);}
 @media(min-width:769px){body{padding-left:188px;}.desktop-sidebar{display:flex;}nav{padding:0 24px;justify-content:flex-end;}.nav-brand,.nav-links{display:none;}footer{padding-left:40px;padding-right:40px;}}
-.tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:color-mix(in srgb,var(--bg) 88%,#000 12%);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:64px;z-index:300;align-items:stretch;}
-.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;border:0;background:transparent;cursor:pointer;padding-bottom:4px;}
+.tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:color-mix(in srgb,var(--bg) 88%,#000 12%);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:80px;z-index:300;align-items:stretch;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.tab-item{flex:0 0 72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;border:0;background:transparent;cursor:pointer;padding-top:6px;padding-bottom:env(safe-area-inset-bottom,6px);}
 .tab-item.active{color:var(--rust);}
-.tab-icon-img{width:22px;height:22px;object-fit:contain;display:block;}
-.tab-profile-avatar{width:24px;height:24px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
+.tab-icon-img{width:36px;height:36px;object-fit:contain;display:block;}
+.tab-profile-avatar{width:36px;height:36px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
 body{overflow-x:hidden;}
-@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 90px;}.page-title{font-size:40px;}.cal-day{min-height:64px;padding:7px 6px;}.summary-strip{grid-template-columns:repeat(2,1fr);}.form-row-half{grid-template-columns:1fr;}.tab-bar{display:flex;}}
+@media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:0 16px 96px;}.page-title{font-size:40px;}.cal-day{min-height:64px;padding:7px 6px;}.summary-strip{grid-template-columns:repeat(2,1fr);}.form-row-half{grid-template-columns:1fr;}.tab-bar{display:flex;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=15"></script>
@@ -223,18 +223,7 @@ function render(){
   while(grid.children.length>7)grid.removeChild(grid.lastChild);
   const firstDay=new Date(viewYear,viewMonth,1).getDay();
   const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
-  const prevYear=viewMonth===0?viewYear-1:viewYear;
-  const prevMonth=viewMonth===0?11:viewMonth-1;
-  const daysInPrevMonth=new Date(prevYear,prevMonth+1,0).getDate();
-  for(let i=0;i<firstDay;i++){
-    const d=daysInPrevMonth-firstDay+i+1;
-    const cell=document.createElement('div');
-    cell.className='cal-day other-month';
-    const key=`${prevYear}-${String(prevMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    cell.onclick=()=>{viewYear=prevYear;viewMonth=prevMonth;loadMonth().then(()=>openModal(key,d));};
-    cell.innerHTML='<div class="cal-day-num">'+d+'</div>';
-    grid.appendChild(cell);
-  }
+  for(let i=0;i<firstDay;i++){const e=document.createElement('div');e.className='cal-day empty';grid.appendChild(e);}
   for(let d=1;d<=daysInMonth;d++){
     const key=`${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const entry=_salesCache[key];
