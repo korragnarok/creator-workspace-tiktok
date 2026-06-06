@@ -586,7 +586,8 @@ async function renderLineup(userId) {
       || nameImgMap[(q.name||'').toLowerCase()]
       || 'icons/default-product.png';
     const done = q.done;
-    return `<div class="lineup-card${done?' done':''}" onclick="window.location='daily-todo.html?focus=${q.id}'" title="${esc(q.name)}">
+    const brandParam = q.brand ? `?brand=${encodeURIComponent(q.brand)}` : '';
+    return `<div class="lineup-card${done?' done':''}" onclick="window.location='daily-todo.html${brandParam}'" title="${esc(q.name)}">
       <img class="lineup-img" src="${img}" alt="" onerror="this.src='icons/default-product.png'">
       <div class="lineup-name">${esc(q.name)}</div>
       ${q.brand ? `<div class="lineup-brand">${esc(q.brand)}</div>` : ''}

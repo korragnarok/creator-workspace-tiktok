@@ -307,6 +307,9 @@ let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
 let TODO = [];
 let activeBrandFilter = 'All';
+// Pre-filter by brand if coming from lineup strip
+const _urlBrand = new URLSearchParams(window.location.search).get('brand');
+if (_urlBrand) activeBrandFilter = _urlBrand;
 let pickerSelected = new Set();
 let hookTarget = null;
 let scriptTarget = null;
@@ -492,7 +495,7 @@ function render(){
   main.innerHTML=html;
 }
 
-function setBrandFilter(b){activeBrandFilter=b;render();}
+function setBrandFilter(b){activeBrandFilter=b;history.replaceState({},'','daily-todo.html');render();}
 
 // ─── ACTIONS ──────────────────────────────────────────────
 async function removeCard(cardId){
