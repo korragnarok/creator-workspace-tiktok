@@ -495,22 +495,32 @@ async function init() {
     const name = document.getElementById('fName').value.trim();
     if(!name) { document.getElementById('fName').focus(); return; }
 
+    const saveBtn = document.querySelector('#modalOverlay .btn-primary');
+    if(saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+
     // Handle image upload
     let image_url = window._existingImgUrl || '';
     const file = window._newImgFile;
     if(file) {
       const ext = file.name.split('.').pop();
       const path = `${user.id}/${Date.now()}.${ext}`;
-      const { data: upData, error: upErr } = await db.storage.from('product-images').upload(path, file, { upsert: true });
-      if(!upErr) {
-        const { data: urlData } = db.storage.from('product-images').getPublicUrl(path);
-        image_url = urlData.publicUrl;
+      const { error: upErr } = await db.storage.from('product-images').upload(path, file, { upsert: true });
+      if(upErr) {
+        showToast('Image upload failed: ' + upErr.message, 'error');
+        if(saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product'; }
+        return;
       }
+      const { data: urlData } = db.storage.from('product-images').getPublicUrl(path);
+      image_url = urlData.publicUrl;
     }
 
-    const row = { user_id: user.id, name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: document.getElementById('fNotes').value.trim(), image_url };
-    if(window._editId) { await db.from('products').update(row).eq('id', window._editId); }
-    else { await db.from('products').insert(row); }
+    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: document.getElementById('fNotes').value.trim(), image_url };
+    const { error: dbErr } = window._editId
+      ? await db.from('products').update(fields).eq('id', window._editId).eq('user_id', user.id)
+      : await db.from('products').insert({ user_id: user.id, ...fields });
+
+    if(saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product'; }
+    if(dbErr) { showToast('Save failed: ' + dbErr.message, 'error'); return; }
     showToast(window._editId ? 'Product updated' : 'Product saved');
     window.closeModal(); renderProducts();
   };
