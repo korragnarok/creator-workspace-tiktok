@@ -2,14 +2,16 @@
   const NAV_ITEMS = [
     { href: 'index.html', label: 'Home', icon: 'home', aliases: [''] },
     { href: 'daily-todo.html', label: 'Daily To Do', mobileLabel: 'To Do', icon: 'todo' },
-    { href: 'video-tracker.html', label: 'Content Tracker', icon: 'video' },
+    { href: 'video-tracker.html', label: 'Content Tracker', mobileLabel: 'Content', icon: 'video' },
     { href: 'hooks.html', label: 'Hooks', icon: 'hooks' },
     { href: 'products.html', label: 'Products', icon: 'products' },
     { href: 'scripts.html', label: 'Scripts', icon: 'scripts' },
     { href: 'sales-calendar.html', label: 'Sales Log', mobileLabel: 'Sales', icon: 'sales' }
   ];
 
-  const MOBILE_ITEMS = NAV_ITEMS;
+  const MOBILE_ITEMS = NAV_ITEMS.filter(item =>
+    ['index.html', 'daily-todo.html', 'sales-calendar.html', 'products.html'].includes(item.href)
+  );
 
   function currentPage() {
     const file = window.location.pathname.split('/').pop() || 'index.html';
