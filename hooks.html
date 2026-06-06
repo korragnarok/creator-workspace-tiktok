@@ -236,9 +236,10 @@ async function init() {
     const f = window._filter;
     let query = db.from('hooks').select('*').eq('user_id', user.id).order('created_at', {ascending:false});
     const { data: hooks } = await query;
+    const normCat = v => (v||'').toLowerCase().trim().replace(/\s+/g,'-');
     const filtered = (hooks||[]).filter(h => {
-      if(f !== 'all' && h.cat !== f) return false;
-      if(q) return h.text.toLowerCase().includes(q);
+      if(f !== 'all' && normCat(h.cat) !== normCat(f)) return false;
+      if(q) return h.text.toLowerCase().includes(q) || normCat(h.cat).includes(q);
       return true;
     });
     _visibleHookIds = filtered.map(h => h.id);
@@ -256,13 +257,19 @@ async function init() {
     }
 
     if(f === 'all') {
-      const cats = ['curiosity','problem','identity','social-proof','product','pattern-interrupt'];
+      const knownCats = ['curiosity','problem','identity','social-proof','product','pattern-interrupt'];
+      const normalize = v => (v||'').toLowerCase().trim().replace(/\s+/g,'-');
+      const extraCats = [...new Set(filtered.map(h => normalize(h.cat)).filter(c => !knownCats.includes(c) && c))];
+      const allCats = [...knownCats, ...extraCats];
       let html = '';
-      cats.forEach(cat => {
-        const ch = filtered.filter(h => h.cat === cat);
+      allCats.forEach(cat => {
+        const ch = filtered.filter(h => normalize(h.cat) === cat);
         if(!ch.length) return;
-        html += '<div class="section-wrap"><div class="section-head"><div class="section-title">'+CAT_LABEL[cat]+'</div><div class="section-line"></div><div class="section-count">'+ch.length+'</div></div><div class="hooks-grid">'+ch.map(hookCard).join('')+'</div></div>';
+        const label = CAT_LABEL[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1).replace(/-/g,' '));
+        html += '<div class="section-wrap"><div class="section-head"><div class="section-title">'+label+'</div><div class="section-line"></div><div class="section-count">'+ch.length+'</div></div><div class="hooks-grid">'+ch.map(hookCard).join('')+'</div></div>';
       });
+      const uncategorized = filtered.filter(h => !normalize(h.cat));
+      if(uncategorized.length) html += '<div class="section-wrap"><div class="section-head"><div class="section-title">Other</div><div class="section-line"></div><div class="section-count">'+uncategorized.length+'</div></div><div class="hooks-grid">'+uncategorized.map(hookCard).join('')+'</div></div>';
       el.innerHTML = html || '<div class="empty"><div class="empty-title">No results</div></div>';
     } else {
       el.innerHTML = '<div class="hooks-grid">'+filtered.map(hookCard).join('')+'</div>';

@@ -397,8 +397,10 @@ async function init() {
   await initTheme(_user.id, _prefs);
   initProfilePopover(_user.id);
 
-  // Pre-fill name input
-  const savedName = (_prefs.display_name || '').trim();
+  // Pre-fill name input — check prefs, metadata, and localStorage fallbacks
+  const savedName = (_prefs.display_name || '').trim()
+    || (_user?.user_metadata?.display_name || '').trim()
+    || (() => { try { return localStorage.getItem('creatorHub:displayName:'+_user.id) || ''; } catch(e) { return ''; } })();
   document.getElementById('nameInput').value = savedName;
   const currentName = document.getElementById('currentDisplayName');
   if (currentName) currentName.textContent = savedName || 'Not set yet';
