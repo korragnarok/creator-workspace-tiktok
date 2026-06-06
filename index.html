@@ -70,7 +70,7 @@ button,input{font:inherit;}
 .hero-sub{font-size:16px;color:var(--text);margin-top:8px;}
 @media(max-width:768px){.hero-sub{font-size:14px;}}
 .hero-sub strong{color:var(--rust);}
-.top-layout{display:grid;grid-template-columns:minmax(390px,0.82fr) minmax(430px,1.18fr);gap:14px;margin-bottom:16px;max-width:100%;}
+.top-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,420px);gap:14px;margin-bottom:16px;max-width:100%;align-items:start;}
 .stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow-sm);min-height:116px;display:flex;align-items:center;gap:14px;min-width:0;}
 .stat-icon{width:56px;height:56px;border-radius:12px;background:rgba(209,169,165,0.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -113,7 +113,7 @@ button,input{font:inherit;}
 .tier-tooltip-name{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);margin-bottom:2px;}
 .tier-tooltip-range{font-family:'Noto Sans Mono',sans-serif;font-size:12px;font-weight:700;color:var(--ink);}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:16px;}
-.lower-grid{display:grid;grid-template-columns:minmax(360px,0.9fr) minmax(420px,1.1fr);gap:14px;min-width:0;max-width:100%;}
+.lower-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;min-width:0;max-width:100%;margin-bottom:16px;}
 .stack{display:flex;flex-direction:column;gap:14px;min-width:0;max-width:100%;}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
 .card-title{font-size:18px;font-weight:700;color:var(--ink);line-height:1.2;}
@@ -168,8 +168,8 @@ button,input{font:inherit;}
 .tab-item.active{color:var(--rust);}
 .tab-icon-img{width:36px;height:36px;object-fit:contain;display:block;}
 .tab-profile-avatar{width:36px;height:36px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
-@media(max-width:1420px) and (min-width:1281px){.content{max-width:1080px;}.top-layout,.lower-grid{grid-template-columns:1fr;}.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));}.stat-card{padding:15px;gap:10px;}.stat-icon{width:48px;height:48px;}.stat-icon img{width:30px;height:30px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}}
-@media(max-width:1280px){.top-layout,.lower-grid{grid-template-columns:1fr;}.content{max-width:1040px;}.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));}.stat-card{padding:15px;gap:10px;}.stat-icon{width:48px;height:48px;}.stat-icon img{width:30px;height:30px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}}
+@media(max-width:1280px) and (min-width:981px){.content{max-width:1040px;}.top-layout{grid-template-columns:minmax(0,1fr) minmax(260px,340px);}.lower-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.stat-card{padding:14px;gap:10px;}.stat-icon{width:44px;height:44px;}.stat-icon img{width:26px;height:26px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}.stat-value{font-size:26px;}}
+@media(max-width:980px){.top-layout{grid-template-columns:1fr;}.lower-grid{grid-template-columns:1fr 1fr;}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:768px){
   .main{display:flex;flex-direction:column;gap:14px;}
   .top-layout{display:contents;}
@@ -246,7 +246,7 @@ button,input{font:inherit;}
         </section>
 
         <section class="lower-grid">
-          <!-- Left: Today's To Do -->
+          <!-- Col 1: Today's To Do -->
           <div class="stack mob-order-5">
             <div class="card">
               <div class="card-head">
@@ -262,7 +262,7 @@ button,input{font:inherit;}
             </div>
           </div>
 
-          <!-- Right: Chart + Top Products -->
+          <!-- Col 2: Commission / GMV chart -->
           <div class="stack mob-order-4">
             <div class="card chart-card">
               <div class="chart-top">
@@ -276,10 +276,13 @@ button,input{font:inherit;}
               <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
             </div>
           </div>
+
+          <!-- Col 3: Top Products Sold -->
           <div class="stack mob-order-1">
             <div class="card">
               <div class="card-head"><div class="card-title">Top Products Sold</div></div>
               <div class="empty-box" id="top-products"><strong>No products saved yet.</strong>Add products you want to research or promote.</div>
+              <a class="add-bar" href="products.html" style="margin-top:10px;">View All Products</a>
             </div>
           </div>
         </section>
