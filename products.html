@@ -296,7 +296,7 @@ async function init() {
       const hasCore = isCoreProduct(p);
       const link = String(p.link || '').trim();
       return '<tr class="'+(_editProductsMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleProductRowClick(\''+p.id+'\')">'+
-        '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span>'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Core</span>':'')+'</div></td>'+
+        '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span>'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Hero</span>':'')+'</div></td>'+
         '<td>'+esc(p.brand||'-')+'</td>'+
         '<td><span class="stock-badge '+(inStock?'stock-in':'stock-out')+'">'+(inStock?'In Stock':'Out of Stock')+'</span></td>'+
         '<td class="num"><span class="sold-value">'+(Number(p.units_sold)||0).toLocaleString()+'</span></td>'+

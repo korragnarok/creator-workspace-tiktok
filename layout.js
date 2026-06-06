@@ -27,7 +27,7 @@
   function coreSidebar() {
     return `
       <div class="core-sidebar">
-        <div class="core-sidebar-head"><span>Core 5</span><span class="core-sidebar-count" id="coreCount">0/5</span></div>
+        <div class="core-sidebar-head"><span>Hero Products</span><span class="core-sidebar-count" id="coreCount">0/5</span></div>
         <div class="core-mini-list">
           <label class="core-mini-item"><span class="core-mini-num">1</span><input class="core-mini-input" data-core-index="0" placeholder="Product name"></label>
           <label class="core-mini-item"><span class="core-mini-num">2</span><input class="core-mini-input" data-core-index="1" placeholder="Product name"></label>

@@ -545,7 +545,7 @@ async function initCore5(userId, prefs) {
     overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);';
     overlay.innerHTML = `
       <div style="background:var(--surface);border-radius:16px;border:1px solid var(--border-mid);padding:24px;width:100%;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
-        <div style="font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px;">Edit Core 5</div>
+        <div style="font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px;">Edit Hero Products</div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:18px;">Your top 5 products. Click any filled slot on the sidebar to go to that product.</div>
         <div id="_core5Inputs" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
         <div style="display:flex;gap:8px;">
@@ -595,7 +595,7 @@ async function saveCore5Modal() {
   closeCore5Modal();
   const { error } = await saveUserPrefs(userId, { core5: values });
   const { error: metaError } = await db.auth.updateUser({ data: { core5: values } });
-  showToast(error && metaError ? 'Core 5 saved locally' : 'Core 5 saved', error && metaError ? 'error' : 'success');
+  showToast(error && metaError ? 'Hero Products saved locally' : 'Hero Products saved', error && metaError ? 'error' : 'success');
 }
 
 // ─── Profile Popover ─────────────────────────────────────────────────────────

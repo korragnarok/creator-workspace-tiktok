@@ -489,7 +489,7 @@ function isProductPropertyName(value) {
     'sold','units sold','sales',
     'gmv','total gmv',
     'live talking points','talking points','features','feature','notes',
-    'core five','core 5','tags'
+    'hero products','hero 5','tags'
   ]).has(cleanKey(value));
 }
 
@@ -523,7 +523,7 @@ function mapProduct(row) {
     status:     normalizeProductStatus(status),
     units_sold: parseInt(pick(row, ['Sold', 'Units Sold', 'Sales']) || '0') || 0,
     notes:      pick(row, ['Live Talking Points', 'Talking Points', 'Features', 'Notes']),
-    tags:       pick(row, ['Core Five', 'Core 5']) ? 'core5' : '',
+    tags:       pick(row, ['Hero Products', 'Hero 5']) ? 'core5' : '',
   };
 }
 
