@@ -1,22 +1,22 @@
 // ─── Creator Hub Service Worker ───────────────────────────────────────────────
-const CACHE = 'creator-hub-v9';
+const CACHE = 'creator-hub-v10';
 
 // Core files to cache for offline shell
 const PRECACHE = [
-  '/creator-workspace-tiktok/',
-  '/creator-workspace-tiktok/index.html',
-  '/creator-workspace-tiktok/auth.html',
-  '/creator-workspace-tiktok/daily-todo.html',
-  '/creator-workspace-tiktok/hooks.html',
-  '/creator-workspace-tiktok/products.html',
-  '/creator-workspace-tiktok/sales-calendar.html',
-  '/creator-workspace-tiktok/scripts.html',
-  '/creator-workspace-tiktok/settings.html',
-  '/creator-workspace-tiktok/video-tracker.html',
-  '/creator-workspace-tiktok/theme-init.js',
-  '/creator-workspace-tiktok/supabase.js',
-  '/creator-workspace-tiktok/layout.js',
-  '/creator-workspace-tiktok/manifest.json',
+  '/',
+  '/index.html',
+  '/auth.html',
+  '/daily-todo.html',
+  '/hooks.html',
+  '/products.html',
+  '/sales-calendar.html',
+  '/scripts.html',
+  '/settings.html',
+  '/video-tracker.html',
+  '/theme-init.js',
+  '/supabase.js',
+  '/layout.js',
+  '/manifest.json',
 ];
 
 // Install — cache core files
@@ -46,8 +46,7 @@ self.addEventListener('fetch', e => {
     return; // let browser handle it normally
   }
 
-  const isAppFile = url.origin === self.location.origin &&
-    url.pathname.startsWith('/creator-workspace-tiktok/');
+  const isAppFile = url.origin === self.location.origin;
 
   e.respondWith(
     fetch(e.request).then(response => {
@@ -59,10 +58,8 @@ self.addEventListener('fetch', e => {
     }).catch(() => {
       return caches.match(e.request).then(cached => {
         if (cached) return cached;
-        // Cache successful GET responses
-        // Offline fallback — return index for navigation requests
         if (e.request.mode === 'navigate') {
-          return caches.match('/creator-workspace-tiktok/index.html');
+          return caches.match('/index.html');
         }
       });
     })

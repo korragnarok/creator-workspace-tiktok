@@ -338,7 +338,7 @@ async function init() {
 
   const today = new Date();
   const since = new Date(today); since.setDate(today.getDate() - 29);
-  const sinceStr = since.toISOString().slice(0,10);
+  const sinceStr = since.getFullYear()+'-'+String(since.getMonth()+1).padStart(2,'0')+'-'+String(since.getDate()).padStart(2,'0');
   const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
 
   const [{ data: rows }, { data: products }, { data: videos }, { data: queue }] = await Promise.all([
@@ -354,7 +354,7 @@ async function init() {
   let total30gmv=0, total30comm=0;
   for(let i=29;i>=0;i--){
     const d=new Date(today); d.setDate(today.getDate()-i);
-    const key=d.toISOString().slice(0,10);
+    const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     const row=(rows||[]).find(r=>r.date===key);
     const gmv=parseFloat(row?.gmv)||0;
     const comm=parseFloat(row?.comm)||0;

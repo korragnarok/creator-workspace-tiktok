@@ -2,8 +2,8 @@
   "name": "Take24",
   "short_name": "Take24",
   "description": "Take24 — The TikTok Shop affiliate workspace for planning, filming, and tracking.",
-  "start_url": "/creator-workspace-tiktok/index.html",
-  "scope": "/creator-workspace-tiktok/",
+  "start_url": "/index.html",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#2A1822",
@@ -27,17 +27,17 @@
   "shortcuts": [
     {
       "name": "Daily To Do",
-      "url": "/creator-workspace-tiktok/daily-todo.html",
+      "url": "/daily-todo.html",
       "icons": [{ "src": "icons/todo.png", "sizes": "96x96" }]
     },
     {
       "name": "Products",
-      "url": "/creator-workspace-tiktok/products.html",
+      "url": "/products.html",
       "icons": [{ "src": "icons/products.png", "sizes": "96x96" }]
     },
     {
       "name": "Sales Log",
-      "url": "/creator-workspace-tiktok/sales-calendar.html",
+      "url": "/sales-calendar.html",
       "icons": [{ "src": "icons/sales.png", "sizes": "96x96" }]
     }
   ]
