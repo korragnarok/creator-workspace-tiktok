@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=14"></script>
+<script src="theme-init.js?v=15"></script>
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -163,8 +163,7 @@ button,input{font:inherit;}
 @media(max-width:768px){.content{width:100%;padding:max(env(safe-area-inset-top),24px) 14px 88px;overflow:hidden;}.welcome{font-size:24px;}.stats-grid{grid-template-columns:1fr;}.lower-grid{width:100%;grid-template-columns:minmax(0,1fr);}.top-layout{grid-template-columns:1fr;width:100%;}.card{width:100%;min-width:0;padding:14px;}.card-head,.chart-top{align-items:flex-start;flex-wrap:wrap;}.empty-box{width:100%;min-width:0;}.add-bar{max-width:100%;}.chart-metrics{gap:18px;flex-wrap:wrap;}.chart-card{overflow:hidden;}.chart-wrap{width:100%;height:180px;}.tier-line{grid-template-columns:repeat(4,1fr);gap:14px 0;}.tier-line::before{display:none;}.tier{padding:4px 0 7px;}.tier-icon{width:24px;height:24px;margin-bottom:6px;}.tier.current .tier-icon{width:30px;height:30px;}.tier-range{display:none;}.tier-tooltip{white-space:normal;max-width:calc(100vw - 32px);text-align:center;}.tab-bar{display:flex;}.app-shell{grid-template-columns:1fr !important;}.workspace{grid-column:1 !important;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
-<script src="supabase.js?v=14"></script>
+<script src="supabase.js?v=15"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -276,7 +275,7 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=14"></script>
+<script src="layout.js?v=15"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0;
@@ -306,26 +305,76 @@ function chartThemeOptions(){
   const gridColor=rgbaFromColor(cssColor('--ink'),0.08);
   return { commColor, gmvColor, tickColor, gridColor };
 }
-function applySalesChartTheme(chart){
-  if(!chart)return;
-  const colors=chartThemeOptions();
-  const [commission, gmv]=chart.data.datasets;
-  if(commission){
-    commission.borderColor=colors.commColor;
-    commission.backgroundColor=rgbaFromColor(colors.commColor,0.06);
-    commission.pointBackgroundColor=colors.commColor;
-  }
-  if(gmv){
-    gmv.borderColor=colors.gmvColor;
-    gmv.backgroundColor=rgbaFromColor(colors.gmvColor,0.05);
-    gmv.pointBackgroundColor=colors.gmvColor;
-  }
-  chart.options.scales.x.ticks.color=colors.tickColor;
-  chart.options.scales.y.ticks.color=colors.tickColor;
-  chart.options.scales.y.grid.color=colors.gridColor;
-  chart.update('none');
+function drawLine(ctx, points, color){
+  if(!points.length)return;
+  ctx.beginPath();
+  points.forEach((p,i)=>{if(i)ctx.lineTo(p.x,p.y);else ctx.moveTo(p.x,p.y);});
+  ctx.strokeStyle=color;
+  ctx.lineWidth=2;
+  ctx.lineJoin='round';
+  ctx.lineCap='round';
+  ctx.stroke();
+  points.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,2.5,0,Math.PI*2);
+    ctx.fillStyle=color;
+    ctx.fill();
+  });
 }
-window.addEventListener('creator-theme-change',()=>applySalesChartTheme(window._salesChart));
+function renderSalesChart(labels, commData, gmvData){
+  const canvas=document.getElementById('salesChart');
+  if(!canvas)return;
+  const wrap=canvas.parentElement;
+  const dpr=window.devicePixelRatio||1;
+  const width=Math.max(260,wrap?.clientWidth||canvas.clientWidth||520);
+  const height=Math.max(150,wrap?.clientHeight||194);
+  canvas.width=Math.round(width*dpr);
+  canvas.height=Math.round(height*dpr);
+  canvas.style.width=width+'px';
+  canvas.style.height=height+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,width,height);
+  const colors=chartThemeOptions();
+  const pad={left:38,right:14,top:14,bottom:24};
+  const plotW=width-pad.left-pad.right;
+  const plotH=height-pad.top-pad.bottom;
+  const all=[...commData,...gmvData].map(Number);
+  const max=Math.max(1,...all);
+  const steps=4;
+  ctx.font='10px "Noto Sans Mono", monospace';
+  ctx.textBaseline='middle';
+  for(let i=0;i<=steps;i++){
+    const y=pad.top+(plotH/steps)*i;
+    const value=max-(max/steps)*i;
+    ctx.strokeStyle=colors.gridColor;
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(pad.left,y);
+    ctx.lineTo(width-pad.right,y);
+    ctx.stroke();
+    ctx.fillStyle=colors.tickColor;
+    ctx.textAlign='right';
+    ctx.fillText('$'+Math.round(value).toLocaleString(),pad.left-8,y);
+  }
+  const xFor=i=>pad.left+(labels.length<=1?0:(plotW/(labels.length-1))*i);
+  const yFor=v=>pad.top+plotH-(Number(v||0)/max)*plotH;
+  const commPoints=commData.map((v,i)=>({x:xFor(i),y:yFor(v)}));
+  const gmvPoints=gmvData.map((v,i)=>({x:xFor(i),y:yFor(v)}));
+  drawLine(ctx,commPoints,colors.commColor);
+  drawLine(ctx,gmvPoints,colors.gmvColor);
+  ctx.fillStyle=colors.tickColor;
+  ctx.textAlign='left';
+  ctx.textBaseline='top';
+  if(labels[0])ctx.fillText(labels[0],pad.left,height-pad.bottom+8);
+  if(labels[labels.length-1]){
+    ctx.textAlign='right';
+    ctx.fillText(labels[labels.length-1],width-pad.right,height-pad.bottom+8);
+  }
+  window._salesChartData={labels,commData,gmvData};
+}
+window.addEventListener('creator-theme-change',()=>{if(window._salesChartData)renderSalesChart(window._salesChartData.labels,window._salesChartData.commData,window._salesChartData.gmvData);});
+window.addEventListener('resize',()=>{if(window._salesChartData)renderSalesChart(window._salesChartData.labels,window._salesChartData.commData,window._salesChartData.gmvData);});
 // Display name + Core 5 now handled by supabase.js: initDisplayName() + initCore5()
 
 async function init() {
@@ -407,9 +456,7 @@ async function init() {
     setText('lc-cta', 'Top tier reached. Keep creating and tracking your wins.');
   }
 
-  const ctx=document.getElementById('salesChart').getContext('2d');
-  const colors=chartThemeOptions();
-  window._salesChart = new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Commission',data:commData,borderColor:colors.commColor,backgroundColor:rgbaFromColor(colors.commColor,0.06),fill:false,tension:0.35,pointRadius:2.5,pointBackgroundColor:colors.commColor,borderWidth:2},{label:'GMV',data:gmvData,borderColor:colors.gmvColor,backgroundColor:rgbaFromColor(colors.gmvColor,0.05),fill:false,tension:0.35,pointRadius:2.5,pointBackgroundColor:colors.gmvColor,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{displayColors:false}},scales:{x:{ticks:{maxTicksLimit:2,font:{size:10,family:"'Noto Sans Mono'"},color:colors.tickColor},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:10,family:"'Noto Sans Mono'"},color:colors.tickColor,callback:v=>'$'+v},grid:{color:colors.gridColor},border:{display:false},beginAtZero:true}}}});
+  renderSalesChart(labels,commData,gmvData);
 }
 function renderTodayContent(){
   const el=document.getElementById('today-content');
@@ -515,13 +562,17 @@ function showTierPopup(tierEl) {
   clearTimeout(_tierDismissTimer);
   _tierDismissTimer = setTimeout(() => _tierTooltip && _tierTooltip.classList.remove('visible'), 2500);
 }
-document.querySelector('.tier-line')?.addEventListener('click', e => {
+function handleTierTap(e){
   const tier = e.target.closest('.tier');
   if (!tier) return;
   e.preventDefault();
   e.stopPropagation();
   showTierPopup(tier);
-});
+}
+const tierLine=document.querySelector('.tier-line');
+tierLine?.addEventListener('click', handleTierTap);
+tierLine?.addEventListener('pointerup', handleTierTap);
+tierLine?.addEventListener('touchend', handleTierTap, { passive:false });
 document.addEventListener('click', e => {
   if (_tierTooltip && !e.target.closest?.('.tier')) {
     _tierTooltip.classList.remove('visible');
