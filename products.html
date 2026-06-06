@@ -121,6 +121,8 @@ body{overflow-x:hidden;}
 .brand-pill,.stock-pill{border:1px solid var(--border-mid);border-radius:100px;background:var(--surface);color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.02em;padding:7px 16px;white-space:nowrap;cursor:pointer;transition:all 0.15s;}
 .brand-pill.active,.stock-pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
 .brand-pill:hover:not(.active),.stock-pill:hover:not(.active){background:var(--sand);color:var(--ink);}
+.hero-pill{border-color:var(--rust);color:var(--rust);}
+.hero-pill.active{background:var(--rust);color:#fff;border-color:var(--rust);}
 .pill-count{font-family:'Noto Sans Mono',sans-serif;font-size:10px;margin-left:4px;opacity:0.75;}
 .product-bank{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden;}
 table{width:100%;border-collapse:collapse;}
@@ -279,7 +281,8 @@ async function init() {
     _allProducts = prods || [];
     renderBrandFilters(_allProducts);
     const filtered = _allProducts.filter(p => {
-      if(_brandFilter !== 'all' && brandKey(p.brand) !== _brandFilter) return false;
+      if(_brandFilter === 'hero' && !isCoreProduct(p)) return false;
+      if(_brandFilter !== 'all' && _brandFilter !== 'hero' && brandKey(p.brand) !== _brandFilter) return false;
       const inStock = productInStock(p);
       if(_stockFilter === 'in' && !inStock) return false;
       if(_stockFilter === 'out' && inStock) return false;
@@ -393,10 +396,12 @@ async function init() {
       counts.get(key).count += 1;
     });
     const brands = Array.from(counts.entries()).sort((a,b) => b[1].count - a[1].count || a[1].label.localeCompare(b[1].label));
-    if(_brandFilter !== 'all' && !counts.has(_brandFilter)) _brandFilter = 'all';
+    const heroCount = products.filter(p => isCoreProduct(p)).length;
+    if(_brandFilter !== 'all' && _brandFilter !== 'hero' && !counts.has(_brandFilter)) _brandFilter = 'all';
     el.innerHTML =
-      '<button class="brand-pill '+(_brandFilter==='all'?'active':'')+'" data-brand="all" onclick="setBrandFilter(this,\'all\')">All Brands <span class="pill-count">'+products.length+'</span></button>'+
-      brands.map(([key, item]) => '<button class="brand-pill '+(_brandFilter===key?'active':'')+'" data-brand="'+escAttr(key)+'" onclick="setBrandFilter(this)">'+esc(item.label)+' <span class="pill-count">'+item.count+'</span></button>').join('');
+      '<button class=\"brand-pill '+(_brandFilter===\'all\'?\'active\':\'')+'\" data-brand=\"all\" onclick=\"setBrandFilter(this,\\'all\\')\">All Brands <span class=\"pill-count\">'+products.length+'</span></button>'+
+      (heroCount ? '<button class=\"brand-pill '+(_brandFilter===\'hero\'?\'active\':\'')+' hero-pill\" data-brand=\"hero\" onclick=\"setBrandFilter(this,\\'hero\\')\">⭐ Hero Brands <span class=\"pill-count\">'+heroCount+'</span></button>' : '')+
+      brands.map(([key, item]) => '<button class=\"brand-pill '+(_brandFilter===key?\'active\':\'')+'\" data-brand=\"'+escAttr(key)+'\" onclick=\"setBrandFilter(this)\">'+esc(item.label)+' <span class=\"pill-count\">'+item.count+'</span></button>').join('');
   }
   window.updateEditToolbar = function() {
     const toolbar = document.getElementById('editToolbar');
