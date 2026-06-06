@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=13"></script>
+<script src="theme-init.js?v=14"></script>
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -91,14 +91,14 @@ button,input{font:inherit;}
 .level-message span{color:var(--text);font-size:13px;}
 .tier-line{display:grid;grid-template-columns:repeat(8,1fr);align-items:start;position:relative;gap:0;padding-top:18px;}
 .tier-line::before{content:'';position:absolute;top:26px;left:5%;right:5%;height:2px;background:color-mix(in srgb,var(--ink) 34%,transparent);}
-.tier{position:relative;text-align:center;color:var(--text);cursor:pointer;}
+.tier{position:relative;text-align:center;color:var(--text);cursor:pointer;appearance:none;border:0;background:none;padding:0;font:inherit;width:100%;display:block;}
 .tier-icon{width:18px;height:18px;object-fit:contain;border-radius:50%;background:color-mix(in srgb,var(--surface) 62%,var(--bg) 38%);border:1px solid color-mix(in srgb,var(--ink) 26%,transparent);padding:2px;margin:0 auto 10px;position:relative;z-index:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--bg) 72%,transparent);}
 .tier.current .tier-icon{width:28px;height:28px;margin-top:-5px;margin-bottom:5px;border-color:var(--rust);background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);box-shadow:0 0 0 6px color-mix(in srgb,var(--rust) 22%,transparent);}
 .tier-name{font-family:'Stack Sans Text',sans-serif;font-weight:800;font-size:10px;color:var(--ink);}
 .tier.current .tier-name{color:var(--rust);}
 .tier-range{font-family:'Noto Sans Mono',sans-serif;font-size:9px;color:var(--text);line-height:1.35;}
 .tier-icon{cursor:pointer;}
-.tier-tooltip{position:fixed;z-index:500;background:var(--surface);border:1px solid var(--border-mid);border-radius:10px;padding:9px 13px;box-shadow:0 6px 24px rgba(0,0,0,0.28);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity 0.15s,transform 0.15s;white-space:nowrap;}
+.tier-tooltip{position:fixed;z-index:900;background:var(--surface);border:1px solid var(--border-mid);border-radius:10px;padding:9px 13px;box-shadow:0 6px 24px rgba(0,0,0,0.28);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity 0.15s,transform 0.15s;white-space:nowrap;}
 .tier-tooltip.visible{opacity:1;transform:translateY(0);}
 .tier-tooltip-name{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);margin-bottom:2px;}
 .tier-tooltip-range{font-family:'Noto Sans Mono',sans-serif;font-size:12px;font-weight:700;color:var(--ink);}
@@ -163,7 +163,7 @@ button,input{font:inherit;}
 @media(max-width:768px){.content{width:100%;padding:max(env(safe-area-inset-top),24px) 14px 88px;overflow:hidden;}.welcome{font-size:24px;}.stats-grid{grid-template-columns:1fr;}.lower-grid{width:100%;grid-template-columns:minmax(0,1fr);}.top-layout{grid-template-columns:1fr;width:100%;}.card{width:100%;min-width:0;padding:14px;}.card-head,.chart-top{align-items:flex-start;flex-wrap:wrap;}.empty-box{width:100%;min-width:0;}.add-bar{max-width:100%;}.chart-metrics{gap:18px;flex-wrap:wrap;}.chart-card{overflow:hidden;}.chart-wrap{width:100%;height:180px;}.tier-line{grid-template-columns:repeat(4,1fr);gap:14px 0;}.tier-line::before{display:none;}.tier{padding:4px 0 7px;}.tier-icon{width:24px;height:24px;margin-bottom:6px;}.tier.current .tier-icon{width:30px;height:30px;}.tier-range{display:none;}.tier-tooltip{white-space:normal;max-width:calc(100vw - 32px);text-align:center;}.tab-bar{display:flex;}.app-shell{grid-template-columns:1fr !important;}.workspace{grid-column:1 !important;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=13"></script>
+<script src="supabase.js?v=14"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -212,14 +212,14 @@ button,input{font:inherit;}
               <div><strong>You're on your way!</strong><span id="lc-cta">Keep creating to level up and unlock higher commission tiers.</span></div>
             </div>
             <div class="tier-line">
-              <div class="tier" data-tier="Bronze" data-range="$0 – $999" onclick="showTierPopup(this)"><img class="tier-icon" src="icons/levels/bronze.png" alt="Bronze"><div class="tier-name">Bronze</div><div class="tier-range">$0 - $999</div></div>
-              <div class="tier" data-tier="Silver" data-range="$1,000 – $4,999" onclick="showTierPopup(this)"><img class="tier-icon" src="icons/levels/silver.png" alt="Silver"><div class="tier-name">Silver</div><div class="tier-range">$1,000 - $4,999</div></div>
-              <div class="tier" data-tier="Gold" data-range="$5,000 – $24,999" onclick="showTierPopup(this)"><img class="tier-icon" src="icons/levels/gold.png" alt="Gold"><div class="tier-name">Gold</div><div class="tier-range">$5,000 - $24,999</div></div>
-              <div class="tier" data-tier="Platinum" data-range="$25,000 – $59,999" onclick="showTierPopup(this)"><img class="tier-icon" src="icons/levels/platinum.png" alt="Platinum"><div class="tier-name">Platinum</div><div class="tier-range">$25,000 - $59,999</div></div>
-              <div class="tier" data-tier="Ruby" data-range="$60,000 – $149,999" onclick="showTierPopup(this)"><img class="tier-icon" src="icons/levels/ruby.png" alt="Ruby"><div class="tier-name">Ruby</div><div class="tier-range">$60,000 - $149,999</div></div>
-              <div class="tier" data-tier="Emerald" data-range="$150,000 – $399,999" onclick="showTierPopup(this)"><img class="tier-icon" src="icons/levels/emerald.png" alt="Emerald"><div class="tier-name">Emerald</div><div class="tier-range">$150,000 - $399,999</div></div>
-              <div class="tier" data-tier="Sapphire" data-range="$400,000 – $1,499,999" onclick="showTierPopup(this)"><img class="tier-icon" src="icons/levels/sapphire.png" alt="Sapphire"><div class="tier-name">Sapphire</div><div class="tier-range">$400,000+</div></div>
-              <div class="tier" data-tier="Diamond" data-range="$1,500,000+" onclick="showTierPopup(this)"><img class="tier-icon" src="icons/levels/diamond.png" alt="Diamond"><div class="tier-name">Diamond</div><div class="tier-range">$1,500,000+</div></div>
+              <button class="tier" type="button" data-tier="Bronze" data-range="$0 – $999" aria-label="Bronze range $0 to $999"><img class="tier-icon" src="icons/levels/bronze.png" alt=""><div class="tier-name">Bronze</div><div class="tier-range">$0 - $999</div></button>
+              <button class="tier" type="button" data-tier="Silver" data-range="$1,000 – $4,999" aria-label="Silver range $1,000 to $4,999"><img class="tier-icon" src="icons/levels/silver.png" alt=""><div class="tier-name">Silver</div><div class="tier-range">$1,000 - $4,999</div></button>
+              <button class="tier" type="button" data-tier="Gold" data-range="$5,000 – $24,999" aria-label="Gold range $5,000 to $24,999"><img class="tier-icon" src="icons/levels/gold.png" alt=""><div class="tier-name">Gold</div><div class="tier-range">$5,000 - $24,999</div></button>
+              <button class="tier" type="button" data-tier="Platinum" data-range="$25,000 – $59,999" aria-label="Platinum range $25,000 to $59,999"><img class="tier-icon" src="icons/levels/platinum.png" alt=""><div class="tier-name">Platinum</div><div class="tier-range">$25,000 - $59,999</div></button>
+              <button class="tier" type="button" data-tier="Ruby" data-range="$60,000 – $149,999" aria-label="Ruby range $60,000 to $149,999"><img class="tier-icon" src="icons/levels/ruby.png" alt=""><div class="tier-name">Ruby</div><div class="tier-range">$60,000 - $149,999</div></button>
+              <button class="tier" type="button" data-tier="Emerald" data-range="$150,000 – $399,999" aria-label="Emerald range $150,000 to $399,999"><img class="tier-icon" src="icons/levels/emerald.png" alt=""><div class="tier-name">Emerald</div><div class="tier-range">$150,000 - $399,999</div></button>
+              <button class="tier" type="button" data-tier="Sapphire" data-range="$400,000 – $1,499,999" aria-label="Sapphire range $400,000 and up"><img class="tier-icon" src="icons/levels/sapphire.png" alt=""><div class="tier-name">Sapphire</div><div class="tier-range">$400,000+</div></button>
+              <button class="tier" type="button" data-tier="Diamond" data-range="$1,500,000+" aria-label="Diamond range $1,500,000 and up"><img class="tier-icon" src="icons/levels/diamond.png" alt=""><div class="tier-name">Diamond</div><div class="tier-range">$1,500,000+</div></button>
             </div>
           </div>
         </section>
@@ -275,7 +275,7 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=13"></script>
+<script src="layout.js?v=14"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0;
@@ -477,15 +477,16 @@ async function clearDoneToday(){
 }
 // ── Tier tooltip ────────────────────────────────────────────────────────────
 let _tierTooltip = null, _tierDismissTimer = null;
-function showTierPopup(iconEl) {
+function showTierPopup(tierEl) {
   if (!_tierTooltip) {
     _tierTooltip = document.createElement('div');
     _tierTooltip.className = 'tier-tooltip';
     _tierTooltip.innerHTML = '<div class="tier-tooltip-name"></div><div class="tier-tooltip-range"></div>';
     document.body.appendChild(_tierTooltip);
   }
-  const tier = iconEl.closest?.('.tier') || iconEl;
+  const tier = tierEl.closest?.('.tier') || tierEl;
   const anchor = tier.querySelector('.tier-icon') || tier;
+  if (!tier?.dataset?.tier) return;
   _tierTooltip.querySelector('.tier-tooltip-name').textContent = tier.dataset.tier;
   _tierTooltip.querySelector('.tier-tooltip-range').textContent = tier.dataset.range;
 
@@ -513,6 +514,13 @@ function showTierPopup(iconEl) {
   clearTimeout(_tierDismissTimer);
   _tierDismissTimer = setTimeout(() => _tierTooltip && _tierTooltip.classList.remove('visible'), 2500);
 }
+document.querySelector('.tier-line')?.addEventListener('click', e => {
+  const tier = e.target.closest('.tier');
+  if (!tier) return;
+  e.preventDefault();
+  e.stopPropagation();
+  showTierPopup(tier);
+});
 document.addEventListener('click', e => {
   if (_tierTooltip && !e.target.closest?.('.tier')) {
     _tierTooltip.classList.remove('visible');
