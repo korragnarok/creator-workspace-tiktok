@@ -55,7 +55,8 @@ button,input{font:inherit;}
 .profile-name{font-weight:700;line-height:1.1;}
 .profile-role{font-size:11px;color:var(--text-muted);}
 .workspace{min-width:0;}
-.topbar{height:64px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;padding:0 24px;background:color-mix(in srgb,var(--bg) 88%,#000 12%);backdrop-filter:blur(18px);position:sticky;top:0;z-index:100;}
+.topbar{height:64px;border-bottom:1px solid var(--border);display:none;align-items:center;gap:14px;padding:0 24px;background:color-mix(in srgb,var(--bg) 88%,#000 12%);backdrop-filter:blur(18px);position:sticky;top:0;z-index:100;}
+@media(max-width:768px){.topbar{display:flex;}}
 .top-spacer{flex:1;}
 .content{display:block;padding:32px 24px 52px;max-width:1210px;margin:0 auto;}
 .main{min-width:0;max-width:100%;}
@@ -157,6 +158,13 @@ button,input{font:inherit;}
 <body>
 <div class="app-shell">
 <div class="workspace">
+    <header class="topbar">
+      <img src="logo.png" alt="Take24" style="height:32px;width:auto;object-fit:contain;">
+      <div class="top-spacer"></div>
+      <button type="button" class="profile-trigger" style="background:none;border:none;cursor:pointer;padding:0;" aria-label="Open profile menu">
+        <div class="avatar" id="profileAvatar"><img class="avatar-img" src="icons/users/icon-1.png" alt="" id="topbarAvatarImg"></div>
+      </button>
+    </header>
     <main class="content">
       <div class="main">
         <div class="hero-row">
