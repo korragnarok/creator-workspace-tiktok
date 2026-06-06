@@ -552,18 +552,31 @@ async function renderLineup(userId) {
   const items = _todayQueue.slice(0, 5);
   if(!items.length) { section.style.display = 'none'; return; }
 
-  // Fetch product images for items that have a prod_id
+  // Fetch by prod_id where available
   const prodIds = [...new Set(items.map(q => q.prod_id).filter(Boolean))];
-  let imgMap = {};
+  // Also fetch by name for items without a prod_id
+  const names = [...new Set(items.filter(q => !q.prod_id).map(q => q.name).filter(Boolean))];
+  let imgMap = {};       // prod_id → image_url
+  let nameImgMap = {};   // name.toLowerCase() → image_url
+
   if(prodIds.length) {
-    const { data: prods } = await db.from('products').select('id,image_url').in('id', prodIds).eq('user_id', userId);
-    (prods || []).forEach(p => { imgMap[p.id] = p.image_url || ''; });
+    const { data: prods } = await db.from('products').select('id,name,image_url').in('id', prodIds).eq('user_id', userId);
+    (prods || []).forEach(p => {
+      if(p.image_url) imgMap[p.id] = p.image_url;
+      if(p.image_url) nameImgMap[p.name.toLowerCase()] = p.image_url;
+    });
+  }
+  if(names.length) {
+    const { data: prods } = await db.from('products').select('name,image_url').in('name', names).eq('user_id', userId);
+    (prods || []).forEach(p => { if(p.image_url) nameImgMap[p.name.toLowerCase()] = p.image_url; });
   }
 
   strip.innerHTML = items.map(q => {
-    const img = (q.prod_id && imgMap[q.prod_id]) ? imgMap[q.prod_id] : 'icons/default-product.png';
+    const img = (q.prod_id && imgMap[q.prod_id])
+      || nameImgMap[(q.name||'').toLowerCase()]
+      || 'icons/default-product.png';
     const done = q.done;
-    return `<div class="lineup-card${done?' done':''}" onclick="window.location='daily-todo.html'" title="${esc(q.name)}">
+    return `<div class="lineup-card${done?' done':''}" onclick="window.location='daily-todo.html?focus=${q.id}'" title="${esc(q.name)}">
       <img class="lineup-img" src="${img}" alt="" onerror="this.src='icons/default-product.png'">
       <div class="lineup-name">${esc(q.name)}</div>
       ${q.brand ? `<div class="lineup-brand">${esc(q.brand)}</div>` : ''}
