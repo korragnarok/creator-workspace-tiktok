@@ -153,7 +153,6 @@ button,input{font:inherit;}
 .name-save{width:100%;border:none;border-radius:var(--r);background:var(--rust);color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:12px 14px;cursor:pointer;}
 .name-save:hover{background:#9a5a57;}
 .tab-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:color-mix(in srgb,var(--bg) 88%,#000 12%);backdrop-filter:blur(20px);border-top:1px solid var(--border);height:80px;z-index:300;align-items:stretch;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
-.tab-bar::-webkit-scrollbar{display:none;}
 .tab-item{flex:0 0 72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;border:0;background:transparent;cursor:pointer;padding-top:6px;padding-bottom:env(safe-area-inset-bottom,6px);}
 .tab-item.active{color:var(--rust);}
 .tab-icon-img{width:36px;height:36px;object-fit:contain;display:block;}
@@ -213,14 +212,14 @@ button,input{font:inherit;}
               <div><strong>You're on your way!</strong><span id="lc-cta">Keep creating to level up and unlock higher commission tiers.</span></div>
             </div>
             <div class="tier-line">
-              <button class="tier" type="button" data-tier="Bronze" data-range="$0 – $999" aria-label="Bronze range $0 to $999"><img class="tier-icon" src="icons/levels/bronze.png" alt=""><div class="tier-name">Bronze</div><div class="tier-range">$0 - $999</div></button>
-              <button class="tier" type="button" data-tier="Silver" data-range="$1,000 – $4,999" aria-label="Silver range $1,000 to $4,999"><img class="tier-icon" src="icons/levels/silver.png" alt=""><div class="tier-name">Silver</div><div class="tier-range">$1,000 - $4,999</div></button>
-              <button class="tier" type="button" data-tier="Gold" data-range="$5,000 – $24,999" aria-label="Gold range $5,000 to $24,999"><img class="tier-icon" src="icons/levels/gold.png" alt=""><div class="tier-name">Gold</div><div class="tier-range">$5,000 - $24,999</div></button>
-              <button class="tier" type="button" data-tier="Platinum" data-range="$25,000 – $59,999" aria-label="Platinum range $25,000 to $59,999"><img class="tier-icon" src="icons/levels/platinum.png" alt=""><div class="tier-name">Platinum</div><div class="tier-range">$25,000 - $59,999</div></button>
-              <button class="tier" type="button" data-tier="Ruby" data-range="$60,000 – $149,999" aria-label="Ruby range $60,000 to $149,999"><img class="tier-icon" src="icons/levels/ruby.png" alt=""><div class="tier-name">Ruby</div><div class="tier-range">$60,000 - $149,999</div></button>
-              <button class="tier" type="button" data-tier="Emerald" data-range="$150,000 – $399,999" aria-label="Emerald range $150,000 to $399,999"><img class="tier-icon" src="icons/levels/emerald.png" alt=""><div class="tier-name">Emerald</div><div class="tier-range">$150,000 - $399,999</div></button>
-              <button class="tier" type="button" data-tier="Sapphire" data-range="$400,000 – $1,499,999" aria-label="Sapphire range $400,000 and up"><img class="tier-icon" src="icons/levels/sapphire.png" alt=""><div class="tier-name">Sapphire</div><div class="tier-range">$400,000+</div></button>
-              <button class="tier" type="button" data-tier="Diamond" data-range="$1,500,000+" aria-label="Diamond range $1,500,000 and up"><img class="tier-icon" src="icons/levels/diamond.png" alt=""><div class="tier-name">Diamond</div><div class="tier-range">$1,500,000+</div></button>
+              <button class="tier" type="button" onclick="showTierPopup('Bronze','$0 – $999',this)" data-tier="Bronze" data-range="$0 – $999" aria-label="Bronze range $0 to $999"><img class="tier-icon" src="icons/levels/bronze.png" alt=""><div class="tier-name">Bronze</div><div class="tier-range">$0 - $999</div></button>
+              <button class="tier" type="button" onclick="showTierPopup('Silver','$1,000 – $4,999',this)" data-tier="Silver" data-range="$1,000 – $4,999" aria-label="Silver range $1,000 to $4,999"><img class="tier-icon" src="icons/levels/silver.png" alt=""><div class="tier-name">Silver</div><div class="tier-range">$1,000 - $4,999</div></button>
+              <button class="tier" type="button" onclick="showTierPopup('Gold','$5,000 – $24,999',this)" data-tier="Gold" data-range="$5,000 – $24,999" aria-label="Gold range $5,000 to $24,999"><img class="tier-icon" src="icons/levels/gold.png" alt=""><div class="tier-name">Gold</div><div class="tier-range">$5,000 - $24,999</div></button>
+              <button class="tier" type="button" onclick="showTierPopup('Platinum','$25,000 – $59,999',this)" data-tier="Platinum" data-range="$25,000 – $59,999" aria-label="Platinum range $25,000 to $59,999"><img class="tier-icon" src="icons/levels/platinum.png" alt=""><div class="tier-name">Platinum</div><div class="tier-range">$25,000 - $59,999</div></button>
+              <button class="tier" type="button" onclick="showTierPopup('Ruby','$60,000 – $149,999',this)" data-tier="Ruby" data-range="$60,000 – $149,999" aria-label="Ruby range $60,000 to $149,999"><img class="tier-icon" src="icons/levels/ruby.png" alt=""><div class="tier-name">Ruby</div><div class="tier-range">$60,000 - $149,999</div></button>
+              <button class="tier" type="button" onclick="showTierPopup('Emerald','$150,000 – $399,999',this)" data-tier="Emerald" data-range="$150,000 – $399,999" aria-label="Emerald range $150,000 to $399,999"><img class="tier-icon" src="icons/levels/emerald.png" alt=""><div class="tier-name">Emerald</div><div class="tier-range">$150,000 - $399,999</div></button>
+              <button class="tier" type="button" onclick="showTierPopup('Sapphire','$400,000 – $1,499,999',this)" data-tier="Sapphire" data-range="$400,000 – $1,499,999" aria-label="Sapphire range $400,000 and up"><img class="tier-icon" src="icons/levels/sapphire.png" alt=""><div class="tier-name">Sapphire</div><div class="tier-range">$400,000+</div></button>
+              <button class="tier" type="button" onclick="showTierPopup('Diamond','$1,500,000+',this)" data-tier="Diamond" data-range="$1,500,000+" aria-label="Diamond range $1,500,000 and up"><img class="tier-icon" src="icons/levels/diamond.png" alt=""><div class="tier-name">Diamond</div><div class="tier-range">$1,500,000+</div></button>
             </div>
           </div>
         </section>
@@ -525,61 +524,35 @@ async function clearDoneToday(){
   showToast('Saved to Content Tracker');
 }
 // ── Tier tooltip ────────────────────────────────────────────────────────────
-let _tierTooltip = null, _tierDismissTimer = null;
-function showTierPopup(tierEl) {
-  if (!_tierTooltip) {
-    _tierTooltip = document.createElement('div');
-    _tierTooltip.className = 'tier-tooltip';
-    _tierTooltip.innerHTML = '<div class="tier-tooltip-name"></div><div class="tier-tooltip-range"></div>';
-    document.body.appendChild(_tierTooltip);
-  }
-  const tier = tierEl.closest?.('.tier') || tierEl;
-  const anchor = tier.querySelector('.tier-icon') || tier;
-  if (!tier?.dataset?.tier) return;
-  _tierTooltip.querySelector('.tier-tooltip-name').textContent = tier.dataset.tier;
-  _tierTooltip.querySelector('.tier-tooltip-range').textContent = tier.dataset.range;
+function showTierPopup(name, range, btn) {
+  // Remove any existing tooltip
+  const existing = document.getElementById('_tierTip');
+  if (existing) existing.remove();
 
-  // Position near the tapped level. Tooltip uses fixed positioning, so viewport
-  // coordinates should not include window scroll offsets.
-  const rect = anchor.getBoundingClientRect();
-  _tierTooltip.style.visibility = 'hidden';
-  _tierTooltip.style.opacity = '0';
-  _tierTooltip.classList.remove('visible');
-  document.body.appendChild(_tierTooltip); // ensure in DOM for measurement
-  const tw = _tierTooltip.offsetWidth;
-  const th = _tierTooltip.offsetHeight;
-  let left = rect.left + rect.width / 2 - tw / 2;
+  const tip = document.createElement('div');
+  tip.id = '_tierTip';
+  tip.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border-mid);border-radius:10px;padding:10px 14px;box-shadow:0 6px 24px rgba(0,0,0,0.4);text-align:center;pointer-events:none;';
+  tip.innerHTML = '<div style="font-family:Stack Sans Notch,sans-serif;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);margin-bottom:3px;">'+name+'</div><div style="font-family:Noto Sans Mono,sans-serif;font-size:13px;font-weight:700;color:var(--ink);">'+range+'</div>';
+  document.body.appendChild(tip);
+
+  // Position above the button
+  const rect = btn.getBoundingClientRect();
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let left = rect.left + rect.width/2 - tw/2;
   let top = rect.top - th - 10;
   if (top < 8) top = rect.bottom + 10;
-  // Keep within viewport
   left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
-  top = Math.max(8, Math.min(top, window.innerHeight - th - 8));
-  _tierTooltip.style.left = left + 'px';
-  _tierTooltip.style.top = top + 'px';
-  _tierTooltip.style.visibility = '';
-  requestAnimationFrame(() => _tierTooltip.classList.add('visible'));
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
 
-  // Auto-dismiss after 2.5s
-  clearTimeout(_tierDismissTimer);
-  _tierDismissTimer = setTimeout(() => _tierTooltip && _tierTooltip.classList.remove('visible'), 2500);
+  // Auto-dismiss
+  clearTimeout(window._tierTimer);
+  window._tierTimer = setTimeout(() => { const t = document.getElementById('_tierTip'); if(t) t.remove(); }, 2500);
 }
-function handleTierTap(e){
-  const tier = e.target.closest('.tier');
-  if (!tier) return;
-  e.preventDefault();
-  e.stopPropagation();
-  showTierPopup(tier);
-}
-const tierLine=document.querySelector('.tier-line');
-tierLine?.addEventListener('click', handleTierTap);
-tierLine?.addEventListener('pointerup', handleTierTap);
-tierLine?.addEventListener('touchend', handleTierTap, { passive:false });
-document.addEventListener('click', e => {
-  if (_tierTooltip && !e.target.closest?.('.tier')) {
-    _tierTooltip.classList.remove('visible');
-  }
-});
-
+// Dismiss on tap outside
+document.addEventListener('touchstart', e => {
+  if (!e.target.closest('.tier')) { const t = document.getElementById('_tierTip'); if(t) t.remove(); }
+}, { passive: true });
 init();
 </script>
 </body>

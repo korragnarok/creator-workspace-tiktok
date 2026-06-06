@@ -9,7 +9,8 @@
     { href: 'sales-calendar.html', label: 'Sales Log', mobileLabel: 'Sales', icon: 'sales' }
   ];
 
-  const MOBILE_ITEMS = NAV_ITEMS.filter(item =>
+  // All pages in mobile nav
+  const MOBILE_ITEMS = NAV_ITEMS; // was: NAV_ITEMS.filter(item =>
     ['index.html', 'daily-todo.html', 'sales-calendar.html', 'products.html'].includes(item.href)
   );
 
