@@ -96,7 +96,17 @@ button,input{font:inherit;}
 .tier.current .tier-icon{width:40px;height:40px;margin-top:-6px;margin-bottom:5px;border-color:var(--rust);background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);box-shadow:0 0 0 6px color-mix(in srgb,var(--rust) 22%,transparent);}
 .tier-name{font-family:'Stack Sans Text',sans-serif;font-weight:800;font-size:10px;color:var(--ink);}
 .tier.current .tier-name{color:var(--rust);}
-.tier-range{font-family:'Noto Sans Mono',sans-serif;font-size:9px;color:var(--text);line-height:1.35;}
+.lineup-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow-sm);}
+.lineup-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.lineup-strip{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.lineup-strip::-webkit-scrollbar{display:none;}
+.lineup-card{flex:0 0 120px;display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--bg-lift);border:1px solid var(--border-mid);border-radius:10px;padding:12px 8px;cursor:pointer;transition:border-color 0.15s;text-align:center;}
+.lineup-card:hover{border-color:var(--rust);}
+.lineup-card.done{opacity:0.45;}
+.lineup-img{width:72px;height:72px;border-radius:8px;object-fit:cover;background:var(--surface);flex-shrink:0;}
+.lineup-name{font-size:11px;font-weight:700;color:var(--ink);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.lineup-brand{font-size:10px;color:var(--text-muted);}
+.lineup-done-badge{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--sage);}
 .tier-icon{cursor:pointer;}
 .tier-tooltip{position:fixed;z-index:900;background:var(--surface);border:1px solid var(--border-mid);border-radius:10px;padding:9px 13px;box-shadow:0 6px 24px rgba(0,0,0,0.28);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity 0.15s,transform 0.15s;white-space:nowrap;}
 .tier-tooltip.visible{opacity:1;transform:translateY(0);}
@@ -273,6 +283,15 @@ button,input{font:inherit;}
             </div>
           </div>
         </section>
+
+        <!-- Today's Lineup strip -->
+        <section class="lineup-section mob-order-6" id="lineupSection" style="display:none;">
+          <div class="lineup-head">
+            <div class="card-title">Today's Lineup</div>
+            <a class="mini-action" href="daily-todo.html">View All</a>
+          </div>
+          <div class="lineup-strip" id="lineupStrip"></div>
+        </section>
       </div>
 
     </main>
@@ -410,7 +429,7 @@ async function init() {
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
     db.from('products').select('id,name,brand,units_sold').eq('user_id', user.id).order('created_at', { ascending:false }),
     db.from('videos').select('id,title,brand,status').eq('user_id', user.id).order('created_at', { ascending:false }),
-    db.from('queue').select('id,name,brand,notes,done').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
+    db.from('queue').select('id,name,brand,notes,done,prod_id').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
   ]);
   _todayQueue=queue||[];
   _dashboardVideos=videos||[];
@@ -444,6 +463,7 @@ async function init() {
   setText('product-saved', `${(products||[]).length} saved`);
 
   renderTodayContent();
+  renderLineup(user.id);
   const topProducts=(products||[]).slice().sort((a,b)=>(Number(b.units_sold)||0)-(Number(a.units_sold)||0)).filter(p=>(Number(p.units_sold)||0)>0).slice(0,3);
   if(topProducts.length){
     document.getElementById('top-products').className='top-product-list';
@@ -518,7 +538,38 @@ async function toggleTodayItem(id,button){
   item.done=nextDone;
   _doneToday+=nextDone?1:-1;
   renderTodayContent();
+  renderLineup(_dashboardUser?.id);
 }
+async function renderLineup(userId) {
+  const section = document.getElementById('lineupSection');
+  const strip = document.getElementById('lineupStrip');
+  if(!section || !strip) return;
+
+  const items = _todayQueue.slice(0, 5);
+  if(!items.length) { section.style.display = 'none'; return; }
+
+  // Fetch product images for items that have a prod_id
+  const prodIds = [...new Set(items.map(q => q.prod_id).filter(Boolean))];
+  let imgMap = {};
+  if(prodIds.length) {
+    const { data: prods } = await db.from('products').select('id,image_url').in('id', prodIds).eq('user_id', userId);
+    (prods || []).forEach(p => { imgMap[p.id] = p.image_url || ''; });
+  }
+
+  strip.innerHTML = items.map(q => {
+    const img = (q.prod_id && imgMap[q.prod_id]) ? imgMap[q.prod_id] : 'icons/default-product.png';
+    const done = q.done;
+    return `<div class="lineup-card${done?' done':''}" onclick="window.location='daily-todo.html'" title="${esc(q.name)}">
+      <img class="lineup-img" src="${img}" alt="" onerror="this.src='icons/default-product.png'">
+      <div class="lineup-name">${esc(q.name)}</div>
+      ${q.brand ? `<div class="lineup-brand">${esc(q.brand)}</div>` : ''}
+      ${done ? '<div class="lineup-done-badge">✓ Done</div>' : ''}
+    </div>`;
+  }).join('');
+
+  section.style.display = '';
+}
+
 async function clearDoneToday(){
   const doneItems=_todayQueue.filter(q=>q.done);
   if(!doneItems.length)return;

@@ -48,6 +48,11 @@ nav{position:sticky;top:0;z-index:200;background:color-mix(in srgb,var(--bg) 88%
 .form-input:focus{border-color:var(--rose);}
 .form-textarea{resize:vertical;min-height:80px;}
 .form-row-half{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.img-upload-row{display:flex;flex-direction:column;gap:8px;}
+.img-preview-wrap{width:80px;height:80px;border-radius:10px;border:1px solid var(--border-mid);overflow:hidden;background:var(--surface);flex-shrink:0;}
+.img-preview{width:100%;height:100%;object-fit:cover;display:block;}
+.img-upload-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.img-upload-btn{font-size:11px;padding:7px 14px;}
 .modal-actions{display:flex;gap:10px;margin-top:20px;}
 .btn-danger{background:none;border:1px solid rgba(174,105,101,0.3);color:var(--rust);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;transition:all 0.15s;text-transform:uppercase;}
 .btn-danger:hover{background:var(--rust);color:#fff;}
@@ -200,6 +205,20 @@ tr.select-mode .tbl-action{display:none;}
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">&#x2715;</button>
     <div class="modal-title" id="modalTitle">Add Product</div>
+    <div class="form-row"><label class="form-label">Product Photo</label>
+      <div class="img-upload-row" id="imgUploadRow">
+        <div class="img-preview-wrap">
+          <img id="fImgPreview" src="icons/default-product.png" alt="" class="img-preview">
+        </div>
+        <div class="img-upload-actions">
+          <label class="btn btn-ghost img-upload-btn" style="cursor:pointer;">
+            Upload Photo <input type="file" id="fImgFile" accept="image/*" style="display:none;" onchange="previewProductImg(this)">
+          </label>
+          <button type="button" class="btn btn-ghost" onclick="clearProductImg()" id="clearImgBtn" style="display:none;">Remove</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Optional — shows on your dashboard. PNG, JPG, WEBP under 2MB.</div>
+      </div>
+    </div>
     <div class="form-row"><label class="form-label">Product Name *</label><input type="text" class="form-input" id="fName" placeholder="e.g. PetLab ProBright Dental Powder"></div>
     <div class="form-row"><label class="form-label">Brand</label><input type="text" class="form-input" id="fBrand" placeholder="e.g. PetLab Co."></div>
     <div class="form-row"><label class="form-label">Tags (comma separated)</label><input type="text" class="form-input" id="fTags" placeholder="e.g. pet, dental, supplement"></div>
@@ -213,6 +232,25 @@ tr.select-mode .tbl-action{display:none;}
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
 <script src="layout.js?v=15"></script>
 <script>
+function previewProductImg(input) {
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 2 * 1024 * 1024) { alert('Image must be under 2MB.'); input.value=''; return; }
+  window._newImgFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('fImgPreview').src = e.target.result;
+    document.getElementById('clearImgBtn').style.display = '';
+  };
+  reader.readAsDataURL(file);
+}
+function clearProductImg() {
+  window._newImgFile = null;
+  window._existingImgUrl = '';
+  document.getElementById('fImgPreview').src = 'icons/default-product.png';
+  document.getElementById('fImgFile').value = '';
+  document.getElementById('clearImgBtn').style.display = 'none';
+}
 let _editProductsMode = false;
 let _selectedProductIds = new Set();
 let _visibleProductIds = [];
@@ -442,6 +480,13 @@ async function init() {
     document.getElementById('fStatus').value = p?.status || 'active';
     document.getElementById('fNotes').value = p?.notes || '';
     document.getElementById('deleteBtn').style.display = p ? '' : 'none';
+    // Image
+    window._existingImgUrl = p?.image_url || '';
+    window._newImgFile = null;
+    const preview = document.getElementById('fImgPreview');
+    preview.src = p?.image_url || 'icons/default-product.png';
+    document.getElementById('fImgFile').value = '';
+    document.getElementById('clearImgBtn').style.display = p?.image_url ? '' : 'none';
     document.getElementById('modalOverlay').classList.add('open');
     setTimeout(() => document.getElementById('fName').focus(), 100);
   };
@@ -449,7 +494,21 @@ async function init() {
   window.saveProduct = async function() {
     const name = document.getElementById('fName').value.trim();
     if(!name) { document.getElementById('fName').focus(); return; }
-    const row = { user_id: user.id, name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: document.getElementById('fNotes').value.trim() };
+
+    // Handle image upload
+    let image_url = window._existingImgUrl || '';
+    const file = window._newImgFile;
+    if(file) {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { data: upData, error: upErr } = await db.storage.from('product-images').upload(path, file, { upsert: true });
+      if(!upErr) {
+        const { data: urlData } = db.storage.from('product-images').getPublicUrl(path);
+        image_url = urlData.publicUrl;
+      }
+    }
+
+    const row = { user_id: user.id, name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: document.getElementById('fNotes').value.trim(), image_url };
     if(window._editId) { await db.from('products').update(row).eq('id', window._editId); }
     else { await db.from('products').insert(row); }
     showToast(window._editId ? 'Product updated' : 'Product saved');
