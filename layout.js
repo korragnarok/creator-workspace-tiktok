@@ -48,7 +48,7 @@
 
     return `
       <aside class="desktop-sidebar sidebar" data-shared-layout="true">
-        <a href="index.html" class="side-brand"><img src="logo.png" alt="Take24 Creator Workspace" style="width:140px;height:auto;object-fit:contain;display:block;"></a>
+        <a href="index.html" class="side-brand"><img src="logo.png" alt="Take24" style="width:160px;height:auto;object-fit:contain;display:block;padding:4px 0;"></a>
         <div class="side-nav">${links}</div>
         ${coreSidebar()}
         <div class="side-profile">
