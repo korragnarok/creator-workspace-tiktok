@@ -286,7 +286,7 @@ async function init() {
       const inStock = productInStock(p);
       if(_stockFilter === 'in' && !inStock) return false;
       if(_stockFilter === 'out' && inStock) return false;
-      if(q) return (p.name + (p.brand||'') + (p.tags||'')).toLowerCase().includes(q);
+      if(q) return (p.name + (p.brand||'') + (p.tags||'') + (p.notes||'')).toLowerCase().includes(q);
       return true;
     }).sort(compareProducts);
     _visibleProductIds = filtered.map(p => p.id);
