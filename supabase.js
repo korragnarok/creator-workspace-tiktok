@@ -35,6 +35,55 @@ async function signOut() {
   window.location.href = 'auth.html';
 }
 
+function localDateKey(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function queueCarryKey(row) {
+  return [
+    row.prod_id || '',
+    String(row.name || '').trim().toLowerCase(),
+    String(row.brand || '').trim().toLowerCase(),
+    String(row.notes || '').trim().toLowerCase(),
+    Number(row.sort_order) || 0
+  ].join('|');
+}
+
+async function carryForwardUnfinishedQueue(userId, targetDate = localDateKey()) {
+  if (!userId || !targetDate) return 0;
+  const { data: overdue, error } = await db.from('queue')
+    .select('id,prod_id,name,brand,notes,sort_order')
+    .eq('user_id', userId)
+    .eq('done', false)
+    .lt('date', targetDate);
+  if (error || !overdue?.length) return 0;
+
+  const { data: todayRows } = await db.from('queue')
+    .select('prod_id,name,brand,notes,sort_order')
+    .eq('user_id', userId)
+    .eq('date', targetDate);
+  const existing = new Set((todayRows || []).map(queueCarryKey));
+  const toMove = [];
+  const duplicateIds = [];
+
+  overdue.forEach(row => {
+    const key = queueCarryKey(row);
+    if (existing.has(key)) duplicateIds.push(row.id);
+    else {
+      existing.add(key);
+      toMove.push(row.id);
+    }
+  });
+
+  if (toMove.length) {
+    await db.from('queue').update({ date: targetDate, done: false }).in('id', toMove).eq('user_id', userId);
+  }
+  if (duplicateIds.length) {
+    await db.from('queue').delete().in('id', duplicateIds).eq('user_id', userId);
+  }
+  return toMove.length;
+}
+
 // ─── Themes ──────────────────────────────────────────────────────────────────
 
 const THEMES = {

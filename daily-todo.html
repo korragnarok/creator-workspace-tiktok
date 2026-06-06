@@ -15,7 +15,8 @@
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
-<link rel="apple-touch-icon" href="icons/pwa/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/pwa/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
@@ -367,6 +368,7 @@ async function loadHooks(){const{data}=await db.from('hooks').select('id,text,ca
 async function loadScripts(){const{data}=await db.from('scripts').select('id,title,brand,script').eq('user_id',_user.id).order('title');ALL_SCRIPTS=data||[];}
 
 async function loadQueue(){
+  if(currentKey()===todayKey) await carryForwardUnfinishedQueue(_user.id, todayKey);
   const{data}=await db.from('queue').select('*').eq('user_id',_user.id).eq('date',currentKey()).order('sort_order');
   const cardMap={};
   (data||[]).forEach(row=>{
