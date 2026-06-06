@@ -123,6 +123,7 @@ button,input{font:inherit;}
 .today-content-detail{font-size:12px;color:var(--text-muted);line-height:1.45;margin-top:3px;}
 .today-content-label{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);margin-right:6px;}
 .top-product-list{display:flex;flex-direction:column;gap:8px;}
+.top-product-rank{width:32px;height:32px;object-fit:contain;flex-shrink:0;}
 .top-product-row{border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;transition:border-color 0.15s;}
 .top-product-row:hover{border-color:var(--rust);}
 .top-product-name{font-weight:700;color:var(--ink);line-height:1.2;}
@@ -434,7 +435,8 @@ async function init() {
   const topProducts=(products||[]).slice().sort((a,b)=>(Number(b.units_sold)||0)-(Number(a.units_sold)||0)).filter(p=>(Number(p.units_sold)||0)>0).slice(0,3);
   if(topProducts.length){
     document.getElementById('top-products').className='top-product-list';
-    document.getElementById('top-products').innerHTML=topProducts.map(p=>`<div class="top-product-row" onclick="window.location='products.html?search='+encodeURIComponent(p.name)" title="View in Products"><div><div class="top-product-name">${p.name}</div><div class="top-product-brand">${p.brand||''}</div></div><div class="top-product-units">${(Number(p.units_sold)||0).toLocaleString()}<span>sold</span></div></div>`).join('');
+    const rankIcons=['icons/top/first.png','icons/top/second.png','icons/top/third.png'];
+    document.getElementById('top-products').innerHTML=topProducts.map((p,i)=>`<div class="top-product-row" onclick="window.location='products.html?search='+encodeURIComponent(p.name)" title="View in Products"><img class="top-product-rank" src="${rankIcons[i]}" alt="${i+1}"><div><div class="top-product-name">${p.name}</div><div class="top-product-brand">${p.brand||''}</div></div><div class="top-product-units">${(Number(p.units_sold)||0).toLocaleString()}<span>sold</span></div></div>`).join('');
   }
 
   const y=today.getFullYear(), m=today.getMonth();
