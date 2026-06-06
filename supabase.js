@@ -133,7 +133,7 @@ const THEMES = {
 };
 
 const DEFAULT_THEME = 'dusk';
-const DEFAULT_PROFILE_ICON = 'icon-1';
+const DEFAULT_PROFILE_ICON = 'avatar';
 const THEME_ICON_NAMES = new Set(['home','todo','video','videos','hooks','products','scripts','sales','gmv','commissions','comission','comissions','commissins']);
 const THEME_ICON_FILES = {
   dusk: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
@@ -142,12 +142,7 @@ const THEME_ICON_FILES = {
   forest: { video:'video.png', videos:'video.png', commissions:'commissins.png', comission:'commissins.png', comissions:'commissins.png', commissins:'commissins.png' }
 };
 const PROFILE_ICONS = [
-  { key: 'icon-1', label: 'Icon 1', src: 'icons/users/icon-1.png' },
-  { key: 'icon-2', label: 'Icon 2', src: 'icons/users/icon-2.png' },
-  { key: 'icon-3', label: 'Icon 3', src: 'icons/users/icon-3.png' },
-  { key: 'icon-4', label: 'Icon 4', src: 'icons/users/icon-4.png' },
-  { key: 'icon-5', label: 'Icon 5', src: 'icons/users/icon-5.png' },
-  { key: 'icon-6', label: 'Icon 6', src: 'icons/users/icon-6.png' }
+  { key: 'avatar', label: 'Default', src: 'icons/users/avatar.png' }
 ];
 
 function _cachedTheme() {
@@ -628,7 +623,7 @@ async function initTheme(userId, prefs) {
   const metaTheme = _metadataTheme(user);
   const cachedTheme = _cachedTheme();
   const prefTheme = THEMES[prefs.theme] ? prefs.theme : '';
-  const themeKey = metaTheme || (cachedTheme && cachedTheme !== DEFAULT_THEME ? cachedTheme : '') || prefTheme || cachedTheme || DEFAULT_THEME;
+  const themeKey = metaTheme || prefTheme || cachedTheme || DEFAULT_THEME;
   try { localStorage.setItem('creatorHub:theme', themeKey); } catch(e) {}
   applyTheme(themeKey);
   if (userId && prefs.theme !== themeKey) await saveUserPrefs(userId, { theme: themeKey });

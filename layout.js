@@ -52,7 +52,7 @@
         <div class="side-nav">${links}</div>
         ${coreSidebar()}
         <div class="side-profile">
-          <div class="avatar" id="profileAvatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div>
+          <div class="avatar" id="profileAvatar"><img class="avatar-img" src="icons/users/avatar.png" alt=""></div>
           <div><div class="profile-name" id="profileName">Creator</div><div class="profile-role">Creator</div></div>
         </div>
       </aside>`;
@@ -68,7 +68,7 @@
       <div class="tab-bar" data-shared-layout="true">
         ${links}
         <button type="button" class="tab-item profile-trigger" aria-label="Open profile menu">
-          <div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/icon-1.png" alt=""></div><div>User</div>
+          <div class="tab-profile-avatar"><img class="avatar-img" src="icons/users/avatar.png" alt=""></div><div>User</div>
         </button>
       </div>`;
   }

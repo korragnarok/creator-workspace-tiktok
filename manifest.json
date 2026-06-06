@@ -28,17 +28,17 @@
     {
       "name": "Daily To Do",
       "url": "/daily-todo.html",
-      "icons": [{ "src": "icons/todo.png", "sizes": "96x96" }]
+      "icons": [{ "src": "icons/pwa/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Products",
       "url": "/products.html",
-      "icons": [{ "src": "icons/products.png", "sizes": "96x96" }]
+      "icons": [{ "src": "icons/pwa/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Sales Log",
       "url": "/sales-calendar.html",
-      "icons": [{ "src": "icons/sales.png", "sizes": "96x96" }]
+      "icons": [{ "src": "icons/pwa/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
