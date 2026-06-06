@@ -9,9 +9,7 @@
     { href: 'sales-calendar.html', label: 'Sales Log', mobileLabel: 'Sales', icon: 'sales' }
   ];
 
-  const MOBILE_ITEMS = NAV_ITEMS.filter(item =>
-    ['index.html', 'daily-todo.html', 'sales-calendar.html', 'products.html'].includes(item.href)
-  );
+  const MOBILE_ITEMS = NAV_ITEMS;
 
   function currentPage() {
     const file = window.location.pathname.split('/').pop() || 'index.html';
