@@ -48,7 +48,7 @@
 
     return `
       <aside class="desktop-sidebar sidebar" data-shared-layout="true">
-        <a href="index.html" class="side-brand">creator <span>workspace</span></a>
+        <a href="index.html" class="side-brand"><img src="logo.png" alt="Take24 Creator Workspace" style="width:140px;height:auto;object-fit:contain;display:block;"></a>
         <div class="side-nav">${links}</div>
         ${coreSidebar()}
         <div class="side-profile">
@@ -275,12 +275,13 @@
           background: color-mix(in srgb,var(--surface) 76%,var(--bg) 24%);
         }
         .desktop-sidebar.sidebar .side-brand::before {
-          content: 'cw';
-          font-family: 'Stack Sans Notch',sans-serif;
-          font-size: 14px;
-          font-weight: 800;
-          color: var(--ink);
-          letter-spacing: 0;
+          content: '';
+        }
+        .desktop-sidebar.sidebar .side-brand img {
+          width: 40px !important;
+          height: 40px !important;
+          object-fit: cover;
+          border-radius: 8px;
         }
         .desktop-sidebar.sidebar .side-brand span,
         .desktop-sidebar.sidebar .side-link {
@@ -325,13 +326,6 @@
         }
         body > nav {
           display: none;
-        }
-        /* Push content below notch/dynamic island */
-        body {
-          padding-top: env(safe-area-inset-top);
-        }
-        .page, .content {
-          padding-top: max(16px, env(safe-area-inset-top));
         }
       }
     `;

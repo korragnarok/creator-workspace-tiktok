@@ -1,7 +1,7 @@
 {
-  "name": "Creator Workspace",
-  "short_name": "Creator Hub",
-  "description": "TikTok Shop creator workspace — products, videos, sales, and scripts.",
+  "name": "Take24",
+  "short_name": "Take24",
+  "description": "Take24 — The TikTok Shop affiliate workspace for planning, filming, and tracking.",
   "start_url": "/creator-workspace-tiktok/index.html",
   "scope": "/creator-workspace-tiktok/",
   "display": "standalone",
