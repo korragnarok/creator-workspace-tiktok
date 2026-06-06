@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=10"></script>
+<script src="theme-init.js?v=13"></script>
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -85,7 +85,6 @@ button,input{font:inherit;}
 .level-feature{background:linear-gradient(135deg,color-mix(in srgb,var(--surface) 74%,var(--rust) 26%),color-mix(in srgb,var(--bg) 78%,#000 22%));color:var(--ink);border:1px solid var(--border-mid);border-radius:var(--r);box-shadow:var(--shadow-md);padding:22px;min-height:248px;}
 .level-feature-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
 .level-feature-title{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);}
-.view-link{font-size:12px;color:var(--text);}
 .level-message{border:1px solid color-mix(in srgb,var(--ink) 16%,transparent);border-radius:8px;padding:16px;display:grid;grid-template-columns:42px 1fr;gap:12px;margin-bottom:24px;background:color-mix(in srgb,var(--surface) 22%,transparent);}
 .level-icon-lg{width:42px;height:42px;object-fit:contain;}
 .level-message strong{display:block;color:var(--ink);margin-bottom:2px;}
@@ -164,7 +163,7 @@ button,input{font:inherit;}
 @media(max-width:768px){.content{width:100%;padding:max(env(safe-area-inset-top),24px) 14px 88px;overflow:hidden;}.welcome{font-size:24px;}.stats-grid{grid-template-columns:1fr;}.lower-grid{width:100%;grid-template-columns:minmax(0,1fr);}.top-layout{grid-template-columns:1fr;width:100%;}.card{width:100%;min-width:0;padding:14px;}.card-head,.chart-top{align-items:flex-start;flex-wrap:wrap;}.empty-box{width:100%;min-width:0;}.add-bar{max-width:100%;}.chart-metrics{gap:18px;flex-wrap:wrap;}.chart-card{overflow:hidden;}.chart-wrap{width:100%;height:180px;}.tier-line{grid-template-columns:repeat(4,1fr);gap:14px 0;}.tier-line::before{display:none;}.tier{padding:4px 0 7px;}.tier-icon{width:24px;height:24px;margin-bottom:6px;}.tier.current .tier-icon{width:30px;height:30px;}.tier-range{display:none;}.tier-tooltip{white-space:normal;max-width:calc(100vw - 32px);text-align:center;}.tab-bar{display:flex;}.app-shell{grid-template-columns:1fr !important;}.workspace{grid-column:1 !important;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=10"></script>
+<script src="supabase.js?v=13"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -207,7 +206,6 @@ button,input{font:inherit;}
           <div class="level-feature">
             <div class="level-feature-head">
               <div class="level-feature-title">Level Ladder</div>
-              <a class="view-link" href="sales-calendar.html">View ladder</a>
             </div>
             <div class="level-message">
               <img id="lc-icon" src="icons/levels/bronze.png" class="level-icon-lg" alt="">
@@ -277,7 +275,7 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=10"></script>
+<script src="layout.js?v=13"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0;
@@ -343,6 +341,7 @@ async function init() {
   const since = new Date(today); since.setDate(today.getDate() - 29);
   const sinceStr = since.getFullYear()+'-'+String(since.getMonth()+1).padStart(2,'0')+'-'+String(since.getDate()).padStart(2,'0');
   const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  await carryForwardUnfinishedQueue(user.id, todayStr);
 
   const [{ data: rows }, { data: products }, { data: videos }, { data: queue }] = await Promise.all([
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),

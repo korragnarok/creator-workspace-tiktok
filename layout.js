@@ -306,9 +306,24 @@
           width: 21px;
           height: 21px;
         }
-        .desktop-sidebar.sidebar .core-sidebar,
-        .desktop-sidebar.sidebar .side-profile {
+        .desktop-sidebar.sidebar .core-sidebar {
           display: none;
+        }
+        .desktop-sidebar.sidebar .side-profile {
+          margin-top: auto;
+          width: 48px;
+          height: 48px;
+          justify-content: center;
+          padding: 0;
+          gap: 0;
+        }
+        .desktop-sidebar.sidebar .side-profile .profile-name,
+        .desktop-sidebar.sidebar .side-profile .profile-role {
+          display: none;
+        }
+        .desktop-sidebar.sidebar .side-profile .avatar {
+          width: 34px;
+          height: 34px;
         }
         .app-shell {
           grid-template-columns: 76px minmax(0, 1fr);
