@@ -359,6 +359,14 @@ async function saveQueueRow(card,take){
     data = fallback.data;
     error = fallback.error;
   }
+  if(error && /script/i.test(error.message || '')){
+    const { script, ...fallbackPayload } = payload;
+    const fallback = take.queueId
+      ? await db.from('queue').update(fallbackPayload).eq('id',take.queueId)
+      : await db.from('queue').insert(fallbackPayload).select('id').single();
+    data = fallback.data;
+    error = fallback.error;
+  }
   if(!take.queueId && data) take.queueId=data.id;
   if(error) console.warn('Queue save failed', error);
 }
