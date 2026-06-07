@@ -4,6 +4,7 @@
     { href: 'daily-todo.html', label: 'Daily To Do', mobileLabel: 'To Do', icon: 'todo' },
     { href: 'video-tracker.html', label: 'Content Tracker', mobileLabel: 'Content', icon: 'video' },
     { href: 'hooks.html', label: 'Hooks', icon: 'hooks' },
+    { href: 'ctas.html', label: 'CTAs', icon: 'hooks' },
     { href: 'products.html', label: 'Products', icon: 'products' },
     { href: 'scripts.html', label: 'Scripts', icon: 'scripts' },
     { href: 'sales-calendar.html', label: 'Sales Log', mobileLabel: 'Sales', icon: 'sales' }

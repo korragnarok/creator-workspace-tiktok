@@ -158,3 +158,14 @@ create policy "Users delete own product images" on storage.objects
 
 create policy "Anyone can view product images" on storage.objects
   for select using (bucket_id = 'product-images');
+
+-- ── 11. CTAS ────────────────────────────────────────────────────────────────
+create table if not exists ctas (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  text text not null,
+  cat text default 'urgency',
+  created_at timestamptz default now()
+);
+alter table ctas enable row level security;
+create policy "Users manage own ctas" on ctas for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F8F5F1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/pwa/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
+<title>CTAs &mdash; Take24</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script src="theme-init.js?v=55"></script>
+<link rel="stylesheet" href="layout.css?v=55">
+<style>
+:root{--r:12px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+.page{max-width:960px;margin:0 auto;padding:0 40px 100px;}
+.page-header{padding:44px 0 32px;border-bottom:1px solid var(--border-mid);margin-bottom:32px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.page-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
+.page-title{font-family:'IBM Plex Serif',serif;font-size:52px;font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);}
+.page-title em{font-style:italic;color:var(--sage);}
+.page-sub{font-size:13px;color:var(--text-mid);margin-top:8px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:0.04em;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;transition:all 0.15s;border:none;text-transform:uppercase;}
+.btn-primary{background:var(--rust);color:#fff;}.btn-primary:hover{background:#9a5a57;}
+.btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}.btn-ghost:hover{background:var(--surface);color:var(--ink);}
+.btn-danger{background:none;border:1px solid rgba(174,105,101,0.3);color:var(--rust);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;transition:all 0.15s;text-transform:uppercase;}
+.btn-danger:hover{background:var(--rust);color:#fff;}
+.filter-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+.pill{background:var(--surface);border:1px solid var(--border-mid);border-radius:100px;padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text-mid);transition:all 0.12s;font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;}
+.pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+.pill:hover:not(.active){background:var(--sand);}
+.search-box{flex:1;min-width:180px;padding:8px 16px;border:1px solid var(--border-mid);border-radius:100px;background:var(--surface);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;}
+.search-box:focus{border-color:var(--rose);}
+.empty{text-align:center;padding:64px 24px;}
+.empty-title{font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:700;color:var(--text-mid);margin-bottom:8px;}
+.empty-sub{font-size:13px;color:var(--text-muted);line-height:1.7;}
+footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-items:center;justify-content:space-between;}
+.footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
+.footer-note{font-size:11px;color:var(--text-muted);}
+@media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:40px;}}
+
+.add-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:28px;box-shadow:var(--shadow-sm);}
+.add-section-title{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-mid);margin-bottom:14px;}
+.add-row{display:flex;gap:10px;flex-wrap:wrap;}
+.add-textarea{flex:1;min-width:240px;padding:10px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;resize:none;height:60px;transition:border-color 0.15s;}
+.add-textarea:focus{border-color:var(--rose);}
+.add-controls{display:flex;flex-direction:column;gap:8px;}
+.add-cat-sel{padding:8px 12px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--bg);font-size:12px;font-family:'Stack Sans Notch',sans-serif;color:var(--text-mid);outline:none;cursor:pointer;}
+.add-btn{background:var(--rust);color:#fff;border:none;border-radius:var(--r);padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;white-space:nowrap;transition:background 0.15s;text-transform:uppercase;letter-spacing:0.04em;}
+.add-btn:hover{background:#9a5a57;}
+
+.section-wrap{margin-bottom:32px;}
+.section-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.section-title{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink);}
+.section-line{flex:1;height:1px;background:var(--border-mid);}
+.section-count{font-size:11px;color:var(--text-muted);background:var(--sand);border-radius:100px;padding:2px 9px;font-family:'Stack Sans Notch',sans-serif;}
+
+.ctas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;}
+.cta-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px;transition:all 0.12s;position:relative;}
+.cta-card:hover{border-color:var(--rose);box-shadow:var(--shadow-md);}
+.cta-text{font-size:14px;color:var(--text);line-height:1.6;flex:1;}
+.cta-footer{display:flex;align-items:center;gap:8px;}
+.cta-cat{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:2px 9px;border-radius:100px;}
+.cat-urgency{background:rgba(174,105,101,0.12);color:var(--rust);}
+.cat-scarcity{background:rgba(209,169,165,0.2);color:#8a5a57;}
+.cat-price{background:rgba(122,129,108,0.12);color:var(--sage);}
+.cat-social-proof{background:rgba(165,139,113,0.12);color:var(--tan);}
+.cat-soft{background:var(--sand);color:var(--text-mid);}
+.cat-curiosity{background:rgba(42,39,37,0.07);color:var(--text-mid);}
+.cta-copy{background:none;border:1px solid var(--border-mid);border-radius:6px;padding:3px 10px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-muted);margin-left:auto;transition:all 0.12s;text-transform:uppercase;letter-spacing:0.04em;}
+.cta-copy:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
+.cta-copy.copied{background:var(--sage);color:#fff;border-color:var(--sage);}
+.cta-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;opacity:0;transition:opacity 0.12s;padding:2px 5px;}
+.cta-card:hover .cta-del{opacity:1;}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.edit-toolbar{display:none;align-items:center;justify-content:space-between;gap:12px;margin:-8px 0 18px;padding:12px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);}
+.edit-toolbar.open{display:flex;}
+.edit-count{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);}
+.edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.bank-select{display:none;position:absolute;top:16px;left:16px;width:24px;height:24px;border:2px solid var(--border-mid);border-radius:7px;background:var(--bg-lift);align-items:center;justify-content:center;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:800;}
+.cta-card.select-mode{padding-left:52px;cursor:pointer;}
+.cta-card.selected{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 16%,transparent),var(--shadow-sm);}
+.cta-card.select-mode .bank-select{display:flex;}
+.cta-card.selected .bank-select{background:var(--rust);border-color:var(--rust);}
+.cta-card.selected .bank-select::after{content:'✓';}
+.cta-card.select-mode .cta-del{display:none;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=55"></script>
+</head>
+<body>
+<nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="ctas.html" class="nav-link active">CTAs</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Swipe File</div>
+      <div class="page-title">CTA <em>Library</em></div>
+      <p class="page-sub">Save your best calls to action by category. Tap to copy instantly.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="editCtasBtn" onclick="toggleCtaEditMode()">Edit CTAs</button>
+    </div>
+  </div>
+
+  <div class="add-section">
+    <div class="add-section-title">Add a CTA</div>
+    <div class="add-row">
+      <textarea class="add-textarea" id="ctaInput" placeholder="Type or paste a call to action..."></textarea>
+      <div class="add-controls">
+        <select class="add-cat-sel" id="ctaCat">
+          <option value="urgency">Urgency</option>
+          <option value="scarcity">Scarcity</option>
+          <option value="price">Price / Value</option>
+          <option value="social-proof">Social Proof</option>
+          <option value="soft">Soft Sell</option>
+          <option value="curiosity">Curiosity</option>
+        </select>
+        <button class="add-btn" onclick="addCta()">Save CTA</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <input type="text" class="search-box" id="searchBox" placeholder="Search CTAs..." oninput="renderCtas()">
+    <div class="pill active" data-f="all" onclick="setFilter(this,'all')">All</div>
+    <div class="pill" data-f="urgency" onclick="setFilter(this,'urgency')">Urgency</div>
+    <div class="pill" data-f="scarcity" onclick="setFilter(this,'scarcity')">Scarcity</div>
+    <div class="pill" data-f="price" onclick="setFilter(this,'price')">Price / Value</div>
+    <div class="pill" data-f="social-proof" onclick="setFilter(this,'social-proof')">Social Proof</div>
+    <div class="pill" data-f="soft" onclick="setFilter(this,'soft')">Soft Sell</div>
+    <div class="pill" data-f="curiosity" onclick="setFilter(this,'curiosity')">Curiosity</div>
+  </div>
+
+  <div class="edit-toolbar" id="ctaEditToolbar">
+    <div class="edit-count" id="ctaEditCount">0 selected</div>
+    <div class="edit-actions">
+      <button class="btn btn-ghost" onclick="selectAllVisibleCtas()">Select All</button>
+      <button class="btn btn-ghost" onclick="clearCtaSelection()">Clear</button>
+      <button class="btn-danger" id="deleteSelectedCtasBtn" onclick="deleteSelectedCtas()">Delete Selected</button>
+    </div>
+  </div>
+
+  <div id="ctaList"></div>
+</div>
+<footer><div class="footer-brand">Take24</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
+<script src="layout.js?v=55"></script>
+<script>
+let _editCtasMode = false;
+let _selectedCtaIds = new Set();
+let _visibleCtaIds = [];
+
+const CAT_LABEL = {urgency:'Urgency',scarcity:'Scarcity',price:'Price / Value','social-proof':'Social Proof',soft:'Soft Sell',curiosity:'Curiosity'};
+const CAT_CLASS = {urgency:'cat-urgency',scarcity:'cat-scarcity',price:'cat-price','social-proof':'cat-social-proof',soft:'cat-soft',curiosity:'cat-curiosity'};
+
+async function init() {
+  const user = await requireAuth();
+  if (!user) return;
+  const prefs = await loadUserPrefs(user.id);
+  await initDisplayName(user, prefs);
+  await initCore5(user.id, prefs);
+  await initTheme(user.id, prefs);
+  initProfilePopover(user.id);
+  window._user = user;
+  window._filter = 'all';
+
+  async function renderCtas() {
+    const q = document.getElementById('searchBox').value.toLowerCase();
+    const f = window._filter;
+    const { data: ctas } = await db.from('ctas').select('*').eq('user_id', user.id).order('created_at', {ascending:false});
+    const normCat = v => (v||'').toLowerCase().trim().replace(/\s+/g,'-');
+    const filtered = (ctas||[]).filter(c => {
+      if(f !== 'all' && normCat(c.cat) !== normCat(f)) return false;
+      if(q) return c.text.toLowerCase().includes(q) || normCat(c.cat).includes(q);
+      return true;
+    });
+    _visibleCtaIds = filtered.map(c => c.id);
+    const el = document.getElementById('ctaList');
+    if(!filtered.length){ el.innerHTML='<div class="empty"><div class="empty-title">No CTAs yet</div><div class="empty-sub">Add your first CTA above.</div></div>'; updateCtaEditToolbar(); return; }
+
+    function ctaCard(c) {
+      const selected = _selectedCtaIds.has(c.id);
+      return '<div class="cta-card '+(_editCtasMode?'select-mode ':'')+(selected?'selected':'')+'\" onclick=\"handleCtaCardClick(\''+c.id+'\')">'+
+        '<span class="bank-select" aria-hidden="true"></span>'+
+        '<button class="cta-del" onclick="event.stopPropagation();delCta(\''+c.id+'\')">&#xD7;</button>'+
+        '<div class="cta-text">'+c.text+'</div>'+
+        '<div class="cta-footer"><span class="cta-cat '+(CAT_CLASS[normCat(c.cat)]||'cat-soft')+'">'+(CAT_LABEL[normCat(c.cat)]||c.cat)+'</span><button class="cta-copy" onclick="event.stopPropagation();copyCta(\''+c.id+'\',this)">Copy</button></div>'+
+      '</div>';
+    }
+
+    if(f === 'all') {
+      const knownCats = ['urgency','scarcity','price','social-proof','soft','curiosity'];
+      const extraCats = [...new Set(filtered.map(c => normCat(c.cat)).filter(c => !knownCats.includes(c) && c))];
+      const allCats = [...knownCats, ...extraCats];
+      let html = '';
+      allCats.forEach(cat => {
+        const ch = filtered.filter(c => normCat(c.cat) === cat);
+        if(!ch.length) return;
+        const label = CAT_LABEL[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1).replace(/-/g,' '));
+        html += '<div class="section-wrap"><div class="section-head"><div class="section-title">'+label+'</div><div class="section-line"></div><div class="section-count">'+ch.length+'</div></div><div class="ctas-grid">'+ch.map(ctaCard).join('')+'</div></div>';
+      });
+      el.innerHTML = html || '<div class="empty"><div class="empty-title">No results</div></div>';
+    } else {
+      el.innerHTML = '<div class="ctas-grid">'+filtered.map(ctaCard).join('')+'</div>';
+    }
+    updateCtaEditToolbar();
+  }
+
+  window.renderCtas = renderCtas;
+
+  window.updateCtaEditToolbar = function() {
+    const toolbar = document.getElementById('ctaEditToolbar');
+    const count = document.getElementById('ctaEditCount');
+    const deleteBtn = document.getElementById('deleteSelectedCtasBtn');
+    const editBtn = document.getElementById('editCtasBtn');
+    if(toolbar) toolbar.classList.toggle('open', _editCtasMode);
+    if(count) count.textContent = `${_selectedCtaIds.size} selected`;
+    if(deleteBtn) deleteBtn.disabled = _selectedCtaIds.size === 0;
+    if(editBtn) editBtn.textContent = _editCtasMode ? 'Done Editing' : 'Edit CTAs';
+  };
+
+  window.toggleCtaEditMode = function() {
+    _editCtasMode = !_editCtasMode;
+    if(!_editCtasMode) _selectedCtaIds.clear();
+    renderCtas();
+  };
+  window.handleCtaCardClick = function(id) {
+    if(!_editCtasMode) return;
+    if(_selectedCtaIds.has(id)) _selectedCtaIds.delete(id);
+    else _selectedCtaIds.add(id);
+    renderCtas();
+  };
+  window.selectAllVisibleCtas = function() {
+    _visibleCtaIds.forEach(id => _selectedCtaIds.add(id));
+    renderCtas();
+  };
+  window.clearCtaSelection = function() {
+    _selectedCtaIds.clear();
+    renderCtas();
+  };
+  window.deleteSelectedCtas = async function() {
+    const ids = Array.from(_selectedCtaIds);
+    if(!ids.length) return;
+    if(!confirm(`Delete ${ids.length} selected CTA${ids.length === 1 ? '' : 's'}?`)) return;
+    const btn = document.getElementById('deleteSelectedCtasBtn');
+    btn.disabled = true; btn.textContent = 'Deleting...';
+    const { error } = await db.from('ctas').delete().in('id', ids).eq('user_id', user.id);
+    if(error){ showToast(error.message,'error'); btn.disabled=false; btn.textContent='Delete Selected'; return; }
+    showToast(`${ids.length} CTA${ids.length===1?'':'s'} deleted`);
+    _selectedCtaIds.clear();
+    _editCtasMode = false;
+    btn.textContent = 'Delete Selected';
+    renderCtas();
+  };
+  window.setFilter = function(el, f) {
+    window._filter = f;
+    document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.f === f));
+    renderCtas();
+  };
+  window.addCta = async function() {
+    const text = document.getElementById('ctaInput').value.trim();
+    if(!text) return;
+    const cat = document.getElementById('ctaCat').value;
+    const { error } = await db.from('ctas').insert({ user_id: user.id, text, cat });
+    if(error){ showToast(error.message,'error'); return; }
+    document.getElementById('ctaInput').value = '';
+    showToast('CTA saved'); renderCtas();
+  };
+  window.delCta = async function(id) {
+    await db.from('ctas').delete().eq('id', id).eq('user_id', user.id);
+    showToast('Deleted'); renderCtas();
+  };
+  window.copyCta = async function(id, btn) {
+    const { data } = await db.from('ctas').select('text').eq('id', id).single();
+    if(data){ navigator.clipboard.writeText(data.text).then(()=>{ btn.textContent='Copied!'; btn.classList.add('copied'); setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000); }); }
+  };
+  document.getElementById('ctaInput').addEventListener('keydown', e => enterSaves(e, window.addCta));
+  await renderCtas();
+}
+init();
+</script>
+</body>
+</html>
