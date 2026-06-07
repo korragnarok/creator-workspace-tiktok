@@ -1,5 +1,5 @@
 // ─── Creator Hub Service Worker ───────────────────────────────────────────────
-const CACHE = 'creator-hub-v34';
+const CACHE = 'creator-hub-v35';
 
 // Core files to cache for offline shell
 const PRECACHE = [
