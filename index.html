@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=33"></script>
+<script src="theme-init.js?v=34"></script>
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -252,7 +252,7 @@ button,input{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=33"></script>
+<script src="supabase.js?v=34"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -378,10 +378,10 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=33"></script>
+<script src="layout.js?v=34"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
-let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0;
+let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0, _streakGoal=1;
 function fmtMoney(n){if(!n||n===0)return'$0';return'$'+Math.ceil(Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
 function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
@@ -496,6 +496,7 @@ async function init() {
   if (!user) return;
   _dashboardUser=user;
   const prefs = await loadUserPrefs(user.id);
+  _streakGoal = resolveStreakGoal(user, prefs);
   await initDisplayName(user, prefs);
   await initCore5(user.id, prefs);
   await initTheme(user.id, prefs);
@@ -579,20 +580,24 @@ async function init() {
   // Mini mobile ladder: current tier plus the next three tiers.
   renderMiniLadder(lvlIdx, monthGmv);
 
-  // Streak: consecutive days with at least one posted video in Content Tracker.
-  const streak = calcStreak(_dashboardVideos, todayStr);
+  // Streak: consecutive days that meet the user's Content Tracker video goal.
+  const streak = calcStreak(_dashboardVideos, todayStr, _streakGoal);
   setText('s-streak', `${streak} 🔥`);
 
   renderSalesChart(labels,commData,gmvData);
 }
 
-function calcStreak(rows, todayStr) {
-  const dateSet = new Set(rows.map(r => r.date));
+function calcStreak(rows, todayStr, goal = 1) {
+  const dailyGoal = _normalizeStreakGoal(goal);
+  const dateCounts = rows.reduce((counts, row) => {
+    if (row.date) counts[row.date] = (counts[row.date] || 0) + 1;
+    return counts;
+  }, {});
   let streak = 0;
   const d = new Date(todayStr);
   while(true) {
     const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    if(dateSet.has(key)) { streak++; d.setDate(d.getDate()-1); }
+    if((dateCounts[key] || 0) >= dailyGoal) { streak++; d.setDate(d.getDate()-1); }
     else break;
   }
   return streak;
@@ -750,7 +755,7 @@ async function clearDoneToday(){
   await db.from('queue').delete().in('id',doneItems.map(item=>item.id));
   _todayQueue=_todayQueue.filter(q=>!q.done);
   _dashboardVideos=[...rows.map((row,i)=>({id:'local-'+doneItems[i].id,...row})),..._dashboardVideos];
-  setText('s-streak', `${calcStreak(_dashboardVideos, todayKey)} 🔥`);
+  setText('s-streak', `${calcStreak(_dashboardVideos, todayKey, _streakGoal)} 🔥`);
   _doneToday=0;
   renderTodayContent();
   showToast('Saved to Content Tracker');

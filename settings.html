@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=33"></script>
+<script src="theme-init.js?v=34"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
@@ -120,7 +120,7 @@ body{overflow-x:hidden;}
 @media(max-width:768px){nav{padding:0 20px;}.nav-links{display:none;}.page{padding:80px 16px 24px;}.page-title{font-size:36px;}.theme-grid{grid-template-columns:1fr;}.tab-bar{display:flex;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=33"></script>
+<script src="supabase.js?v=34"></script>
 </head>
 <body>
 <nav>
@@ -156,6 +156,17 @@ body{overflow-x:hidden;}
       <div class="form-hint">Shows in your dashboard greeting and sidebar.</div>
     </div>
     <button class="btn btn-primary" id="saveNameBtn" onclick="saveName()">Save Name</button>
+  </div>
+
+  <!-- Streak Goal -->
+  <div class="settings-section">
+    <div class="section-title">Daily Streak Goal</div>
+    <div class="form-group">
+      <label class="form-label">Videos Per Day</label>
+      <input type="number" class="form-input" id="streakGoalInput" min="1" max="50" step="1" value="1">
+      <div class="form-hint">How many videos need to be added to Content Tracker each day to keep your streak alive.</div>
+    </div>
+    <button class="btn btn-primary" id="saveStreakGoalBtn" onclick="saveStreakGoalSetting()">Save Streak Goal</button>
   </div>
 
   <!-- Theme -->
@@ -255,7 +266,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=33"></script>
+<script src="layout.js?v=34"></script>
 <script>
 let _user = null, _prefs = null;
 
@@ -365,6 +376,19 @@ async function saveName() {
   showToast(error && metaError ? 'Name saved on this browser only' : 'Name updated', error && metaError ? 'error' : 'success');
 }
 
+async function saveStreakGoalSetting() {
+  const input = document.getElementById('streakGoalInput');
+  const btn = document.getElementById('saveStreakGoalBtn');
+  const goal = _normalizeStreakGoal(input.value);
+  input.value = goal;
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const { error } = await saveStreakGoal(_user.id, goal);
+  const { error: metaError } = await db.auth.updateUser({ data: { streak_goal: goal } });
+  _prefs = { ...(_prefs || {}), streak_goal: goal };
+  btn.disabled = false; btn.textContent = 'Save Streak Goal';
+  showToast(error && metaError ? 'Streak goal saved on this browser only' : 'Streak goal updated', error && metaError ? 'error' : 'success');
+}
+
 async function savePassword() {
   const np = document.getElementById('newPass').value;
   const cp = document.getElementById('confirmPass').value;
@@ -404,6 +428,8 @@ async function init() {
   document.getElementById('nameInput').value = savedName;
   const currentName = document.getElementById('currentDisplayName');
   if (currentName) currentName.textContent = savedName || 'Not set yet';
+  const streakInput = document.getElementById('streakGoalInput');
+  if (streakInput) streakInput.value = resolveStreakGoal(_user, _prefs);
 
   const activeTheme = document.documentElement.dataset.theme || _prefs.theme || DEFAULT_THEME;
   buildThemeGrid(activeTheme);
@@ -412,6 +438,7 @@ async function init() {
 
 document.addEventListener('keydown', e => {
   if (document.activeElement === document.getElementById('nameInput')) enterSaves(e, saveName);
+  if (document.activeElement === document.getElementById('streakGoalInput')) enterSaves(e, saveStreakGoalSetting);
   if (document.activeElement === document.getElementById('newPass') || document.activeElement === document.getElementById('confirmPass')) enterSaves(e, savePassword);
 });
 

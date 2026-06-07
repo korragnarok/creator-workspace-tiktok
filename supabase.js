@@ -4,6 +4,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+const DEFAULT_STREAK_GOAL = 1;
 
 function enterSaves(e, saveFn) {
   if (!e || e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return false;
@@ -271,6 +272,7 @@ async function loadUserPrefs(userId) {
       core5: [],
       theme,
       profile_icon: '',
+      streak_goal: _cachedStreakGoal(userId),
       _isNewPrefs: false
     };
     rows.forEach(row => {
@@ -278,18 +280,21 @@ async function loadUserPrefs(userId) {
       if (Array.isArray(row.core5) && row.core5.some(value => String(value || '').trim())) merged.core5 = row.core5;
       if (THEMES[row.theme]) merged.theme = row.theme;
       if (row.profile_icon) merged.profile_icon = row.profile_icon;
+      merged.streak_goal = _normalizeStreakGoal(row.streak_goal, merged.streak_goal);
     });
     return { ...merged, core5: _resolveCore5(userId, merged.core5) };
   }
   const cachedCore5 = _cachedCore5(userId);
-  await saveUserPrefs(userId, { display_name: '', core5: cachedCore5, theme });
-  return { display_name: null, core5: cachedCore5, theme, profile_icon: _cachedAvatarUrl(userId) || _cachedProfileIcon(userId), _isNewPrefs: true };
+  const streakGoal = _cachedStreakGoal(userId);
+  await saveUserPrefs(userId, { display_name: '', core5: cachedCore5, theme, streak_goal: streakGoal });
+  return { display_name: null, core5: cachedCore5, theme, profile_icon: _cachedAvatarUrl(userId) || _cachedProfileIcon(userId), streak_goal: streakGoal, _isNewPrefs: true };
 }
 
 async function saveUserPrefs(userId, patch) {
   if (!userId) return { error: new Error('Missing user id') };
   const cleanPatch = { ...patch };
   if ('core5' in cleanPatch) cleanPatch.core5 = _normalizeCore5(cleanPatch.core5);
+  if ('streak_goal' in cleanPatch) cleanPatch.streak_goal = _normalizeStreakGoal(cleanPatch.streak_goal);
   const { data: updated, error: updateError } = await db.from('user_prefs')
     .update(cleanPatch)
     .eq('user_id', userId)
@@ -303,6 +308,36 @@ async function saveUserPrefs(userId, patch) {
     .insert({ user_id: userId, display_name: '', core5: [], theme: _cachedTheme() || DEFAULT_THEME, ...cleanPatch });
   if (insertError) console.warn('Preference insert failed', insertError);
   return { error: insertError || null };
+}
+
+function _streakGoalKey(userId) {
+  return `creatorHub:streakGoal:${userId || 'local'}`;
+}
+
+function _normalizeStreakGoal(value, fallback = DEFAULT_STREAK_GOAL) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(50, Math.max(1, parsed));
+}
+
+function _cachedStreakGoal(userId) {
+  try { return _normalizeStreakGoal(localStorage.getItem(_streakGoalKey(userId))); }
+  catch(e) { return DEFAULT_STREAK_GOAL; }
+}
+
+function _metadataStreakGoal(user) {
+  return _normalizeStreakGoal(user?.user_metadata?.streak_goal);
+}
+
+function resolveStreakGoal(user, prefs) {
+  return _normalizeStreakGoal(prefs?.streak_goal || user?.user_metadata?.streak_goal || _cachedStreakGoal(user?.id));
+}
+
+async function saveStreakGoal(userId, value) {
+  const goal = _normalizeStreakGoal(value);
+  try { localStorage.setItem(_streakGoalKey(userId), String(goal)); } catch(e) {}
+  const { error } = await saveUserPrefs(userId, { streak_goal: goal });
+  return { goal, error };
 }
 
 // ─── Display Name ─────────────────────────────────────────────────────────────

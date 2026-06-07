@@ -108,6 +108,7 @@ create table if not exists user_prefs (
   core5 jsonb default '[]'::jsonb,
   theme text default 'dusk',
   profile_icon text default 'icon-1',
+  streak_goal integer default 1,
   updated_at timestamptz default now()
 );
 alter table user_prefs enable row level security;
@@ -116,6 +117,8 @@ create policy "Users manage own prefs" on user_prefs for all using (auth.uid() =
 alter table user_prefs add column if not exists theme text default 'dusk';
 
 alter table user_prefs add column if not exists profile_icon text default 'icon-1';
+
+alter table user_prefs add column if not exists streak_goal integer default 1;
 
 -- ── 9. STORAGE — avatars bucket ─────────────────────────────────────────────
 -- Run this in Supabase SQL Editor (Storage policies need SQL, not the UI).
