@@ -84,12 +84,14 @@ create table if not exists queue (
   name text not null,
   brand text default '',
   notes text default '',
+  inspiration_links jsonb default '[]'::jsonb,
   done boolean default false,
   sort_order integer default 0,
   created_at timestamptz default now()
 );
 alter table queue enable row level security;
 create policy "Users manage own queue" on queue for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+alter table queue add column if not exists inspiration_links jsonb default '[]'::jsonb;
 
 -- ── 7. IDEAS ────────────────────────────────────────────────────────────────
 create table if not exists ideas (

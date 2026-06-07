@@ -75,7 +75,7 @@
     if (document.querySelector('link[data-shared-layout-styles], link[href*="layout.css"]')) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'layout.css?v=51';
+    link.href = 'layout.css?v=52';
     link.dataset.sharedLayoutStyles = 'true';
     document.head.appendChild(link);
   }

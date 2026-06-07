@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=51"></script>
-<link rel="stylesheet" href="layout.css?v=51">
+<script src="theme-init.js?v=52"></script>
+<link rel="stylesheet" href="layout.css?v=52">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=51"></script>
+<script src="supabase.js?v=52"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -254,7 +254,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=51"></script>
+<script src="layout.js?v=52"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -338,7 +338,7 @@ async function loadQueue(){
   (data||[]).forEach(row=>{
     const key=row.prod_id||('_n_'+row.name);
     if(!cardMap[key])cardMap[key]={id:'c-'+key,prodId:row.prod_id,name:row.name,brand:row.brand||'',script:'',takes:[]};
-    cardMap[key].takes.push({id:'t-'+row.id,queueId:row.id,hookText:row.notes||'',script:'',inspirationLinks:[],done:row.done,sortOrder:row.sort_order,editingScript:false});
+    cardMap[key].takes.push({id:'t-'+row.id,queueId:row.id,hookText:row.notes||'',script:'',inspirationLinks:normalizeInspirationLinks(row.inspiration_links),done:row.done,sortOrder:row.sort_order,editingScript:false});
   });
   TODO=Object.values(cardMap);
   TODO.forEach(card=>{
@@ -349,14 +349,34 @@ async function loadQueue(){
 }
 
 async function saveQueueRow(card,take){
-  const payload={user_id:_user.id,date:currentKey(),prod_id:card.prodId||null,name:card.name,brand:card.brand||'',notes:take.hookText||'',done:take.done||false,sort_order:take.sortOrder||0};
-  if(take.queueId){await db.from('queue').update(payload).eq('id',take.queueId);}
-  else{const{data}=await db.from('queue').insert(payload).select('id').single();if(data)take.queueId=data.id;}
+  const payload={user_id:_user.id,date:currentKey(),prod_id:card.prodId||null,name:card.name,brand:card.brand||'',notes:take.hookText||'',inspiration_links:normalizeInspirationLinks(take.inspirationLinks),done:take.done||false,sort_order:take.sortOrder||0};
+  const save = take.queueId
+    ? () => db.from('queue').update(payload).eq('id',take.queueId)
+    : () => db.from('queue').insert(payload).select('id').single();
+  let { data, error } = await save();
+  if(error && /inspiration_links/i.test(error.message || '')){
+    const { inspiration_links, ...fallbackPayload } = payload;
+    const fallback = take.queueId
+      ? await db.from('queue').update(fallbackPayload).eq('id',take.queueId)
+      : await db.from('queue').insert(fallbackPayload).select('id').single();
+    data = fallback.data;
+    error = fallback.error;
+  }
+  if(!take.queueId && data) take.queueId=data.id;
+  if(error) console.warn('Queue save failed', error);
 }
 async function deleteQueueRow(take){if(take.queueId){await db.from('queue').delete().eq('id',take.queueId);sessionStorage.removeItem('ts-'+take.queueId);}}
 
 // ─── RENDER ───────────────────────────────────────────────
 function getFilteredCards(){return activeBrandFilter==='All'?TODO:TODO.filter(c=>(c.brand||'')=== activeBrandFilter);}
+function normalizeInspirationLinks(value){
+  if(Array.isArray(value)) return value.map(normalizeUrl).filter(Boolean);
+  if(typeof value==='string'){
+    try { return normalizeInspirationLinks(JSON.parse(value)); } catch(e) {}
+    return value.split(',').map(normalizeUrl).filter(Boolean);
+  }
+  return [];
+}
 
 function render(){
   renderWeekStrip();
@@ -515,15 +535,17 @@ function copyAllScripts(btn){
   navigator.clipboard.writeText(all.join('\n\n---\n\n')).then(()=>{btn.textContent='✓ Copied!';setTimeout(()=>btn.textContent='📋 Copy All',2000);showToast(`Copied ${all.length} script${all.length>1?'s':''}`);});
 }
 
-function addInspirationLink(cardId,takeId){
+async function addInspirationLink(cardId,takeId){
   const input=document.getElementById('insp-'+takeId);if(!input)return;
   const url=normalizeUrl(input.value);if(!url)return;
-  const take=TODO.find(c=>c.id===cardId)?.takes.find(t=>t.id===takeId);if(!take)return;
+  const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);if(!take)return;
   take.inspirationLinks=[...(take.inspirationLinks||[]),url];input.value='';render();
+  if(take.queueId)await saveQueueRow(card,take);
 }
-function removeInspirationLink(cardId,takeId,index){
-  const take=TODO.find(c=>c.id===cardId)?.takes.find(t=>t.id===takeId);if(!take)return;
+async function removeInspirationLink(cardId,takeId,index){
+  const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);if(!take)return;
   take.inspirationLinks=(take.inspirationLinks||[]).filter((_,i)=>i!==index);render();
+  if(take.queueId)await saveQueueRow(card,take);
 }
 
 function saveScriptEdit(cid,tid){
