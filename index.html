@@ -581,7 +581,7 @@ async function init() {
 
   // Streak: consecutive days with at least one posted video in Content Tracker.
   const streak = calcStreak(_dashboardVideos, todayStr);
-  setText('s-streak', String(streak));
+  setText('s-streak', `${streak} 🔥`);
 
   renderSalesChart(labels,commData,gmvData);
 }
@@ -750,7 +750,7 @@ async function clearDoneToday(){
   await db.from('queue').delete().in('id',doneItems.map(item=>item.id));
   _todayQueue=_todayQueue.filter(q=>!q.done);
   _dashboardVideos=[...rows.map((row,i)=>({id:'local-'+doneItems[i].id,...row})),..._dashboardVideos];
-  setText('s-streak', String(calcStreak(_dashboardVideos, todayKey)));
+  setText('s-streak', `${calcStreak(_dashboardVideos, todayKey)} 🔥`);
   _doneToday=0;
   renderTodayContent();
   showToast('Saved to Content Tracker');
