@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Products — Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=39"></script>
-<link rel="stylesheet" href="layout.css?v=39">
+<script src="theme-init.js?v=40"></script>
+<link rel="stylesheet" href="layout.css?v=40">
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -103,6 +103,12 @@ tbody td{padding:14px 16px;color:var(--text-mid);vertical-align:middle;}
 .shop-link:hover{color:var(--rust);}
 .tbl-action{border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;}
 .tbl-action:hover{border-color:var(--rust);color:var(--rust);}
+.editable-cell{display:inline-flex;align-items:center;min-height:30px;max-width:260px;border:1px solid transparent;border-radius:7px;padding:3px 7px;margin:-3px -7px;cursor:text;transition:border-color 0.12s,background 0.12s;color:inherit;}
+.editable-cell:hover{border-color:var(--border-mid);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);}
+.editable-cell.stock-badge{cursor:pointer;margin:0;}
+.inline-editor{width:100%;min-width:96px;border:1px solid var(--sage);border-radius:7px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:13px;padding:6px 8px;outline:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--sage) 18%,transparent);}
+td.num .inline-editor{max-width:96px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:800;}
+.features-cell .editable-cell{display:flex;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .prod-select{display:none;width:22px;height:22px;border:2px solid var(--border-mid);border-radius:7px;background:var(--bg-lift);align-items:center;justify-content:center;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;flex-shrink:0;}
 tr.select-mode .prod-select{display:inline-flex;}
 tr.selected .prod-select{background:var(--rust);border-color:var(--rust);}
@@ -117,7 +123,7 @@ tr.select-mode .tbl-action{display:none;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=39"></script>
+<script src="supabase.js?v=40"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand">Creator Hub</a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link active">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -191,7 +197,7 @@ tr.select-mode .tbl-action{display:none;}
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=39"></script>
+<script src="layout.js?v=40"></script>
 <script>
 function previewProductImg(input) {
   const file = input.files[0];
@@ -258,12 +264,12 @@ async function init() {
       const hasCore = isCoreProduct(p);
       const link = String(p.link || '').trim();
       return '<tr class="'+(_editProductsMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleProductRowClick(\''+p.id+'\')">'+
-        '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span>'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Hero</span>':'')+'</div></td>'+
-        '<td>'+esc(p.brand||'-')+'</td>'+
-        '<td><span class="stock-badge '+(inStock?'stock-in':'stock-out')+'">'+(inStock?'In Stock':'Out of Stock')+'</span></td>'+
-        '<td class="num"><span class="sold-value">'+(Number(p.units_sold)||0).toLocaleString()+'</span></td>'+
+        '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'name\')">'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Hero</span>':'')+'</div></td>'+
+        '<td><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'brand\')">'+esc(p.brand||'-')+'</span></td>'+
+        '<td><span class="editable-cell stock-badge '+(inStock?'stock-in':'stock-out')+'" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'status\')">'+productStockLabel(p)+'</span></td>'+
+        '<td class="num"><span class="editable-cell sold-value" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'units_sold\')">'+(Number(p.units_sold)||0).toLocaleString()+'</span></td>'+
         '<td class="num"><span class="gmv-value">'+(gmv?fmtMoney(gmv):'-')+'</span></td>'+
-        '<td><div class="features-cell">'+esc(productFeatures(p))+'</div></td>'+
+        '<td><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
         '<td>'+(link?'<a class="shop-link" href="'+escAttr(link)+'" target="_blank" rel="noopener">Shop ↗</a>':'-')+'</td>'+
         '<td><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button></td>'+
       '</tr>';
@@ -306,6 +312,12 @@ async function init() {
   function productInStock(p) {
     return String(p.status || 'active') !== 'paused';
   }
+  function productStockLabel(p) {
+    const status = String(p.status || 'active');
+    if(status === 'paused') return 'Out of Stock';
+    if(status === 'promote') return 'Promote Now';
+    return 'In Stock';
+  }
   function productGmv(p) {
     return Number(p.gmv || p.gmv_30d || p.total_gmv || 0);
   }
@@ -315,7 +327,7 @@ async function init() {
   function productFeatures(p) {
     const tags = String(p.tags || '').split(',').map(t => t.trim()).filter(Boolean).join(', ');
     const notes = String(p.notes || '').trim().replace(/\s+/g, ' ');
-    return tags || notes || '-';
+    return notes || tags || '-';
   }
   function isCoreProduct(p) {
     const name = String(p.name || '').trim().toLowerCase();
@@ -430,6 +442,69 @@ async function init() {
       _sortDir = (field === 'sold' || field === 'gmv') ? -1 : 1;
     }
     renderProducts();
+  };
+
+  window.beginProductInlineEdit = function(event, id, field) {
+    if(_editProductsMode) return;
+    event.stopPropagation();
+    const p = _allProducts.find(row => row.id === id);
+    const host = event.currentTarget;
+    if(!p || !host || host.querySelector('.inline-editor')) return;
+    const originalHtml = host.innerHTML;
+    const originalValue = field === 'status'
+      ? String(p.status || 'active')
+      : field === 'units_sold'
+        ? String(Number(p.units_sold) || 0)
+        : String(p[field] || '');
+
+    let editor;
+    if(field === 'status') {
+      editor = document.createElement('select');
+      editor.innerHTML = '<option value="active">In Stock</option><option value="paused">Out of Stock</option><option value="promote">Promote Now</option>';
+      editor.value = originalValue;
+    } else {
+      editor = document.createElement('input');
+      editor.type = field === 'units_sold' ? 'number' : 'text';
+      if(field === 'units_sold') { editor.min = '0'; editor.step = '1'; }
+      editor.value = originalValue;
+    }
+    editor.className = 'inline-editor';
+    host.innerHTML = '';
+    host.appendChild(editor);
+    editor.focus();
+    if(editor.select) editor.select();
+
+    let saved = false;
+    const cancel = () => { if(!saved) host.innerHTML = originalHtml; };
+    const save = async () => {
+      if(saved) return;
+      saved = true;
+      const next = field === 'units_sold' ? Math.max(0, parseInt(editor.value, 10) || 0) : editor.value.trim();
+      if(field === 'name' && !next) {
+        saved = false;
+        editor.focus();
+        showToast('Product name cannot be blank', 'error');
+        return;
+      }
+      const patch = {};
+      patch[field] = next;
+      const { error } = await db.from('products').update(patch).eq('id', id).eq('user_id', user.id);
+      if(error) {
+        showToast(error.message, 'error');
+        host.innerHTML = originalHtml;
+        return;
+      }
+      Object.assign(p, patch);
+      showToast('Product updated');
+      renderProducts();
+    };
+    editor.addEventListener('click', e => e.stopPropagation());
+    editor.addEventListener('keydown', e => {
+      if(e.key === 'Enter') { e.preventDefault(); save(); }
+      if(e.key === 'Escape') { e.preventDefault(); saved = true; host.innerHTML = originalHtml; }
+    });
+    editor.addEventListener('blur', save);
+    if(field === 'status') editor.addEventListener('change', save);
   };
 
   window.openModal = async function(id) {
