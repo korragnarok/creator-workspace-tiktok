@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=52"></script>
-<link rel="stylesheet" href="layout.css?v=52">
+<script src="theme-init.js?v=53"></script>
+<link rel="stylesheet" href="layout.css?v=53">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=52"></script>
+<script src="supabase.js?v=53"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -74,9 +74,11 @@ a{text-decoration:none;color:inherit;}
 
 .cards-list{display:flex;flex-direction:column;gap:14px;}
 .pcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
-.pcard-header{background:color-mix(in srgb,var(--surface) 55%,var(--bg) 45%);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);}
-.pcard-name{font-family:'Stack Sans Notch',sans-serif;font-size:15px;font-weight:800;color:var(--ink);}
-.pcard-brand{font-size:11px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.07em;text-transform:uppercase;margin-top:2px;}
+	.pcard-header{background:color-mix(in srgb,var(--surface) 55%,var(--bg) 45%);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);}
+	.pcard-name{font-family:'Stack Sans Notch',sans-serif;font-size:15px;font-weight:800;color:var(--ink);}
+	.pcard-name a{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color 0.12s,color 0.12s;}
+	.pcard-name a:hover{color:var(--rust);border-bottom-color:var(--rust);}
+	.pcard-brand{font-size:11px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.07em;text-transform:uppercase;margin-top:2px;}
 .pcard-btns{display:flex;gap:6px;flex-shrink:0;align-items:center;}
 .hbtn{background:color-mix(in srgb,var(--surface) 68%,var(--bg) 32%);border:1px solid var(--border-mid);border-radius:6px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.12s;}
 .hbtn:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
@@ -254,7 +256,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=52"></script>
+<script src="layout.js?v=53"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -369,6 +371,11 @@ async function deleteQueueRow(take){if(take.queueId){await db.from('queue').dele
 
 // ─── RENDER ───────────────────────────────────────────────
 function getFilteredCards(){return activeBrandFilter==='All'?TODO:TODO.filter(c=>(c.brand||'')=== activeBrandFilter);}
+function productBankUrl(card){
+  const brand=String(card?.brand||'').trim();
+  if(brand)return 'products.html?brand='+encodeURIComponent(brand);
+  return 'products.html?search='+encodeURIComponent(String(card?.name||'').trim());
+}
 function normalizeInspirationLinks(value){
   if(Array.isArray(value)) return value.map(normalizeUrl).filter(Boolean);
   if(typeof value==='string'){
@@ -410,12 +417,12 @@ function render(){
   }
 
   let html='<div class="cards-list">';
-  filtered.forEach(card=>{
-    const takes=card.takes||[],doneTakes=takes.filter(t=>t.done).length;
-    html+=`<div class="pcard" id="${esc(card.id)}">
-      <div class="pcard-header">
-        <div><div class="pcard-name">${esc(card.name)}</div>${card.brand?`<div class="pcard-brand">${esc(card.brand)}</div>`:''}</div>
-        <div class="pcard-btns">
+	  filtered.forEach(card=>{
+	    const takes=card.takes||[],doneTakes=takes.filter(t=>t.done).length;
+	    html+=`<div class="pcard" id="${esc(card.id)}">
+	      <div class="pcard-header">
+	        <div><div class="pcard-name"><a href="${esc(productBankUrl(card))}" title="View this brand in Products">${esc(card.name)}</a></div>${card.brand?`<div class="pcard-brand">${esc(card.brand)}</div>`:''}</div>
+	        <div class="pcard-btns">
           <span style="font-family:'Noto Sans Mono',sans-serif;font-size:11px;color:var(--text-muted);padding:0 4px;">${doneTakes}/${takes.length}</span>
           <button class="hbtn danger" onclick="removeCard('${esc(card.id)}')">Remove</button>
         </div>
