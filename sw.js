@@ -1,5 +1,5 @@
 // ─── Creator Hub Service Worker ───────────────────────────────────────────────
-const CACHE = 'creator-hub-v35';
+const CACHE = 'creator-hub-v36';
 
 // Core files to cache for offline shell
 const PRECACHE = [
@@ -16,6 +16,7 @@ const PRECACHE = [
   '/theme-init.js',
   '/supabase.js',
   '/layout.js',
+  '/layout.css',
   '/manifest.json',
   '/apple-touch-icon.png',
   '/icons/pwa/apple-touch-icon.png',
