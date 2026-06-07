@@ -95,6 +95,10 @@ alter table queue enable row level security;
 create policy "Users manage own queue" on queue for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 alter table queue add column if not exists inspiration_links jsonb default '[]'::jsonb;
 
+-- ── 12. QUEUE SCRIPT COLUMN ─────────────────────────────────────────────────
+-- Stores per-take script text so it syncs across devices
+alter table queue add column if not exists script text default '';
+
 -- ── 7. IDEAS ────────────────────────────────────────────────────────────────
 create table if not exists ideas (
   id uuid default gen_random_uuid() primary key,

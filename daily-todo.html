@@ -340,18 +340,13 @@ async function loadQueue(){
   (data||[]).forEach(row=>{
     const key=row.prod_id||('_n_'+row.name);
     if(!cardMap[key])cardMap[key]={id:'c-'+key,prodId:row.prod_id,name:row.name,brand:row.brand||'',script:'',takes:[]};
-    cardMap[key].takes.push({id:'t-'+row.id,queueId:row.id,hookText:row.notes||'',script:'',inspirationLinks:normalizeInspirationLinks(row.inspiration_links),done:row.done,sortOrder:row.sort_order,editingScript:false});
+    cardMap[key].takes.push({id:'t-'+row.id,queueId:row.id,hookText:row.notes||'',script:row.script||'',inspirationLinks:normalizeInspirationLinks(row.inspiration_links),done:row.done,sortOrder:row.sort_order,editingScript:false});
   });
   TODO=Object.values(cardMap);
-  TODO.forEach(card=>{
-    const s=sessionStorage.getItem('script-'+card.id+'-'+currentKey());
-    if(s)card.script=s;
-    card.takes.forEach(take=>{const ts=sessionStorage.getItem('ts-'+take.queueId);if(ts)take.script=ts;});
-  });
 }
 
 async function saveQueueRow(card,take){
-  const payload={user_id:_user.id,date:currentKey(),prod_id:card.prodId||null,name:card.name,brand:card.brand||'',notes:take.hookText||'',inspiration_links:normalizeInspirationLinks(take.inspirationLinks),done:take.done||false,sort_order:take.sortOrder||0};
+  const payload={user_id:_user.id,date:currentKey(),prod_id:card.prodId||null,name:card.name,brand:card.brand||'',notes:take.hookText||'',script:take.script||'',inspiration_links:normalizeInspirationLinks(take.inspirationLinks),done:take.done||false,sort_order:take.sortOrder||0};
   const save = take.queueId
     ? () => db.from('queue').update(payload).eq('id',take.queueId)
     : () => db.from('queue').insert(payload).select('id').single();
@@ -567,13 +562,14 @@ async function removeInspirationLink(cardId,takeId,index){
 }
 
 function saveScriptEdit(cid,tid){
-  const take=TODO.find(c=>c.id===cid)?.takes.find(t=>t.id===tid);
+  const card=TODO.find(c=>c.id===cid);
+  const take=card?.takes.find(t=>t.id===tid);
   const ta=document.getElementById('sta-'+tid);
   if(take&&ta){
     take.script=ta.value.trim();
     take.editingScript=false;
-    if(take.queueId)sessionStorage.setItem('ts-'+take.queueId,take.script);
     render();
+    if(take.queueId) saveQueueRow(card,take);
   }
 }
 
@@ -676,9 +672,11 @@ function filterScripts(){
 }
 function selectScript(scriptId){
   const script=ALL_SCRIPTS.find(s=>s.id===scriptId);if(!script||!scriptTarget)return;
-  const take=TODO.find(c=>c.id===scriptTarget.cardId)?.takes.find(t=>t.id===scriptTarget.takeId);if(!take)return;
-  take.script=script.script;if(take.queueId)sessionStorage.setItem('ts-'+take.queueId,take.script);
+  const card=TODO.find(c=>c.id===scriptTarget.cardId);
+  const take=card?.takes.find(t=>t.id===scriptTarget.takeId);if(!take)return;
+  take.script=script.script;
   closeScriptModal();render();
+  if(take.queueId) saveQueueRow(card,take);
 }
 
 ['pickerModal','hookModal','scriptModal'].forEach(id=>{document.getElementById(id).addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});});
