@@ -320,6 +320,10 @@ function _normalizeStreakGoal(value, fallback = DEFAULT_STREAK_GOAL) {
   return Math.min(50, Math.max(1, parsed));
 }
 
+function _hasStreakGoalValue(value) {
+  return value !== undefined && value !== null && String(value).trim() !== '';
+}
+
 function _cachedStreakGoal(userId) {
   try { return _normalizeStreakGoal(localStorage.getItem(_streakGoalKey(userId))); }
   catch(e) { return DEFAULT_STREAK_GOAL; }
@@ -330,13 +334,16 @@ function _metadataStreakGoal(user) {
 }
 
 function resolveStreakGoal(user, prefs) {
-  return _normalizeStreakGoal(prefs?.streak_goal || user?.user_metadata?.streak_goal || _cachedStreakGoal(user?.id));
+  if (_hasStreakGoalValue(user?.user_metadata?.streak_goal)) return _normalizeStreakGoal(user.user_metadata.streak_goal);
+  if (_hasStreakGoalValue(prefs?.streak_goal)) return _normalizeStreakGoal(prefs.streak_goal);
+  return _cachedStreakGoal(user?.id);
 }
 
 async function saveStreakGoal(userId, value) {
   const goal = _normalizeStreakGoal(value);
   try { localStorage.setItem(_streakGoalKey(userId), String(goal)); } catch(e) {}
   const { error } = await saveUserPrefs(userId, { streak_goal: goal });
+  try { await db.auth.updateUser({ data: { streak_goal: goal } }); } catch(e) {}
   return { goal, error };
 }
 
