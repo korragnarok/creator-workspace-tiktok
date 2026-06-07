@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Videos &mdash; Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=40"></script>
-<link rel="stylesheet" href="layout.css?v=40">
+<script src="theme-init.js?v=42"></script>
+<link rel="stylesheet" href="layout.css?v=42">
 <style>
 
 :root{--r:12px;}
@@ -73,8 +73,9 @@ tbody td.muted{color:var(--text-muted);font-size:12px;}
 .tbl-action:hover{border-color:var(--rust);color:var(--rust);}
 .editable-cell{display:inline-flex;align-items:center;min-height:30px;max-width:260px;border:1px solid transparent;border-radius:7px;padding:3px 7px;margin:-3px -7px;cursor:text;transition:border-color 0.12s,background 0.12s;color:inherit;}
 .editable-cell:hover{border-color:var(--border-mid);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);}
-.editable-cell.status{cursor:pointer;margin:0;}
+.editable-cell.status{cursor:pointer;margin:0;justify-content:center;min-width:74px;text-align:center;}
 .inline-editor{width:100%;min-width:96px;border:1px solid var(--sage);border-radius:7px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:13px;padding:6px 8px;outline:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--sage) 18%,transparent);}
+.inline-editor.inline-select{min-width:88px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;text-transform:uppercase;text-align:center;cursor:pointer;}
 td.num .inline-editor{max-width:96px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:800;}
 .video-select{display:none;width:22px;height:22px;border:2px solid var(--border-mid);border-radius:7px;background:var(--bg-lift);align-items:center;justify-content:center;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;}
 tr.select-mode .video-select{display:inline-flex;}
@@ -82,7 +83,7 @@ tr.selected .video-select{background:var(--rust);border-color:var(--rust);}
 tr.selected .video-select::after{content:'✓';}
 tr.select-mode .video-id-text{display:none;}
 tr.select-mode .tbl-action{display:none;}
-.status{display:inline-block;padding:3px 10px;border-radius:100px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;}
+.status{display:inline-flex;align-items:center;justify-content:center;min-width:74px;padding:3px 10px;border-radius:100px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;text-align:center;}
 .status-yes{background:rgba(122,129,108,0.15);color:var(--sage);}
 .status-no{background:rgba(174,105,101,0.12);color:var(--rust);}
 .pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);}
@@ -134,7 +135,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=40"></script>
+<script src="supabase.js?v=42"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link active">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -202,7 +203,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=40"></script>
+<script src="layout.js?v=42"></script>
 <script>
 const PAGE_SIZE=25;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
@@ -369,17 +370,23 @@ function beginVideoInlineEdit(event, id, field) {
   const originalValue = field === 'hook' ? hook : String(row[field] || '');
 
   let editor;
-  if(field === 'status') {
+  if(field === 'status' || field === 'units') {
     editor = document.createElement('select');
-    editor.innerHTML = '<option value="live">Live</option><option value="scheduled">Scheduled</option><option value="draft">Draft</option>';
-    editor.value = row.status || 'live';
+    editor.className = 'inline-editor inline-select';
+    if(field === 'status') {
+      editor.innerHTML = '<option value="live">Live</option><option value="scheduled">Scheduled</option><option value="draft">Draft</option>';
+      editor.value = row.status || 'live';
+    } else {
+      editor.innerHTML = '<option value="0">No</option><option value="1">Yes</option>';
+      editor.value = (Number(row.units) || 0) > 0 ? '1' : '0';
+    }
   } else {
     editor = document.createElement('input');
     editor.type = field === 'date' ? 'date' : (field === 'views' || field === 'units' ? 'number' : 'text');
     if(field === 'views' || field === 'units') { editor.min = '0'; editor.step = '1'; }
     editor.value = originalValue;
   }
-  editor.className = 'inline-editor';
+  if(!editor.className) editor.className = 'inline-editor';
   host.innerHTML = '';
   host.appendChild(editor);
   editor.focus();
@@ -391,7 +398,8 @@ function beginVideoInlineEdit(event, id, field) {
     if(saved) return;
     saved = true;
     const patch = {};
-    if(field === 'views' || field === 'units') patch[field] = Math.max(0, parseInt(editor.value, 10) || 0);
+    if(field === 'views') patch[field] = Math.max(0, parseInt(editor.value, 10) || 0);
+    else if(field === 'units') patch.units = editor.value === '1' ? Math.max(1, Number(row.units) || 1) : 0;
     else if(field === 'hook') {
       const nextHook = editor.value.trim();
       patch.title = nextHook || row.title || '';
@@ -416,7 +424,7 @@ function beginVideoInlineEdit(event, id, field) {
     if(e.key === 'Escape') { e.preventDefault(); saved = true; host.innerHTML = originalHtml; }
   });
   editor.addEventListener('blur', save);
-  if(field === 'status') editor.addEventListener('change', save);
+  if(field === 'status' || field === 'units') editor.addEventListener('change', save);
 }
 
 function selectAllVisibleVideos(){

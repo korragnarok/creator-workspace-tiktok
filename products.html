@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Products — Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=40"></script>
-<link rel="stylesheet" href="layout.css?v=40">
+<script src="theme-init.js?v=42"></script>
+<link rel="stylesheet" href="layout.css?v=42">
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -123,7 +123,7 @@ tr.select-mode .tbl-action{display:none;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=40"></script>
+<script src="supabase.js?v=42"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand">Creator Hub</a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link active">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -197,7 +197,7 @@ tr.select-mode .tbl-action{display:none;}
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=40"></script>
+<script src="layout.js?v=42"></script>
 <script>
 function previewProductImg(input) {
   const file = input.files[0];
@@ -263,7 +263,7 @@ async function init() {
       const gmv = productGmv(p);
       const hasCore = isCoreProduct(p);
       const link = String(p.link || '').trim();
-      return '<tr class="'+(_editProductsMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleProductRowClick(\''+p.id+'\')">'+
+      return '<tr class="'+(_editProductsMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleProductRowClick(event,\''+p.id+'\')">'+
         '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'name\')">'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Hero</span>':'')+'</div></td>'+
         '<td><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'brand\')">'+esc(p.brand||'-')+'</span></td>'+
         '<td><span class="editable-cell stock-badge '+(inStock?'stock-in':'stock-out')+'" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'status\')">'+productStockLabel(p)+'</span></td>'+
@@ -389,7 +389,8 @@ async function init() {
     if(!_editProductsMode) _selectedProductIds.clear();
     renderProducts();
   };
-  window.handleProductCardClick = function(id) {
+  window.handleProductCardClick = function(event, id) {
+    if(event?.target?.closest?.('.editable-cell,.inline-editor,button,a')) return;
     if(!_editProductsMode) { openModal(id); return; }
     if(_selectedProductIds.has(id)) _selectedProductIds.delete(id);
     else _selectedProductIds.add(id);
@@ -445,8 +446,8 @@ async function init() {
   };
 
   window.beginProductInlineEdit = function(event, id, field) {
-    if(_editProductsMode) return;
     event.stopPropagation();
+    if(_editProductsMode) return;
     const p = _allProducts.find(row => row.id === id);
     const host = event.currentTarget;
     if(!p || !host || host.querySelector('.inline-editor')) return;
