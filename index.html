@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=24"></script>
+<script src="theme-init.js?v=30"></script>
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -79,7 +79,7 @@ button,input{font:inherit;}
 .stat-icon{width:44px;height:44px;border-radius:12px;background:rgba(209,169,165,0.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .stat-icon.sage{background:rgba(122,129,108,0.18);}
 .stat-icon.gold{background:rgba(201,168,122,0.22);}
-.stat-icon img{width:26px;height:26px;object-fit:contain;}
+.stat-icon img{width:34px;height:34px;object-fit:contain;}
 .stat-label{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);margin-bottom:2px;}
 .stat-icon.sage+.stat-body .stat-label{color:var(--sage);}
 .stat-body{min-width:0;}
@@ -102,9 +102,11 @@ button,input{font:inherit;}
 .tier-range{display:none;}
 .lineup-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow-sm);}
 .lineup-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.lineup-strip{display:flex;gap:12px;padding-bottom:4px;}
-.lineup-strip::-webkit-scrollbar{display:none;}
-.lineup-card{flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--bg-lift);border:1px solid var(--border-mid);border-radius:10px;padding:16px 12px;cursor:pointer;transition:border-color 0.15s;text-align:center;min-width:0;}
+.lineup-strip{display:flex;gap:12px;padding-bottom:8px;overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--border-mid) transparent;-webkit-overflow-scrolling:touch;}
+.lineup-strip::-webkit-scrollbar{height:8px;}
+.lineup-strip::-webkit-scrollbar-track{background:transparent;}
+.lineup-strip::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:999px;}
+.lineup-card{flex:0 0 calc((100% - 48px) / 5);display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--bg-lift);border:1px solid var(--border-mid);border-radius:10px;padding:16px 12px;cursor:pointer;transition:border-color 0.15s;text-align:center;min-width:130px;}
 .lineup-card:hover{border-color:var(--rust);}
 .lineup-card.done{opacity:0.45;}
 .lineup-img{width:100%;aspect-ratio:1;border-radius:8px;object-fit:cover;background:var(--surface);flex-shrink:0;max-width:140px;}
@@ -174,12 +176,11 @@ button,input{font:inherit;}
 .tab-icon-img{width:36px;height:36px;object-fit:contain;display:block;}
 .tab-profile-avatar{width:36px;height:36px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
 .mob-mini-ladder-wrap{display:none!important;}
-@media(max-width:1280px) and (min-width:981px){.top-layout{grid-template-columns:minmax(0,1fr) minmax(260px,340px);}.lower-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.lower-grid .mob-order-4{grid-column:1 / -1;}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.stat-card{padding:14px;gap:10px;}.stat-icon{width:44px;height:44px;}.stat-icon img{width:26px;height:26px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}.stat-value{font-size:26px;}.chart-wrap{height:200px;}}
+@media(max-width:1280px) and (min-width:981px){.top-layout{grid-template-columns:minmax(0,1fr) minmax(260px,340px);}.lower-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.lower-grid .mob-order-4{grid-column:1 / -1;}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.stat-card{padding:14px;gap:10px;}.stat-icon{width:44px;height:44px;}.stat-icon img{width:34px;height:34px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}.stat-value{font-size:26px;}.chart-wrap{height:200px;}}
 @media(max-width:980px){.top-layout{grid-template-columns:1fr;}.lower-grid{grid-template-columns:1fr 1fr;}.lower-grid .mob-order-4{grid-column:1 / -1;}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:768px){
   .main{display:flex;flex-direction:column;gap:14px;}
   .top-layout{display:contents;}
-  .lineup-strip{overflow-x:auto;scrollbar-width:none;}
   .lineup-card{flex:0 0 130px;}
   .lineup-img{max-width:100px;}
   .lower-grid{display:contents;}
@@ -200,7 +201,7 @@ button,input{font:inherit;}
   .stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
   .stat-card{min-height:0;padding:12px 8px;gap:6px;flex-direction:column;align-items:flex-start;}
   .stat-icon{width:34px;height:34px;border-radius:10px;}
-  .stat-icon img{width:20px;height:20px;}
+  .stat-icon img{width:26px;height:26px;}
   .stat-value{font-size:18px;}
   .stat-label{font-size:8px;letter-spacing:0.06em;}
   .stat-sub{font-size:10px;}
@@ -226,8 +227,7 @@ button,input{font:inherit;}
   .mob-mini-ladder-wrap{display:block!important;}
 
   /* Lineup 3 cards */
-  .lineup-strip{overflow-x:visible;}
-  .lineup-card{flex:1;min-width:0;}
+  .lineup-card{flex:0 0 calc((100% - 24px) / 3);min-width:108px;}
   .lineup-img{max-width:none;}
 
   /* Top product icons bigger */
@@ -250,7 +250,7 @@ button,input{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=24"></script>
+<script src="supabase.js?v=30"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -285,7 +285,7 @@ button,input{font:inherit;}
               <div class="stat-body"><div class="stat-label">To Do</div><div class="stat-value" id="todo-count">0</div><div class="stat-sub" id="todo-sub">0 done today</div></div>
             </div>
             <div class="stat-card stat-card-streak">
-              <div class="stat-icon gold"><img src="icons/dusk/todo.png" data-theme-icon alt=""></div>
+              <div class="stat-icon gold"><img src="icons/dusk/video.png" data-theme-icon alt=""></div>
               <div class="stat-body"><div class="stat-label">Streak</div><div class="stat-value" id="s-streak">-</div><div class="stat-sub">days in a row</div></div>
             </div>
           </div>
@@ -376,7 +376,7 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=24"></script>
+<script src="layout.js?v=30"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0;
@@ -508,7 +508,7 @@ async function init() {
   const [{ data: rows }, { data: products }, { data: videos }, { data: queue }] = await Promise.all([
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
     db.from('products').select('id,name,brand,units_sold').eq('user_id', user.id).order('created_at', { ascending:false }),
-    db.from('videos').select('id,title,brand,status').eq('user_id', user.id).order('created_at', { ascending:false }),
+    db.from('videos').select('id,title,brand,status,date').eq('user_id', user.id).order('date', { ascending:false, nullsFirst:false }),
     db.from('queue').select('id,name,brand,notes,done,prod_id').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
   ]);
   _todayQueue=queue||[];
@@ -577,8 +577,8 @@ async function init() {
   // Mini mobile ladder: current tier plus the next three tiers.
   renderMiniLadder(lvlIdx, monthGmv);
 
-  // Streak — consecutive days with a sales entry going back from today
-  const streak = calcStreak(rows || [], todayStr);
+  // Streak: consecutive days with at least one posted video in Content Tracker.
+  const streak = calcStreak(_dashboardVideos, todayStr);
   setText('s-streak', String(streak));
 
   renderSalesChart(labels,commData,gmvData);
@@ -692,8 +692,7 @@ async function renderLineup(userId) {
   const strip = document.getElementById('lineupStrip');
   if(!section || !strip) return;
 
-  const isMob = window.innerWidth <= 768;
-  const items = _todayQueue.slice(0, isMob ? 3 : 5);
+  const items = _todayQueue;
   if(!items.length) { section.style.display = 'none'; return; }
 
   // Fetch by prod_id where available
@@ -749,6 +748,7 @@ async function clearDoneToday(){
   await db.from('queue').delete().in('id',doneItems.map(item=>item.id));
   _todayQueue=_todayQueue.filter(q=>!q.done);
   _dashboardVideos=[...rows.map((row,i)=>({id:'local-'+doneItems[i].id,...row})),..._dashboardVideos];
+  setText('s-streak', String(calcStreak(_dashboardVideos, todayKey)));
   _doneToday=0;
   renderTodayContent();
   showToast('Saved to Content Tracker');

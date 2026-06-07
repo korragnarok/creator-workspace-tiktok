@@ -313,7 +313,7 @@ function _applyDisplayName(name) {
     if (!el.querySelector('.avatar-img')) el.textContent = name.charAt(0).toUpperCase();
   });
   const wt = document.getElementById('welcomeTitle');
-  if (wt) wt.textContent = `welcome back, ${name}`;
+  if (wt) wt.textContent = `welcome back, ${name} 👋`;
 }
 
 function _profileIconByKey(key) {
