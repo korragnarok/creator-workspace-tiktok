@@ -263,10 +263,13 @@ async function loadUserPrefs(userId) {
   const theme = _cachedTheme() || DEFAULT_THEME;
   const { data, error } = await db.from('user_prefs')
     .select('*')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
   if (error) console.warn('Preference load failed', error);
-  const rows = data || [];
-  if (rows.length) {
+  const row = data || null;
+  if (row) {
     const merged = {
       display_name: '',
       core5: [],
@@ -275,18 +278,15 @@ async function loadUserPrefs(userId) {
       streak_goal: _cachedStreakGoal(userId),
       _isNewPrefs: false
     };
-    rows.forEach(row => {
-      if ((row.display_name || '').trim()) merged.display_name = row.display_name;
-      if (Array.isArray(row.core5) && row.core5.some(value => String(value || '').trim())) merged.core5 = row.core5;
-      if (THEMES[row.theme]) merged.theme = row.theme;
-      if (row.profile_icon) merged.profile_icon = row.profile_icon;
-      merged.streak_goal = _normalizeStreakGoal(row.streak_goal, merged.streak_goal);
-    });
+    if ((row.display_name || '').trim()) merged.display_name = row.display_name;
+    if (Array.isArray(row.core5) && row.core5.some(value => String(value || '').trim())) merged.core5 = row.core5;
+    if (THEMES[row.theme]) merged.theme = row.theme;
+    if (row.profile_icon) merged.profile_icon = row.profile_icon;
+    merged.streak_goal = _normalizeStreakGoal(row.streak_goal, merged.streak_goal);
     return { ...merged, core5: _resolveCore5(userId, merged.core5) };
   }
   const cachedCore5 = _cachedCore5(userId);
   const streakGoal = _cachedStreakGoal(userId);
-  await saveUserPrefs(userId, { display_name: '', core5: cachedCore5, theme, streak_goal: streakGoal });
   return { display_name: null, core5: cachedCore5, theme, profile_icon: _cachedAvatarUrl(userId) || _cachedProfileIcon(userId), streak_goal: streakGoal, _isNewPrefs: true };
 }
 
@@ -295,19 +295,14 @@ async function saveUserPrefs(userId, patch) {
   const cleanPatch = { ...patch };
   if ('core5' in cleanPatch) cleanPatch.core5 = _normalizeCore5(cleanPatch.core5);
   if ('streak_goal' in cleanPatch) cleanPatch.streak_goal = _normalizeStreakGoal(cleanPatch.streak_goal);
-  const { data: updated, error: updateError } = await db.from('user_prefs')
-    .update(cleanPatch)
-    .eq('user_id', userId)
-    .select('user_id');
-  if (updateError) {
-    console.warn('Preference update failed', updateError);
-    return { error: updateError };
-  }
-  if (updated && updated.length) return { error: null };
-  const { error: insertError } = await db.from('user_prefs')
-    .insert({ user_id: userId, display_name: '', core5: [], theme: _cachedTheme() || DEFAULT_THEME, ...cleanPatch });
-  if (insertError) console.warn('Preference insert failed', insertError);
-  return { error: insertError || null };
+  const { error } = await db.from('user_prefs')
+    .upsert({
+      user_id: userId,
+      updated_at: new Date().toISOString(),
+      ...cleanPatch
+    }, { onConflict: 'user_id' });
+  if (error) console.warn('Preference save failed', error);
+  return { error: error || null };
 }
 
 function _streakGoalKey(userId) {
@@ -334,6 +329,7 @@ function _metadataStreakGoal(user) {
 }
 
 function resolveStreakGoal(user, prefs) {
+  if (!prefs?._isNewPrefs && _hasStreakGoalValue(prefs?.streak_goal)) return _normalizeStreakGoal(prefs.streak_goal);
   if (_hasStreakGoalValue(user?.user_metadata?.streak_goal)) return _normalizeStreakGoal(user.user_metadata.streak_goal);
   if (_hasStreakGoalValue(prefs?.streak_goal)) return _normalizeStreakGoal(prefs.streak_goal);
   return _cachedStreakGoal(user?.id);
@@ -716,7 +712,9 @@ async function initTheme(userId, prefs) {
   const metaTheme = _metadataTheme(user);
   const cachedTheme = _cachedTheme();
   const prefTheme = THEMES[prefs.theme] ? prefs.theme : '';
-  const themeKey = metaTheme || prefTheme || cachedTheme || DEFAULT_THEME;
+  const themeKey = prefs?._isNewPrefs
+    ? (metaTheme || cachedTheme || prefTheme || DEFAULT_THEME)
+    : (prefTheme || metaTheme || cachedTheme || DEFAULT_THEME);
   try { localStorage.setItem('creatorHub:theme', themeKey); } catch(e) {}
   applyTheme(themeKey);
   if (userId && prefs.theme !== themeKey) await saveUserPrefs(userId, { theme: themeKey });
