@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=53"></script>
-<link rel="stylesheet" href="layout.css?v=53">
+<script src="theme-init.js?v=55"></script>
+<link rel="stylesheet" href="layout.css?v=55">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=53"></script>
+<script src="supabase.js?v=55"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -256,7 +256,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=53"></script>
+<script src="layout.js?v=55"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -506,14 +506,25 @@ function videoRowFromTake(card,take){
   if(take.hookText)notes.push('Hook: '+take.hookText);
   if(take.script)notes.push('Script: '+take.script);
   if(take.inspirationLinks?.length)notes.push('Inspiration: '+take.inspirationLinks.join(', '));
-  return {
-    user_id:_user.id,
-    title:take.hookText||card.name,
-    brand:card.name,
-    date:currentKey(),
-    status:'live',
-    notes:notes.join('\n')
-  };
+	  return {
+	    user_id:_user.id,
+	    title:take.hookText||card.name,
+	    brand:card.name,
+	    date:currentKey(),
+	    posted_time:currentTimeValue(),
+	    status:'live',
+	    notes:notes.join('\n')
+	  };
+	}
+function currentTimeValue(){const d=new Date();return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;}
+async function insertVideoRows(rows){
+  let {error}=await db.from('videos').insert(rows);
+  if(error&&/posted_time/i.test(error.message||'')){
+    const fallbackRows=rows.map(({posted_time,...row})=>row);
+    const retry=await db.from('videos').insert(fallbackRows);
+    error=retry.error;
+  }
+  return {error};
 }
 async function clearDoneToday(btn){
   const donePairs=[];
@@ -522,7 +533,7 @@ async function clearDoneToday(btn){
   const original=btn?.textContent||'Clear Done';
   if(btn){btn.disabled=true;btn.textContent='Clearing...';}
   const rows=donePairs.map(({card,take})=>videoRowFromTake(card,take));
-  const {error}=await db.from('videos').insert(rows);
+  const {error}=await insertVideoRows(rows);
   if(error){
     if(btn){btn.disabled=false;btn.textContent=original;}
     showToast('Could not save to Content Tracker: '+error.message,'error');

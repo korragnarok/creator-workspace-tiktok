@@ -40,6 +40,7 @@ create table if not exists videos (
   title text not null,
   brand text default '',
   date date,
+  posted_time time,
   status text default 'live',
   views integer default 0,
   units integer default 0,
@@ -49,6 +50,7 @@ create table if not exists videos (
 );
 alter table videos enable row level security;
 create policy "Users manage own videos" on videos for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+alter table videos add column if not exists posted_time time;
 
 -- ── 4. HOOKS ────────────────────────────────────────────────────────────────
 create table if not exists hooks (

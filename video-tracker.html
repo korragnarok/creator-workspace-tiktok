@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Videos &mdash; Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=53"></script>
-<link rel="stylesheet" href="layout.css?v=53">
+<script src="theme-init.js?v=55"></script>
+<link rel="stylesheet" href="layout.css?v=55">
 <style>
 
 :root{--r:12px;}
@@ -67,7 +67,8 @@ tbody tr.selected:hover{background:color-mix(in srgb,var(--rust) 18%,transparent
 tbody td{padding:13px 14px;font-size:13px;color:var(--text);vertical-align:middle;}
 tbody td.num{text-align:right;font-family:'Noto Sans Mono',sans-serif;font-weight:700;}
 tbody td.muted{color:var(--text-muted);font-size:12px;}
-.tbl-product{font-weight:700;color:var(--ink);line-height:1.25;}
+	.tbl-product{font-weight:700;color:var(--ink);line-height:1.25;}
+	.tbl-time{display:block;margin-top:2px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;letter-spacing:0.06em;color:var(--text-muted);}
 .tbl-hook{font-size:12px;color:var(--text-mid);margin-top:2px;line-height:1.35;}
 .tbl-action{border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;}
 .tbl-action:hover{border-color:var(--rust);color:var(--rust);}
@@ -135,7 +136,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=53"></script>
+<script src="supabase.js?v=55"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link active">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -170,7 +171,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   <div class="table-card">
     <table>
       <thead><tr>
-        <th onclick="sortBy('date')">Date Posted</th>
+        <th onclick="sortBy('date')">Posted</th>
         <th onclick="sortBy('brand')">Product</th>
         <th>Hook</th>
         <th onclick="sortBy('views')" class="num">Views</th>
@@ -191,6 +192,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="form-row-half">
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Product</label><input type="text" class="form-input" id="fBrand" placeholder="e.g. PetLab Co."></div>
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Date Posted</label><input type="date" class="form-input" id="fDate"></div>
+      <div class="form-row" style="margin-bottom:0"><label class="form-label">Time Posted</label><input type="time" class="form-input" id="fTime" step="1"></div>
     </div>
     <div class="form-row" style="margin-top:16px"><label class="form-label">Status</label><select class="form-input" id="fStatus"><option value="live">Live</option><option value="scheduled">Scheduled</option><option value="draft">Draft</option></select></div>
     <div class="form-row-half">
@@ -203,7 +205,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=53"></script>
+<script src="layout.js?v=55"></script>
 <script>
 const PAGE_SIZE=25;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
@@ -227,6 +229,9 @@ async function init() {
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function fmtNum(n){if(!n&&n!==0)return'-';return Number(n||0).toLocaleString('en-US');}
 function fmtDate(s){if(!s)return'-';return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function fmtTime(s){if(!s)return'';const [h,m]=String(s).split(':');if(!h||!m)return'';const d=new Date();d.setHours(Number(h)||0,Number(m)||0,0,0);return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+function currentTimeValue(){const d=new Date();return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;}
+function videoSortDateTime(v){return `${v.date||''}T${String(v.posted_time||'00:00:00').slice(0,8)}`;}
 function shortId(id){return String(id||'').slice(0,8);}
 function hookFromVideo(v){
   const notes=String(v.notes||'');
@@ -236,7 +241,11 @@ function hookFromVideo(v){
 async function loadVideos(){
   const tbody=document.getElementById('tbody');
   tbody.innerHTML='<tr><td colspan="8"><div class="empty">Loading...</div></td></tr>';
-  const {data,error}=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false});
+  let {data,error}=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false}).order('posted_time', {ascending:false, nullsFirst:false});
+  if(error&&/posted_time/i.test(error.message||'')){
+    const retry=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false});
+    data=retry.data;error=retry.error;
+  }
   if(error){
     tbody.innerHTML='<tr><td colspan="8" class="empty">Error loading videos.</td></tr>';
     return;
@@ -276,7 +285,7 @@ function getFiltered(){
     if(q&&!((v.title||'')+(v.brand||'')+(v.notes||'')+(v.status||'')).toLowerCase().includes(q))return false;
     return true;
   }).sort((a,b)=>{
-    let av=a[sortField]||'',bv=b[sortField]||'';
+    let av=sortField==='date'?videoSortDateTime(a):(a[sortField]||''),bv=sortField==='date'?videoSortDateTime(b):(b[sortField]||'');
     if(sortField==='views'||sortField==='units'){av=Number(av)||0;bv=Number(bv)||0;}
     return av<bv?-1*sortDir:av>bv?1*sortDir:0;
   });
@@ -313,7 +322,7 @@ function renderTable(){
     const hasSales=(Number(v.units)||0)>0;
     const selected=_selectedVideoIds.has(v.id);
     return `<tr class="${_editVideosMode?'select-mode ':''}${selected?'selected':''}" onclick="handleVideoRowClick('${v.id}')">
-      <td class="muted"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','date')">${fmtDate(v.date)}</span></td>
+      <td class="muted"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','date')">${fmtDate(v.date)}${fmtTime(v.posted_time)?`<span class="tbl-time">${fmtTime(v.posted_time)}</span>`:''}</span></td>
       <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','brand')">${esc(v.brand||'No product')}</span></div><div class="tbl-hook"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','title')">${esc(v.title||'')}</span></div></td>
       <td><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','hook')">${esc(hook||'-')}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','views')">${fmtNum(v.views)}</span></td>
@@ -387,7 +396,7 @@ function beginVideoInlineEdit(event, id, field) {
     }
   } else {
     editor = document.createElement('input');
-    editor.type = field === 'date' ? 'date' : (field === 'views' || field === 'units' ? 'number' : 'text');
+    editor.type = field === 'date' ? 'date' : (field === 'posted_time' ? 'time' : (field === 'views' || field === 'units' ? 'number' : 'text'));
     if(field === 'views' || field === 'units') { editor.min = '0'; editor.step = '1'; }
     editor.value = originalValue;
   }
@@ -465,6 +474,7 @@ async function openModal(id){
   document.getElementById('fTitle').value=v?.title||'';
   document.getElementById('fBrand').value=v?.brand||'';
   document.getElementById('fDate').value=v?.date||new Date().toISOString().slice(0,10);
+  document.getElementById('fTime').value=String(v?.posted_time||currentTimeValue()).slice(0,8);
   document.getElementById('fStatus').value=v?.status||'live';
   document.getElementById('fViews').value=v?.views||'';
   document.getElementById('fUnits').value=v?.units||'';
@@ -478,8 +488,13 @@ function closeModal(){document.getElementById('modalOverlay').classList.remove('
 async function saveVideo(){
   const title=document.getElementById('fTitle').value.trim();
   if(!title){document.getElementById('fTitle').focus();return;}
-  const row={user_id:user.id,title,brand:document.getElementById('fBrand').value.trim(),date:document.getElementById('fDate').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,notes:document.getElementById('fNotes').value.trim(),link:document.getElementById('fLink').value.trim()};
-  if(window._editId)await db.from('videos').update(row).eq('id',window._editId);else await db.from('videos').insert(row);
+  const row={user_id:user.id,title,brand:document.getElementById('fBrand').value.trim(),date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,notes:document.getElementById('fNotes').value.trim(),link:document.getElementById('fLink').value.trim()};
+  let result=window._editId?await db.from('videos').update(row).eq('id',window._editId):await db.from('videos').insert(row);
+  if(result.error&&/posted_time/i.test(result.error.message||'')){
+    const {posted_time,...fallbackRow}=row;
+    result=window._editId?await db.from('videos').update(fallbackRow).eq('id',window._editId):await db.from('videos').insert(fallbackRow);
+  }
+  if(result.error){showToast(result.error.message,'error');return;}
   showToast(window._editId?'Video updated':'Video saved');
   closeModal();
   await loadVideos();
