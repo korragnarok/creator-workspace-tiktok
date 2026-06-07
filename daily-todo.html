@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=32"></script>
+<script src="theme-init.js?v=33"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=32"></script>
+<script src="supabase.js?v=33"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -241,6 +241,7 @@ body{overflow-x:hidden;}
       <button class="date-arrow" onclick="changeDay(1)" aria-label="Next day">›</button>
       <div class="header-actions">
         <button class="btn btn-ghost" onclick="copyAllScripts(this)">Copy All</button>
+        <button class="btn btn-ghost" id="clearDoneBtn" onclick="clearDoneToday(this)">Clear Done</button>
         <button class="btn btn-ghost" onclick="restartDay()">Restart</button>
         <button class="btn btn-ghost" onclick="refreshDay(this)">Refresh</button>
         <button class="btn btn-primary" onclick="openPicker()">+ Add Product</button>
@@ -301,7 +302,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=32"></script>
+<script src="layout.js?v=33"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -408,6 +409,8 @@ function getFilteredCards(){return activeBrandFilter==='All'?TODO:TODO.filter(c=
 function render(){
   renderWeekStrip();
   const allTakes=TODO.flatMap(c=>c.takes),done=allTakes.filter(t=>t.done).length,total=allTakes.length;
+  const clearBtn=document.getElementById('clearDoneBtn');
+  if(clearBtn) clearBtn.disabled=done===0;
   const pArea=document.getElementById('progressArea');
   if(total>0){
     pArea.innerHTML=`<div class="progress-summary">
@@ -517,6 +520,42 @@ async function toggleDone(cardId,takeId){
   const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
   if(!take)return;take.done=!take.done;render();
   if(take.queueId)await db.from('queue').update({done:take.done}).eq('id',take.queueId);
+}
+function videoRowFromTake(card,take){
+  const notes=[];
+  notes.push('Product: '+card.name);
+  if(take.hookText)notes.push('Hook: '+take.hookText);
+  if(take.script)notes.push('Script: '+take.script);
+  if(take.inspirationLinks?.length)notes.push('Inspiration: '+take.inspirationLinks.join(', '));
+  return {
+    user_id:_user.id,
+    title:take.hookText||card.name,
+    brand:card.name,
+    date:currentKey(),
+    status:'live',
+    notes:notes.join('\n')
+  };
+}
+async function clearDoneToday(btn){
+  const donePairs=[];
+  TODO.forEach(card=>(card.takes||[]).forEach(take=>{if(take.done)donePairs.push({card,take});}));
+  if(!donePairs.length){showToast('No done tasks yet');return;}
+  const original=btn?.textContent||'Clear Done';
+  if(btn){btn.disabled=true;btn.textContent='Clearing...';}
+  const rows=donePairs.map(({card,take})=>videoRowFromTake(card,take));
+  const {error}=await db.from('videos').insert(rows);
+  if(error){
+    if(btn){btn.disabled=false;btn.textContent=original;}
+    showToast('Could not save to Content Tracker: '+error.message,'error');
+    return;
+  }
+  const ids=donePairs.map(({take})=>take.queueId).filter(Boolean);
+  if(ids.length)await db.from('queue').delete().in('id',ids).eq('user_id',_user.id);
+  donePairs.forEach(({card,take})=>{if(take.queueId)sessionStorage.removeItem('ts-'+take.queueId);card.takes=card.takes.filter(item=>item.id!==take.id);});
+  TODO=TODO.filter(card=>(card.takes||[]).length>0);
+  if(btn)btn.textContent=original;
+  render();
+  showToast(`Saved ${rows.length} to Content Tracker`);
 }
 function copyAllScripts(btn){
   const all=[];TODO.forEach(card=>card.takes.forEach((take,i)=>{if(take.script)all.push(`${card.name.toUpperCase()}${card.takes.length>1?' — Take '+(i+1):''}\n${take.script}`);}));
