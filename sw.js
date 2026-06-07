@@ -10,6 +10,7 @@ const PRECACHE = [
   '/hooks.html',
   '/products.html',
   '/sales-calendar.html',
+  '/script-workshop.html',
   '/scripts.html',
   '/settings.html',
   '/video-tracker.html',

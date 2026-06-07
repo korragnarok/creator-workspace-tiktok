@@ -7,10 +7,11 @@
     { href: 'ctas.html', label: 'CTAs', icon: 'hooks' },
     { href: 'products.html', label: 'Products', icon: 'products' },
     { href: 'scripts.html', label: 'Scripts', icon: 'scripts' },
+    { href: 'script-workshop.html', label: 'Script Workshop', icon: 'scripts', desktopOnly: true },
     { href: 'sales-calendar.html', label: 'Sales Log', mobileLabel: 'Sales', icon: 'sales' }
   ];
 
-  const MOBILE_ITEMS = NAV_ITEMS;
+  const MOBILE_ITEMS = NAV_ITEMS.filter(item => !item.desktopOnly);
 
   function currentPage() {
     const file = window.location.pathname.split('/').pop() || 'index.html';
@@ -76,7 +77,7 @@
     if (document.querySelector('link[data-shared-layout-styles], link[href*="layout.css"]')) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'layout.css?v=55';
+    link.href = 'layout.css?v=56';
     link.dataset.sharedLayoutStyles = 'true';
     document.head.appendChild(link);
   }

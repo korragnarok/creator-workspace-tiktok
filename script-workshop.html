@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F8F5F1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/pwa/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
+<title>Script Workshop — Take24</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script src="theme-init.js?v=56"></script>
+<link rel="stylesheet" href="layout.css?v=56">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+button,input,textarea,select{font:inherit;}
+.page{max-width:1220px;margin:0 auto;padding:32px 28px 80px;}
+.mobile-only{display:none;}
+.workshop-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px;}
+.page-title{font-family:'IBM Plex Serif',serif;font-size:42px;font-weight:800;line-height:0.95;color:var(--ink);}
+.page-sub{font-size:13px;color:var(--text-mid);margin-top:8px;}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:9px;border:1px solid var(--border-mid);background:transparent;color:var(--ink);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;padding:9px 14px;cursor:pointer;transition:background 0.15s,border-color 0.15s,color 0.15s;}
+.btn:hover{background:color-mix(in srgb,var(--surface) 70%,var(--rust) 14%);}
+.btn-primary{background:var(--sage);border-color:var(--sage);color:#fff;}
+.btn-primary:hover{opacity:0.88;background:var(--sage);}
+.btn-soft{background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
+.top-fields{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) 170px;gap:12px;margin-bottom:14px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow-sm);}
+.field{min-width:0;}
+.field-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px;}
+.field-input,.field-select{width:100%;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--ink);padding:10px 12px;outline:none;}
+.field-input:focus,.field-select:focus{border-color:var(--rust);}
+.workshop-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,0.75fr);gap:16px;align-items:start;}
+.panel{background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sm);}
+.script-builder{display:flex;flex-direction:column;gap:9px;}
+.section-card{display:grid;grid-template-columns:150px minmax(0,1fr) 108px;gap:14px;align-items:center;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
+.section-meta{display:flex;align-items:center;gap:10px;min-width:0;}
+.drag-dots{font-family:'Noto Sans Mono',monospace;color:var(--text-muted);font-size:15px;letter-spacing:-0.2em;line-height:1;}
+.section-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--sage);color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:900;flex-shrink:0;}
+.section-name{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:var(--rust);}
+.section-text{width:100%;min-height:58px;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--text);padding:10px 12px;resize:vertical;outline:none;}
+.section-text:focus{border-color:var(--rust);}
+.section-tools{display:flex;align-items:center;justify-content:flex-end;gap:7px;color:var(--text-muted);}
+.icon-btn{width:28px;height:28px;border:1px solid var(--border-mid);border-radius:8px;background:transparent;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.icon-btn:hover{border-color:var(--rust);color:var(--rust);}
+.count{font-family:'Noto Sans Mono',monospace;font-size:10px;color:var(--text-muted);white-space:nowrap;}
+.add-section{border:1px dashed var(--border-mid);background:transparent;color:var(--text-mid);padding:12px;border-radius:10px;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;}
+.notes-panel{margin-top:12px;padding:14px;}
+.notes-head{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);margin-bottom:8px;}
+.notes-area{width:100%;min-height:140px;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--text);padding:12px;resize:vertical;outline:none;}
+.side-stack{display:flex;flex-direction:column;gap:14px;}
+.library{padding:16px;}
+.library-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:10px;}
+.library-title{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink);}
+.library-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.tab{border:0;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid transparent;cursor:pointer;}
+.tab.active{color:var(--rust);border-bottom-color:var(--rust);}
+.library-row{display:flex;gap:10px;margin-bottom:10px;}
+.search{flex:1;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);padding:9px 11px;outline:none;}
+.search:focus{border-color:var(--rust);}
+.library-list{display:flex;flex-direction:column;gap:7px;max-height:318px;overflow:auto;padding-right:2px;}
+.library-item{border:1px solid var(--border);border-radius:9px;background:color-mix(in srgb,var(--surface) 72%,var(--bg) 28%);padding:10px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;}
+.library-text{font-size:13px;color:var(--text);line-height:1.4;}
+.library-meta{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px;}
+.insert-btn{border:0;border-radius:7px;background:var(--surface-2);color:var(--ink);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;padding:7px 10px;cursor:pointer;text-transform:uppercase;}
+.insert-btn:hover{background:var(--sage);color:#fff;}
+.inspo-card{padding:16px;}
+.inspo-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.inspo-list{display:flex;flex-direction:column;gap:8px;min-height:170px;border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--bg);}
+.inspo-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--border-mid);border-radius:8px;color:var(--text);}
+.empty{padding:22px;text-align:center;color:var(--text-muted);font-style:italic;}
+@media(max-width:768px){
+  body{padding-left:0!important;}
+  .page{display:none;}
+  .mobile-only{display:block;padding:120px 22px 80px;text-align:center;}
+  .mobile-only h1{font-family:'IBM Plex Serif',serif;color:var(--ink);font-size:34px;line-height:1;margin-bottom:10px;}
+  .mobile-only p{color:var(--text-mid);}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=56"></script>
+</head>
+<body>
+<div class="mobile-only">
+  <h1>Script Workshop</h1>
+  <p>This workspace is built for desktop screens.</p>
+</div>
+<main class="page">
+  <header class="workshop-head">
+    <div>
+      <h1 class="page-title">Script Workshop</h1>
+      <p class="page-sub">Build better content ideas, version your scripts, and track what works.</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-soft" onclick="newScript()">+ New Script</button>
+      <button class="btn btn-primary" onclick="saveDraft()">Save Draft</button>
+      <button class="btn" onclick="copyFullScript()">Copy Script</button>
+    </div>
+  </header>
+
+  <section class="top-fields">
+    <div class="field">
+      <div class="field-label">Script Title</div>
+      <input class="field-input" id="scriptTitle" placeholder="Untitled script">
+    </div>
+    <div class="field">
+      <div class="field-label">Product</div>
+      <select class="field-select" id="productSelect"></select>
+    </div>
+    <div class="field">
+      <div class="field-label">Type</div>
+      <select class="field-select" id="scriptType">
+        <option value="demo">Product Demo</option>
+        <option value="review">Review</option>
+        <option value="comparison">Comparison</option>
+        <option value="problem">Problem / Solution</option>
+        <option value="storytime">Storytime</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="workshop-grid">
+    <div>
+      <div class="script-builder" id="sectionList"></div>
+      <button class="add-section" onclick="addSection()">+ Add New Section</button>
+      <div class="panel notes-panel">
+        <div class="notes-head">Notes</div>
+        <textarea class="notes-area" id="scriptNotes" placeholder="Filming reminders, angles, B-roll ideas, or alternate wording..."></textarea>
+      </div>
+    </div>
+
+    <aside class="side-stack">
+      <section class="panel library">
+        <div class="library-head">
+          <div class="library-title" id="libraryTitle">Hook Library</div>
+          <div class="library-tabs">
+            <button class="tab active" data-tab="hooks" onclick="setLibraryTab('hooks')">Hooks</button>
+            <button class="tab" data-tab="scripts" onclick="setLibraryTab('scripts')">Scripts</button>
+            <button class="tab" data-tab="ctas" onclick="setLibraryTab('ctas')">CTAs</button>
+          </div>
+        </div>
+        <div class="library-row">
+          <input class="search" id="librarySearch" placeholder="Search..." oninput="renderLibrary()">
+          <button class="btn btn-primary" onclick="quickAddLibrary()">+ Add</button>
+        </div>
+        <div class="library-list" id="libraryList"></div>
+      </section>
+
+      <section class="panel inspo-card">
+        <div class="inspo-top">
+          <div class="library-title">Inspiration</div>
+          <button class="btn btn-primary" onclick="addInspo()">+ Add Link</button>
+        </div>
+        <div class="inspo-list" id="inspoList"></div>
+      </section>
+    </aside>
+  </section>
+</main>
+
+<script src="layout.js?v=56"></script>
+<script>
+let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks';
+let sections=[
+  {type:'hook', label:'Hook', text:''},
+  {type:'problem', label:'Problem', text:''},
+  {type:'demo', label:'Demo', text:''},
+  {type:'proof', label:'Proof', text:''},
+  {type:'cta', label:'CTA', text:''}
+];
+let inspo=[];
+
+async function init(){
+  user=await requireAuth();
+  if(!user)return;
+  const prefs=await loadUserPrefs(user.id);
+  await initDisplayName(user,prefs);
+  await initCore5(user.id,prefs);
+  await initTheme(user.id,prefs);
+  initProfilePopover(user.id);
+  await Promise.all([loadProducts(),loadLibraries()]);
+  restoreLocalDraft();
+  renderProducts();
+  renderSections();
+  renderLibrary();
+  renderInspo();
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function draftKey(){return `creatorHub:scriptWorkshop:${user?.id||'local'}`;}
+async function loadProducts(){const {data}=await db.from('products').select('id,name,brand').eq('user_id',user.id).order('name');products=data||[];}
+async function loadLibraries(){
+  const [h,s,c]=await Promise.all([
+    db.from('hooks').select('*').eq('user_id',user.id).order('created_at',{ascending:false}),
+    db.from('scripts').select('*').eq('user_id',user.id).order('created_at',{ascending:false}),
+    db.from('ctas').select('*').eq('user_id',user.id).order('created_at',{ascending:false})
+  ]);
+  hooks=h.data||[];scripts=s.data||[];ctas=c.data||[];
+}
+function renderProducts(){
+  const sel=document.getElementById('productSelect');
+  sel.innerHTML='<option value="">Choose product</option>'+products.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.brand?' — '+esc(p.brand):''}</option>`).join('');
+}
+function sectionIcon(label){return String(label||'?').trim().slice(0,1).toUpperCase();}
+function renderSections(){
+  const wrap=document.getElementById('sectionList');
+  wrap.innerHTML=sections.map((section,index)=>`
+    <div class="section-card">
+      <div class="section-meta">
+        <div class="drag-dots">::</div>
+        <div class="section-icon">${sectionIcon(section.label)}</div>
+        <div class="section-name">${esc(section.label)}</div>
+      </div>
+      <textarea class="section-text" maxlength="500" data-index="${index}" oninput="updateSection(${index},this)" placeholder="Write the ${esc(section.label).toLowerCase()}...">${esc(section.text)}</textarea>
+      <div class="section-tools">
+        <span class="count">${String(section.text||'').length}/500</span>
+        <button class="icon-btn" onclick="moveSection(${index},-1)" title="Move up">↑</button>
+        <button class="icon-btn" onclick="moveSection(${index},1)" title="Move down">↓</button>
+        <button class="icon-btn" onclick="duplicateSection(${index})" title="Duplicate">⧉</button>
+        <button class="icon-btn" onclick="deleteSection(${index})" title="Delete">×</button>
+      </div>
+    </div>`).join('');
+}
+function updateSection(index,el){sections[index].text=el.value;const count=el.closest('.section-card')?.querySelector('.count');if(count)count.textContent=`${el.value.length}/500`;}
+function moveSection(index,dir){const next=index+dir;if(next<0||next>=sections.length)return;[sections[index],sections[next]]=[sections[next],sections[index]];renderSections();}
+function duplicateSection(index){sections.splice(index+1,0,{...sections[index],text:sections[index].text});renderSections();}
+function deleteSection(index){if(sections.length<=1)return;sections.splice(index,1);renderSections();}
+function addSection(){const label=prompt('Section name','Angle');if(!label)return;sections.push({type:'custom',label,text:''});renderSections();}
+function setLibraryTab(tab){activeTab=tab;document.querySelectorAll('.tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===tab));document.getElementById('libraryTitle').textContent=tab==='hooks'?'Hook Library':tab==='scripts'?'Saved Scripts':'CTA Library';renderLibrary();}
+function libraryRows(){
+  const q=document.getElementById('librarySearch').value.toLowerCase();
+  const rows=activeTab==='hooks'?hooks.map(h=>({meta:h.cat||'Hook',text:h.text}))
+    :activeTab==='scripts'?scripts.map(s=>({meta:s.brand||s.cat||'Script',text:s.script,title:s.title}))
+    :ctas.map(c=>({meta:c.cat||'CTA',text:c.text}));
+  return rows.filter(row=>!q||`${row.meta} ${row.title||''} ${row.text}`.toLowerCase().includes(q)).slice(0,24);
+}
+function renderLibrary(){
+  const list=document.getElementById('libraryList');
+  const rows=libraryRows();
+  list.innerHTML=rows.length?rows.map((row,index)=>`
+    <div class="library-item">
+      <div><div class="library-meta">${esc(row.meta)}</div><div class="library-text">${esc(row.title||row.text).slice(0,180)}</div></div>
+      <button class="insert-btn" onclick="insertLibrary(${index})">Insert</button>
+    </div>`).join(''):'<div class="empty">Nothing saved here yet.</div>';
+}
+function insertLibrary(index){
+  const row=libraryRows()[index];if(!row)return;
+  const targetType=activeTab==='hooks'?'hook':activeTab==='ctas'?'cta':'demo';
+  const target=sections.find(section=>section.type===targetType)||sections[0];
+  target.text=row.text||'';
+  renderSections();
+}
+async function quickAddLibrary(){
+  const text=prompt(activeTab==='hooks'?'New hook':activeTab==='ctas'?'New CTA':'New script');
+  if(!text)return;
+  if(activeTab==='hooks')await db.from('hooks').insert({user_id:user.id,text,cat:'workshop'});
+  else if(activeTab==='ctas')await db.from('ctas').insert({user_id:user.id,text,cat:'soft'});
+  else await db.from('scripts').insert({user_id:user.id,title:'Workshop snippet',script:text,cat:'workshop'});
+  await loadLibraries();renderLibrary();showToast('Saved');
+}
+function addInspo(){const url=prompt('Paste inspiration link');if(!url)return;inspo.push(url);renderInspo();}
+function removeInspo(index){inspo.splice(index,1);renderInspo();}
+function renderInspo(){
+  const list=document.getElementById('inspoList');
+  list.innerHTML=inspo.length?inspo.map((url,index)=>`<div class="inspo-item"><a href="${esc(url)}" target="_blank" rel="noopener">${esc(url).replace(/^https?:\/\//,'').slice(0,58)}</a><button class="icon-btn" onclick="removeInspo(${index})">×</button></div>`).join(''):'<div class="empty">Add TikToks, product pages, or reference videos.</div>';
+}
+function fullScript(){return sections.map(section=>section.text.trim()).filter(Boolean).join('\n\n');}
+function selectedProduct(){
+  const id=document.getElementById('productSelect').value;
+  return products.find(p=>p.id===id);
+}
+function saveLocalDraft(){
+  const draft={title:document.getElementById('scriptTitle').value,productId:document.getElementById('productSelect').value,type:document.getElementById('scriptType').value,notes:document.getElementById('scriptNotes').value,sections,inspo};
+  try{localStorage.setItem(draftKey(),JSON.stringify(draft));}catch(e){}
+}
+function restoreLocalDraft(){
+  try{
+    const draft=JSON.parse(localStorage.getItem(draftKey())||'null');
+    if(!draft)return;
+    document.getElementById('scriptTitle').value=draft.title||'';
+    document.getElementById('scriptType').value=draft.type||'demo';
+    document.getElementById('scriptNotes').value=draft.notes||'';
+    sections=Array.isArray(draft.sections)&&draft.sections.length?draft.sections:sections;
+    inspo=Array.isArray(draft.inspo)?draft.inspo:[];
+    setTimeout(()=>{document.getElementById('productSelect').value=draft.productId||'';},0);
+  }catch(e){}
+}
+function newScript(){
+  if(fullScript()&&!confirm('Start a new script? Unsaved text will be cleared.'))return;
+  document.getElementById('scriptTitle').value='';
+  document.getElementById('productSelect').value='';
+  document.getElementById('scriptNotes').value='';
+  sections=[{type:'hook',label:'Hook',text:''},{type:'problem',label:'Problem',text:''},{type:'demo',label:'Demo',text:''},{type:'proof',label:'Proof',text:''},{type:'cta',label:'CTA',text:''}];
+  inspo=[];renderSections();renderInspo();saveLocalDraft();
+}
+async function saveDraft(){
+  const script=fullScript();
+  if(!script){showToast('Add script text first','error');return;}
+  const product=selectedProduct();
+  const title=document.getElementById('scriptTitle').value.trim()||`${product?.name||'Untitled'} Script`;
+  const notes=[document.getElementById('scriptNotes').value.trim(),inspo.length?'Inspiration: '+inspo.join(', '):''].filter(Boolean).join('\n');
+  const row={user_id:user.id,title,brand:product?.name||'',cat:document.getElementById('scriptType').value,script,notes};
+  const {error}=await db.from('scripts').insert(row);
+  if(error){showToast(error.message,'error');return;}
+  saveLocalDraft();await loadLibraries();renderLibrary();showToast('Draft saved');
+}
+function copyFullScript(){const script=fullScript();if(!script)return;copyText(script);showToast('Copied');}
+function copyText(text){navigator.clipboard?.writeText(text);}
+document.addEventListener('input',e=>{if(e.target.closest('.page'))saveLocalDraft();});
+init();
+</script>
+</body>
+</html>
