@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=50"></script>
-<link rel="stylesheet" href="layout.css?v=50">
+<script src="theme-init.js?v=51"></script>
+<link rel="stylesheet" href="layout.css?v=51">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=50"></script>
+<script src="supabase.js?v=51"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -216,7 +216,7 @@ body{overflow-x:hidden;}
     <div class="modal-list" id="pickerList"></div>
     <div class="modal-footer">
       <button class="modal-cancel" onclick="closePicker()">Cancel</button>
-      <button class="modal-confirm" id="pickerConfirmBtn" onclick="addSelectedProducts()">Add Selected</button>
+      <button class="modal-confirm" id="pickerConfirmBtn" onclick="addSelectedProducts()">Save</button>
     </div>
   </div>
 </div>
@@ -254,7 +254,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=50"></script>
+<script src="layout.js?v=51"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -381,7 +381,7 @@ function render(){
   const main=document.getElementById('mainContent');
   const filtered=getFilteredCards();
   if(!TODO.length){
-    main.innerHTML=`<div class="empty-state"><div class="empty-title">Nothing planned yet</div><div class="empty-sub">Tap "+ Add Task" to pick products you're filming today.</div><button class="btn btn-primary" onclick="openPicker()">+ Add Task</button></div>`;
+    main.innerHTML=`<div class="empty-state"><div class="empty-title">Nothing planned yet</div><div class="empty-sub">Tap "+ Product" to pick products you're filming today.</div><button class="btn btn-primary" onclick="openPicker()">+ Product</button></div>`;
     return;
   }
   if(!filtered.length){
@@ -573,15 +573,23 @@ function togglePick(id){if(pickerSelected.has(id))pickerSelected.delete(id);else
 async function addSelectedProducts(){
   const existing=new Set(TODO.map(c=>c.prodId).filter(Boolean));
   const toAdd=[...pickerSelected].filter(id=>!existing.has(id));
-  if(!toAdd.length){closePicker();return;}
-  const btn=document.getElementById('pickerConfirmBtn');btn.disabled=true;btn.textContent='Adding...';
+  const toRemove=TODO.filter(card=>card.prodId&&!pickerSelected.has(card.prodId));
+  const btn=document.getElementById('pickerConfirmBtn');btn.disabled=true;btn.textContent='Saving...';
+  for(const card of toRemove){
+    for(const take of card.takes||[]) await deleteQueueRow(take);
+    sessionStorage.removeItem('script-'+card.id+'-'+currentKey());
+  }
+  TODO=TODO.filter(card=>!card.prodId||pickerSelected.has(card.prodId));
   for(const id of toAdd){
     const p=ALL_PRODUCTS.find(x=>x.id===id);if(!p)continue;
     const card={id:'c-'+uid(),prodId:p.id,name:p.name,brand:p.brand||'',script:'',takes:[]};
     const take={id:'t-'+uid(),queueId:null,hookText:'',script:'',inspirationLinks:[],done:false,sortOrder:0,editingScript:false};
     card.takes.push(take);TODO.push(card);await saveQueueRow(card,take);
   }
-  closePicker();btn.disabled=false;btn.textContent='Add Selected';render();showToast(`Added ${toAdd.length} product${toAdd.length>1?'s':''}`);
+  if(activeBrandFilter!=='All'&&!TODO.some(card=>(card.brand||'')===activeBrandFilter)) activeBrandFilter='All';
+  closePicker();btn.disabled=false;btn.textContent='Save';render();
+  const changes=toAdd.length+toRemove.length;
+  showToast(changes?`Saved ${changes} change${changes>1?'s':''}`:'No changes');
 }
 
 // ─── HOOK PICKER ──────────────────────────────────────────
