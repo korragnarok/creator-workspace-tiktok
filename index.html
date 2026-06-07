@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=17"></script>
+<script src="theme-init.js?v=18"></script>
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -94,8 +94,8 @@ button,input{font:inherit;}
 .tier-line{display:grid;grid-template-columns:repeat(8,1fr);align-items:start;position:relative;gap:0;padding-top:18px;}
 .tier-line::before{content:'';position:absolute;top:26px;left:5%;right:5%;height:2px;background:color-mix(in srgb,var(--ink) 34%,transparent);}
 .tier{position:relative;text-align:center;color:var(--text);cursor:pointer;appearance:none;border:0;background:none;padding:0;font:inherit;width:100%;display:block;}
-.tier-icon{width:18px;height:18px;object-fit:contain;border-radius:50%;background:color-mix(in srgb,var(--surface) 62%,var(--bg) 38%);border:1px solid color-mix(in srgb,var(--ink) 26%,transparent);padding:2px;margin:0 auto 10px;position:relative;z-index:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--bg) 72%,transparent);}
-.tier.current .tier-icon{width:28px;height:28px;margin-top:-5px;margin-bottom:5px;border-color:var(--rust);background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);box-shadow:0 0 0 5px color-mix(in srgb,var(--rust) 22%,transparent);}
+.tier-icon{width:18px!important;height:18px!important;max-width:18px!important;max-height:18px!important;object-fit:contain;border-radius:50%;background:color-mix(in srgb,var(--surface) 62%,var(--bg) 38%);border:1px solid color-mix(in srgb,var(--ink) 26%,transparent);padding:2px;margin:0 auto 10px;position:relative;z-index:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--bg) 72%,transparent);}
+.tier.current .tier-icon{width:28px!important;height:28px!important;max-width:28px!important;max-height:28px!important;margin-top:-5px;margin-bottom:5px;border-color:var(--rust);background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);box-shadow:0 0 0 5px color-mix(in srgb,var(--rust) 22%,transparent);}
 .tier-name{font-family:'Stack Sans Text',sans-serif;font-weight:800;font-size:10px;color:var(--ink);}
 .tier.current .tier-name{color:var(--rust);}
 .tier-range{display:none;}
@@ -172,7 +172,7 @@ button,input{font:inherit;}
 .tab-item.active{color:var(--rust);}
 .tab-icon-img{width:36px;height:36px;object-fit:contain;display:block;}
 .tab-profile-avatar{width:36px;height:36px;border-radius:50%;overflow:hidden;background:var(--sage);display:flex;align-items:center;justify-content:center;}
-.mob-mini-ladder-wrap{display:none;}
+.mob-mini-ladder-wrap{display:none!important;}
 @media(max-width:1280px) and (min-width:981px){.top-layout{grid-template-columns:minmax(0,1fr) minmax(260px,340px);}.lower-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.stat-card{padding:14px;gap:10px;}.stat-icon{width:44px;height:44px;}.stat-icon img{width:26px;height:26px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}.stat-value{font-size:26px;}}
 @media(max-width:980px){.top-layout{grid-template-columns:1fr;}.lower-grid{grid-template-columns:1fr 1fr;}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:768px){
@@ -222,7 +222,7 @@ button,input{font:inherit;}
 
   /* Hide desktop tier line on mobile */
   .tier-line{display:none;}
-  .mob-mini-ladder-wrap{display:block;}
+  .mob-mini-ladder-wrap{display:block!important;}
 
   /* Lineup 3 cards */
   .lineup-strip{overflow-x:visible;}
@@ -249,7 +249,7 @@ button,input{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=17"></script>
+<script src="supabase.js?v=18"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -375,7 +375,7 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=17"></script>
+<script src="layout.js?v=18"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0;
@@ -474,7 +474,10 @@ function renderSalesChart(labels, commData, gmvData){
   window._salesChartData={labels,commData,gmvData};
 }
 window.addEventListener('creator-theme-change',()=>{if(window._salesChartData)renderSalesChart(window._salesChartData.labels,window._salesChartData.commData,window._salesChartData.gmvData);});
-window.addEventListener('resize',()=>{if(window._salesChartData)renderSalesChart(window._salesChartData.labels,window._salesChartData.commData,window._salesChartData.gmvData);});
+window.addEventListener('resize',()=>{
+  if(window._salesChartData)renderSalesChart(window._salesChartData.labels,window._salesChartData.commData,window._salesChartData.gmvData);
+  if(window._miniLadderData)renderMiniLadder(window._miniLadderData.lvlIdx, window._miniLadderData.monthGmv);
+});
 // Display name + Core 5 now handled by supabase.js: initDisplayName() + initCore5()
 
 async function init() {
@@ -562,7 +565,7 @@ async function init() {
     setText('lc-cta', 'Top tier reached. Keep creating and tracking your wins.');
   }
 
-  // Mini mobile ladder — 4 tiers centered on current level
+  // Mini mobile ladder: current tier plus the next three tiers.
   renderMiniLadder(lvlIdx, monthGmv);
 
   // Streak — consecutive days with a sales entry going back from today
@@ -587,13 +590,16 @@ function calcStreak(rows, todayStr) {
 function renderMiniLadder(lvlIdx, monthGmv) {
   const wrap = document.getElementById('mobMiniLadder');
   if(!wrap) return;
+  window._miniLadderData = { lvlIdx, monthGmv };
+  if(!window.matchMedia('(max-width: 768px)').matches) {
+    wrap.innerHTML = '';
+    wrap.style.display = '';
+    return;
+  }
 
-  // Show 4 tiers centered on current level, clamped to array
-  const total = LEVELS.length;
-  let start = Math.max(0, lvlIdx - 1);
-  let end = start + 4;
-  if(end > total) { end = total; start = Math.max(0, end - 4); }
-  const visible = LEVELS.slice(start, end);
+  // Mobile only: show the current tier and up to three tiers after it.
+  const start = lvlIdx;
+  const visible = LEVELS.slice(start, start + 4);
 
   // Progress within current level
   const lvl = LEVELS[lvlIdx];
@@ -601,13 +607,17 @@ function renderMiniLadder(lvlIdx, monthGmv) {
   const pct = nextLvl
     ? Math.min(100, Math.round(((monthGmv - lvl.min) / (nextLvl.min - lvl.min)) * 100))
     : 100;
-  const nextRange = nextLvl ? `$${(nextLvl.min/1000).toFixed(0)}k` : 'Max';
+  const formatTierRange = level => {
+    if(level.name === 'Diamond') return '$1,500,000+';
+    if(level.name === 'Sapphire') return '$400,000+';
+    return `${fmtMoney(level.min)} - ${fmtMoney(level.max)}`;
+  };
 
   wrap.innerHTML = `
     <div class="mob-mini-ladder">
       ${visible.map((level, i) => {
         const isCurrent = (start + i) === lvlIdx;
-        return `<div class="mob-mini-tier${isCurrent?' current':''}" onclick="showTierPopup('${level.name}','${level.min===0?'$0':('$'+(level.min/1000).toFixed(0)+'k')} – ${nextLvl&&(start+i)===lvlIdx?nextRange:('$'+(level.max/1000).toFixed(0)+'k')}',this)">
+        return `<div class="mob-mini-tier${isCurrent?' current':''}" onclick="showTierPopup('${level.name}','${formatTierRange(level)}',this)">
           <img src="icons/levels/${level.icon}.png" alt="${level.name}">
           <div class="mob-mini-tier-name">${level.name}</div>
         </div>`;
