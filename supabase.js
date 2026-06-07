@@ -6,6 +6,25 @@ const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 const DEFAULT_STREAK_GOAL = 1;
 
+function registerAppServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+      .then(registration => registration.update())
+      .catch(e => console.warn('SW:', e));
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    const key = 'creatorHub:swReloaded';
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch(e) {}
+    window.location.reload();
+  });
+}
+
+registerAppServiceWorker();
+
 function enterSaves(e, saveFn) {
   if (!e || e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return false;
   const target = e.target;
