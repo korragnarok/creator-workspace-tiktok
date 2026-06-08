@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=66"></script>
-<link rel="stylesheet" href="layout.css?v=66">
+<script src="theme-init.js?v=67"></script>
+<link rel="stylesheet" href="layout.css?v=67">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -28,7 +28,7 @@ button,input,textarea,select{font:inherit;}
 .btn-primary{background:var(--sage);border-color:var(--sage);color:#fff;}
 .btn-primary:hover{opacity:0.88;background:var(--sage);}
 .btn-soft{background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
-.top-fields{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) 170px;gap:12px;margin-bottom:14px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow-sm);}
+.top-fields{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) minmax(240px,0.7fr);gap:12px;margin-bottom:14px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow-sm);}
 .field{min-width:0;}
 .field-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px;}
 .field-input,.field-select{width:100%;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--ink);padding:10px 12px;outline:none;}
@@ -93,7 +93,7 @@ button,input,textarea,select{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=66"></script>
+<script src="supabase.js?v=67"></script>
 </head>
 <body>
 <div class="mobile-only">
@@ -123,13 +123,16 @@ button,input,textarea,select{font:inherit;}
       <select class="field-select" id="productSelect"></select>
     </div>
     <div class="field">
-      <div class="field-label">Type</div>
-      <select class="field-select" id="scriptType">
-        <option value="demo">Product Demo</option>
-        <option value="review">Review</option>
+      <div class="field-label">Framework</div>
+      <select class="field-select" id="scriptType" onchange="changeFramework(this.value)">
+        <option value="product-demo">Product Demo / Problem Solution</option>
+        <option value="skit">Skit</option>
+        <option value="aesthetic">Aesthetic</option>
+        <option value="storytelling">Storytelling</option>
+        <option value="testimonial">Testimonial</option>
+        <option value="pov">POV</option>
         <option value="comparison">Comparison</option>
-        <option value="problem">Problem / Solution</option>
-        <option value="storytime">Storytime</option>
+        <option value="voiceover">Voiceover</option>
       </select>
     </div>
   </section>
@@ -137,7 +140,7 @@ button,input,textarea,select{font:inherit;}
   <section class="workshop-grid">
     <div>
       <div class="script-builder" id="sectionList"></div>
-      <button class="add-section" onclick="addSection()">+ Add New Section</button>
+      <button class="add-section" id="addSectionBtn" onclick="addSection()">+ Add Section</button>
       <div class="panel notes-panel">
         <div class="notes-head">Notes</div>
         <textarea class="notes-area" id="scriptNotes" placeholder="Filming reminders, angles, B-roll ideas, or alternate wording..."></textarea>
@@ -182,16 +185,20 @@ button,input,textarea,select{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=66"></script>
+<script src="layout.js?v=67"></script>
 <script>
-let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks';
-let sections=[
-  {type:'hook', label:'Hook', text:''},
-  {type:'problem', label:'Problem', text:''},
-  {type:'demo', label:'Demo', text:''},
-  {type:'proof', label:'Proof', text:''},
-  {type:'cta', label:'CTA', text:''}
-];
+let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks', currentFramework='product-demo';
+const FRAMEWORKS={
+  'product-demo':{label:'Product Demo / Problem Solution',addLabel:'+ Add Section',sections:['Hook','Problem','Demo','Proof','CTA']},
+  skit:{label:'Skit',addLabel:'+ Add Dialogue',sections:['Person 1','Person 2'],promptTitle:'Add Dialogue',promptMessage:'Who is speaking in this new dialogue box?',promptPlaceholder:'Person 3'},
+  aesthetic:{label:'Aesthetic',addLabel:'+ Add Shot',sections:['On-Screen Text','Shot 1','Shot 2','Shot 3'],autoPrefix:'Shot'},
+  storytelling:{label:'Storytelling',addLabel:'+ Add Section',sections:['Hook','Backstory','Turning Point','Result','CTA']},
+  testimonial:{label:'Testimonial',addLabel:'+ Add Section',sections:['Before','What I Tried','What Changed','Results','Recommendation']},
+  pov:{label:'POV',addLabel:'+ Add Scene',sections:['Setup','Scene 1','Scene 2','Scene 3','CTA'],autoPrefix:'Scene'},
+  comparison:{label:'Comparison',addLabel:'+ Add Section',sections:['Hook','Product A','Product B','Winner','CTA']},
+  voiceover:{label:'Voiceover',addLabel:'+ Add Section',sections:['Hook','Voiceover Script','B-Roll Notes','CTA']}
+};
+let sections=makeFrameworkSections(currentFramework);
 let inspo=[];
 let workshopModalResolve=null;
 
@@ -207,11 +214,50 @@ async function init(){
   restoreLocalDraft();
   renderProducts();
   renderSections();
+  updateAddSectionButton();
   renderLibrary();
   renderInspo();
 }
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function draftKey(){return `creatorHub:scriptWorkshop:${user?.id||'local'}`;}
+function normalizeFramework(value){
+  if(value==='demo'||value==='problem'||value==='review')return 'product-demo';
+  if(value==='storytime')return 'storytelling';
+  return FRAMEWORKS[value]?value:'product-demo';
+}
+function sectionType(label){return String(label||'section').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'section';}
+function makeFrameworkSections(frameworkKey,existing=[]){
+  const framework=FRAMEWORKS[normalizeFramework(frameworkKey)]||FRAMEWORKS['product-demo'];
+  const existingByLabel=new Map(existing.map(section=>[String(section.label||'').trim().toLowerCase(),section]));
+  return framework.sections.map(label=>{
+    const found=existingByLabel.get(label.toLowerCase());
+    return {type:sectionType(label),label,text:found?.text||''};
+  });
+}
+function updateAddSectionButton(){
+  const btn=document.getElementById('addSectionBtn');
+  if(btn)btn.textContent=FRAMEWORKS[currentFramework]?.addLabel||'+ Add Section';
+}
+function nextNumberedLabel(prefix){
+  const used=sections.map(section=>String(section.label||''));
+  let next=1;
+  while(used.some(label=>label.toLowerCase()===`${prefix} ${next}`.toLowerCase()))next++;
+  return `${prefix} ${next}`;
+}
+function nextPersonLabel(){
+  const used=sections.map(section=>String(section.label||''));
+  let next=1;
+  while(used.some(label=>label.toLowerCase()===`Person ${next}`.toLowerCase()))next++;
+  return `Person ${next}`;
+}
+function changeFramework(value){
+  currentFramework=normalizeFramework(value);
+  document.getElementById('scriptType').value=currentFramework;
+  sections=makeFrameworkSections(currentFramework,sections);
+  renderSections();
+  updateAddSectionButton();
+  saveLocalDraft();
+}
 function closeWorkshopModal(value=null){
   document.getElementById('workshopModalOverlay').classList.remove('open');
   if(workshopModalResolve){workshopModalResolve(value);workshopModalResolve=null;}
@@ -277,7 +323,16 @@ function updateSection(index,el){sections[index].text=el.value;}
 function moveSection(index,dir){const next=index+dir;if(next<0||next>=sections.length)return;[sections[index],sections[next]]=[sections[next],sections[index]];renderSections();saveLocalDraft();}
 function duplicateSection(index){sections.splice(index+1,0,{...sections[index],text:sections[index].text});renderSections();saveLocalDraft();}
 function deleteSection(index){if(sections.length<=1)return;sections.splice(index,1);renderSections();saveLocalDraft();}
-async function addSection(){const label=await openWorkshopPrompt({title:'Add Section',message:'Name this script section.',placeholder:'Angle',value:'Angle'});if(!label)return;sections.push({type:'custom',label,text:''});renderSections();saveLocalDraft();}
+async function addSection(){
+  const framework=FRAMEWORKS[currentFramework]||FRAMEWORKS['product-demo'];
+  let label='';
+  if(currentFramework==='skit')label=await openWorkshopPrompt({title:framework.promptTitle,message:framework.promptMessage,placeholder:framework.promptPlaceholder,value:nextPersonLabel()});
+  else if(framework.autoPrefix)label=nextNumberedLabel(framework.autoPrefix);
+  else label=await openWorkshopPrompt({title:'Add Section',message:'Name this script section.',placeholder:'Angle',value:'Angle'});
+  if(!label)return;
+  sections.push({type:sectionType(label),label,text:''});
+  renderSections();saveLocalDraft();
+}
 function setLibraryTab(tab){activeTab=tab;document.querySelectorAll('.tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===tab));document.getElementById('libraryTitle').textContent=tab==='hooks'?'Hook Library':'CTA Library';renderLibrary();}
 function libraryRows(){
   const q=document.getElementById('librarySearch').value.toLowerCase();
@@ -322,22 +377,29 @@ function renderInspo(){
   list.innerHTML=inspo.length?inspo.map((url,index)=>`<a href="${esc(url)}" target="_blank" rel="noopener" class="inspo-pill">Inspo ${index+1}<button class="inspo-pill-x" onclick="event.preventDefault();removeInspo(${index})">×</button></a>`).join(''):'<div class="empty">Add TikToks, product pages, or reference videos.</div>';
 }
 function fullScript(){return sections.map(section=>section.text.trim()).filter(Boolean).join('\n\n');}
+function formattedScript(){
+  return sections
+    .filter(section=>String(section.text||'').trim())
+    .map(section=>`${section.label}:\n${section.text.trim()}`)
+    .join('\n\n');
+}
 function selectedProduct(){
   const id=document.getElementById('productSelect').value;
   return products.find(p=>p.id===id);
 }
 function saveLocalDraft(){
-  const draft={title:document.getElementById('scriptTitle').value,productId:document.getElementById('productSelect').value,type:document.getElementById('scriptType').value,notes:document.getElementById('scriptNotes').value,sections,inspo};
+  const draft={title:document.getElementById('scriptTitle').value,productId:document.getElementById('productSelect').value,type:currentFramework,notes:document.getElementById('scriptNotes').value,sections,inspo};
   try{localStorage.setItem(draftKey(),JSON.stringify(draft));}catch(e){}
 }
 function restoreLocalDraft(){
   try{
     const draft=JSON.parse(localStorage.getItem(draftKey())||'null');
     if(!draft)return;
+    currentFramework=normalizeFramework(draft.type);
     document.getElementById('scriptTitle').value=draft.title||'';
-    document.getElementById('scriptType').value=draft.type||'demo';
+    document.getElementById('scriptType').value=currentFramework;
     document.getElementById('scriptNotes').value=draft.notes||'';
-    sections=Array.isArray(draft.sections)&&draft.sections.length?draft.sections:sections;
+    sections=Array.isArray(draft.sections)&&draft.sections.length?draft.sections.map(section=>({type:section.type||sectionType(section.label),label:section.label||'Section',text:section.text||''})):makeFrameworkSections(currentFramework);
     inspo=Array.isArray(draft.inspo)?draft.inspo:[];
     setTimeout(()=>{document.getElementById('productSelect').value=draft.productId||'';},0);
   }catch(e){}
@@ -347,21 +409,22 @@ async function newScript(){
   document.getElementById('scriptTitle').value='';
   document.getElementById('productSelect').value='';
   document.getElementById('scriptNotes').value='';
-  sections=[{type:'hook',label:'Hook',text:''},{type:'problem',label:'Problem',text:''},{type:'demo',label:'Demo',text:''},{type:'proof',label:'Proof',text:''},{type:'cta',label:'CTA',text:''}];
-  inspo=[];renderSections();renderInspo();saveLocalDraft();
+  sections=makeFrameworkSections(currentFramework);
+  inspo=[];renderSections();updateAddSectionButton();renderInspo();saveLocalDraft();
 }
 async function saveDraft(){
-  const script=fullScript();
+  const script=formattedScript();
   if(!script){showToast('Add script text first','error');return;}
   const product=selectedProduct();
   const title=document.getElementById('scriptTitle').value.trim()||`${product?.name||'Untitled'} Script`;
-  const notes=[document.getElementById('scriptNotes').value.trim(),inspo.length?'Inspiration: '+inspo.join(', '):''].filter(Boolean).join('\n');
-  const row={user_id:user.id,title,brand:product?.name||'',cat:document.getElementById('scriptType').value,script,notes};
+  const frameworkLabel=FRAMEWORKS[currentFramework]?.label||currentFramework;
+  const notes=['Framework: '+frameworkLabel,document.getElementById('scriptNotes').value.trim(),inspo.length?'Inspiration: '+inspo.join(', '):''].filter(Boolean).join('\n');
+  const row={user_id:user.id,title,brand:product?.name||'',cat:frameworkLabel,script,notes};
   const {error}=await db.from('scripts').insert(row);
   if(error){showToast(error.message,'error');return;}
   saveLocalDraft();await loadLibraries();renderLibrary();showToast('Draft saved');
 }
-function copyFullScript(){const script=fullScript();if(!script)return;copyText(script);showToast('Copied');}
+function copyFullScript(){const script=formattedScript();if(!script)return;copyText(script);showToast('Copied');}
 function copyText(text){navigator.clipboard?.writeText(text);}
 document.addEventListener('input',e=>{if(e.target.closest('.page'))saveLocalDraft();});
 init();
