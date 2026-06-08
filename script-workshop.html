@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=62"></script>
-<link rel="stylesheet" href="layout.css?v=62">
+<script src="theme-init.js?v=65"></script>
+<link rel="stylesheet" href="layout.css?v=65">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -32,6 +32,7 @@ button,input,textarea,select{font:inherit;}
 .field{min-width:0;}
 .field-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px;}
 .field-input,.field-select{width:100%;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--ink);padding:10px 12px;outline:none;}
+.field-select{padding-right:34px;}
 .field-input:focus,.field-select:focus{border-color:var(--rust);}
 .workshop-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,0.75fr);gap:16px;align-items:start;}
 .panel{background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sm);}
@@ -75,6 +76,14 @@ button,input,textarea,select{font:inherit;}
 .inspo-pill-x{background:none;border:none;color:var(--text-muted);font-size:14px;line-height:1;cursor:pointer;padding:0 0 0 2px;transition:color 0.12s;}
 .inspo-pill-x:hover{color:var(--rust);}
 .empty{padding:22px;text-align:center;color:var(--text-muted);font-style:italic;}
+.workshop-modal-overlay{display:none;position:fixed;inset:0;z-index:700;align-items:center;justify-content:center;background:rgba(0,0,0,0.48);backdrop-filter:blur(5px);padding:24px;}
+.workshop-modal-overlay.open{display:flex;}
+.workshop-modal{width:min(520px,100%);border:1px solid var(--border-mid);border-radius:16px;background:var(--bg-lift);box-shadow:var(--shadow-md);padding:24px;}
+.workshop-modal-title{font-family:'IBM Plex Serif',serif;font-size:26px;font-weight:800;line-height:1.05;color:var(--ink);margin-bottom:8px;}
+.workshop-modal-message{font-size:14px;color:var(--text-mid);margin-bottom:18px;}
+.workshop-modal-input{width:100%;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);color:var(--ink);padding:12px 14px;outline:none;margin-bottom:18px;}
+.workshop-modal-input:focus{border-color:var(--rust);}
+.workshop-modal-actions{display:flex;justify-content:flex-end;gap:10px;}
 @media(max-width:768px){
   body{padding-left:0!important;}
   .page{display:none;}
@@ -84,7 +93,7 @@ button,input,textarea,select{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=62"></script>
+<script src="supabase.js?v=65"></script>
 </head>
 <body>
 <div class="mobile-only">
@@ -161,8 +170,19 @@ button,input,textarea,select{font:inherit;}
     </aside>
   </section>
 </main>
+<div class="workshop-modal-overlay" id="workshopModalOverlay" role="dialog" aria-modal="true" aria-labelledby="workshopModalTitle">
+  <div class="workshop-modal">
+    <div class="workshop-modal-title" id="workshopModalTitle"></div>
+    <div class="workshop-modal-message" id="workshopModalMessage"></div>
+    <input class="workshop-modal-input" id="workshopModalInput">
+    <div class="workshop-modal-actions">
+      <button class="btn btn-soft" id="workshopModalCancel" type="button">Cancel</button>
+      <button class="btn btn-primary" id="workshopModalSave" type="button">Save</button>
+    </div>
+  </div>
+</div>
 
-<script src="layout.js?v=62"></script>
+<script src="layout.js?v=65"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks';
 let sections=[
@@ -173,6 +193,7 @@ let sections=[
   {type:'cta', label:'CTA', text:''}
 ];
 let inspo=[];
+let workshopModalResolve=null;
 
 async function init(){
   user=await requireAuth();
@@ -191,6 +212,34 @@ async function init(){
 }
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function draftKey(){return `creatorHub:scriptWorkshop:${user?.id||'local'}`;}
+function closeWorkshopModal(value=null){
+  document.getElementById('workshopModalOverlay').classList.remove('open');
+  if(workshopModalResolve){workshopModalResolve(value);workshopModalResolve=null;}
+}
+function openWorkshopPrompt({title,message='',placeholder='',value='',confirmText='Save',showInput=true}){
+  const overlay=document.getElementById('workshopModalOverlay');
+  const input=document.getElementById('workshopModalInput');
+  document.getElementById('workshopModalTitle').textContent=title;
+  document.getElementById('workshopModalMessage').textContent=message;
+  document.getElementById('workshopModalSave').textContent=confirmText;
+  input.style.display=showInput?'block':'none';
+  input.value=value;
+  input.placeholder=placeholder;
+  overlay.classList.add('open');
+  if(showInput)setTimeout(()=>input.focus(),60);
+  return new Promise(resolve=>{workshopModalResolve=resolve;});
+}
+function openWorkshopConfirm(title,message,confirmText='Continue'){
+  return openWorkshopPrompt({title,message,confirmText,showInput:false});
+}
+document.getElementById('workshopModalCancel').addEventListener('click',()=>closeWorkshopModal(null));
+document.getElementById('workshopModalSave').addEventListener('click',()=>{
+  const input=document.getElementById('workshopModalInput');
+  closeWorkshopModal(input.style.display==='none'?true:input.value.trim());
+});
+document.getElementById('workshopModalInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();closeWorkshopModal(e.target.value.trim());}
+});
 async function loadProducts(){const {data}=await db.from('products').select('id,name,brand').eq('user_id',user.id).order('name');products=data||[];}
 async function loadLibraries(){
   const [h,s,c]=await Promise.all([
@@ -228,7 +277,7 @@ function updateSection(index,el){sections[index].text=el.value;}
 function moveSection(index,dir){const next=index+dir;if(next<0||next>=sections.length)return;[sections[index],sections[next]]=[sections[next],sections[index]];renderSections();saveLocalDraft();}
 function duplicateSection(index){sections.splice(index+1,0,{...sections[index],text:sections[index].text});renderSections();saveLocalDraft();}
 function deleteSection(index){if(sections.length<=1)return;sections.splice(index,1);renderSections();saveLocalDraft();}
-function addSection(){const label=prompt('Section name','Angle');if(!label)return;sections.push({type:'custom',label,text:''});renderSections();saveLocalDraft();}
+async function addSection(){const label=await openWorkshopPrompt({title:'Add Section',message:'Name this script section.',placeholder:'Angle',value:'Angle'});if(!label)return;sections.push({type:'custom',label,text:''});renderSections();saveLocalDraft();}
 function setLibraryTab(tab){activeTab=tab;document.querySelectorAll('.tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===tab));document.getElementById('libraryTitle').textContent=tab==='hooks'?'Hook Library':'CTA Library';renderLibrary();}
 function libraryRows(){
   const q=document.getElementById('librarySearch').value.toLowerCase();
@@ -255,13 +304,16 @@ function insertLibrary(index){
   saveLocalDraft();
 }
 async function quickAddLibrary(){
-  const text=prompt(activeTab==='hooks'?'New hook':activeTab==='ctas'?'New CTA':'New script');
+  const search=document.getElementById('librarySearch');
+  const typed=search.value.trim();
+  const text=typed||await openWorkshopPrompt({title:activeTab==='hooks'?'New Hook':activeTab==='ctas'?'New CTA':'New Script',message:'Add it to your saved library.',placeholder:'Type it here...'});
   if(!text)return;
   if(activeTab==='hooks')await db.from('hooks').insert({user_id:user.id,text,cat:'workshop'});
   else if(activeTab==='ctas')await db.from('ctas').insert({user_id:user.id,text,cat:'soft'});
+  search.value='';
   await loadLibraries();renderLibrary();showToast('Saved');
 }
-function addInspo(){const url=prompt('Paste inspiration link');if(!url)return;inspo.push(url);renderInspo();saveLocalDraft();}
+async function addInspo(){const url=await openWorkshopPrompt({title:'Add Inspiration',message:'Paste a TikTok, product page, or reference link.',placeholder:'https://...'});if(!url)return;inspo.push(url);renderInspo();saveLocalDraft();}
 function removeInspo(index){inspo.splice(index,1);renderInspo();saveLocalDraft();}
 function renderInspo(){
   const list=document.getElementById('inspoList');
@@ -288,8 +340,8 @@ function restoreLocalDraft(){
     setTimeout(()=>{document.getElementById('productSelect').value=draft.productId||'';},0);
   }catch(e){}
 }
-function newScript(){
-  if(fullScript()&&!confirm('Start a new script? Unsaved text will be cleared.'))return;
+async function newScript(){
+  if(fullScript()&&!(await openWorkshopConfirm('Start New Script?','This will clear the current workshop draft on this page.','Start New')))return;
   document.getElementById('scriptTitle').value='';
   document.getElementById('productSelect').value='';
   document.getElementById('scriptNotes').value='';
