@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=71"></script>
-<link rel="stylesheet" href="layout.css?v=71">
+<script src="theme-init.js?v=72"></script>
+<link rel="stylesheet" href="layout.css?v=72">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -93,7 +93,8 @@ button,input,textarea,select{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=71"></script>
+<script src="supabase.js?v=72"></script>
+<script src="gemini-ai.js?v=72"></script>
 </head>
 <body>
 <div class="mobile-only">
@@ -107,6 +108,8 @@ button,input,textarea,select{font:inherit;}
       <p class="page-sub">Build better content ideas, version your scripts, and track what works.</p>
     </div>
     <div class="actions">
+      <button class="btn btn-primary" id="aiDraftBtn" onclick="generateAiDraft()">AI Draft</button>
+      <button class="btn btn-soft" onclick="disconnectGeminiKey()">Disconnect API Key</button>
       <button class="btn btn-soft" onclick="newScript()">+ New Script</button>
       <button class="btn btn-primary" onclick="saveDraft()">Save Draft</button>
       <button class="btn" onclick="copyFullScript()">Copy Script</button>
@@ -185,7 +188,7 @@ button,input,textarea,select{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=71"></script>
+<script src="layout.js?v=72"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks', currentFramework='product-demo', pendingDraftProductId='';
 const FRAMEWORKS={
@@ -210,6 +213,7 @@ async function init(){
   await initCore5(user.id,prefs);
   await initTheme(user.id,prefs);
   initProfilePopover(user.id);
+  CreatorGemini.init({autoPrompt:true});
   await Promise.all([loadProducts(),loadLibraries()]);
   restoreLocalDraft();
   renderProducts();
@@ -461,6 +465,63 @@ async function saveDraft(){
   const {error}=await db.from('scripts').insert(row);
   if(error){showToast(error.message,'error');return;}
   saveLocalDraft();await loadLibraries();renderLibrary();showToast('Draft saved');
+}
+function disconnectGeminiKey(){
+  CreatorGemini.disconnect();
+}
+function parseAiSections(text){
+  const cleaned=String(text||'').replace(/```json|```/gi,'').trim();
+  try{
+    const parsed=JSON.parse(cleaned);
+    if(Array.isArray(parsed))return parsed;
+    if(Array.isArray(parsed.sections))return parsed.sections;
+  }catch(e){}
+  return [];
+}
+async function generateAiDraft(){
+  const btn=document.getElementById('aiDraftBtn');
+  const hasText=Boolean(fullScript());
+  if(hasText&&!(await openWorkshopConfirm('Replace Current Draft?','AI Draft will replace the text in your current script sections.','Replace','Cancel')))return;
+  const product=selectedProduct();
+  const framework=FRAMEWORKS[currentFramework]||FRAMEWORKS['product-demo'];
+  const extra=await openWorkshopPrompt({
+    title:'AI Draft',
+    message:'Optional: add the angle, audience, offer, or tone you want Gemini to use.',
+    placeholder:'Example: casual TikTok, busy moms, emphasize before/after...',
+    confirmText:'Generate'
+  });
+  if(extra===null)return;
+  const labels=sections.map(section=>section.label);
+  const prompt=[
+    'You are helping write a TikTok Shop creator video script.',
+    `Product: ${product?.name||'Not selected'}`,
+    `Brand: ${product?.brand||''}`,
+    `Framework: ${framework.label}`,
+    `Sections: ${labels.join(', ')}`,
+    extra?`Creative direction: ${extra}`:'',
+    'Return JSON only, with this exact shape:',
+    '{"sections":[{"label":"Hook","text":"..."},{"label":"Problem","text":"..."}]}',
+    'Use the exact section labels provided. Keep each section concise, natural, and creator-friendly.'
+  ].filter(Boolean).join('\n');
+  try{
+    if(btn){btn.disabled=true;btn.textContent='Drafting...';}
+    const text=await CreatorGemini.generateText(prompt);
+    const generated=parseAiSections(text);
+    if(!generated.length)throw new Error('Gemini did not return usable sections.');
+    const byLabel=new Map(generated.map(section=>[String(section.label||'').trim().toLowerCase(),String(section.text||'').trim()]));
+    sections=sections.map(section=>({
+      ...section,
+      text:byLabel.get(String(section.label||'').trim().toLowerCase())||section.text||''
+    }));
+    renderSections();
+    saveLocalDraft();
+    showToast('AI draft added');
+  }catch(error){
+    console.error('Gemini draft failed',error);
+    if(!String(error?.message||'').toLowerCase().includes('api key'))showToast('Gemini could not draft this script.','error');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='AI Draft';}
+  }
 }
 function copyFullScript(){const script=formattedScript();if(!script)return;copyText(script);showToast('Copied');}
 function copyText(text){navigator.clipboard?.writeText(text);}

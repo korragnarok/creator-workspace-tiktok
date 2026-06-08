@@ -1,5 +1,5 @@
 // ─── Creator Hub Service Worker ───────────────────────────────────────────────
-const CACHE = 'creator-hub-v71';
+const CACHE = 'creator-hub-v72';
 
 // Core files to cache for offline shell
 const PRECACHE = [
@@ -17,6 +17,7 @@ const PRECACHE = [
   '/ctas.html',
   '/theme-init.js',
   '/supabase.js',
+  '/gemini-ai.js',
   '/layout.js',
   '/layout.css',
   '/manifest.json',
@@ -49,6 +50,8 @@ self.addEventListener('fetch', e => {
   // Always go network-only for Supabase and external APIs
   if (url.hostname.includes('supabase.co') ||
       url.hostname.includes('googleapis.com') ||
+      url.hostname.includes('esm.run') ||
+      url.hostname.includes('esm.sh') ||
       url.hostname.includes('jsdelivr.net')) {
     return; // let browser handle it normally
   }
