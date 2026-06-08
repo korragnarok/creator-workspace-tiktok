@@ -57,7 +57,8 @@ window.CreatorGemini = (() => {
           <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Google AI Studio</a>.
           Your key stays in this browser only.
         </div>
-        <input class="gemini-key-input" id="geminiKeyInput" type="password" autocomplete="off" placeholder="AIzaSy...">
+<input class="gemini-key-input" id="geminiKeyInput" type="password" autocomplete="off" placeholder="Paste your API key here...">
+
         <div class="gemini-key-actions">
           <button class="btn btn-primary" id="geminiSaveKeyBtn" type="button">Save Key</button>
         </div>
