@@ -5,7 +5,7 @@
     { href: 'video-tracker.html', label: 'Content Tracker', mobileLabel: 'Content', icon: 'video' },
     { href: 'products.html', label: 'Products', icon: 'products' },
     { href: 'scripts.html', label: 'Scripts', icon: 'scripts' },
-    { href: 'script-workshop.html', label: 'Script Workshop', icon: 'scripts', desktopOnly: true },
+    { href: 'script-workshop.html', label: 'Script Workshop', icon: 'workshop', desktopOnly: true },
     { href: 'sales-calendar.html', label: 'Sales Log', mobileLabel: 'Sales', icon: 'sales' }
   ];
 
@@ -75,7 +75,7 @@
     if (document.querySelector('link[data-shared-layout-styles], link[href*="layout.css"]')) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'layout.css?v=56';
+    link.href = 'layout.css?v=57';
     link.dataset.sharedLayoutStyles = 'true';
     document.head.appendChild(link);
   }

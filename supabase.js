@@ -203,7 +203,7 @@ const THEMES = {
 
 const DEFAULT_THEME = 'dusk';
 const DEFAULT_PROFILE_ICON = 'avatar';
-const THEME_ICON_NAMES = new Set(['home','todo','video','videos','hooks','products','scripts','sales','gmv','commissions','comission','comissions','commissins']);
+const THEME_ICON_NAMES = new Set(['home','todo','video','videos','hooks','products','scripts','sales','gmv','commissions','comission','comissions','commissins','move-up','move-down','duplicate','delete','workshop']);
 const THEME_ICON_FILES = {
   dusk: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
   warm: { video:'videos.png', videos:'videos.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
