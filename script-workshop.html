@@ -44,8 +44,8 @@ button,input,textarea,select{font:inherit;}
 .section-text{width:100%;min-height:58px;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--text);padding:10px 12px;resize:vertical;outline:none;}
 .section-text:focus{border-color:var(--rust);}
 .section-tools{display:flex;align-items:center;justify-content:flex-end;gap:7px;color:var(--text-muted);}
-.icon-btn{width:28px;height:28px;border:1px solid var(--border-mid);border-radius:50%;background:transparent;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.icon-btn:hover{border-color:var(--sage);color:var(--sage);background:color-mix(in srgb,var(--sage) 12%,transparent);}
+.icon-btn{width:28px;height:28px;border:1px solid var(--border-mid);border-radius:8px;background:transparent;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.icon-btn:hover{border-color:var(--rust);color:var(--rust);}
 .count{font-family:'Noto Sans Mono',monospace;font-size:10px;color:var(--text-muted);white-space:nowrap;}
 .add-section{border:1px dashed var(--border-mid);background:transparent;color:var(--text-mid);padding:12px;border-radius:10px;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;}
 .notes-panel{margin-top:12px;padding:14px;}
@@ -216,15 +216,15 @@ function renderSections(){
       </div>
       <textarea class="section-text" maxlength="500" data-index="${index}" oninput="updateSection(${index},this)" placeholder="Write the ${esc(section.label).toLowerCase()}...">${esc(section.text)}</textarea>
       <div class="section-tools">
-        <span class="count">${String(section.text||'').length}</span>
-        <button class="icon-btn" onclick="moveSection(${index},-1)" title="Move up">↑</button>
-        <button class="icon-btn" onclick="moveSection(${index},1)" title="Move down">↓</button>
-        <button class="icon-btn" onclick="duplicateSection(${index})" title="Duplicate">⧉</button>
-        <button class="icon-btn" onclick="deleteSection(${index})" title="Delete">×</button>
+        <span class="count">${String(section.text||'').length}/500</span>
+        <button class="icon-btn" onclick="moveSection(${index},-1)" title="Move up"><img src="icons/workshop/move-up.png" alt="↑" width="14" height="14"></button>
+        <button class="icon-btn" onclick="moveSection(${index},1)" title="Move down"><img src="icons/workshop/move-down.png" alt="↓" width="14" height="14"></button>
+        <button class="icon-btn" onclick="duplicateSection(${index})" title="Duplicate"><img src="icons/workshop/duplicate.png" alt="⧉" width="14" height="14"></button>
+        <button class="icon-btn" onclick="deleteSection(${index})" title="Delete"><img src="icons/workshop/delete.png" alt="×" width="14" height="14"></button>
       </div>
     </div>`).join('');
 }
-function updateSection(index,el){sections[index].text=el.value;const count=el.closest('.section-card')?.querySelector('.count');if(count)count.textContent=`${el.value.length}`;}
+function updateSection(index,el){sections[index].text=el.value;const count=el.closest('.section-card')?.querySelector('.count');if(count)count.textContent=`${el.value.length}/500`;}
 function moveSection(index,dir){const next=index+dir;if(next<0||next>=sections.length)return;[sections[index],sections[next]]=[sections[next],sections[index]];renderSections();}
 function duplicateSection(index){sections.splice(index+1,0,{...sections[index],text:sections[index].text});renderSections();}
 function deleteSection(index){if(sections.length<=1)return;sections.splice(index,1);renderSections();}
