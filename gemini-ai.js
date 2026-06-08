@@ -142,14 +142,19 @@ window.CreatorGemini = (() => {
     return text.includes('403') || text.includes('400') || text.includes('api key') || text.includes('permission') || text.includes('auth');
   }
 
+  function responseText(response) {
+    return typeof response.text === 'function' ? response.text() : (response.text || '');
+  }
+
   async function generateText(prompt, options = {}) {
     try {
       const client = await requireKey();
       const response = await client.models.generateContent({
         model: options.model || 'gemini-2.5-flash',
-        contents: prompt
+        contents: prompt,
+        config: options.config || undefined
       });
-      return typeof response.text === 'function' ? response.text() : (response.text || '');
+      return responseText(response);
     } catch (error) {
       if (isAuthError(error)) {
         alert('Your Gemini API key failed. Please enter a new key.');
@@ -161,5 +166,17 @@ window.CreatorGemini = (() => {
     }
   }
 
-  return { init, requireKey, disconnect, generateText, hasKey: () => looksLikeKey(savedKey()) };
+  async function generateJson(prompt, schema, options = {}) {
+    const text = await generateText(prompt, {
+      ...options,
+      config: {
+        ...(options.config || {}),
+        responseMimeType: 'application/json',
+        responseJsonSchema: schema
+      }
+    });
+    return JSON.parse(String(text || '').replace(/```json|```/gi, '').trim());
+  }
+
+  return { init, requireKey, disconnect, generateText, generateJson, hasKey: () => looksLikeKey(savedKey()) };
 })();
