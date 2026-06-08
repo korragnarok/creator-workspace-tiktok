@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=68"></script>
-<link rel="stylesheet" href="layout.css?v=68">
+<script src="theme-init.js?v=69"></script>
+<link rel="stylesheet" href="layout.css?v=69">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=68"></script>
+<script src="supabase.js?v=69"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -256,7 +256,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=68"></script>
+<script src="layout.js?v=69"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -371,6 +371,13 @@ function productBankUrl(card){
   if(brand)return 'products.html?brand='+encodeURIComponent(brand);
   return 'products.html?search='+encodeURIComponent(String(card?.name||'').trim());
 }
+function scriptWorkshopUrl(card){
+  const params=new URLSearchParams();
+  if(card?.prodId)params.set('productId',card.prodId);
+  if(card?.name)params.set('productName',card.name);
+  if(card?.brand)params.set('brand',card.brand);
+  return 'script-workshop.html'+(params.toString()?'?'+params.toString():'');
+}
 function normalizeInspirationLinks(value){
   if(Array.isArray(value)) return value.map(normalizeUrl).filter(Boolean);
   if(typeof value==='string'){
@@ -419,6 +426,7 @@ function render(){
 	        <div><div class="pcard-name"><a href="${esc(productBankUrl(card))}" title="View this brand in Products">${esc(card.name)}</a></div>${card.brand?`<div class="pcard-brand">${esc(card.brand)}</div>`:''}</div>
 	        <div class="pcard-btns">
           <span style="font-family:'Noto Sans Mono',sans-serif;font-size:11px;color:var(--text-muted);padding:0 4px;">${doneTakes}/${takes.length}</span>
+          <a class="hbtn" href="${esc(scriptWorkshopUrl(card))}">Workshop</a>
           <button class="hbtn danger" onclick="removeCard('${esc(card.id)}')">Remove</button>
         </div>
       </div>
