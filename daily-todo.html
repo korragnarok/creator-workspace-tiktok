@@ -360,7 +360,7 @@ async function saveQueueRow(card,take){
     error = fallback.error;
   }
   if(!take.queueId && data) take.queueId=data.id;
-  if(error) console.warn('Queue save failed', error);
+  if(error) { console.error('Queue save failed', error); throw new Error(error.message || 'Supabase save error'); }
 }
 async function deleteQueueRow(take){if(take.queueId){await db.from('queue').delete().eq('id',take.queueId);sessionStorage.removeItem('ts-'+take.queueId);}}
 
@@ -561,7 +561,7 @@ async function removeInspirationLink(cardId,takeId,index){
   if(take.queueId)await saveQueueRow(card,take);
 }
 
-function saveScriptEdit(cid,tid){
+async function saveScriptEdit(cid,tid){
   const card=TODO.find(c=>c.id===cid);
   const take=card?.takes.find(t=>t.id===tid);
   const ta=document.getElementById('sta-'+tid);
@@ -569,7 +569,13 @@ function saveScriptEdit(cid,tid){
     take.script=ta.value.trim();
     take.editingScript=false;
     render();
-    saveQueueRow(card,take);
+    try {
+      await saveQueueRow(card,take);
+      showToast('Script saved');
+    } catch(err) {
+      console.error('Script save error:', err);
+      showToast('Save failed: '+err.message, 'error');
+    }
   }
 }
 
