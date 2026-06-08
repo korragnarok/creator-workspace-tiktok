@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=67"></script>
-<link rel="stylesheet" href="layout.css?v=67">
+<script src="theme-init.js?v=68"></script>
+<link rel="stylesheet" href="layout.css?v=68">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -32,7 +32,7 @@ button,input,textarea,select{font:inherit;}
 .field{min-width:0;}
 .field-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px;}
 .field-input,.field-select{width:100%;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--ink);padding:10px 12px;outline:none;}
-.field-select{padding-right:34px;}
+.field-select{padding-right:48px;}
 .field-input:focus,.field-select:focus{border-color:var(--rust);}
 .workshop-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,0.75fr);gap:16px;align-items:start;}
 .panel{background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sm);}
@@ -93,7 +93,7 @@ button,input,textarea,select{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=67"></script>
+<script src="supabase.js?v=68"></script>
 </head>
 <body>
 <div class="mobile-only">
@@ -185,7 +185,7 @@ button,input,textarea,select{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=67"></script>
+<script src="layout.js?v=68"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks', currentFramework='product-demo';
 const FRAMEWORKS={
