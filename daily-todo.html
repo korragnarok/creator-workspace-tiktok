@@ -577,7 +577,7 @@ function saveScriptEdit(cid,tid){
     take.script=ta.value.trim();
     take.editingScript=false;
     render();
-    if(take.queueId) saveQueueRow(card,take);
+    saveQueueRow(card,take);
   }
 }
 
