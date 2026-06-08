@@ -138,7 +138,6 @@ button,input,textarea,select{font:inherit;}
           <div class="library-title" id="libraryTitle">Hook Library</div>
           <div class="library-tabs">
             <button class="tab active" data-tab="hooks" onclick="setLibraryTab('hooks')">Hooks</button>
-            <button class="tab" data-tab="scripts" onclick="setLibraryTab('scripts')">Scripts</button>
             <button class="tab" data-tab="ctas" onclick="setLibraryTab('ctas')">CTAs</button>
           </div>
         </div>
@@ -227,7 +226,7 @@ function moveSection(index,dir){const next=index+dir;if(next<0||next>=sections.l
 function duplicateSection(index){sections.splice(index+1,0,{...sections[index],text:sections[index].text});renderSections();}
 function deleteSection(index){if(sections.length<=1)return;sections.splice(index,1);renderSections();}
 function addSection(){const label=prompt('Section name','Angle');if(!label)return;sections.push({type:'custom',label,text:''});renderSections();}
-function setLibraryTab(tab){activeTab=tab;document.querySelectorAll('.tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===tab));document.getElementById('libraryTitle').textContent=tab==='hooks'?'Hook Library':tab==='scripts'?'Saved Scripts':'CTA Library';renderLibrary();}
+function setLibraryTab(tab){activeTab=tab;document.querySelectorAll('.tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===tab));document.getElementById('libraryTitle').textContent=tab==='hooks'?'Hook Library':'CTA Library';renderLibrary();}
 function libraryRows(){
   const q=document.getElementById('librarySearch').value.toLowerCase();
   const rows=activeTab==='hooks'?hooks.map(h=>({meta:h.cat||'Hook',text:h.text}))
@@ -256,7 +255,6 @@ async function quickAddLibrary(){
   if(!text)return;
   if(activeTab==='hooks')await db.from('hooks').insert({user_id:user.id,text,cat:'workshop'});
   else if(activeTab==='ctas')await db.from('ctas').insert({user_id:user.id,text,cat:'soft'});
-  else await db.from('scripts').insert({user_id:user.id,title:'Workshop snippet',script:text,cat:'workshop'});
   await loadLibraries();renderLibrary();showToast('Saved');
 }
 function addInspo(){const url=prompt('Paste inspiration link');if(!url)return;inspo.push(url);renderInspo();}
