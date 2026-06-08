@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=69"></script>
-<link rel="stylesheet" href="layout.css?v=69">
+<script src="theme-init.js?v=70"></script>
+<link rel="stylesheet" href="layout.css?v=70">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -93,7 +93,7 @@ button,input,textarea,select{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=69"></script>
+<script src="supabase.js?v=70"></script>
 </head>
 <body>
 <div class="mobile-only">
@@ -185,7 +185,7 @@ button,input,textarea,select{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=69"></script>
+<script src="layout.js?v=70"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks', currentFramework='product-demo', pendingDraftProductId='';
 const FRAMEWORKS={
@@ -213,7 +213,8 @@ async function init(){
   await Promise.all([loadProducts(),loadLibraries()]);
   restoreLocalDraft();
   renderProducts();
-  if(!applyProductHandoff()&&pendingDraftProductId)document.getElementById('productSelect').value=pendingDraftProductId;
+  if(pendingDraftProductId)document.getElementById('productSelect').value=pendingDraftProductId;
+  await applyProductHandoff();
   renderSections();
   updateAddSectionButton();
   renderLibrary();
@@ -263,12 +264,13 @@ function closeWorkshopModal(value=null){
   document.getElementById('workshopModalOverlay').classList.remove('open');
   if(workshopModalResolve){workshopModalResolve(value);workshopModalResolve=null;}
 }
-function openWorkshopPrompt({title,message='',placeholder='',value='',confirmText='Save',showInput=true}){
+function openWorkshopPrompt({title,message='',placeholder='',value='',confirmText='Save',cancelText='Cancel',showInput=true}){
   const overlay=document.getElementById('workshopModalOverlay');
   const input=document.getElementById('workshopModalInput');
   document.getElementById('workshopModalTitle').textContent=title;
   document.getElementById('workshopModalMessage').textContent=message;
   document.getElementById('workshopModalSave').textContent=confirmText;
+  document.getElementById('workshopModalCancel').textContent=cancelText;
   input.style.display=showInput?'block':'none';
   input.value=value;
   input.placeholder=placeholder;
@@ -276,8 +278,8 @@ function openWorkshopPrompt({title,message='',placeholder='',value='',confirmTex
   if(showInput)setTimeout(()=>input.focus(),60);
   return new Promise(resolve=>{workshopModalResolve=resolve;});
 }
-function openWorkshopConfirm(title,message,confirmText='Continue'){
-  return openWorkshopPrompt({title,message,confirmText,showInput:false});
+function openWorkshopConfirm(title,message,confirmText='Continue',cancelText='Cancel'){
+  return openWorkshopPrompt({title,message,confirmText,cancelText,showInput:false});
 }
 document.getElementById('workshopModalCancel').addEventListener('click',()=>closeWorkshopModal(null));
 document.getElementById('workshopModalSave').addEventListener('click',()=>{
@@ -300,19 +302,39 @@ function renderProducts(){
   const sel=document.getElementById('productSelect');
   sel.innerHTML='<option value="">Choose product</option>'+products.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.brand?' — '+esc(p.brand):''}</option>`).join('');
 }
-function applyProductHandoff(){
+async function applyProductHandoff(){
   const params=new URLSearchParams(window.location.search);
   const productId=params.get('productId')||'';
   const productName=String(params.get('productName')||'').trim().toLowerCase();
   const brand=String(params.get('brand')||'').trim().toLowerCase();
+  if(!productId&&!productName&&!brand)return false;
   const product=products.find(p=>productId&&p.id===productId)
     || products.find(p=>productName&&String(p.name||'').trim().toLowerCase()===productName)
     || products.find(p=>productName&&String(p.name||'').toLowerCase().includes(productName)&&(!brand||String(p.brand||'').toLowerCase()===brand));
   if(!product)return;
+  const currentProductId=document.getElementById('productSelect').value;
+  const hasDraftText=Boolean(fullScript()||document.getElementById('scriptTitle').value.trim()||document.getElementById('scriptNotes').value.trim()||inspo.length);
+  if(hasDraftText&&currentProductId!==product.id){
+    const startNew=await openWorkshopConfirm(
+      'Workshop Draft Already Open',
+      `Start a new script for ${product.name}, or keep editing your current workshop draft?`,
+      'Start New',
+      'Keep Current'
+    );
+    if(!startNew){
+      history.replaceState({},'',window.location.pathname);
+      return false;
+    }
+    document.getElementById('scriptTitle').value='';
+    document.getElementById('scriptNotes').value='';
+    sections=makeFrameworkSections(currentFramework);
+    inspo=[];
+  }
   document.getElementById('productSelect').value=product.id;
   const title=document.getElementById('scriptTitle');
   if(!title.value.trim())title.value=`${product.name} Script`;
   saveLocalDraft();
+  history.replaceState({},'',window.location.pathname);
   return true;
 }
 function sectionIcon(label){return String(label||'?').trim().slice(0,1).toUpperCase();}
