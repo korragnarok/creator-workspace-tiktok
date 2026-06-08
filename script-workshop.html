@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=58"></script>
-<link rel="stylesheet" href="layout.css?v=58">
+<script src="theme-init.js?v=59"></script>
+<link rel="stylesheet" href="layout.css?v=59">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -47,7 +47,6 @@ button,input,textarea,select{font:inherit;}
 .icon-btn{width:28px;height:28px;border:0;border-radius:50%;background:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
 .icon-btn:hover{opacity:0.78;}
 .icon-btn img{width:22px;height:22px;object-fit:contain;display:block;}
-.count{font-family:'Noto Sans Mono',monospace;font-size:10px;color:var(--text-muted);white-space:nowrap;}
 .add-section{border:1px dashed var(--border-mid);background:transparent;color:var(--text-mid);padding:12px;border-radius:10px;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;}
 .notes-panel{margin-top:12px;padding:14px;}
 .notes-head{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);margin-bottom:8px;}
@@ -85,7 +84,7 @@ button,input,textarea,select{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=58"></script>
+<script src="supabase.js?v=59"></script>
 </head>
 <body>
 <div class="mobile-only">
@@ -163,7 +162,7 @@ button,input,textarea,select{font:inherit;}
   </section>
 </main>
 
-<script src="layout.js?v=58"></script>
+<script src="layout.js?v=59"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks';
 let sections=[
@@ -217,7 +216,6 @@ function renderSections(){
       </div>
       <textarea class="section-text" maxlength="500" data-index="${index}" oninput="updateSection(${index},this)" placeholder="Write the ${esc(section.label).toLowerCase()}...">${esc(section.text)}</textarea>
       <div class="section-tools">
-        <span class="count">${String(section.text||'').length}/500</span>
         <button class="icon-btn" onclick="moveSection(${index},-1)" title="Move up"><img src="icons/dusk/move-up.png" data-theme-icon data-icon-name="move-up" alt="Move up"></button>
         <button class="icon-btn" onclick="moveSection(${index},1)" title="Move down"><img src="icons/dusk/move-down.png" data-theme-icon data-icon-name="move-down" alt="Move down"></button>
         <button class="icon-btn" onclick="duplicateSection(${index})" title="Duplicate"><img src="icons/dusk/duplicate.png" data-theme-icon data-icon-name="duplicate" alt="Duplicate"></button>
@@ -226,7 +224,7 @@ function renderSections(){
     </div>`).join('');
   if (typeof applyThemeIcons === 'function') applyThemeIcons(_cachedTheme?.() || DEFAULT_THEME);
 }
-function updateSection(index,el){sections[index].text=el.value;const count=el.closest('.section-card')?.querySelector('.count');if(count)count.textContent=`${el.value.length}/500`;}
+function updateSection(index,el){sections[index].text=el.value;}
 function moveSection(index,dir){const next=index+dir;if(next<0||next>=sections.length)return;[sections[index],sections[next]]=[sections[next],sections[index]];renderSections();}
 function duplicateSection(index){sections.splice(index+1,0,{...sections[index],text:sections[index].text});renderSections();}
 function deleteSection(index){if(sections.length<=1)return;sections.splice(index,1);renderSections();}
