@@ -10,8 +10,8 @@ window.CreatorGemini = (() => {
   }
 
   function looksLikeKey(key) {
-    return /^AIzaSy/.test(String(key || '').trim());
-  }
+  return true;
+}
 
   async function loadSdk() {
     if (!sdkPromise) sdkPromise = import('https://esm.run/@google/genai');
@@ -57,7 +57,8 @@ window.CreatorGemini = (() => {
           <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Google AI Studio</a>.
           Your key stays in this browser only.
         </div>
-        <input class="gemini-key-input" id="geminiKeyInput" type="password" autocomplete="off" placeholder="AIzaSy...">
+<input class="gemini-key-input" id="geminiKeyInput" type="password" autocomplete="off" placeholder="Paste your API key here...">
+
         <div class="gemini-key-actions">
           <button class="btn btn-primary" id="geminiSaveKeyBtn" type="button">Save Key</button>
         </div>
@@ -75,28 +76,23 @@ window.CreatorGemini = (() => {
   }
 
   async function saveFromModal() {
-    const input = document.getElementById('geminiKeyInput');
-    const key = input?.value.trim() || '';
-    if (!looksLikeKey(key)) {
-      alert('That does not look like a Gemini API key. Gemini keys usually start with "AIzaSy".');
-      input?.focus();
-      return;
-    }
+  const input = document.getElementById('geminiKeyInput');
+  const key = input?.value.trim() || '';
     try {
-      localStorage.setItem(GEMINI_KEY_STORAGE, key);
-      await initialize(key);
-      closeModal();
-      if (modalPromise) {
-        modalPromise.resolve(ai);
-        modalPromise = null;
-      }
-    } catch (error) {
-      alert('Could not initialize Gemini with that key. Please check it and try again.');
-      localStorage.removeItem(GEMINI_KEY_STORAGE);
-      ai = null;
-      input?.focus();
+    localStorage.setItem(GEMINI_KEY_STORAGE, key);
+    await initialize(key);
+    closeModal();
+    if (modalPromise) {
+      modalPromise.resolve(ai);
+      modalPromise = null;
     }
+  } catch (error) {
+    alert('Could not initialize Gemini with that key. Please check it and try again.');
+    localStorage.removeItem(GEMINI_KEY_STORAGE);
+    ai = null;
+    input?.focus();
   }
+}
 
   function closeModal() {
     document.getElementById('geminiKeyModal')?.classList.remove('open');
