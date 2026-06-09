@@ -98,7 +98,7 @@ button,input{font:inherit;}
 .empty-box strong{display:block;color:var(--text-mid);font-weight:400;}
 .today-content-list{display:flex;flex-direction:column;gap:6px;flex:1;}
 /* ── Filming Schedule ── */
-.sched-list{display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;max-height:500px;scrollbar-width:thin;scrollbar-color:var(--border-mid) transparent;}
+.sched-list{display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;max-height:600px;scrollbar-width:thin;scrollbar-color:var(--border-mid) transparent;}
 .sched-list-inner{display:flex;flex-direction:column;}
 .sched-row{display:grid;grid-template-columns:56px 24px 1fr auto;gap:10px;align-items:center;padding:8px 12px;border:none;border-radius:0;background:transparent;border-bottom:1px solid var(--border);}
 .sched-row:last-child{border-bottom:none;}
@@ -687,8 +687,9 @@ function renderTodayContent(){
     const timeLabel=rawTime?fmtSchedTime(rawTime):'+ time';
     const cleanLine=String(q.notes||'').split('\n').find(l=>l.trim()&&!/^SCHED_TIME:/i.test(l)&&!/^STATUS:/i.test(l))||'';
     const typeTag=parseSchedType(q.notes)||cleanLine.trim().slice(0,24)||'';
-    const statusClass=q.done?'filmed':'not-started';
-    const statusLabel=q.done?'Filmed':'Not Started';
+    const storedSt=String(q.notes||'').match(/STATUS:(in-progress|filmed)/i)?.[1]?.toLowerCase()||'';
+    const statusClass=q.done?'filmed':storedSt==='in-progress'?'in-progress':'not-started';
+    const statusLabel=q.done?'Filmed':storedSt==='in-progress'?'In Progress':'Not Started';
     const statusIcon=statusClass==='filmed'?'icons/workshop/status-filmed.png':statusClass==='in-progress'?'icons/workshop/status-in-progress.png':'icons/workshop/status-not-started.png';
     return`<div class="sched-row${q.done?' done':''}">
       <span class="sched-time${rawTime?'':' no-time'}" onclick="openTimePopover('${q.id}',this)" title="Set time">${esc(timeLabel)}</span>
