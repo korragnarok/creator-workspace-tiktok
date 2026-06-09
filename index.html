@@ -112,9 +112,9 @@ button,input{font:inherit;}
 .sched-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;}
 .sched-brand{font-size:11px;color:var(--text-muted);}
 .sched-type-tag{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:color-mix(in srgb,var(--rust) 14%,var(--surface) 86%);color:var(--rust);}
-.sched-status-icon{width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;flex-shrink:0;background:none;border:none;padding:0;transition:transform 0.12s;}
+.sched-status-icon{width:24px;height:24px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;flex-shrink:0;background:none;border:none;padding:0;transition:transform 0.12s;}
 .sched-status-icon:hover{transform:scale(1.1);}
-.sched-status-icon img{width:36px;height:36px;object-fit:contain;display:block;}
+.sched-status-icon img{width:24px;height:24px;max-width:24px;max-height:24px;object-fit:contain;display:block;}
 .sched-progress-wrap{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);}
 .sched-progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-mid);margin-bottom:6px;}
 .sched-progress-bar{background:color-mix(in srgb,var(--ink) 12%,transparent);border-radius:999px;height:6px;overflow:hidden;}
@@ -680,7 +680,8 @@ function renderTodayContent(){
   const rows=sorted.map(q=>{
     const rawTime=parseSchedTime(q.notes);
     const timeLabel=rawTime?fmtSchedTime(rawTime):'+ time';
-    const typeTag=parseSchedType(q.notes)||String(q.notes||'').split('\n')[0].trim().slice(0,24)||'';
+    const cleanLine=String(q.notes||'').split('\n').find(l=>l.trim()&&!/^SCHED_TIME:/i.test(l)&&!/^STATUS:/i.test(l))||'';
+    const typeTag=parseSchedType(q.notes)||cleanLine.trim().slice(0,24)||'';
     const statusClass=q.done?'filmed':'not-started';
     const statusLabel=q.done?'Filmed':'Not Started';
     const statusIcon=statusClass==='filmed'?'icons/workshop/status-filmed.png':statusClass==='in-progress'?'icons/workshop/status-in-progress.png':'icons/workshop/status-not-started.png';
@@ -689,11 +690,9 @@ function renderTodayContent(){
       <button class="sched-status-icon" onclick="cycleSchedStatus('${q.id}',this)" title="${statusLabel}"><img src="${statusIcon}" alt="${statusLabel}"></button>
       <div class="sched-body">
         <div class="sched-name">${esc(q.name)}</div>
-        <div class="sched-meta">
-          ${q.brand?`<span class="sched-brand">${esc(q.brand)}</span>`:''}
-          ${typeTag?`<span class="sched-type-tag">${esc(typeTag)}</span>`:''}
-        </div>
+        ${q.brand?`<div class="sched-brand">${esc(q.brand)}</div>`:''}
       </div>
+      <button class="sched-status ${statusClass}" onclick="cycleSchedStatus('${q.id}',this)">${statusLabel}</button>
     </div>`;
   }).join('');
   list.innerHTML=`<div class="sched-list-inner">${rows}</div>`;
