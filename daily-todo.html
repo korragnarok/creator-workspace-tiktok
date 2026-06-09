@@ -124,6 +124,10 @@ a{text-decoration:none;color:inherit;}
 .tbtn.del:hover{background:rgba(180,50,40,0.12);color:#c83c32;border-color:rgba(180,50,40,0.25);}
 .add-take-btn{width:100%;background:none;border:1px dashed var(--border-mid);border-radius:10px;padding:9px;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:'Stack Sans Notch',sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;}
 .add-take-btn:hover{border-color:var(--rust);color:var(--rust);}
+/* undo toast */
+.undo-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:14px;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;box-shadow:0 6px 28px rgba(0,0,0,0.38);z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;white-space:nowrap;pointer-events:none;}
+.undo-toast.visible{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+.undo-toast-btn{background:var(--rust);color:#fff;border:none;border-radius:7px;padding:5px 13px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.06em;cursor:pointer;}
 
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px;}
 .modal-overlay.open{display:flex;}
@@ -482,11 +486,50 @@ function render(){
 function setBrandFilter(b){activeBrandFilter=b;history.replaceState({},'','daily-todo.html');render();}
 
 // ─── ACTIONS ──────────────────────────────────────────────
+let _dtUndoTimer=null, _dtUndoCard=null;
 async function removeCard(cardId){
   const card=TODO.find(c=>c.id===cardId);
-  if(!card||!confirm('Remove this product and all its takes?'))return;
-  for(const take of card.takes)await deleteQueueRow(take);
-  TODO=TODO.filter(c=>c.id!==cardId);render();
+  if(!card)return;
+  // Cancel any pending undo commit for a previous card
+  if(_dtUndoTimer){clearTimeout(_dtUndoTimer);await _dtCommitRemove();}
+  // Stash and optimistically remove
+  _dtUndoCard=card;
+  TODO=TODO.filter(c=>c.id!==cardId);
+  render();
+  showUndoToast(card.name,()=>{
+    // Undo: restore
+    if(_dtUndoCard){
+      TODO=[...(TODO),_dtUndoCard];
+      _dtUndoCard=null;
+      if(_dtUndoTimer){clearTimeout(_dtUndoTimer);_dtUndoTimer=null;}
+      render();
+    }
+  });
+  _dtUndoTimer=setTimeout(()=>_dtCommitRemove(),5000);
+}
+async function _dtCommitRemove(){
+  if(_dtUndoCard){
+    for(const take of _dtUndoCard.takes||[])await deleteQueueRow(take);
+    _dtUndoCard=null;
+  }
+  _dtUndoTimer=null;
+}
+function showUndoToast(name,onUndo){
+  let toast=document.getElementById('_undoToast');
+  if(!toast){
+    toast=document.createElement('div');
+    toast.id='_undoToast';
+    toast.className='undo-toast';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML=`<span>"${esc(name)}" removed</span><button class="undo-toast-btn" id="_undoBtn">Undo</button>`;
+  document.getElementById('_undoBtn').onclick=()=>{
+    toast.classList.remove('visible');
+    onUndo();
+  };
+  requestAnimationFrame(()=>toast.classList.add('visible'));
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer=setTimeout(()=>toast.classList.remove('visible'),5000);
 }
 async function addTake(cardId){
   const card=TODO.find(c=>c.id===cardId);if(!card)return;
