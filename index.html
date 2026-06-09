@@ -98,12 +98,8 @@ button,input{font:inherit;}
 .empty-box strong{display:block;color:var(--text-mid);font-weight:400;}
 .today-content-list{display:flex;flex-direction:column;gap:6px;flex:1;}
 /* ── Filming Schedule ── */
-.sched-list{display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;max-height:420px;scrollbar-width:thin;scrollbar-color:var(--border-mid) transparent;}
-.sched-list-inner{position:relative;display:flex;flex-direction:column;gap:0;}
-.sched-list-inner::before{content:'';position:absolute;left:18px;top:20px;bottom:20px;width:2px;background:color-mix(in srgb,var(--border-mid) 70%,transparent);z-index:0;}
-.sched-row{display:grid;grid-template-columns:38px 56px 1fr auto;gap:10px;align-items:center;padding:8px 12px 8px 0;border:none;border-radius:0;background:transparent;transition:opacity 0.15s;border-bottom:1px solid var(--border);}
-.sched-row:last-child{border-bottom:none;}
-.sched-row:hover{opacity:0.9;}
+.sched-list{display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;max-height:500px;scrollbar-width:thin;scrollbar-color:var(--border-mid) transparent;}
+.sched-row{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg-lift);transition:border-color 0.15s;}
 .sched-row:hover{border-color:var(--border-mid);}
 .sched-row.done{opacity:0.5;}
 .sched-row.done .sched-name{text-decoration:line-through;}
@@ -115,11 +111,10 @@ button,input{font:inherit;}
 .sched-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;}
 .sched-brand{font-size:11px;color:var(--text-muted);}
 .sched-type-tag{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:color-mix(in srgb,var(--rust) 14%,var(--surface) 86%);color:var(--rust);}
-.sched-status-icon{width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;flex-shrink:0;background:none;border:none;padding:0;transition:transform 0.12s;}
-.sched-status-icon:hover{transform:scale(1.1);}
-.sched-status-icon img{width:36px;height:36px;object-fit:contain;display:block;}
 .sched-status{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;padding:4px 9px;border-radius:99px;white-space:nowrap;cursor:pointer;border:none;transition:opacity 0.15s;}
-
+.sched-status.not-started{background:color-mix(in srgb,var(--border-mid) 60%,var(--surface) 40%);color:var(--text-mid);}
+.sched-status.in-progress{background:color-mix(in srgb,var(--tan) 22%,var(--surface) 78%);color:var(--tan);}
+.sched-status.filmed{background:color-mix(in srgb,var(--sage) 22%,var(--surface) 78%);color:var(--sage);}
 .sched-progress-wrap{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);}
 .sched-progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-mid);margin-bottom:6px;}
 .sched-progress-bar{background:color-mix(in srgb,var(--ink) 12%,transparent);border-radius:999px;height:6px;overflow:hidden;}
@@ -306,7 +301,7 @@ button,input{font:inherit;}
         <section class="lower-grid">
           <!-- Col 1: Today's Filming Schedule -->
           <div class="stack mob-order-5">
-            <div class="card" style="min-height:0;display:flex;flex-direction:column;height:100%;">
+            <div class="card" style="min-height:0;">
               <div class="card-head">
                 <div>
                   <div class="card-title">Today's Filming Schedule</div>
@@ -682,15 +677,13 @@ function renderTodayContent(){
     return ta.localeCompare(tb);
   });
   list.className='sched-list';
-  const rows=sorted.map(q=>{
+  list.innerHTML=sorted.map(q=>{
     const rawTime=parseSchedTime(q.notes);
     const timeLabel=rawTime?fmtSchedTime(rawTime):'+ time';
     const typeTag=parseSchedType(q.notes)||String(q.notes||'').split('\n')[0].trim().slice(0,24)||'';
     const statusClass=q.done?'filmed':'not-started';
     const statusLabel=q.done?'Filmed':'Not Started';
-    const statusIcon=statusClass==='filmed'?'icons/workshop/status-filmed.png':statusClass==='in-progress'?'icons/workshop/status-in-progress.png':'icons/workshop/status-not-started.png';
     return`<div class="sched-row${q.done?' done':''}">
-      <button class="sched-status-icon" onclick="cycleSchedStatus('${q.id}',this)" title="${statusLabel}"><img src="${statusIcon}" alt="${statusLabel}"></button>
       <span class="sched-time${rawTime?'':' no-time'}" onclick="openTimePopover('${q.id}',this)" title="Set time">${esc(timeLabel)}</span>
       <div class="sched-body">
         <div class="sched-name">${esc(q.name)}</div>
@@ -699,9 +692,9 @@ function renderTodayContent(){
           ${typeTag?`<span class="sched-type-tag">${esc(typeTag)}</span>`:''}
         </div>
       </div>
+      <button class="sched-status ${statusClass}" onclick="cycleSchedStatus('${q.id}',this)">${statusLabel}</button>
     </div>`;
   }).join('');
-  list.innerHTML=`<div class="sched-list-inner">${rows}</div>`;
   // Progress bar
   const pct=total?Math.round((filmed/total)*100):0;
   if(progressWrap){
