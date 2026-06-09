@@ -155,6 +155,10 @@ button,input{font:inherit;}
 .chart-card{background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);border-color:color-mix(in srgb,var(--rust) 24%,var(--border) 76%);}
 .chart-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
 .chart-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.chart-range-pills{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.chart-pill{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:4px 10px;border-radius:99px;border:1px solid var(--border-mid);background:transparent;color:var(--text-muted);cursor:pointer;transition:all 0.15s;}
+.chart-pill:hover{border-color:var(--rust);color:var(--rust);}
+.chart-pill.active{background:var(--rust);border-color:var(--rust);color:#fff;}
 .chart-metrics{display:flex;gap:28px;margin:12px 0 6px;}
 .metric{display:flex;align-items:flex-start;gap:8px;}
 .metric-dot{width:9px;height:9px;border-radius:50%;margin-top:9px;background:var(--rust);}
@@ -339,7 +343,14 @@ button,input{font:inherit;}
           <div class="stack mob-order-6">
             <div class="card chart-card">
               <div class="chart-top">
-                <div><div class="card-title">Commission / GMV</div><div class="chart-sub">Last 30 days</div></div>
+                <div>
+                  <div class="card-title">Commission / GMV</div>
+                  <div class="chart-range-pills">
+                    <button class="chart-pill active" onclick="setChartRange('30d')">30 Days</button>
+                    <button class="chart-pill" onclick="setChartRange('month')">This Month</button>
+                    <button class="chart-pill" onclick="setChartRange('week')">This Week</button>
+                  </div>
+                </div>
                 <a class="mini-action" href="sales-calendar.html">Calendar</a>
               </div>
               <div class="chart-metrics">
@@ -425,6 +436,65 @@ function drawLine(ctx, points, color){
     ctx.fill();
   });
 }
+function setChartRange(range){
+  window._chartRange = range;
+  // Update pill active state
+  document.querySelectorAll('.chart-pill').forEach(p => p.classList.toggle('active', p.textContent.trim().toLowerCase().replace(' ','').includes(range==='30d'?'30':range==='month'?'month':'week')));
+  const today = window._dashboardToday || new Date();
+  const rows = window._allSalesRows || [];
+  const labels=[], gmvData=[], commData=[];
+  let totalGmv=0, totalComm=0;
+
+  if(range==='week'){
+    // Mon–today or Mon–Sun of current week
+    const dow = today.getDay(); // 0=Sun
+    const daysBack = dow===0 ? 6 : dow-1; // days back to Monday
+    for(let i=daysBack;i>=0;i--){
+      const d=new Date(today); d.setDate(today.getDate()-i);
+      const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const row=rows.find(r=>r.date===key);
+      const gmv=parseFloat(row?.gmv)||0;
+      const comm=parseFloat(row?.comm)||0;
+      labels.push(d.toLocaleDateString('en-US',{weekday:'short'}));
+      gmvData.push(gmv); commData.push(comm);
+      totalGmv+=gmv; totalComm+=comm;
+    }
+  } else if(range==='month'){
+    const year=today.getFullYear(), month=today.getMonth();
+    const daysInMonth=new Date(year,month+1,0).getDate();
+    const lastDay=today.getDate();
+    for(let d=1;d<=lastDay;d++){
+      const key=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      const row=rows.find(r=>r.date===key);
+      const gmv=parseFloat(row?.gmv)||0;
+      const comm=parseFloat(row?.comm)||0;
+      labels.push(String(d));
+      gmvData.push(gmv); commData.push(comm);
+      totalGmv+=gmv; totalComm+=comm;
+    }
+  } else {
+    // 30 days default
+    for(let i=29;i>=0;i--){
+      const d=new Date(today); d.setDate(today.getDate()-i);
+      const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const row=rows.find(r=>r.date===key);
+      const gmv=parseFloat(row?.gmv)||0;
+      const comm=parseFloat(row?.comm)||0;
+      labels.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+      gmvData.push(gmv); commData.push(comm);
+      totalGmv+=gmv; totalComm+=comm;
+    }
+  }
+
+  setText('m-comm', fmtMoney(totalComm));
+  setText('m-gmv', fmtMoney(totalGmv));
+  // Only update stat cards on initial load (30d range)
+  if(range==='30d'){
+    setText('s-comm', fmtMoney(totalComm));
+    setText('s-gmv', fmtMoney(totalGmv));
+  }
+  renderSalesChart(labels, gmvData, commData);
+}
 function renderSalesChart(labels, commData, gmvData){
   const canvas=document.getElementById('salesChart');
   if(!canvas)return;
@@ -477,11 +547,11 @@ function renderSalesChart(labels, commData, gmvData){
   }
   window._salesChartData={labels,commData,gmvData};
 }
-window.addEventListener('creator-theme-change',()=>{if(window._salesChartData)renderSalesChart(window._salesChartData.labels,window._salesChartData.commData,window._salesChartData.gmvData);});
+window.addEventListener('creator-theme-change',()=>{if(window._allSalesRows)setChartRange(window._chartRange||'30d');});
 window.addEventListener('resize',()=>{
   clearTimeout(window._resizeTimer);
   window._resizeTimer=setTimeout(()=>{
-    if(window._salesChartData)renderSalesChart(window._salesChartData.labels,window._salesChartData.commData,window._salesChartData.gmvData);
+    if(window._allSalesRows)setChartRange(window._chartRange||'30d');
     if(window._miniLadderData)renderMiniLadder(window._miniLadderData.lvlIdx, window._miniLadderData.monthGmv);
   }, 80);
 });
@@ -518,25 +588,10 @@ async function init() {
   _todayQueue=queue||[];
   _dashboardVideos=videos||[];
 
-  const labels=[], gmvData=[], commData=[];
-  let total30gmv=0, total30comm=0;
-  for(let i=29;i>=0;i--){
-    const d=new Date(today); d.setDate(today.getDate()-i);
-    const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    const row=(rows||[]).find(r=>r.date===key);
-    const gmv=parseFloat(row?.gmv)||0;
-    const comm=parseFloat(row?.comm)||0;
-    labels.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
-    gmvData.push(gmv);
-    commData.push(comm);
-    total30gmv+=gmv;
-    total30comm+=comm;
-  }
-
-  setText('s-comm', fmtMoney(total30comm));
-  setText('s-gmv', fmtMoney(total30gmv));
-  setText('m-comm', fmtMoney(total30comm));
-  setText('m-gmv', fmtMoney(total30gmv));
+  // Store raw rows globally so range switching doesn't need a re-fetch
+  window._allSalesRows = rows || [];
+  window._dashboardToday = today;
+  setChartRange('30d');
 
   const doneToday=_todayQueue.filter(q=>q.done).length;
   _doneToday=doneToday;
