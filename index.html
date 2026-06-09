@@ -115,6 +115,11 @@ button,input{font:inherit;}
 .sched-status-icon{width:24px;height:24px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;flex-shrink:0;background:none;border:none;padding:0;transition:transform 0.12s;}
 .sched-status-icon:hover{transform:scale(1.1);}
 .sched-status-icon img{width:24px;height:24px;max-width:24px;max-height:24px;object-fit:contain;display:block;}
+.sched-status{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:99px;white-space:nowrap;cursor:pointer;border:none;transition:all 0.15s;line-height:1;}
+.sched-status.not-started{background:color-mix(in srgb,var(--border-mid) 50%,var(--surface) 50%);color:var(--text-mid);}
+.sched-status.in-progress{background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);color:var(--rust);}
+.sched-status.filmed{background:color-mix(in srgb,var(--sage) 22%,var(--surface) 78%);color:var(--sage);}
+.sched-status:hover{filter:brightness(1.15);}
 .sched-progress-wrap{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);}
 .sched-progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-mid);margin-bottom:6px;}
 .sched-progress-bar{background:color-mix(in srgb,var(--ink) 12%,transparent);border-radius:999px;height:6px;overflow:hidden;}
@@ -687,12 +692,12 @@ function renderTodayContent(){
     const statusIcon=statusClass==='filmed'?'icons/workshop/status-filmed.png':statusClass==='in-progress'?'icons/workshop/status-in-progress.png':'icons/workshop/status-not-started.png';
     return`<div class="sched-row${q.done?' done':''}">
       <span class="sched-time${rawTime?'':' no-time'}" onclick="openTimePopover('${q.id}',this)" title="Set time">${esc(timeLabel)}</span>
-      <button class="sched-status-icon" onclick="cycleSchedStatus('${q.id}',this)" title="${statusLabel}"><img src="${statusIcon}" alt="${statusLabel}"></button>
+      <button class="sched-status-icon" onclick="cycleSchedStatus('${q.id}')" title="${statusLabel}"><img src="${statusIcon}" alt="${statusLabel}"></button>
       <div class="sched-body">
         <div class="sched-name">${esc(q.name)}</div>
         ${q.brand?`<div class="sched-brand">${esc(q.brand)}</div>`:''}
       </div>
-      <button class="sched-status ${statusClass}" onclick="cycleSchedStatus('${q.id}',this)">${statusLabel}</button>
+      <button class="sched-status ${statusClass}" onclick="cycleSchedStatus('${q.id}')">${statusLabel}</button>
     </div>`;
   }).join('');
   list.innerHTML=`<div class="sched-list-inner">${rows}</div>`;
@@ -706,15 +711,20 @@ function renderTodayContent(){
     if(fill)fill.style.width=pct+'%';
   }
 }
-async function cycleSchedStatus(id,btn){
+async function cycleSchedStatus(id){
   const item=_todayQueue.find(q=>q.id===id);
   if(!item||!_dashboardUser)return;
-  // Cycle: not-started → in-progress → filmed → not-started
-  const cur=btn.classList.contains('filmed')?'filmed':btn.classList.contains('in-progress')?'in-progress':'not-started';
+  // Read current status from notes
+  const storedStatus=String(item.notes||'').match(/STATUS:(in-progress|filmed)/i)?.[1]?.toLowerCase()||'';
+  const cur=item.done?'filmed':storedStatus==='in-progress'?'in-progress':'not-started';
   const next=cur==='not-started'?'in-progress':cur==='in-progress'?'filmed':'not-started';
-  // Update notes to store status
-  let notes=String(item.notes||'').replace(/\nSTATUS:[^\n]*/g,'').replace(/^STATUS:[^\n]*\n?/,'');
-  if(next!=='not-started')notes=(notes.trim()+'\nSTATUS:'+next).trim();
+  let notes=String(item.notes||'').replace(/
+STATUS:[^
+]*/g,'').replace(/^STATUS:[^
+]*
+?/,'');
+  if(next!=='not-started')notes=(notes.trim()+'
+STATUS:'+next).trim();
   item.notes=notes;
   item.done=next==='filmed';
   await db.from('queue').update({done:item.done,notes:item.notes}).eq('id',id);
