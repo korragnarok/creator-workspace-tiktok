@@ -96,17 +96,38 @@ button,input{font:inherit;}
 .saved-count{font-size:12px;color:var(--text-mid);}
 .empty-box{border:1px dashed var(--border-mid);border-radius:8px;padding:14px 16px;color:var(--text-muted);font-size:13px;min-height:62px;flex:1;}
 .empty-box strong{display:block;color:var(--text-mid);font-weight:400;}
-.today-content-list{border:1px dashed var(--border-mid);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;flex:1;}
-.today-content-item{padding:9px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:24px 1fr;gap:9px;align-items:start;}
-.today-content-item:last-child{border-bottom:none;}
-.today-content-check{width:20px;height:20px;border:2px solid var(--border-mid);border-radius:6px;background:var(--surface);cursor:pointer;margin-top:1px;transition:all 0.12s;display:flex;align-items:center;justify-content:center;}
-.today-content-check:hover{border-color:var(--rust);background:#FBF5F4;}
-.today-content-check.checked{background:var(--rust);border-color:var(--rust);}
-.today-content-check.checked::after{content:'\2713';color:#fff;font-size:12px;font-weight:800;}
-.today-content-check:disabled{cursor:wait;opacity:0.55;}
-.today-content-item.done .today-content-name{text-decoration:line-through;opacity:0.55;}
-.today-content-name{font-weight:700;color:var(--ink);line-height:1.25;}
-.today-content-detail{font-size:12px;color:var(--text-muted);line-height:1.45;margin-top:3px;}
+.today-content-list{display:flex;flex-direction:column;gap:6px;flex:1;}
+/* ── Filming Schedule ── */
+.sched-list{display:flex;flex-direction:column;gap:6px;flex:1;}
+.sched-row{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg-lift);transition:border-color 0.15s;}
+.sched-row:hover{border-color:var(--border-mid);}
+.sched-row.done{opacity:0.5;}
+.sched-row.done .sched-name{text-decoration:line-through;}
+.sched-time{font-family:'Noto Sans Mono',monospace;font-size:11px;font-weight:700;color:var(--text-mid);white-space:nowrap;cursor:pointer;padding:4px 6px;border-radius:6px;border:1px solid transparent;transition:border-color 0.12s;text-align:center;}
+.sched-time:hover{border-color:var(--border-mid);}
+.sched-time.no-time{color:var(--text-muted);font-style:italic;font-size:10px;}
+.sched-body{min-width:0;}
+.sched-name{font-weight:700;color:var(--ink);font-size:13px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sched-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;}
+.sched-brand{font-size:11px;color:var(--text-muted);}
+.sched-type-tag{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:color-mix(in srgb,var(--rust) 14%,var(--surface) 86%);color:var(--rust);}
+.sched-status{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;padding:4px 9px;border-radius:99px;white-space:nowrap;cursor:pointer;border:none;transition:opacity 0.15s;}
+.sched-status.not-started{background:color-mix(in srgb,var(--border-mid) 60%,var(--surface) 40%);color:var(--text-mid);}
+.sched-status.in-progress{background:color-mix(in srgb,var(--tan) 22%,var(--surface) 78%);color:var(--tan);}
+.sched-status.filmed{background:color-mix(in srgb,var(--sage) 22%,var(--surface) 78%);color:var(--sage);}
+.sched-progress-wrap{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);}
+.sched-progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-mid);margin-bottom:6px;}
+.sched-progress-bar{background:color-mix(in srgb,var(--ink) 12%,transparent);border-radius:999px;height:6px;overflow:hidden;}
+.sched-progress-fill{height:100%;border-radius:999px;background:var(--sage);transition:width 0.5s ease;}
+.sched-empty{border:1px dashed var(--border-mid);border-radius:8px;padding:14px 16px;color:var(--text-muted);font-size:13px;flex:1;}
+.sched-empty strong{display:block;color:var(--text-mid);font-weight:400;}
+/* time-edit popover */
+.time-popover{position:fixed;z-index:800;background:var(--surface);border:1px solid var(--border-mid);border-radius:12px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,0.32);display:flex;gap:8px;align-items:center;}
+.time-popover input[type=time]{background:var(--bg);border:1px solid var(--border-mid);border-radius:8px;color:var(--text);padding:6px 10px;font-size:13px;font-family:inherit;outline:none;}
+.time-popover input[type=time]:focus{border-color:var(--rust);}
+.time-popover-btn{border:none;border-radius:8px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;padding:7px 12px;cursor:pointer;}
+.time-popover-save{background:var(--rust);color:#fff;}
+.time-popover-clear{background:var(--surface);color:var(--text-mid);border:1px solid var(--border-mid);}
 .today-content-label{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);margin-right:6px;}
 .top-product-list{display:flex;flex-direction:column;gap:8px;flex:1;}
 .top-product-rank{width:32px;height:32px;object-fit:contain;flex-shrink:0;}
@@ -278,19 +299,27 @@ button,input{font:inherit;}
         </section>
 
         <section class="lower-grid">
-          <!-- Col 1: Today's To Do -->
+          <!-- Col 1: Today's Filming Schedule -->
           <div class="stack mob-order-5">
-            <div class="card">
+            <div class="card" style="min-height:0;">
               <div class="card-head">
-                <div class="card-title">Today's To Do</div>
-                <div style="display:flex;gap:8px;align-items:center;">
-                  <span id="content-saved" style="font-size:12px;color:var(--text-muted);"></span>
+                <div>
+                  <div class="card-title">Today's Filming Schedule</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:2px;" id="sched-count-label">0 scripts planned</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center;">
                   <a class="mini-action" href="daily-todo.html">Open</a>
                 </div>
               </div>
-              <div class="empty-box" id="today-content"><strong>No content scheduled yet.</strong>Add a video idea to start planning today.</div>
-              <button class="add-bar" type="button" onclick="clearDoneToday()" style="margin-top:10px;">Clear Done</button>
-              <a class="add-bar" href="daily-todo.html" style="margin-top:6px;">+ Add Video Idea</a>
+              <div id="sched-list" class="sched-empty"><strong>No content scheduled yet.</strong>Add a video idea to start planning today.</div>
+              <div id="sched-progress-wrap" class="sched-progress-wrap" style="display:none;">
+                <div class="sched-progress-label"><span id="sched-progress-text">0 / 0 scripts filmed</span><span id="sched-progress-pct">0%</span></div>
+                <div class="sched-progress-bar"><div class="sched-progress-fill" id="sched-progress-fill" style="width:0%"></div></div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:10px;">
+                <a class="add-bar" href="daily-todo.html" style="flex:1;margin-top:0;">+ Add Script</a>
+                <button class="add-bar" type="button" onclick="clearDoneToday()" style="flex:1;margin-top:0;background:var(--surface);color:var(--text-mid);border:1px solid var(--border-mid);">Clear Filmed</button>
+              </div>
             </div>
           </div>
 
@@ -476,7 +505,7 @@ async function init() {
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
     db.from('products').select('id,name,brand,units_sold').eq('user_id', user.id).order('created_at', { ascending:false }),
     db.from('videos').select('id,title,brand,status,date').eq('user_id', user.id).order('date', { ascending:false, nullsFirst:false }),
-    db.from('queue').select('id,name,brand,notes,done,prod_id').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
+    db.from('queue').select('id,name,brand,notes,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
   ]);
   _todayQueue=queue||[];
   _dashboardVideos=videos||[];
@@ -610,22 +639,141 @@ function renderMiniLadder(lvlIdx, monthGmv) {
     </div>`;
   wrap.style.display = 'block';
 }
+function parseSchedTime(notes){
+  const m=String(notes||'').match(/SCHED_TIME:([0-9]{1,2}:[0-9]{2}(?::[0-9]{2})?(?:\s*[AP]M)?)/i);
+  return m?m[1].trim():'';
+}
+function fmtSchedTime(raw){
+  if(!raw)return'';
+  const m=raw.match(/^([0-9]{1,2}):([0-9]{2})/);
+  if(!m)return raw;
+  let h=parseInt(m[1]),min=m[2],ampm='AM';
+  if(h>=12){ampm='PM';if(h>12)h-=12;}
+  if(h===0)h=12;
+  return`${h}:${min} ${ampm}`;
+}
+function parseSchedType(notes){
+  const m=String(notes||'').match(/TYPE:([A-Za-z /]+)/i);
+  return m?m[1].trim():'';
+}
 function renderTodayContent(){
-  const el=document.getElementById('today-content');
-  const openCount=_todayQueue.filter(q=>!q.done).length;
-  setText('todo-count', String(openCount));
-  setText('todo-sub', `${_doneToday} done today`);
-  setText('content-saved', `${openCount} saved`);
-  if(!_todayQueue.length){
-    el.className='empty-box';
-    el.innerHTML='<strong>No content scheduled yet.</strong>Add a video idea to start planning today.';
+  const list=document.getElementById('sched-list');
+  const progressWrap=document.getElementById('sched-progress-wrap');
+  const total=_todayQueue.length;
+  const filmed=_todayQueue.filter(q=>q.done).length;
+  const openCount=total-filmed;
+  _doneToday=filmed;
+  setText('todo-count',String(openCount));
+  setText('todo-sub',`${filmed} filmed today`);
+  setText('content-saved',`${total} saved`);
+  setText('sched-count-label',`${total} script${total!==1?'s':''} planned`);
+  if(!total){
+    list.className='sched-empty';
+    list.innerHTML='<strong>No content scheduled yet.</strong>Add a video idea to start planning today.';
+    if(progressWrap)progressWrap.style.display='none';
     return;
   }
-  el.className='today-content-list';
-  el.innerHTML=_todayQueue.slice(0,3).map(q=>{
-    const detail=queuePreviewDetail(q);
-    return `<div class="today-content-item${q.done?' done':''}"><button class="today-content-check${q.done?' checked':''}" type="button" aria-label="Mark ${esc(q.name)} done" onclick="toggleTodayItem('${q.id}', this)"></button><div><div class="today-content-name">${esc(q.name)}</div>${detail}</div></div>`;
+  // Sort by scheduled time (items with time first, then no-time)
+  const sorted=[..._todayQueue].sort((a,b)=>{
+    const ta=parseSchedTime(a.notes),tb=parseSchedTime(b.notes);
+    if(!ta&&!tb)return(a.sort_order||0)-(b.sort_order||0);
+    if(!ta)return 1; if(!tb)return -1;
+    return ta.localeCompare(tb);
+  });
+  list.className='sched-list';
+  list.innerHTML=sorted.map(q=>{
+    const rawTime=parseSchedTime(q.notes);
+    const timeLabel=rawTime?fmtSchedTime(rawTime):'+ time';
+    const typeTag=parseSchedType(q.notes)||String(q.notes||'').split('\n')[0].trim().slice(0,24)||'';
+    const statusClass=q.done?'filmed':'not-started';
+    const statusLabel=q.done?'Filmed':'Not Started';
+    return`<div class="sched-row${q.done?' done':''}">
+      <span class="sched-time${rawTime?'':' no-time'}" onclick="openTimePopover('${q.id}',this)" title="Set time">${esc(timeLabel)}</span>
+      <div class="sched-body">
+        <div class="sched-name">${esc(q.name)}</div>
+        <div class="sched-meta">
+          ${q.brand?`<span class="sched-brand">${esc(q.brand)}</span>`:''}
+          ${typeTag?`<span class="sched-type-tag">${esc(typeTag)}</span>`:''}
+        </div>
+      </div>
+      <button class="sched-status ${statusClass}" onclick="cycleSchedStatus('${q.id}',this)">${statusLabel}</button>
+    </div>`;
   }).join('');
+  // Progress bar
+  const pct=total?Math.round((filmed/total)*100):0;
+  if(progressWrap){
+    progressWrap.style.display='';
+    setText('sched-progress-text',`${filmed} / ${total} scripts filmed`);
+    setText('sched-progress-pct',`${pct}%`);
+    const fill=document.getElementById('sched-progress-fill');
+    if(fill)fill.style.width=pct+'%';
+  }
+}
+async function cycleSchedStatus(id,btn){
+  const item=_todayQueue.find(q=>q.id===id);
+  if(!item||!_dashboardUser)return;
+  // Cycle: not-started → in-progress → filmed → not-started
+  const cur=btn.classList.contains('filmed')?'filmed':btn.classList.contains('in-progress')?'in-progress':'not-started';
+  const next=cur==='not-started'?'in-progress':cur==='in-progress'?'filmed':'not-started';
+  // Update notes to store status
+  let notes=String(item.notes||'').replace(/\nSTATUS:[^\n]*/g,'').replace(/^STATUS:[^\n]*\n?/,'');
+  if(next!=='not-started')notes=(notes.trim()+'\nSTATUS:'+next).trim();
+  item.notes=notes;
+  item.done=next==='filmed';
+  await db.from('queue').update({done:item.done,notes:item.notes}).eq('id',id);
+  if(item.done)_doneToday++;
+  else if(cur==='filmed')_doneToday=Math.max(0,_doneToday-1);
+  renderTodayContent();
+  renderLineup(_dashboardUser?.id);
+}
+// Time popover
+let _timePopoverId=null;
+function openTimePopover(id,anchor){
+  closeTimePopover();
+  const item=_todayQueue.find(q=>q.id===id);
+  if(!item)return;
+  _timePopoverId=id;
+  const rawTime=parseSchedTime(item.notes);
+  const pop=document.createElement('div');
+  pop.className='time-popover';
+  pop.id='_timePop';
+  pop.innerHTML=`<input type="time" id="_timeInput" value="${rawTime?rawTime.slice(0,5):''}"><button class="time-popover-btn time-popover-save" onclick="saveSchedTime()">Set</button><button class="time-popover-btn time-popover-clear" onclick="clearSchedTime()">Clear</button>`;
+  document.body.appendChild(pop);
+  const rect=anchor.getBoundingClientRect();
+  let top=rect.bottom+6,left=rect.left;
+  if(top+80>window.innerHeight)top=rect.top-80;
+  left=Math.max(8,Math.min(left,window.innerWidth-200));
+  pop.style.top=top+'px';pop.style.left=left+'px';
+  setTimeout(()=>document.addEventListener('click',_timePopoverOutside),10);
+}
+function _timePopoverOutside(e){if(!document.getElementById('_timePop')?.contains(e.target))closeTimePopover();}
+function closeTimePopover(){
+  const pop=document.getElementById('_timePop');
+  if(pop)pop.remove();
+  document.removeEventListener('click',_timePopoverOutside);
+  _timePopoverId=null;
+}
+async function saveSchedTime(){
+  const val=document.getElementById('_timeInput')?.value;
+  if(!_timePopoverId)return;
+  const item=_todayQueue.find(q=>q.id===_timePopoverId);
+  if(!item)return;
+  let notes=String(item.notes||'').replace(/\nSCHED_TIME:[^\n]*/g,'').replace(/^SCHED_TIME:[^\n]*\n?/,'');
+  if(val)notes=(notes.trim()+'\nSCHED_TIME:'+val).trim();
+  item.notes=notes;
+  await db.from('queue').update({notes}).eq('id',_timePopoverId);
+  closeTimePopover();
+  renderTodayContent();
+}
+async function clearSchedTime(){
+  if(!_timePopoverId)return;
+  const item=_todayQueue.find(q=>q.id===_timePopoverId);
+  if(!item)return;
+  let notes=String(item.notes||'').replace(/\nSCHED_TIME:[^\n]*/g,'').replace(/^SCHED_TIME:[^\n]*\n?/,'');
+  item.notes=notes.trim();
+  await db.from('queue').update({notes:item.notes}).eq('id',_timePopoverId);
+  closeTimePopover();
+  renderTodayContent();
 }
 function queuePreviewDetail(item){
   const lines=String(item.notes||'').split('\n').map(line=>line.trim()).filter(Boolean);
@@ -744,7 +892,7 @@ async function clearDoneToday(){
   setText('s-streak', fmtStreak(calcStreak(_dashboardVideos, todayKey, _streakGoal)));
   _doneToday=0;
   renderTodayContent();
-  showToast('Saved to Content Tracker');
+  showToast('Filmed items saved to Content Tracker');
 }
 // ── Tier tooltip ────────────────────────────────────────────────────────────
 function showTierPopup(name, range, btn) {
