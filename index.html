@@ -714,17 +714,11 @@ function renderTodayContent(){
 async function cycleSchedStatus(id){
   const item=_todayQueue.find(q=>q.id===id);
   if(!item||!_dashboardUser)return;
-  // Read current status from notes
   const storedStatus=String(item.notes||'').match(/STATUS:(in-progress|filmed)/i)?.[1]?.toLowerCase()||'';
   const cur=item.done?'filmed':storedStatus==='in-progress'?'in-progress':'not-started';
   const next=cur==='not-started'?'in-progress':cur==='in-progress'?'filmed':'not-started';
-  let notes=String(item.notes||'').replace(/
-STATUS:[^
-]*/g,'').replace(/^STATUS:[^
-]*
-?/,'');
-  if(next!=='not-started')notes=(notes.trim()+'
-STATUS:'+next).trim();
+  let notes=String(item.notes||'').replace(/\nSTATUS:[^\n]*/g,'').replace(/^STATUS:[^\n]*\n?/,'');
+  if(next!=='not-started')notes=(notes.trim()+'\nSTATUS:'+next).trim();
   item.notes=notes;
   item.done=next==='filmed';
   await db.from('queue').update({done:item.done,notes:item.notes}).eq('id',id);
