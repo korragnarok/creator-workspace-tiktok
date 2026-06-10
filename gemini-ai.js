@@ -10,7 +10,7 @@ window.CreatorGemini = (() => {
   }
 
   function looksLikeKey(key) {
-    return /^AIzaSy/.test(String(key || '').trim());
+    return String(key || '').trim().length > 0;
   }
 
   async function loadSdk() {
@@ -23,6 +23,7 @@ window.CreatorGemini = (() => {
     if (!looksLikeKey(cleanKey)) throw new Error('Gemini API key does not look valid.');
     const { GoogleGenAI } = await loadSdk();
     ai = new GoogleGenAI({ apiKey: cleanKey });
+    updateIndicator();
     return ai;
   }
 
@@ -57,7 +58,7 @@ window.CreatorGemini = (() => {
           <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Google AI Studio</a>.
           Your key stays in this browser only.
         </div>
-        <input class="gemini-key-input" id="geminiKeyInput" type="password" autocomplete="off" placeholder="AIzaSy...">
+        <input class="gemini-key-input" id="geminiKeyInput" type="password" autocomplete="off" placeholder="Paste your API key here...">
         <div class="gemini-key-actions">
           <button class="btn btn-soft" id="geminiSkipKeyBtn" type="button">Use Without AI</button>
           <button class="btn btn-primary" id="geminiSaveKeyBtn" type="button">Save Key</button>
@@ -79,14 +80,10 @@ window.CreatorGemini = (() => {
   async function saveFromModal() {
     const input = document.getElementById('geminiKeyInput');
     const key = input?.value.trim() || '';
-    if (!looksLikeKey(key)) {
-      alert('That does not look like a Gemini API key. Gemini keys usually start with "AIzaSy".');
-      input?.focus();
-      return;
-    }
     try {
       localStorage.setItem(GEMINI_KEY_STORAGE, key);
       await initialize(key);
+      updateIndicator();
       closeModal();
       if (modalPromise) {
         modalPromise.resolve(ai);
@@ -106,6 +103,7 @@ window.CreatorGemini = (() => {
 
   function cancelModal() {
     closeModal();
+    updateIndicator();
     if (modalPromise) {
       modalPromise.resolve(null);
       modalPromise = null;
@@ -129,8 +127,10 @@ window.CreatorGemini = (() => {
       catch(e) {
         localStorage.removeItem(GEMINI_KEY_STORAGE);
         ai = null;
+        updateIndicator();
       }
     }
+    updateIndicator();
     return options.autoPrompt ? showKeyPrompt() : null;
   }
 
@@ -146,7 +146,14 @@ window.CreatorGemini = (() => {
   function disconnect() {
     localStorage.removeItem(GEMINI_KEY_STORAGE);
     ai = null;
+    updateIndicator();
     showKeyPrompt();
+  }
+
+  function updateIndicator() {
+    window.dispatchEvent(new CustomEvent('creator-gemini-key-change', {
+      detail: { connected: looksLikeKey(savedKey()) }
+    }));
   }
 
   function isAuthError(error) {
@@ -172,6 +179,7 @@ window.CreatorGemini = (() => {
         alert('Your Gemini API key failed. Please enter a new key.');
         localStorage.removeItem(GEMINI_KEY_STORAGE);
         ai = null;
+        updateIndicator();
         showKeyPrompt();
       }
       throw error;
@@ -190,5 +198,5 @@ window.CreatorGemini = (() => {
     return JSON.parse(String(text || '').replace(/```json|```/gi, '').trim());
   }
 
-  return { init, requireKey, disconnect, generateText, generateJson, hasKey: () => looksLikeKey(savedKey()) };
+  return { init, requireKey, disconnect, generateText, generateJson, hasKey: () => looksLikeKey(savedKey()), showKeyPrompt, updateIndicator };
 })();

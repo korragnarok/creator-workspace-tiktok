@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=77"></script>
-<link rel="stylesheet" href="layout.css?v=77">
+<script src="theme-init.js?v=78"></script>
+<link rel="stylesheet" href="layout.css?v=78">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -93,8 +93,8 @@ button,input,textarea,select{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=77"></script>
-<script src="gemini-ai.js?v=77"></script>
+<script src="supabase.js?v=78"></script>
+<script src="gemini-ai.js?v=78"></script>
 </head>
 <body>
 <div class="mobile-only">
@@ -109,7 +109,7 @@ button,input,textarea,select{font:inherit;}
     </div>
     <div class="actions">
       <button class="btn btn-primary" id="aiDraftBtn" onclick="generateAiDraft()">Generate with AI</button>
-      <button class="btn btn-soft" onclick="disconnectGeminiKey()">Disconnect API Key</button>
+      <button class="btn btn-soft" id="geminiKeyToggleBtn" onclick="toggleGeminiKey()">Connect Gemini</button>
       <button class="btn btn-soft" onclick="newScript()">+ New Script</button>
       <button class="btn btn-primary" onclick="saveDraft()">Save Draft</button>
       <button class="btn" onclick="copyFullScript()">Copy Script</button>
@@ -188,7 +188,7 @@ button,input,textarea,select{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=77"></script>
+<script src="layout.js?v=78"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks', currentFramework='product-demo', pendingDraftProductId='';
 const FRAMEWORKS={
@@ -269,6 +269,8 @@ async function init(){
   await initTheme(user.id,prefs);
   initProfilePopover(user.id);
   CreatorGemini.init({autoPrompt:false});
+  updateGeminiKeyButton();
+  window.addEventListener('creator-gemini-key-change', updateGeminiKeyButton);
   await Promise.all([loadProducts(),loadLibraries()]);
   restoreLocalDraft();
   renderProducts();
@@ -537,8 +539,14 @@ async function saveDraft(){
   if(error){showToast(error.message,'error');return;}
   saveLocalDraft();await loadLibraries();renderLibrary();showToast('Draft saved');
 }
-function disconnectGeminiKey(){
-  CreatorGemini.disconnect();
+function updateGeminiKeyButton(){
+  const btn=document.getElementById('geminiKeyToggleBtn');
+  if(!btn)return;
+  btn.textContent=CreatorGemini.hasKey()?'Disconnect Gemini Key':'Connect Gemini';
+}
+function toggleGeminiKey(){
+  if(CreatorGemini.hasKey())CreatorGemini.disconnect();
+  else CreatorGemini.showKeyPrompt();
 }
 function aiKeyMap(){return AI_FRAMEWORK_KEYS[currentFramework]||AI_FRAMEWORK_KEYS['product-demo'];}
 function aiResponseSchema(){
