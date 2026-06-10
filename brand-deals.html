@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F8F5F1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/pwa/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
+<title>Brand Deals — Take24</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script src="theme-init.js?v=87"></script>
+<link rel="stylesheet" href="layout.css?v=87">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:radial-gradient(circle at 72% 8%,color-mix(in srgb,var(--rust) 9%,transparent),transparent 32%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+button,input,select{font:inherit;}
+a{text-decoration:none;color:inherit;}
+.page{max-width:1220px;margin:0 auto;padding:34px 34px 92px;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:22px;margin-bottom:22px;}
+.eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.18em;text-transform:uppercase;color:var(--rust);margin-bottom:8px;}
+.title{font-family:'Stack Sans Text',sans-serif;font-size:48px;font-weight:800;line-height:0.95;color:var(--ink);letter-spacing:-0.02em;}
+.sub{font-size:14px;color:var(--text-mid);margin-top:10px;}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--border-mid);background:transparent;color:var(--ink);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:900;letter-spacing:0.05em;text-transform:uppercase;padding:11px 18px;cursor:pointer;transition:background 0.14s,border-color 0.14s,opacity 0.14s;}
+.btn:hover{background:color-mix(in srgb,var(--surface) 70%,var(--rust) 12%);}
+.btn-primary{background:var(--tan);border-color:var(--tan);color:var(--bg);}
+.btn-primary:hover{opacity:0.88;background:var(--tan);}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{display:flex;align-items:center;gap:14px;min-height:96px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);padding:18px;box-shadow:var(--shadow-sm);}
+.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);color:var(--rust);font-family:'Noto Sans Mono',monospace;font-size:22px;font-weight:900;flex-shrink:0;}
+.stat-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-mid);}
+.stat-value{font-family:'Noto Sans Mono',monospace;font-size:30px;font-weight:900;color:var(--ink);line-height:1;margin-top:6px;}
+.stat-sub{font-size:12px;color:var(--text-muted);margin-top:4px;}
+.toolbar{display:grid;grid-template-columns:minmax(0,auto) minmax(220px,1fr);gap:16px;align-items:center;margin-bottom:14px;}
+.filters{display:flex;gap:8px;align-items:center;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.filters::-webkit-scrollbar{display:none;}
+.pill{border:1px solid var(--border-mid);border-radius:999px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:8px 16px;white-space:nowrap;cursor:pointer;transition:all 0.14s;}
+.pill.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+.pill:hover:not(.active){background:var(--surface-2);color:var(--ink);}
+.search{width:100%;border:1px solid var(--border-mid);border-radius:10px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);color:var(--ink);padding:11px 15px;outline:none;}
+.search:focus{border-color:var(--rust);}
+.deals-bank{border:1px solid var(--border);border-radius:13px;background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);box-shadow:var(--shadow-sm);overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);padding:14px 16px;text-align:left;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface) 82%,var(--bg) 18%);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:last-child{border-bottom:0;}
+tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
+.deal-name{display:flex;align-items:center;gap:12px;min-width:260px;}
+.deal-thumb{width:52px;height:52px;border-radius:9px;border:1px solid var(--border-mid);background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--rust);font-family:'Noto Sans Mono',monospace;font-size:20px;font-weight:900;flex-shrink:0;overflow:hidden;}
+.deal-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.deal-title{font-weight:900;color:var(--ink);line-height:1.2;}
+.deal-meta{font-size:12px;color:var(--text-muted);margin-top:3px;}
+.tag{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;background:color-mix(in srgb,var(--rust) 16%,transparent);color:var(--rust);margin-left:6px;}
+.type-cell{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;color:var(--text);}
+.progress-wrap{min-width:90px;}
+.progress-top{font-family:'Noto Sans Mono',monospace;color:var(--ink);font-weight:900;margin-bottom:6px;}
+.progress{height:6px;border-radius:999px;background:color-mix(in srgb,var(--bg) 70%,var(--surface) 30%);overflow:hidden;}
+.progress-bar{height:100%;border-radius:999px;background:var(--sage);}
+.status{display:inline-flex;align-items:center;border-radius:8px;padding:6px 10px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.05em;text-transform:uppercase;white-space:nowrap;}
+.status.not-started{background:color-mix(in srgb,var(--surface-2) 80%,var(--bg) 20%);color:var(--text-mid);}
+.status.in-progress{background:color-mix(in srgb,var(--tan) 20%,transparent);color:var(--tan);}
+.status.on-track{background:color-mix(in srgb,var(--sage) 20%,transparent);color:var(--sage);}
+.status.completed{background:color-mix(in srgb,var(--sage) 26%,transparent);color:var(--sage);}
+.days{font-family:'Noto Sans Mono',monospace;font-size:18px;font-weight:900;color:var(--sage);line-height:1;}
+.days.due-soon{color:var(--tan);}
+.days.overdue{color:var(--rust);}
+.days-label{font-size:11px;color:var(--text-muted);}
+.empty{padding:54px 22px;text-align:center;color:var(--text-muted);font-style:italic;}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:700;align-items:center;justify-content:center;background:rgba(0,0,0,0.48);backdrop-filter:blur(5px);padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{width:min(560px,100%);max-height:90vh;overflow:auto;border:1px solid var(--border-mid);border-radius:16px;background:var(--bg-lift);box-shadow:var(--shadow-md);padding:28px;position:relative;}
+.modal-close{position:absolute;top:16px;right:16px;border:0;background:none;color:var(--text-muted);font-size:24px;cursor:pointer;}
+.modal-title{font-family:'IBM Plex Serif',serif;font-size:30px;font-weight:800;color:var(--ink);margin-bottom:20px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-row{margin-bottom:14px;}
+.form-wide{grid-column:1/-1;}
+.form-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-mid);margin-bottom:6px;}
+.form-input{width:100%;border:1px solid var(--border-mid);border-radius:10px;background:var(--surface);color:var(--ink);padding:11px 13px;outline:none;}
+.form-input:focus{border-color:var(--rust);}
+.modal-actions{display:flex;gap:10px;margin-top:10px;}
+.modal-actions .btn-primary{flex:1;}
+@media(max-width:980px){.stats{grid-template-columns:repeat(2,minmax(0,1fr));}.toolbar{grid-template-columns:1fr;}.page{padding:90px 18px 90px;}.title{font-size:42px;}.page-head{align-items:flex-start;}.deals-bank{overflow-x:auto;-webkit-overflow-scrolling:touch;}table{min-width:960px;}}
+@media(max-width:640px){.page-head{display:block;}.actions{margin-top:18px}.stats{grid-template-columns:1fr;}.form-grid{grid-template-columns:1fr;}.form-wide{grid-column:auto;}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=87"></script>
+</head>
+<body>
+<main class="page">
+  <header class="page-head">
+    <div>
+      <div class="eyebrow">Partner Work</div>
+      <h1 class="title">Brand Deals</h1>
+      <p class="sub">Track samples, retainers, campaigns, due dates, and brand deliverables.</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="openDealModal()">+ New Brand Deal</button>
+    </div>
+  </header>
+
+  <section class="stats">
+    <div class="stat-card"><div class="stat-icon">$</div><div><div class="stat-label">Total Active</div><div class="stat-value" id="statActive">0</div><div class="stat-sub">brand deals</div></div></div>
+    <div class="stat-card"><div class="stat-icon">!</div><div><div class="stat-label">Due This Week</div><div class="stat-value" id="statWeek">0</div><div class="stat-sub">deadlines</div></div></div>
+    <div class="stat-card"><div class="stat-icon">#</div><div><div class="stat-label">Current Campaigns</div><div class="stat-value" id="statCampaigns">0</div><div class="stat-sub">active now</div></div></div>
+    <div class="stat-card"><div class="stat-icon">P</div><div><div class="stat-label">PPS Score</div><div class="stat-value" id="statPps">0</div><div class="stat-sub">posts per sample</div></div></div>
+  </section>
+
+  <section class="toolbar">
+    <div class="filters">
+      <button class="pill active" data-filter="all" onclick="setFilter('all')">All</button>
+      <button class="pill" data-filter="sample" onclick="setFilter('sample')">Samples</button>
+      <button class="pill" data-filter="retainer" onclick="setFilter('retainer')">Retainers</button>
+      <button class="pill" data-filter="campaign" onclick="setFilter('campaign')">Campaigns</button>
+    </div>
+    <input class="search" id="dealSearch" placeholder="Search brand deals..." oninput="renderDeals()">
+  </section>
+
+  <section class="deals-bank">
+    <table>
+      <thead>
+        <tr>
+          <th>Brand Deal</th>
+          <th>Type</th>
+          <th>Brand</th>
+          <th>Received</th>
+          <th>Due Date</th>
+          <th>Videos</th>
+          <th>Status</th>
+          <th>Days Left</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="dealBody"></tbody>
+    </table>
+  </section>
+</main>
+
+<div class="modal-overlay" id="dealModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeDealModal()">×</button>
+    <div class="modal-title">New Brand Deal</div>
+    <div class="form-grid">
+      <div class="form-row form-wide"><label class="form-label">Deal Name</label><input class="form-input" id="dealName" placeholder="e.g., PetLab Probiotic Chew"></div>
+      <div class="form-row"><label class="form-label">Brand</label><input class="form-input" id="dealBrand" placeholder="e.g., PetLab Co"></div>
+      <div class="form-row"><label class="form-label">Type</label><select class="form-input" id="dealType"><option value="sample">Sample</option><option value="retainer">Retainer</option><option value="campaign">Campaign</option></select></div>
+      <div class="form-row"><label class="form-label">Received</label><input class="form-input" id="dealReceived" type="date"></div>
+      <div class="form-row"><label class="form-label">Due Date</label><input class="form-input" id="dealDue" type="date"></div>
+      <div class="form-row"><label class="form-label">Videos Done</label><input class="form-input" id="dealDone" type="number" min="0" value="0"></div>
+      <div class="form-row"><label class="form-label">Videos Needed</label><input class="form-input" id="dealNeeded" type="number" min="1" value="1"></div>
+      <div class="form-row form-wide"><label class="form-label">Product Link</label><input class="form-input" id="dealLink" placeholder="https://..."></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveDeal()">Save Brand Deal</button>
+      <button class="btn" onclick="closeDealModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="layout.js?v=87"></script>
+<script>
+let user=null;
+let deals=[];
+let activeFilter='all';
+const DEAL_KEY_PREFIX='creatorHub:brandDeals:';
+
+const starterDeals=[
+  {id:'sample-1',name:'Shark Corded Vacuum',brand:'Shark/Ninja',type:'sample',received:'2026-06-02',due:'2026-06-15',done:1,needed:2,status:'in-progress',link:''},
+  {id:'sample-2',name:'PetLab Co. Probiotic Chew',brand:'PetLab Co',type:'sample',received:'2026-06-05',due:'2026-06-12',done:0,needed:1,status:'not-started',link:''},
+  {id:'retainer-1',name:'Mississippi Candle Co.',brand:'Mississippi Candle Co',type:'retainer',received:'2026-06-01',due:'2026-06-30',done:4,needed:6,status:'on-track',link:''},
+  {id:'sample-3',name:'Dog Friendly Co. Treats',brand:'Dog Friendly Co',type:'sample',received:'2026-05-28',due:'2026-06-08',done:1,needed:1,status:'completed',link:''},
+  {id:'campaign-1',name:'Comfrt Loungewear Campaign',brand:'Comfrt',type:'campaign',received:'2026-06-03',due:'2026-06-22',done:0,needed:3,status:'not-started',link:''},
+  {id:'retainer-2',name:'QVC Cookware Set',brand:'QVC',type:'retainer',received:'2026-06-01',due:'2026-06-30',done:2,needed:4,status:'in-progress',link:''}
+];
+
+async function init(){
+  user=await requireAuth();
+  if(!user)return;
+  const prefs=await loadUserPrefs(user.id);
+  await initDisplayName(user,prefs);
+  await initCore5(user.id,prefs);
+  await initTheme(user.id,prefs);
+  initProfilePopover(user.id);
+  loadDeals();
+  renderDeals();
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function dealKey(){return `${DEAL_KEY_PREFIX}${user?.id||'local'}`;}
+function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function parseLocalDate(value){const [y,m,d]=String(value||todayKey()).split('-').map(Number);return new Date(y,m-1,d);}
+function daysLeft(due){return Math.ceil((parseLocalDate(due)-parseLocalDate(todayKey()))/86400000);}
+function typeLabel(type){return ({sample:'Sample',retainer:'Retainer',campaign:'Campaign'}[type]||'Sample');}
+function statusLabel(status){return ({'not-started':'Not Started','in-progress':'In Progress','on-track':'On Track',completed:'Completed'}[status]||'Not Started');}
+function monthDay(value){return parseLocalDate(value).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
+function loadDeals(){
+  try{deals=JSON.parse(localStorage.getItem(dealKey())||'null')||starterDeals;}
+  catch(e){deals=starterDeals;}
+}
+function saveDeals(){try{localStorage.setItem(dealKey(),JSON.stringify(deals));}catch(e){}}
+function setFilter(filter){
+  activeFilter=filter;
+  document.querySelectorAll('.pill').forEach(btn=>btn.classList.toggle('active',btn.dataset.filter===filter));
+  renderDeals();
+}
+function visibleDeals(){
+  const q=document.getElementById('dealSearch').value.trim().toLowerCase();
+  return deals.filter(deal=>(activeFilter==='all'||deal.type===activeFilter)
+    &&(!q||`${deal.name} ${deal.brand} ${deal.type} ${deal.status}`.toLowerCase().includes(q)));
+}
+function updateStats(){
+  const active=deals.filter(deal=>deal.status!=='completed').length;
+  const week=deals.filter(deal=>deal.status!=='completed'&&daysLeft(deal.due)>=0&&daysLeft(deal.due)<=7).length;
+  const campaigns=deals.filter(deal=>deal.type==='campaign'&&deal.status!=='completed').length;
+  const samples=deals.filter(deal=>deal.type==='sample').length||1;
+  const posts=deals.reduce((sum,deal)=>sum+(Number(deal.done)||0),0);
+  document.getElementById('statActive').textContent=active;
+  document.getElementById('statWeek').textContent=week;
+  document.getElementById('statCampaigns').textContent=campaigns;
+  document.getElementById('statPps').textContent=(posts/samples).toFixed(1).replace(/\.0$/,'');
+}
+function dealStatus(deal){
+  const done=Number(deal.done)||0;
+  const needed=Math.max(Number(deal.needed)||1,1);
+  if(done>=needed)return 'completed';
+  if(done>0)return 'in-progress';
+  return deal.status||'not-started';
+}
+function renderDeals(){
+  updateStats();
+  const rows=visibleDeals();
+  const body=document.getElementById('dealBody');
+  if(!rows.length){body.innerHTML='<tr><td colspan="9"><div class="empty">No brand deals found.</div></td></tr>';return;}
+  body.innerHTML=rows.map(deal=>{
+    const status=dealStatus(deal);
+    const left=daysLeft(deal.due);
+    const needed=Math.max(Number(deal.needed)||1,1);
+    const done=Math.min(Number(deal.done)||0,needed);
+    const pct=Math.min(100,Math.round((done/needed)*100));
+    const dayClass=left<0?'overdue':left<=7?'due-soon':'';
+    return `<tr>
+      <td>
+        <div class="deal-name">
+          <div class="deal-thumb">${esc((deal.brand||deal.name||'?').slice(0,1).toUpperCase())}</div>
+          <div><div class="deal-title">${esc(deal.name)} <span class="tag">${esc(typeLabel(deal.type))}</span></div>
+          <div class="deal-meta">${needed} video${needed===1?'':'s'} required${deal.link?` · <a href="${esc(deal.link)}" target="_blank" rel="noopener">View Product</a>`:''}</div></div>
+        </div>
+      </td>
+      <td class="type-cell">${esc(typeLabel(deal.type))}</td>
+      <td>${esc(deal.brand)}</td>
+      <td>${esc(monthDay(deal.received))}</td>
+      <td>${esc(monthDay(deal.due))}</td>
+      <td><div class="progress-wrap"><div class="progress-top">${done} / ${needed}</div><div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div></td>
+      <td><span class="status ${status}">${esc(statusLabel(status))}</span></td>
+      <td>${left<0?'<div class="days overdue">Late</div>':`<div class="days ${dayClass}">${left}</div><div class="days-label">days</div>`}</td>
+      <td><button class="btn" onclick="removeDeal('${esc(deal.id)}')">Remove</button></td>
+    </tr>`;
+  }).join('');
+}
+function openDealModal(){
+  document.getElementById('dealModal').classList.add('open');
+  document.getElementById('dealReceived').value=todayKey();
+  document.getElementById('dealDue').value=todayKey();
+  setTimeout(()=>document.getElementById('dealName').focus(),50);
+}
+function closeDealModal(){document.getElementById('dealModal').classList.remove('open');}
+function saveDeal(){
+  const name=document.getElementById('dealName').value.trim();
+  if(!name){showToast('Add a deal name first','error');return;}
+  const deal={
+    id:`deal-${Date.now()}`,
+    name,
+    brand:document.getElementById('dealBrand').value.trim(),
+    type:document.getElementById('dealType').value,
+    received:document.getElementById('dealReceived').value||todayKey(),
+    due:document.getElementById('dealDue').value||todayKey(),
+    done:Number(document.getElementById('dealDone').value)||0,
+    needed:Number(document.getElementById('dealNeeded').value)||1,
+    status:'not-started',
+    link:document.getElementById('dealLink').value.trim()
+  };
+  deals.unshift(deal);
+  saveDeals();
+  ['dealName','dealBrand','dealLink'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('dealDone').value=0;
+  document.getElementById('dealNeeded').value=1;
+  closeDealModal();
+  renderDeals();
+  showToast('Brand deal saved');
+}
+function removeDeal(id){
+  deals=deals.filter(deal=>deal.id!==id);
+  saveDeals();
+  renderDeals();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDealModal();});
+init();
+</script>
+</body>
+</html>
