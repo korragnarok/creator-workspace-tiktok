@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=85"></script>
-<link rel="stylesheet" href="layout.css?v=85">
+<script src="theme-init.js?v=86"></script>
+<link rel="stylesheet" href="layout.css?v=86">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -36,6 +36,16 @@ button,input,textarea,select{font:inherit;}
 .field-input:focus,.field-select:focus{border-color:var(--rust);}
 .workshop-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,0.75fr);gap:16px;align-items:start;}
 .panel{background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sm);}
+.canvas-panel{padding:16px;}
+.canvas-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.canvas-title{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);}
+.canvas-hint{font-size:12px;color:var(--text-muted);}
+.script-canvas{width:100%;min-height:450px;border:1px solid var(--border-mid);border-radius:12px;background:color-mix(in srgb,var(--bg) 88%,var(--surface) 12%);color:var(--ink);padding:24px;resize:vertical;outline:none;font-size:18px;line-height:1.65;box-shadow:inset 0 1px 18px rgba(0,0,0,0.12);}
+.script-canvas:focus{border-color:var(--rust);box-shadow:inset 0 1px 18px rgba(0,0,0,0.12),0 0 0 3px color-mix(in srgb,var(--rust) 18%,transparent);}
+.script-canvas::placeholder{color:var(--text-muted);}
+.script-canvas::-webkit-scrollbar{width:10px;}
+.script-canvas::-webkit-scrollbar-track{background:color-mix(in srgb,var(--bg) 78%,var(--surface) 22%);border-radius:999px;}
+.script-canvas::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--rust) 42%,var(--surface) 58%);border-radius:999px;border:2px solid color-mix(in srgb,var(--bg) 78%,var(--surface) 22%);}
 .script-builder{display:flex;flex-direction:column;gap:9px;}
 .section-card{display:grid;grid-template-columns:150px minmax(0,1fr) 108px;gap:14px;align-items:center;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
 .section-meta{display:flex;align-items:center;gap:10px;min-width:0;}
@@ -102,8 +112,8 @@ button,input,textarea,select{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=85"></script>
-<script src="gemini-ai.js?v=85"></script>
+<script src="supabase.js?v=86"></script>
+<script src="gemini-ai.js?v=86"></script>
 </head>
 <body>
 <div class="mobile-only">
@@ -136,7 +146,7 @@ button,input,textarea,select{font:inherit;}
     </div>
     <div class="field">
       <div class="field-label">Framework</div>
-      <select class="field-select" id="scriptType" onchange="changeFramework(this.value)">
+      <select class="field-select" id="scriptType">
         <option value="product-demo">Product Demo / Problem Solution</option>
         <option value="skit">Skit</option>
         <option value="aesthetic">Aesthetic</option>
@@ -151,8 +161,13 @@ button,input,textarea,select{font:inherit;}
 
   <section class="workshop-grid">
     <div>
-      <div class="script-builder" id="sectionList"></div>
-      <button class="add-section" id="addSectionBtn" onclick="addSection()">+ Add Section</button>
+      <div class="panel canvas-panel">
+        <div class="canvas-head">
+          <div class="canvas-title">Script Canvas</div>
+          <div class="canvas-hint">Write, paste, or generate the full script here.</div>
+        </div>
+        <textarea class="script-canvas" id="scriptCanvas" placeholder="[HOOK]\nStart with the moment that makes someone stop scrolling.\n\n[BODY]\nShow the problem, proof, and product in motion.\n\n[CTA]\nTell them exactly where to tap."></textarea>
+      </div>
       <div class="panel notes-panel">
         <div class="notes-head">Notes</div>
         <textarea class="notes-area" id="scriptNotes" placeholder="Filming reminders, angles, B-roll ideas, or alternate wording..."></textarea>
@@ -231,7 +246,7 @@ button,input,textarea,select{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=85"></script>
+<script src="layout.js?v=86"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks', currentFramework='product-demo', pendingDraftProductId='';
 const FRAMEWORKS={
@@ -243,6 +258,66 @@ const FRAMEWORKS={
   pov:{label:'POV',addLabel:'+ Add Scene',sections:['Setup','Scene 1','Scene 2','Scene 3','CTA'],autoPrefix:'Scene'},
   comparison:{label:'Comparison',addLabel:'+ Add Section',sections:['Hook','Product A','Product B','Winner','CTA']},
   voiceover:{label:'Voiceover',addLabel:'+ Add Section',sections:['Hook','Voiceover Script','B-Roll Notes','CTA']}
+};
+const FRAMEWORK_PLACEHOLDERS={
+  'product-demo':`[THE HOOK / AGITATION: Call out a specific annoying problem]
+
+[THE DEMO: Show the product instantly solving it in real-time]
+
+[THE CALL TO ACTION: Tell them to tap the yellow cart before stock runs out]`,
+  skit:`[PERSON 1: Set up the relatable problem or objection]
+
+[PERSON 2: Respond naturally with the product as the solution]
+
+[PERSON 1: React to the proof, result, or transformation]
+
+[CTA: Give a quick reason to tap the cart now]`,
+  aesthetic:`[ON-SCREEN TEXT: Short scroll-stopping text]
+
+[SHOT 1: Show the product or problem visually]
+
+[SHOT 2: Show the product being used]
+
+[SHOT 3: Show the result, texture, fit, or final look]
+
+[CTA: Short cart/link direction]`,
+  storytelling:`[HOOK: State the relatable pain point or show an immediate visual hook]
+
+[THE PROBLEM: Why old methods or products failed you]
+
+[THE SOLUTION: Introducing the product and what changed]
+
+[THE RESULTS & CTA: The visual proof and telling them to click the link right now]`,
+  testimonial:`[HOOK: State the relatable pain point or show an immediate visual hook]
+
+[THE PROBLEM: Why old methods or products failed you]
+
+[THE SOLUTION: Introducing the product and what changed]
+
+[THE RESULTS & CTA: The visual proof and telling them to click the link right now]`,
+  pov:`[SETUP: Put the viewer inside the situation]
+
+[SCENE 1: Show the problem happening]
+
+[SCENE 2: Show the product entering naturally]
+
+[SCENE 3: Show the result or payoff]
+
+[CTA: Tell them to tap the cart while it is available]`,
+  comparison:`[HOOK: Call out the difference they care about]
+
+[PRODUCT A: Show what fails, costs more, or takes too long]
+
+[PRODUCT B: Show why this product works better]
+
+[WINNER & CTA: Make the choice obvious and point them to the cart]`,
+  voiceover:`[HOOK: Say the thing that makes them stop scrolling]
+
+[VOICEOVER SCRIPT: Explain the problem, product, proof, and result naturally]
+
+[B-ROLL NOTES: Quick shots to film]
+
+[CTA: Fast link/cart direction]`
 };
 const AI_FRAMEWORK_KEYS={
   'storytelling':[
@@ -320,8 +395,7 @@ async function init(){
   renderProducts();
   if(pendingDraftProductId)document.getElementById('productSelect').value=pendingDraftProductId;
   await applyProductHandoff();
-  renderSections();
-  updateAddSectionButton();
+  if(!document.getElementById('scriptCanvas').value.trim())injectFrameworkTemplate(currentFramework);
   renderLibrary();
   renderInspo();
 }
@@ -360,11 +434,11 @@ function nextPersonLabel(){
 function changeFramework(value){
   currentFramework=normalizeFramework(value);
   document.getElementById('scriptType').value=currentFramework;
-  sections=makeFrameworkSections(currentFramework);
-  renderSections();
-  updateAddSectionButton();
+  injectFrameworkTemplate(currentFramework);
   saveLocalDraft();
 }
+function frameworkTemplate(frameworkKey){return FRAMEWORK_PLACEHOLDERS[normalizeFramework(frameworkKey)]||FRAMEWORK_PLACEHOLDERS['product-demo'];}
+function injectFrameworkTemplate(frameworkKey){document.getElementById('scriptCanvas').value=frameworkTemplate(frameworkKey);}
 function closeWorkshopModal(value=null){
   document.getElementById('workshopModalOverlay').classList.remove('open');
   if(workshopModalResolve){workshopModalResolve(value);workshopModalResolve=null;}
@@ -461,7 +535,7 @@ async function applyProductHandoff(){
     }
     document.getElementById('scriptTitle').value='';
     document.getElementById('scriptNotes').value='';
-    sections=makeFrameworkSections(currentFramework);
+    document.getElementById('scriptCanvas').value=frameworkTemplate(currentFramework);
     inspo=[];
   }
   document.getElementById('productSelect').value=product.id;
@@ -474,6 +548,7 @@ async function applyProductHandoff(){
 function sectionIcon(label){return String(label||'?').trim().slice(0,1).toUpperCase();}
 function renderSections(){
   const wrap=document.getElementById('sectionList');
+  if(!wrap)return;
   wrap.innerHTML=sections.map((section,index)=>`
     <div class="section-card">
       <div class="section-meta">
@@ -524,10 +599,19 @@ function renderLibrary(){
 }
 function insertLibrary(index){
   const row=libraryRows()[index];if(!row)return;
-  const targetType=activeTab==='hooks'?'hook':activeTab==='ctas'?'cta':'demo';
-  const target=sections.find(section=>section.type===targetType)||sections[0];
-  target.text=row.text||'';
-  renderSections();
+  const canvas=document.getElementById('scriptCanvas');
+  const text=String(row.text||'').trim();
+  if(!text)return;
+  const start=canvas.selectionStart??canvas.value.length;
+  const end=canvas.selectionEnd??canvas.value.length;
+  const before=canvas.value.slice(0,start);
+  const after=canvas.value.slice(end);
+  const prefix=before&& !before.endsWith('\n')?'\n':'';
+  const suffix=after&& !after.startsWith('\n')?'\n':'';
+  canvas.value=`${before}${prefix}${text}${suffix}${after}`;
+  canvas.focus();
+  const next=start+prefix.length+text.length;
+  canvas.setSelectionRange(next,next);
   saveLocalDraft();
 }
 async function quickAddLibrary(){
@@ -548,13 +632,18 @@ function renderInspo(){
   const list=document.getElementById('inspoList');
   list.innerHTML=inspo.length?inspo.map((url,index)=>`<a href="${esc(url)}" target="_blank" rel="noopener" class="inspo-pill">Inspo ${index+1}<button class="inspo-pill-x" onclick="event.preventDefault();removeInspo(${index})">×</button></a>`).join(''):'<div class="empty">Add TikToks, product pages, or reference videos.</div>';
 }
-function fullScript(){return sections.map(section=>section.text.trim()).filter(Boolean).join('\n\n');}
-function formattedScript(){
-  return sections
+function sectionDraftToText(draftSections){
+  return (draftSections||[])
     .filter(section=>String(section.text||'').trim())
-    .map(section=>`${section.label}:\n${section.text.trim()}`)
+    .map(section=>`[${String(section.label||'Section').toUpperCase()}]\n${String(section.text||'').trim()}`)
     .join('\n\n');
 }
+function canvasText(){return document.getElementById('scriptCanvas').value.trim();}
+function fullScript(){
+  const text=canvasText();
+  return text===frameworkTemplate(currentFramework).trim()?'':text;
+}
+function formattedScript(){return fullScript();}
 function selectedProduct(){
   const id=document.getElementById('productSelect').value;
   return products.find(p=>p.id===id);
@@ -576,7 +665,7 @@ function setAiLoading(isLoading){
   }
 }
 function saveLocalDraft(){
-  const draft={title:document.getElementById('scriptTitle').value,productId:document.getElementById('productSelect').value,type:currentFramework,notes:document.getElementById('scriptNotes').value,sections,inspo};
+  const draft={title:document.getElementById('scriptTitle').value,productId:document.getElementById('productSelect').value,type:currentFramework,notes:document.getElementById('scriptNotes').value,script:document.getElementById('scriptCanvas').value,inspo};
   try{localStorage.setItem(draftKey(),JSON.stringify(draft));}catch(e){}
 }
 function restoreLocalDraft(){
@@ -587,7 +676,7 @@ function restoreLocalDraft(){
     document.getElementById('scriptTitle').value=draft.title||'';
     document.getElementById('scriptType').value=currentFramework;
     document.getElementById('scriptNotes').value=draft.notes||'';
-    sections=Array.isArray(draft.sections)&&draft.sections.length?draft.sections.map(section=>({type:section.type||sectionType(section.label),label:section.label||'Section',text:section.text||''})):makeFrameworkSections(currentFramework);
+    document.getElementById('scriptCanvas').value=draft.script||sectionDraftToText(draft.sections)||'';
     inspo=Array.isArray(draft.inspo)?draft.inspo:[];
     pendingDraftProductId=draft.productId||'';
   }catch(e){}
@@ -597,8 +686,8 @@ async function newScript(){
   document.getElementById('scriptTitle').value='';
   document.getElementById('productSelect').value='';
   document.getElementById('scriptNotes').value='';
-  sections=makeFrameworkSections(currentFramework);
-  inspo=[];renderSections();updateAddSectionButton();renderInspo();saveLocalDraft();
+  document.getElementById('scriptCanvas').value=frameworkTemplate(currentFramework);
+  inspo=[];renderInspo();saveLocalDraft();
 }
 async function saveDraft(){
   const script=formattedScript();
@@ -622,35 +711,10 @@ function toggleGeminiKey(){
   else CreatorGemini.showKeyPrompt();
 }
 function aiKeyMap(){return AI_FRAMEWORK_KEYS[currentFramework]||AI_FRAMEWORK_KEYS['product-demo'];}
-function aiResponseSchema(){
-  const properties={};
-  const required=[];
-  aiKeyMap().forEach(([key])=>{
-    properties[key]={type:'string'};
-    required.push(key);
-  });
-  return {type:'object',properties,required};
-}
-function applyAiJsonToSections(data){
-  const keyMap=aiKeyMap();
-  const byLabel=new Map(sections.map(section=>[String(section.label||'').trim().toLowerCase(),section]));
-  keyMap.forEach(([key,label])=>{
-    const text=String(data?.[key]||'').trim();
-    if(!text)return;
-    const labelKey=label.toLowerCase();
-    const existing=byLabel.get(labelKey);
-    if(existing)existing.text=text;
-    else {
-      const next={type:sectionType(label),label,text};
-      sections.push(next);
-      byLabel.set(labelKey,next);
-    }
-  });
-}
 async function generateAiDraft(){
   const productSelect=document.getElementById('productSelect');
   const hasText=Boolean(fullScript());
-  if(hasText&&!(await openWorkshopConfirm('Replace Current Draft?','Generate with AI will replace the text in your current script sections.','Replace','Cancel')))return;
+  if(hasText&&!(await openWorkshopConfirm('Replace Current Draft?','Generate with AI will replace the text in your script canvas.','Replace','Cancel')))return;
   const product=selectedProduct();
   const framework=FRAMEWORKS[currentFramework]||FRAMEWORKS['product-demo'];
   const aiInputs=await openAiGenerationModal();
@@ -660,7 +724,6 @@ async function generateAiDraft(){
     productSelect?.focus();
     return;
   }
-  const expectedKeys=aiKeyMap().map(([key])=>key);
   const selectedProductName=product?.name||'Not selected';
   const prompt=`You are a conversion-focused TikTok Shop scriptwriting expert. Write a highly conversational, authentic script based on these precise structural inputs:
 - Product Name: ${selectedProductName}
@@ -679,12 +742,12 @@ Strict Writing Directives:
 6. Write with high organic sales intent. Every single sentence must serve a purpose: either hitting a highly relatable pain point, showing immediate visual proof/results, or driving them to look at the link.
 7. The Call to Action section must be short, fast, and high-urgency. Do not sound like a generic corporate ad. Use phrases like: "The yellow link is on the screen right now—grab one before shipping takes forever" or "If your skin looks like mine did, just tap the cart below while they're still in stock."
 8. Keep stage directions inside the brackets very short (e.g., [shows close-up], [swatches back of hand]) so they don't bloat the text body.
-9. Keep the content matching the JSON keys exactly for the active framework: ${expectedKeys.join(', ')}`;
+9. Instead of generating separate JSON sections, generate the entire script as a single cohesive string of text formatted with clear section headers like [HOOK], [BODY], and [CTA]. The total word count must be under 130 words.
+10. Return only the script text. Do not wrap it in JSON, markdown fences, bullets, or commentary.`;
   try{
     setAiLoading(true);
-    const data=await CreatorGemini.generateJson(prompt, aiResponseSchema());
-    applyAiJsonToSections(data);
-    renderSections();
+    const script=await CreatorGemini.generateText(prompt);
+    document.getElementById('scriptCanvas').value=String(script||'').replace(/```(?:text)?|```/gi,'').trim();
     saveLocalDraft();
     showToast('AI draft added');
   }catch(error){
@@ -701,6 +764,7 @@ document.getElementById('aiDraftBtn')?.addEventListener('click',e=>{
   e.preventDefault();
   generateAiDraft();
 });
+document.getElementById('scriptType')?.addEventListener('change',e=>changeFramework(e.target.value));
 document.addEventListener('input',e=>{if(e.target.closest('.page'))saveLocalDraft();});
 init();
 </script>
