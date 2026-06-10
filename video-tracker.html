@@ -150,7 +150,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
   <div class="stat-row">
     <div class="scard"><div class="scard-label">Total Videos</div><div class="scard-val sage" id="sTotal">-</div><div class="scard-sub">all time</div></div>
-    <div class="scard"><div class="scard-label">Got Sales</div><div class="scard-val" id="sSales">-</div><div class="scard-sub" id="sSalesSub">-</div></div>
+    <div class="scard"><div class="scard-label">Total GMV</div><div class="scard-val" id="sGmv">-</div><div class="scard-sub" id="sGmvSub">-</div></div>
     <div class="scard"><div class="scard-label">Avg Views</div><div class="scard-val" id="sViews">-</div><div class="scard-sub">per video</div></div>
     <div class="scard"><div class="scard-label">This Month</div><div class="scard-val accent" id="sMonth">-</div><div class="scard-sub">videos posted</div></div>
   </div>
@@ -175,6 +175,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
         <th onclick="sortBy('brand')">Product</th>
         <th>Hook</th>
         <th onclick="sortBy('views')" class="num">Views</th>
+        <th onclick="sortBy('gmv')" class="num">GMV</th>
         <th onclick="sortBy('units')">Got Sales</th>
         <th onclick="sortBy('status')">Status</th>
         <th></th>
@@ -198,6 +199,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="form-row-half">
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Views</label><input type="number" class="form-input" id="fViews" placeholder="0" min="0"></div>
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Units Sold</label><input type="number" class="form-input" id="fUnits" placeholder="0" min="0"></div>
+      <div class="form-row" style="margin-bottom:0;grid-column:1/-1"><label class="form-label">GMV ($)</label><input type="number" class="form-input" id="fGmv" placeholder="0.00" min="0" step="0.01"></div>
     </div>
     <div class="form-row" style="margin-top:16px"><label class="form-label">Notes / What Worked</label><textarea class="form-input form-textarea" id="fNotes" placeholder="What performed well?"></textarea></div>
     <div class="form-row"><label class="form-label">TikTok Link</label><input type="url" class="form-input" id="fLink" placeholder="https://www.tiktok.com/..."></div>
@@ -260,9 +262,11 @@ function updateStats(){
   const sales=DATA.filter(v=>(Number(v.units)||0)>0).length;
   const viewRows=DATA.filter(v=>(Number(v.views)||0)>0);
   const avgViews=viewRows.length?Math.round(viewRows.reduce((sum,v)=>sum+(Number(v.views)||0),0)/viewRows.length):0;
+  const totalGmv=DATA.reduce((sum,v)=>sum+(Number(v.gmv)||0),0);
+  const gmvVids=DATA.filter(v=>(Number(v.gmv)||0)>0).length;
   document.getElementById('sTotal').textContent=DATA.length;
-  document.getElementById('sSales').textContent=sales;
-  document.getElementById('sSalesSub').textContent=DATA.length?Math.round(sales/DATA.length*100)+'% of videos':'-';
+  document.getElementById('sGmv').textContent=totalGmv>0?'$'+totalGmv.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'-';
+  document.getElementById('sGmvSub').textContent=gmvVids?gmvVids+' video'+(gmvVids===1?'':'s')+' tracked':'-';
   document.getElementById('sViews').textContent=fmtNum(avgViews);
   document.getElementById('sMonth').textContent=DATA.filter(v=>String(v.date||'').startsWith(month)).length;
 }
@@ -286,7 +290,7 @@ function getFiltered(){
     return true;
   }).sort((a,b)=>{
     let av=sortField==='date'?videoSortDateTime(a):(a[sortField]||''),bv=sortField==='date'?videoSortDateTime(b):(b[sortField]||'');
-    if(sortField==='views'||sortField==='units'){av=Number(av)||0;bv=Number(bv)||0;}
+    if(sortField==='views'||sortField==='units'||sortField==='gmv'){av=Number(av)||0;bv=Number(bv)||0;}
     return av<bv?-1*sortDir:av>bv?1*sortDir:0;
   });
 }
@@ -326,6 +330,7 @@ function renderTable(){
       <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','brand')">${esc(v.brand||'No product')}</span></div><div class="tbl-hook"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','title')">${esc(v.title||'')}</span></div></td>
       <td><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','hook')">${esc(hook||'-')}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','views')">${fmtNum(v.views)}</span></td>
+      <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','gmv')">${(Number(v.gmv)||0)>0?'$'+Number(v.gmv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'-'}</span></td>
       <td><span class="editable-cell status ${hasSales?'status-yes':'status-no'}" onclick="beginVideoInlineEdit(event,'${v.id}','units')">${hasSales?'Yes':'No'}</span></td>
       <td><span class="editable-cell status status-${esc(v.status||'draft')}" onclick="beginVideoInlineEdit(event,'${v.id}','status')">${esc(v.status||'draft')}</span></td>
       <td><button class="tbl-action" onclick="event.stopPropagation();openModal('${v.id}')">Edit</button></td>
@@ -396,8 +401,9 @@ function beginVideoInlineEdit(event, id, field) {
     }
   } else {
     editor = document.createElement('input');
-    editor.type = field === 'date' ? 'date' : (field === 'posted_time' ? 'time' : (field === 'views' || field === 'units' ? 'number' : 'text'));
+    editor.type = field === 'date' ? 'date' : (field === 'posted_time' ? 'time' : (field === 'views' || field === 'units' || field === 'gmv' ? 'number' : 'text'));
     if(field === 'views' || field === 'units') { editor.min = '0'; editor.step = '1'; }
+    if(field === 'gmv') { editor.min = '0'; editor.step = '0.01'; }
     editor.value = originalValue;
   }
   if(!editor.className) editor.className = 'inline-editor';
@@ -413,6 +419,7 @@ function beginVideoInlineEdit(event, id, field) {
     saved = true;
     const patch = {};
     if(field === 'views') patch[field] = Math.max(0, parseInt(editor.value, 10) || 0);
+    else if(field === 'gmv') patch[field] = Math.max(0, parseFloat(editor.value) || 0);
     else if(field === 'units') patch.units = editor.value === '1' ? Math.max(1, Number(row.units) || 1) : 0;
     else if(field === 'hook') {
       const nextHook = editor.value.trim();
@@ -478,6 +485,7 @@ async function openModal(id){
   document.getElementById('fStatus').value=v?.status||'live';
   document.getElementById('fViews').value=v?.views||'';
   document.getElementById('fUnits').value=v?.units||'';
+  document.getElementById('fGmv').value=v?.gmv||'';
   document.getElementById('fNotes').value=v?.notes||'';
   document.getElementById('fLink').value=v?.link||'';
   document.getElementById('deleteBtn').style.display=v?'':'none';
@@ -488,7 +496,7 @@ function closeModal(){document.getElementById('modalOverlay').classList.remove('
 async function saveVideo(){
   const title=document.getElementById('fTitle').value.trim();
   if(!title){document.getElementById('fTitle').focus();return;}
-  const row={user_id:user.id,title,brand:document.getElementById('fBrand').value.trim(),date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,notes:document.getElementById('fNotes').value.trim(),link:document.getElementById('fLink').value.trim()};
+  const row={user_id:user.id,title,brand:document.getElementById('fBrand').value.trim(),date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes:document.getElementById('fNotes').value.trim(),link:document.getElementById('fLink').value.trim()};
   let result=window._editId?await db.from('videos').update(row).eq('id',window._editId):await db.from('videos').insert(row);
   if(result.error&&/posted_time/i.test(result.error.message||'')){
     const {posted_time,...fallbackRow}=row;
