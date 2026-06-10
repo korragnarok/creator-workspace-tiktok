@@ -160,12 +160,17 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
       <div class="form-row form-wide"><label class="form-label">Deal Name</label><input class="form-input" id="dealName" placeholder="e.g., PetLab Probiotic Chew"></div>
       <div class="form-row"><label class="form-label">Brand</label><input class="form-input" id="dealBrand" placeholder="e.g., PetLab Co"></div>
       <div class="form-row"><label class="form-label">Type</label><select class="form-input" id="dealType"><option value="sample">Sample</option><option value="retainer">Retainer</option><option value="campaign">Campaign</option></select></div>
-      <div class="form-row"><label class="form-label">Received</label><input class="form-input" id="dealReceived" type="date"></div>
-      <div class="form-row"><label class="form-label">Due Date</label><input class="form-input" id="dealDue" type="date"></div>
+      <div class="form-row"><label class="form-label">Received</label><input class="form-input" id="dealReceived" type="date" oninput="updateReturnPreview()"></div>
+      <div class="form-row" id="dueDateRow"><label class="form-label">Due Date</label><input class="form-input" id="dealDue" type="date"></div>
+      <div class="form-row" id="daysToReturnRow" style="display:none;">
+        <label class="form-label">Days to Return</label>
+        <input class="form-input" id="dealDaysToReturn" type="number" min="1" max="365" placeholder="e.g. 118" oninput="updateReturnPreview()">
+        <div id="returnPreview" style="font-family:'Noto Sans Mono',monospace;font-size:12px;color:var(--sage);margin-top:6px;min-height:18px;"></div>
+      </div>
       <div class="form-row"><label class="form-label">Videos Done</label><input class="form-input" id="dealDone" type="number" min="0" value="0"></div>
       <div class="form-row"><label class="form-label">Videos Needed</label><input class="form-input" id="dealNeeded" type="number" min="1" value="1"></div>
       <div class="form-row form-wide"><label class="form-label">Product Link</label><input class="form-input" id="dealLink" placeholder="https://..."></div>
-      <div class="form-row form-wide" style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="dealRefundable" style="width:18px;height:18px;accent-color:var(--rust);cursor:pointer;flex-shrink:0;"><label for="dealRefundable" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);cursor:pointer;">Refundable Sample</label></div>
+      <div class="form-row form-wide" style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="dealRefundable" style="width:18px;height:18px;accent-color:var(--rust);cursor:pointer;flex-shrink:0;" onchange="toggleRefundableFields()"><label for="dealRefundable" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);cursor:pointer;">Refundable Sample</label></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-primary" id="dealSaveBtn" onclick="saveDeal()">Save Brand Deal</button>
@@ -290,6 +295,9 @@ function openDealModal(){
   document.getElementById('dealType').value='sample';
   document.getElementById('dealReceived').value=todayKey();
   document.getElementById('dealDue').value=todayKey();
+  document.getElementById('dealDaysToReturn').value='';
+  document.getElementById('returnPreview').textContent='';
+  toggleRefundableFields();
   document.getElementById('dealDone').value=0;
   document.getElementById('dealNeeded').value=1;
   document.getElementById('dealLink').value='';
@@ -309,6 +317,17 @@ function openEditModal(id){
   document.getElementById('dealType').value=deal.type||'sample';
   document.getElementById('dealReceived').value=deal.received||todayKey();
   document.getElementById('dealDue').value=deal.due||todayKey();
+  // For refundable: back-calculate days from received → due
+  if(deal.refundable&&deal.received&&deal.due){
+    const rec=new Date(deal.received+'T00:00:00');
+    const due=new Date(deal.due+'T00:00:00');
+    const diff=Math.round((due-rec)/86400000);
+    document.getElementById('dealDaysToReturn').value=diff>0?diff:'';
+  } else {
+    document.getElementById('dealDaysToReturn').value='';
+  }
+  toggleRefundableFields();
+  if(deal.refundable)updateReturnPreview();
   document.getElementById('dealDone').value=deal.done||0;
   document.getElementById('dealNeeded').value=deal.needed||1;
   document.getElementById('dealLink').value=deal.link||'';
@@ -325,6 +344,39 @@ function deleteDeal(){
   showToast('Deal deleted');
 }
 function closeDealModal(){document.getElementById('dealModal').classList.remove('open');_editingDealId=null;}
+function toggleRefundableFields(){
+  const isRefundable=document.getElementById('dealRefundable')?.checked;
+  document.getElementById('dueDateRow').style.display=isRefundable?'none':'';
+  document.getElementById('daysToReturnRow').style.display=isRefundable?'':'none';
+  if(isRefundable)updateReturnPreview();
+}
+function updateReturnPreview(){
+  const days=parseInt(document.getElementById('dealDaysToReturn')?.value)||0;
+  const received=document.getElementById('dealReceived')?.value;
+  const preview=document.getElementById('returnPreview');
+  if(!preview)return;
+  if(!days){preview.textContent='';return;}
+  // Calculate due date from received date
+  const base=received?new Date(received+'T00:00:00'):new Date();
+  const due=new Date(base);due.setDate(base.getDate()+days);
+  // Days left from today
+  const today=new Date();today.setHours(0,0,0,0);
+  const dLeft=Math.ceil((due-today)/86400000);
+  const dueStr=due.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  preview.textContent=`Due ${dueStr} · ${dLeft>0?dLeft+' days left':dLeft===0?'Due today':Math.abs(dLeft)+' days overdue'}`;
+  preview.style.color=dLeft<=7?'var(--rust)':'var(--sage)';
+}
+function computeDueFromDays(){
+  // Called before save — converts days-to-return into a real due date
+  const isRefundable=document.getElementById('dealRefundable')?.checked;
+  if(!isRefundable)return document.getElementById('dealDue')?.value||'';
+  const days=parseInt(document.getElementById('dealDaysToReturn')?.value)||0;
+  const received=document.getElementById('dealReceived')?.value;
+  if(!days||!received)return '';
+  const base=new Date(received+'T00:00:00');
+  base.setDate(base.getDate()+days);
+  return base.getFullYear()+'-'+String(base.getMonth()+1).padStart(2,'0')+'-'+String(base.getDate()).padStart(2,'0');
+}
 function saveDeal(){
   const name=document.getElementById('dealName').value.trim();
   if(!name){showToast('Add a deal name first','error');return;}
@@ -333,7 +385,7 @@ function saveDeal(){
     brand:document.getElementById('dealBrand').value.trim(),
     type:document.getElementById('dealType').value,
     received:document.getElementById('dealReceived').value||todayKey(),
-    due:document.getElementById('dealDue').value||todayKey(),
+    due:computeDueFromDays()||todayKey(),
     done:Number(document.getElementById('dealDone').value)||0,
     needed:Number(document.getElementById('dealNeeded').value)||1,
     link:document.getElementById('dealLink').value.trim(),
