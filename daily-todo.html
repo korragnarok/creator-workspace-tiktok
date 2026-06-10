@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=76"></script>
-<link rel="stylesheet" href="layout.css?v=76">
+<script src="theme-init.js?v=77"></script>
+<link rel="stylesheet" href="layout.css?v=77">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=76"></script>
+<script src="supabase.js?v=77"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -260,7 +260,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=76"></script>
+<script src="layout.js?v=77"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -285,6 +285,7 @@ function addDays(date, amount){const d=new Date(date);d.setDate(d.getDate()+amou
 
 function getLinkLabel(url){try{const u=new URL(url);return u.hostname.replace(/^www\./,'')+(u.pathname.length>1?u.pathname.slice(0,18):'');}catch(e){return url.replace(/^https?:\/\//,'').slice(0,28);}}
 function normalizeUrl(url){const t=(url||'').trim();if(!t)return '';return /^https?:\/\//i.test(t)?t:'https://'+t;}
+function displayHookText(text){return String(text||'').replace(/\bSCHED_TIME\s*:\s*\d{1,2}:?\d{0,2}\b/gi,'').trim();}
 
 // ─── DATE NAV ─────────────────────────────────────────────
 function updateDateDisplay(){
@@ -440,7 +441,7 @@ function render(){
       html+=`<div class="take-card${take.done?' done':''}" id="${esc(take.id)}">
         <div class="take-label"><span class="take-num">Take${takes.length>1?' '+(i+1):''}</span>${take.done?'<span style="color:var(--sage);font-size:10px;">✓ Filmed</span>':''}</div>`;
 
-      if(take.hookText){html+=`<div class="hook-display" onclick="openHookModal('${esc(card.id)}','${esc(take.id)}')">${esc(take.hookText)}</div>`;}
+      if(displayHookText(take.hookText)){html+=`<div class="hook-display" onclick="openHookModal('${esc(card.id)}','${esc(take.id)}')">${esc(displayHookText(take.hookText))}</div>`;}
 
       html+=`<div class="script-actions">`;
       if(take.script)html+=`<button class="btn btn-ghost btn-xs js-copy-take-script" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Copy</button>`;
@@ -548,12 +549,12 @@ async function toggleDone(cardId,takeId){
 function videoRowFromTake(card,take){
   const notes=[];
   notes.push('Product: '+card.name);
-  if(take.hookText)notes.push('Hook: '+take.hookText);
+  if(displayHookText(take.hookText))notes.push('Hook: '+displayHookText(take.hookText));
   if(take.script)notes.push('Script: '+take.script);
   if(take.inspirationLinks?.length)notes.push('Inspiration: '+take.inspirationLinks.join(', '));
 	  return {
 	    user_id:_user.id,
-	    title:take.hookText||card.name,
+	    title:displayHookText(take.hookText)||card.name,
 	    brand:card.name,
 	    date:currentKey(),
 	    posted_time:currentTimeValue(),
