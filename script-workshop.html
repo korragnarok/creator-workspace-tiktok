@@ -604,9 +604,7 @@ function mobInsertLib(index){
   const text=String(row.text||'').trim();
   if(!text)return;
   const cur=canvas.value;
-  canvas.value=cur+(cur&&!cur.endsWith('
-')?'
-':'')+text;
+  canvas.value=cur+(cur&&!cur.endsWith('\n')?'\n':'')+text;
   document.getElementById('scriptCanvas').value=canvas.value;
   saveLocalDraft();
   showToast('Inserted');
