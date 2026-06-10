@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=80"></script>
-<link rel="stylesheet" href="layout.css?v=80">
+<script src="theme-init.js?v=81"></script>
+<link rel="stylesheet" href="layout.css?v=81">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -84,17 +84,26 @@ button,input,textarea,select{font:inherit;}
 .workshop-modal-input{width:100%;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);color:var(--ink);padding:12px 14px;outline:none;margin-bottom:18px;}
 .workshop-modal-input:focus{border-color:var(--rust);}
 .workshop-modal-actions{display:flex;justify-content:flex-end;gap:10px;}
+.ai-modal{width:min(720px,100%);}
+.ai-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+.ai-form .field-wide{grid-column:1/-1;}
+.ai-field textarea{min-height:108px;resize:vertical;}
+.ai-field select,.ai-field textarea,.ai-field input{width:100%;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);color:var(--ink);padding:12px 14px;outline:none;}
+.ai-field select{padding-right:48px;}
+.ai-field select:focus,.ai-field textarea:focus,.ai-field input:focus{border-color:var(--rust);}
+.ai-field-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px;}
 @media(max-width:768px){
   body{padding-left:0!important;}
   .page{display:none;}
   .mobile-only{display:block;padding:120px 22px 80px;text-align:center;}
   .mobile-only h1{font-family:'IBM Plex Serif',serif;color:var(--ink);font-size:34px;line-height:1;margin-bottom:10px;}
   .mobile-only p{color:var(--text-mid);}
+  .ai-form{grid-template-columns:1fr;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=80"></script>
-<script src="gemini-ai.js?v=80"></script>
+<script src="supabase.js?v=81"></script>
+<script src="gemini-ai.js?v=81"></script>
 </head>
 <body>
 <div class="mobile-only">
@@ -187,8 +196,42 @@ button,input,textarea,select{font:inherit;}
     </div>
   </div>
 </div>
+<div class="workshop-modal-overlay" id="aiModal" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+  <div class="workshop-modal ai-modal">
+    <div class="workshop-modal-title" id="aiModalTitle">Generate with AI</div>
+    <div class="workshop-modal-message">Add the details Gemini should use to write a stronger, more specific script.</div>
+    <div class="ai-form">
+      <div class="ai-field">
+        <div class="ai-field-label">Features &amp; Selling Points</div>
+        <textarea id="aiFeatures" placeholder="e.g., Full coverage, 72-hour wear, doesn't cake up"></textarea>
+      </div>
+      <div class="ai-field">
+        <div class="ai-field-label">Your Angle / Relatability Context</div>
+        <textarea id="aiAngle" placeholder="e.g., Busy mom with zero time to get ready, covering up dark circles, trying to look alive on a budget"></textarea>
+      </div>
+      <div class="ai-field">
+        <div class="ai-field-label">Hook Style</div>
+        <select id="aiHookStyle">
+          <option>Unfiltered & Honest Review</option>
+          <option>Curiosity / Call-Out</option>
+          <option>Visual Proof / Transformation</option>
+          <option>Everyday Routine Walkthrough</option>
+          <option>Comment-bait/Rage-bait</option>
+        </select>
+      </div>
+      <div class="ai-field">
+        <div class="ai-field-label">Extra Creative Direction / Notes (Optional)</div>
+        <input id="aiCustomNotes" placeholder="Example: casual TikTok, mention a before/after, keep it punchy">
+      </div>
+    </div>
+    <div class="workshop-modal-actions">
+      <button class="btn btn-soft" id="aiModalCancel" type="button">Cancel</button>
+      <button class="btn btn-primary" id="aiModalGenerate" type="button">Generate</button>
+    </div>
+  </div>
+</div>
 
-<script src="layout.js?v=80"></script>
+<script src="layout.js?v=81"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks', currentFramework='product-demo', pendingDraftProductId='';
 const FRAMEWORKS={
@@ -259,6 +302,7 @@ const AI_FRAMEWORK_KEYS={
 let sections=makeFrameworkSections(currentFramework);
 let inspo=[];
 let workshopModalResolve=null;
+let aiModalResolve=null;
 
 async function init(){
   user=await requireAuth();
@@ -349,6 +393,25 @@ document.getElementById('workshopModalSave').addEventListener('click',()=>{
 });
 document.getElementById('workshopModalInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();closeWorkshopModal(e.target.value.trim());}
+});
+function closeAiModal(value=null){
+  document.getElementById('aiModal').classList.remove('open');
+  if(aiModalResolve){aiModalResolve(value);aiModalResolve=null;}
+}
+function openAiGenerationModal(){
+  const overlay=document.getElementById('aiModal');
+  overlay.classList.add('open');
+  setTimeout(()=>document.getElementById('aiFeatures')?.focus(),60);
+  return new Promise(resolve=>{aiModalResolve=resolve;});
+}
+document.getElementById('aiModalCancel').addEventListener('click',()=>closeAiModal(null));
+document.getElementById('aiModalGenerate').addEventListener('click',()=>{
+  closeAiModal({
+    features:document.getElementById('aiFeatures').value.trim(),
+    angle:document.getElementById('aiAngle').value.trim(),
+    hookStyle:document.getElementById('aiHookStyle').value,
+    customNotes:document.getElementById('aiCustomNotes').value.trim()
+  });
 });
 async function loadProducts(){const {data}=await db.from('products').select('id,name,brand').eq('user_id',user.id).order('name');products=data||[];}
 async function loadLibraries(){
@@ -585,28 +648,24 @@ async function generateAiDraft(){
   if(hasText&&!(await openWorkshopConfirm('Replace Current Draft?','Generate with AI will replace the text in your current script sections.','Replace','Cancel')))return;
   const product=selectedProduct();
   const framework=FRAMEWORKS[currentFramework]||FRAMEWORKS['product-demo'];
-  const extra=await openWorkshopPrompt({
-    title:'Generate with AI',
-    message:'Optional: add the angle, audience, offer, or tone you want Gemini to use.',
-    placeholder:'Example: casual TikTok, busy moms, emphasize before/after...',
-    confirmText:'Generate'
-  });
-  if(extra===null)return;
+  const aiInputs=await openAiGenerationModal();
+  if(aiInputs===null)return;
   const expectedKeys=aiKeyMap().map(([key])=>key);
-  const prompt=[
-    'You are a master TikTok Shop copywriter. Write a conversational, highly authentic, and relatable script based on the following context:',
-    `- Script Title: ${document.getElementById('scriptTitle').value.trim()||'Untitled script'}`,
-    `- Product Name: ${product?.name||'Not selected'}`,
-    `- Selected Framework: ${framework.label}`,
-    extra?`Creative direction: ${extra}`:'',
-    '',
-    'Writing Rules:',
-    `- Never use cheesy influencer speak ("Hey guys", "I'm obsessed!"). Start naturally, mid-sentence, like a real conversation.`,
-    '- Write text exactly how a real person talks, including natural phrasing and pauses.',
-    '- Include concise visual stage directions inside brackets [like this] within the dialogue text blocks where relevant so the creator knows what to do on camera.',
-    '- Ensure the output strictly conforms to the requested JSON keys for the chosen framework. Do not wrap the JSON object inside markdown formatting like ```json.',
-    `Required JSON keys: ${expectedKeys.join(', ')}`
-  ].filter(Boolean).join('\n');
+  const selectedProduct=product?.name||'Not selected';
+  const prompt=`You are a conversion-focused TikTok Shop scriptwriting expert. Write a highly conversational, authentic script based on these precise structural inputs:
+- Product Name: ${selectedProduct}
+- Chosen Framework: ${framework.label}
+- Target Features to Emphasize: ${aiInputs.features}
+- Creator's Relatability Angle: ${aiInputs.angle}
+- Preferred Hook Style: ${aiInputs.hookStyle}
+- Custom Direction: ${aiInputs.customNotes}
+
+Strict Writing Directives:
+1. BAN THE 'INFLUENCER VOICE'. Do not start with clichés like "Hey guys!", "Welcome back!", or "I'm obsessed!". Start mid-sentence, completely unfiltered.
+2. Integrate the Creator's Relatability Angle organically. The script must sound like an everyday person sharing a genuine solution, completely customized to their life context.
+3. Structure the hook precisely matching the chosen Hook Style option.
+4. Insert brief visual action cues in brackets [like this] within the dialogue lines so the creator knows what actions to perform on camera.
+5. Keep the content matching the JSON keys exactly for the active framework: ${expectedKeys.join(', ')}`;
   try{
     setAiLoading(true);
     const data=await CreatorGemini.generateJson(prompt, aiResponseSchema());
