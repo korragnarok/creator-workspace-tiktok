@@ -278,11 +278,12 @@ async function fetchDealProgress(deal){
 function calcDealStatus(deal, videoCount, salesCount, totalGmv){
   const needVideos=Math.max(Number(deal.needed)||1,1);
   const needGmv=Number(deal.min_gmv)||0;
-  const count=deal.refundable?salesCount:videoCount;
+  // Refundable uses manual done; campaign uses videoCount; sample/retainer uses videoCount
+  const count=deal.refundable?(Number(deal.done)||0):videoCount;
   const videosOk=count>=needVideos;
   const gmvOk=deal.type!=='campaign'||needGmv===0||totalGmv>=needGmv;
   if(videosOk&&gmvOk) return 'completed';
-  if(videoCount>0||salesCount>0) return 'in-progress';
+  if(videoCount>0||(deal.refundable&&(Number(deal.done)||0)>0)) return 'in-progress';
   return 'not-started';
 }
 
@@ -321,7 +322,8 @@ async function renderDeals(){
         </div>`;
     } else {
       const prog=progressMap[deal.id]||{videoCount:0,salesCount:0,totalGmv:0};
-      const count=deal.refundable?prog.salesCount:prog.videoCount;
+      // Refundable: manual done count (sales are complex). Sample/retainer: auto from tagged videos.
+      const count=deal.refundable?Number(deal.done)||0:prog.videoCount;
       status=calcDealStatus(deal,prog.videoCount,prog.salesCount,prog.totalGmv);
       const needed=Math.max(Number(deal.needed)||1,1);
       const done=Math.min(count,needed);
@@ -364,8 +366,9 @@ function toggleModalFields(){
   document.getElementById('daysToReturnRow').style.display=isRefundable?'':'none';
   // due date row — always visible (hidden only when refundable days-to-return is shown)
   document.getElementById('dueDateRow').style.display=isRefundable?'none':'';
-  // done/needed rows — hide for campaigns (campaigns count via video tracker)
-  document.getElementById('doneDoneRow').style.display='none'; // always auto-counted from videos
+  // Videos Done: hide for sample/retainer (auto-counted via video tagging), show for refundable/campaign (manual)
+  const showDone=isRefundable||isCampaign;
+  document.getElementById('doneDoneRow').style.display=showDone?'':'none';
   document.getElementById('doneNeededRow').style.display='';
   // labels
   document.getElementById('labelReceived').textContent=isCampaign?'Campaign Start':'Received';
@@ -392,6 +395,7 @@ function openDealModal(){
   document.getElementById('dealDaysToReturn').value='';
   document.getElementById('returnPreview').textContent='';
 
+  document.getElementById('dealDone').value=0;
   document.getElementById('dealNeeded').value=1;
   document.getElementById('dealMinGmv').value='';
   document.getElementById('dealLink').value='';
@@ -424,6 +428,7 @@ function openEditModal(id){
   toggleModalFields();
   if(deal.refundable)updateReturnPreview();
 
+  document.getElementById('dealDone').value=deal.done||0;
   document.getElementById('dealNeeded').value=deal.needed||1;
   document.getElementById('dealMinGmv').value=deal.min_gmv||0;
   document.getElementById('dealLink').value=deal.link||'';
@@ -498,6 +503,7 @@ async function saveDeal(){
     received:document.getElementById('dealReceived').value||todayKey(),
     due:computeDueFromDays()||todayKey(),
 
+    done:(isRefundable||type==='campaign')?Number(document.getElementById('dealDone').value)||0:0,
     needed:Number(document.getElementById('dealNeeded').value)||1,
     min_gmv:type==='campaign'?(parseFloat(document.getElementById('dealMinGmv').value)||0):0,
     link:document.getElementById('dealLink').value.trim(),
