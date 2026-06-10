@@ -159,9 +159,9 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
     <div class="form-grid">
       <div class="form-row form-wide"><label class="form-label">Deal Name</label><input class="form-input" id="dealName" placeholder="e.g., PetLab Probiotic Chew"></div>
       <div class="form-row"><label class="form-label">Brand</label><input class="form-input" id="dealBrand" placeholder="e.g., PetLab Co"></div>
-      <div class="form-row"><label class="form-label">Type</label><select class="form-input" id="dealType"><option value="sample">Sample</option><option value="retainer">Retainer</option><option value="campaign">Campaign</option></select></div>
-      <div class="form-row"><label class="form-label">Received</label><input class="form-input" id="dealReceived" type="date" oninput="updateReturnPreview()"></div>
-      <div class="form-row" id="dueDateRow"><label class="form-label">Due Date</label><input class="form-input" id="dealDue" type="date"></div>
+      <div class="form-row"><label class="form-label">Type</label><select class="form-input" id="dealType" onchange="toggleModalFields()"><option value="sample">Sample</option><option value="retainer">Retainer</option><option value="campaign">Campaign</option></select></div>
+      <div class="form-row"><label class="form-label" id="labelReceived">Received</label><input class="form-input" id="dealReceived" type="date" oninput="updateReturnPreview()"></div>
+      <div class="form-row" id="dueDateRow"><label class="form-label" id="labelDue">Due Date</label><input class="form-input" id="dealDue" type="date"></div>
       <div class="form-row" id="daysToReturnRow" style="display:none;">
         <label class="form-label">Days to Return</label>
         <input class="form-input" id="dealDaysToReturn" type="number" min="1" max="365" placeholder="e.g. 118" oninput="updateReturnPreview()">
@@ -169,6 +169,11 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
       </div>
       <div class="form-row"><label class="form-label" id="labelDone">Videos Done</label><input class="form-input" id="dealDone" type="number" min="0" value="0"></div>
       <div class="form-row"><label class="form-label" id="labelNeeded">Videos Needed</label><input class="form-input" id="dealNeeded" type="number" min="1" value="1"></div>
+      <div class="form-row form-wide" id="minGmvRow" style="display:none;">
+        <label class="form-label">Min GMV Required ($)</label>
+        <input class="form-input" id="dealMinGmv" type="number" min="0" step="0.01" placeholder="0 = no GMV requirement">
+        <div style="font-family:'Stack Sans Notch',sans-serif;font-size:10px;color:var(--text-muted);margin-top:5px;letter-spacing:0.06em;">Leave 0 or blank if this campaign has no GMV requirement.</div>
+      </div>
       <div class="form-row form-wide"><label class="form-label">Product Link</label><input class="form-input" id="dealLink" placeholder="https://..."></div>
       <div class="form-row form-wide" style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="dealRefundable" style="width:18px;height:18px;accent-color:var(--rust);cursor:pointer;flex-shrink:0;" onchange="toggleRefundableFields()"><label for="dealRefundable" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);cursor:pointer;">Refundable Sample</label></div>
     </div>
@@ -185,16 +190,6 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
 let user=null;
 let deals=[];
 let activeFilter='all';
-const DEAL_KEY_PREFIX='creatorHub:brandDeals:';
-
-const starterDeals=[
-  {id:'sample-1',name:'Shark Corded Vacuum',brand:'Shark/Ninja',type:'sample',received:'2026-06-02',due:'2026-06-15',done:1,needed:2,status:'in-progress',link:''},
-  {id:'sample-2',name:'PetLab Co. Probiotic Chew',brand:'PetLab Co',type:'sample',received:'2026-06-05',due:'2026-06-12',done:0,needed:1,status:'not-started',link:''},
-  {id:'retainer-1',name:'Mississippi Candle Co.',brand:'Mississippi Candle Co',type:'retainer',received:'2026-06-01',due:'2026-06-30',done:4,needed:6,status:'on-track',link:''},
-  {id:'sample-3',name:'Dog Friendly Co. Treats',brand:'Dog Friendly Co',type:'sample',received:'2026-05-28',due:'2026-06-08',done:1,needed:1,status:'completed',link:''},
-  {id:'campaign-1',name:'Comfrt Loungewear Campaign',brand:'Comfrt',type:'campaign',received:'2026-06-03',due:'2026-06-22',done:0,needed:3,status:'not-started',link:''},
-  {id:'retainer-2',name:'QVC Cookware Set',brand:'QVC',type:'retainer',received:'2026-06-01',due:'2026-06-30',done:2,needed:4,status:'in-progress',link:''}
-];
 
 async function init(){
   user=await requireAuth();
@@ -204,28 +199,47 @@ async function init(){
   await initCore5(user.id,prefs);
   await initTheme(user.id,prefs);
   initProfilePopover(user.id);
-  loadDeals();
+  await loadDeals();
   renderDeals();
   loadPps();
 }
+
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function dealKey(){return `${DEAL_KEY_PREFIX}${user?.id||'local'}`;}
 function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function parseLocalDate(value){const [y,m,d]=String(value||todayKey()).split('-').map(Number);return new Date(y,m-1,d);}
 function daysLeft(due){return Math.ceil((parseLocalDate(due)-parseLocalDate(todayKey()))/86400000);}
 function typeLabel(type){return ({sample:'Sample',retainer:'Retainer',campaign:'Campaign'}[type]||'Sample');}
-function statusLabel(status){return ({'not-started':'Not Started','in-progress':'In Progress','on-track':'On Track',completed:'Completed'}[status]||'Not Started');}
-function monthDay(value){return parseLocalDate(value).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
-function loadDeals(){
-  try{deals=JSON.parse(localStorage.getItem(dealKey())||'null')||starterDeals;}
-  catch(e){deals=starterDeals;}
+function statusLabel(status){return ({'not-started':'Not Started','in-progress':'In Progress','on-track':'On Track',completed:'Completed',incomplete:'Incomplete'}[status]||'Not Started');}
+function monthDay(value){if(!value)return '—';return parseLocalDate(value).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
+function fmtGmv(n){return n>0?'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';}
+
+async function loadDeals(){
+  const {data,error}=await db.from('brand_deals').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
+  if(error){showToast('Error loading deals','error');return;}
+  deals=data||[];
 }
-function saveDeals(){try{localStorage.setItem(dealKey(),JSON.stringify(deals));}catch(e){}}
+
+async function saveDealToDb(vals, id){
+  if(id){
+    const {error}=await db.from('brand_deals').update(vals).eq('id',id).eq('user_id',user.id);
+    return error;
+  } else {
+    const {error}=await db.from('brand_deals').insert({...vals,user_id:user.id});
+    return error;
+  }
+}
+
+async function deleteDealFromDb(id){
+  const {error}=await db.from('brand_deals').delete().eq('id',id).eq('user_id',user.id);
+  return error;
+}
+
 function setFilter(filter){
   activeFilter=filter;
   document.querySelectorAll('.pill').forEach(btn=>btn.classList.toggle('active',btn.dataset.filter===filter));
   renderDeals();
 }
+
 function visibleDeals(){
   const q=document.getElementById('dealSearch').value.trim().toLowerCase();
   return deals.filter(deal=>{
@@ -235,36 +249,91 @@ function visibleDeals(){
     return true;
   });
 }
+
 function updateStats(){
-  const active=deals.filter(deal=>deal.status!=='completed').length;
-  const week=deals.filter(deal=>deal.status!=='completed'&&daysLeft(deal.due)>=0&&daysLeft(deal.due)<=7).length;
-  const campaigns=deals.filter(deal=>deal.type==='campaign'&&deal.status!=='completed').length;
-  const samples=deals.filter(deal=>deal.type==='sample').length||1;
-  const posts=deals.reduce((sum,deal)=>sum+(Number(deal.done)||0),0);
+  const active=deals.filter(d=>d.status!=='completed').length;
+  const week=deals.filter(d=>d.status!=='completed'&&daysLeft(d.due)>=0&&daysLeft(d.due)<=7).length;
+  const campaigns=deals.filter(d=>d.type==='campaign'&&d.status!=='completed').length;
   document.getElementById('statActive').textContent=active;
   document.getElementById('statWeek').textContent=week;
   document.getElementById('statCampaigns').textContent=campaigns;
-  // PPS is manually set — don't overwrite with calculated value
-  // document.getElementById('statPps').textContent=(posts/samples).toFixed(1).replace(/\.0$/,'');
 }
+
+// For non-campaign deals: compute status from done/needed
 function dealStatus(deal){
+  if(deal.type==='campaign') return deal.status||'not-started';
   const done=Number(deal.done)||0;
   const needed=Math.max(Number(deal.needed)||1,1);
-  if(done>=needed)return 'completed';
-  if(done>0)return 'in-progress';
+  if(done>=needed) return 'completed';
+  if(done>0) return 'in-progress';
   return deal.status||'not-started';
 }
-function renderDeals(){
+
+// Campaign progress: query videos by campaign_id within date range
+async function fetchCampaignProgress(deal){
+  let q=db.from('videos').select('gmv,date').eq('user_id',user.id).eq('campaign_id',deal.id);
+  if(deal.received) q=q.gte('date',deal.received);
+  if(deal.due) q=q.lte('date',deal.due);
+  const {data,error}=await q;
+  if(error||!data) return {videoCount:0,totalGmv:0};
+  return {
+    videoCount:data.length,
+    totalGmv:data.reduce((sum,v)=>sum+(Number(v.gmv)||0),0)
+  };
+}
+
+function campaignStatus(deal, videoCount, totalGmv){
+  const needVideos=Math.max(Number(deal.needed)||1,1);
+  const needGmv=Number(deal.min_gmv)||0;
+  const videosOk=videoCount>=needVideos;
+  const gmvOk=needGmv===0||totalGmv>=needGmv;
+  if(videosOk&&gmvOk) return 'completed';
+  if(videoCount>0||totalGmv>0) return 'in-progress';
+  return 'not-started';
+}
+
+async function renderDeals(){
   updateStats();
   const rows=visibleDeals();
   const body=document.getElementById('dealBody');
-  if(!rows.length){body.innerHTML='<tr><td colspan="9"><div class="empty">No brand deals found.</div></td></tr>';return;}
+  if(!rows.length){body.innerHTML='<tr><td colspan="8"><div class="empty">No brand deals yet. Add one above.</div></td></tr>';return;}
+
+  // For campaigns, fetch progress from Supabase in parallel
+  const progressMap={};
+  await Promise.all(rows.filter(d=>d.type==='campaign').map(async d=>{
+    progressMap[d.id]=await fetchCampaignProgress(d);
+  }));
+
   body.innerHTML=rows.map(deal=>{
-    const status=dealStatus(deal);
+    const isCampaign=deal.type==='campaign';
+    let status, criteriaHtml;
+
+    if(isCampaign){
+      const prog=progressMap[deal.id]||{videoCount:0,totalGmv:0};
+      const needVideos=Math.max(Number(deal.needed)||1,1);
+      const needGmv=Number(deal.min_gmv)||0;
+      const videoPct=Math.min(100,Math.round((prog.videoCount/needVideos)*100));
+      const gmvPct=needGmv>0?Math.min(100,Math.round((prog.totalGmv/needGmv)*100)):100;
+      status=campaignStatus(deal,prog.videoCount,prog.totalGmv);
+      const gmvBarColor=prog.totalGmv>=needGmv&&needGmv>0?'var(--sage)':(prog.totalGmv>0?'var(--tan)':' var(--rust)');
+      criteriaHtml=`
+        <div class="progress-wrap" style="min-width:120px;">
+          <div class="progress-top" style="font-size:11px;">${prog.videoCount} / ${needVideos} <span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;color:var(--text-muted);">videos</span></div>
+          <div class="progress" style="margin-bottom:6px;"><div class="progress-bar" style="width:${videoPct}%"></div></div>
+          ${needGmv>0?`
+          <div class="progress-top" style="font-size:11px;">${fmtGmv(prog.totalGmv)} / ${fmtGmv(needGmv)} <span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;color:var(--text-muted);">gmv</span></div>
+          <div class="progress"><div class="progress-bar" style="width:${gmvPct}%;background:${gmvBarColor};"></div></div>
+          `:`<div style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;color:var(--text-muted);margin-top:2px;">No GMV Req.</div>`}
+        </div>`;
+    } else {
+      status=dealStatus(deal);
+      const needed=Math.max(Number(deal.needed)||1,1);
+      const done=Math.min(Number(deal.done)||0,needed);
+      const pct=Math.min(100,Math.round((done/needed)*100));
+      criteriaHtml=`<div class="progress-wrap"><div class="progress-top">${done} / ${needed} <span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);">${deal.refundable?'sales':'videos'}</span></div><div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div>`;
+    }
+
     const left=daysLeft(deal.due);
-    const needed=Math.max(Number(deal.needed)||1,1);
-    const done=Math.min(Number(deal.done)||0,needed);
-    const pct=Math.min(100,Math.round((done/needed)*100));
     const dayClass=left<0?'overdue':left<=7?'due-soon':'';
     return `<tr>
       <td>
@@ -277,14 +346,42 @@ function renderDeals(){
       <td>${esc(deal.brand)}</td>
       <td>${esc(monthDay(deal.received))}</td>
       <td>${esc(monthDay(deal.due))}</td>
-      <td><div class="progress-wrap"><div class="progress-top">${done} / ${needed} <span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);">${deal.refundable?'sales':'videos'}</span></div><div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div></td>
+      <td>${criteriaHtml}</td>
       <td><span class="status ${status}">${esc(statusLabel(status))}</span></td>
       <td>${left<0?'<div class="days overdue">Late</div>':`<div class="days ${dayClass}">${left}</div><div class="days-label">days</div>`}</td>
-      <td style="white-space:nowrap;"><button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openEditModal('${esc(deal.id)}')">Edit</button><button class="btn" onclick="event.stopPropagation();removeDeal('${esc(deal.id)}')">Remove</button></td>
+      <td style="white-space:nowrap;"><button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openEditModal('${esc(deal.id)}')">Edit</button><button class="btn" onclick="event.stopPropagation();confirmDeleteDeal('${esc(deal.id)}')">Remove</button></td>
     </tr>`;
   }).join('');
 }
+
 let _editingDealId=null;
+
+function toggleModalFields(){
+  const type=document.getElementById('dealType').value;
+  const isCampaign=type==='campaign';
+  const isRefundable=document.getElementById('dealRefundable')?.checked;
+  // campaign-only rows
+  document.getElementById('minGmvRow').style.display=isCampaign?'':`none`;
+  // refundable-only rows
+  document.getElementById('daysToReturnRow').style.display=(!isCampaign&&isRefundable)?'':`none`;
+  document.getElementById('dueDateRow').style.display=(!isCampaign&&!isRefundable)?'':`none`;
+  // campaign always shows date range (received=start, due=end) — just update labels
+  document.getElementById('labelReceived').textContent=isCampaign?'Campaign Start':'Received';
+  document.getElementById('labelDue').textContent=isCampaign?'Campaign End':'Due Date';
+  if(!isCampaign){
+    const labelDone=document.getElementById('labelDone');
+    const labelNeeded=document.getElementById('labelNeeded');
+    if(labelDone)labelDone.textContent=isRefundable?'Sales Made':'Videos Done';
+    if(labelNeeded)labelNeeded.textContent=isRefundable?'Sales Needed':'Videos Needed';
+  } else {
+    const labelDone=document.getElementById('labelDone');
+    const labelNeeded=document.getElementById('labelNeeded');
+    if(labelDone)labelDone.textContent='Videos Posted';
+    if(labelNeeded)labelNeeded.textContent='Min Videos Required';
+  }
+  if(isRefundable&&!isCampaign)updateReturnPreview();
+}
+
 function openDealModal(){
   _editingDealId=null;
   document.getElementById('dealModalTitle').textContent='New Brand Deal';
@@ -297,14 +394,16 @@ function openDealModal(){
   document.getElementById('dealDue').value=todayKey();
   document.getElementById('dealDaysToReturn').value='';
   document.getElementById('returnPreview').textContent='';
-  toggleRefundableFields();
   document.getElementById('dealDone').value=0;
   document.getElementById('dealNeeded').value=1;
+  document.getElementById('dealMinGmv').value='';
   document.getElementById('dealLink').value='';
   const dr=document.getElementById('dealRefundable');if(dr)dr.checked=false;
+  toggleModalFields();
   document.getElementById('dealModal').classList.add('open');
   setTimeout(()=>document.getElementById('dealName').focus(),50);
 }
+
 function openEditModal(id){
   const deal=deals.find(d=>d.id===id);
   if(!deal)return;
@@ -317,7 +416,6 @@ function openEditModal(id){
   document.getElementById('dealType').value=deal.type||'sample';
   document.getElementById('dealReceived').value=deal.received||todayKey();
   document.getElementById('dealDue').value=deal.due||todayKey();
-  // For refundable: back-calculate days from received → due
   if(deal.refundable&&deal.received&&deal.due){
     const rec=new Date(deal.received+'T00:00:00');
     const due=new Date(deal.due+'T00:00:00');
@@ -326,54 +424,64 @@ function openEditModal(id){
   } else {
     document.getElementById('dealDaysToReturn').value='';
   }
-  toggleRefundableFields();
+  toggleModalFields();
   if(deal.refundable)updateReturnPreview();
   document.getElementById('dealDone').value=deal.done||0;
   document.getElementById('dealNeeded').value=deal.needed||1;
+  document.getElementById('dealMinGmv').value=deal.min_gmv||0;
   document.getElementById('dealLink').value=deal.link||'';
   const dr=document.getElementById('dealRefundable');if(dr)dr.checked=!!deal.refundable;
   document.getElementById('dealModal').classList.add('open');
   setTimeout(()=>document.getElementById('dealName').focus(),50);
 }
-function deleteDeal(){
+
+async function deleteDeal(){
   if(!_editingDealId||!confirm('Delete this deal?'))return;
+  const btn=document.getElementById('dealSaveBtn');
+  btn.disabled=true;
+  const error=await deleteDealFromDb(_editingDealId);
+  btn.disabled=false;
+  if(error){showToast(error.message,'error');return;}
   deals=deals.filter(d=>d.id!==_editingDealId);
-  saveDeals();
   closeDealModal();
   renderDeals();
   showToast('Deal deleted');
 }
-function closeDealModal(){document.getElementById('dealModal').classList.remove('open');_editingDealId=null;}
-function toggleRefundableFields(){
-  const isRefundable=document.getElementById('dealRefundable')?.checked;
-  document.getElementById('dueDateRow').style.display=isRefundable?'none':'';
-  document.getElementById('daysToReturnRow').style.display=isRefundable?'':'none';
-  const labelDone=document.getElementById('labelDone');
-  const labelNeeded=document.getElementById('labelNeeded');
-  if(labelDone)labelDone.textContent=isRefundable?'Sales Made':'Videos Done';
-  if(labelNeeded)labelNeeded.textContent=isRefundable?'Sales Needed':'Videos Needed';
-  if(isRefundable)updateReturnPreview();
+
+async function confirmDeleteDeal(id){
+  if(!confirm('Delete this deal?'))return;
+  const error=await deleteDealFromDb(id);
+  if(error){showToast(error.message,'error');return;}
+  deals=deals.filter(d=>d.id!==id);
+  renderDeals();
+  showToast('Deal deleted');
 }
+
+function closeDealModal(){document.getElementById('dealModal').classList.remove('open');_editingDealId=null;}
+
+function toggleRefundableFields(){
+  toggleModalFields();
+}
+
 function updateReturnPreview(){
   const days=parseInt(document.getElementById('dealDaysToReturn')?.value)||0;
   const received=document.getElementById('dealReceived')?.value;
   const preview=document.getElementById('returnPreview');
   if(!preview)return;
   if(!days){preview.textContent='';return;}
-  // Calculate due date from received date
   const base=received?new Date(received+'T00:00:00'):new Date();
   const due=new Date(base);due.setDate(base.getDate()+days);
-  // Days left from today
   const today=new Date();today.setHours(0,0,0,0);
   const dLeft=Math.ceil((due-today)/86400000);
   const dueStr=due.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   preview.textContent=`Due ${dueStr} · ${dLeft>0?dLeft+' days left':dLeft===0?'Due today':Math.abs(dLeft)+' days overdue'}`;
-  preview.style.color=dLeft<=7?'var(--rust)':'var(--sage)';
+  preview.style.color=dLeft<=7?'var(--rust)':`var(--sage)`;
 }
+
 function computeDueFromDays(){
-  // Called before save — converts days-to-return into a real due date
   const isRefundable=document.getElementById('dealRefundable')?.checked;
-  if(!isRefundable)return document.getElementById('dealDue')?.value||'';
+  const isCampaign=document.getElementById('dealType').value==='campaign';
+  if(!isRefundable||isCampaign)return document.getElementById('dealDue')?.value||'';
   const days=parseInt(document.getElementById('dealDaysToReturn')?.value)||0;
   const received=document.getElementById('dealReceived')?.value;
   if(!days||!received)return '';
@@ -381,37 +489,35 @@ function computeDueFromDays(){
   base.setDate(base.getDate()+days);
   return base.getFullYear()+'-'+String(base.getMonth()+1).padStart(2,'0')+'-'+String(base.getDate()).padStart(2,'0');
 }
-function saveDeal(){
+
+async function saveDeal(){
   const name=document.getElementById('dealName').value.trim();
   if(!name){showToast('Add a deal name first','error');return;}
+  const type=document.getElementById('dealType').value;
   const vals={
     name,
     brand:document.getElementById('dealBrand').value.trim(),
-    type:document.getElementById('dealType').value,
+    type,
     received:document.getElementById('dealReceived').value||todayKey(),
     due:computeDueFromDays()||todayKey(),
     done:Number(document.getElementById('dealDone').value)||0,
     needed:Number(document.getElementById('dealNeeded').value)||1,
+    min_gmv:type==='campaign'?(parseFloat(document.getElementById('dealMinGmv').value)||0):0,
     link:document.getElementById('dealLink').value.trim(),
-    refundable:document.getElementById('dealRefundable')?.checked||false
+    refundable:document.getElementById('dealRefundable')?.checked||false,
+    status:'not-started'
   };
-  if(_editingDealId){
-    const idx=deals.findIndex(d=>d.id===_editingDealId);
-    if(idx>=0)deals[idx]={...deals[idx],...vals};
-    showToast('Deal updated');
-  } else {
-    deals.unshift({id:`deal-${Date.now()}`,status:'not-started',...vals});
-    showToast('Brand deal saved');
-  }
-  saveDeals();
+  const btn=document.getElementById('dealSaveBtn');
+  btn.disabled=true;btn.textContent='Saving...';
+  const error=await saveDealToDb(vals,_editingDealId);
+  btn.disabled=false;btn.textContent=_editingDealId?'Save Changes':'Save Brand Deal';
+  if(error){showToast(error.message,'error');return;}
+  showToast(_editingDealId?'Deal updated':'Brand deal saved');
   closeDealModal();
+  await loadDeals();
   renderDeals();
 }
-function removeDeal(id){
-  deals=deals.filter(deal=>deal.id!==id);
-  saveDeals();
-  renderDeals();
-}
+
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDealModal();});
 init();
 
