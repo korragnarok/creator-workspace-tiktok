@@ -204,7 +204,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     </div>
     <div class="form-row" style="margin-top:16px"><label class="form-label">Notes / What Worked</label><textarea class="form-input form-textarea" id="fNotes" placeholder="What performed well?"></textarea></div>
     <div class="form-row"><label class="form-label">TikTok Link</label><input type="url" class="form-input" id="fLink" placeholder="https://www.tiktok.com/..."></div>
-    <div class="form-row"><label class="form-label">Tag to Campaign <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);font-family:'IBM Plex Serif',serif;">(optional)</span></label><select class="form-input" id="fCampaign"><option value="">— None —</option></select></div>
+    <div class="form-row"><label class="form-label">Tag to Brand Deal <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);font-family:'IBM Plex Serif',serif;">(optional)</span></label><select class="form-input" id="fCampaign"><option value="">— None —</option></select></div>
     <div class="modal-actions"><button class="btn btn-primary" style="flex:1;" onclick="saveVideo()">Save</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-danger" id="deleteBtn" style="display:none;" onclick="deleteVideo()">Delete</button></div>
   </div>
 </div>
@@ -255,6 +255,18 @@ async function loadVideos(){
     return;
   }
   DATA=data||[];
+  // Enrich videos with deal label for table display
+  const dealIds=[...new Set(DATA.filter(v=>v.campaign_id).map(v=>v.campaign_id))];
+  if(dealIds.length){
+    const {data:dealData}=await db.from('brand_deals').select('id,type').in('id',dealIds);
+    const dealMap=Object.fromEntries((dealData||[]).map(d=>[d.id,d.type]));
+    DATA.forEach(v=>{
+      if(v.campaign_id){
+        const t=dealMap[v.campaign_id];
+        v._dealLabel=({sample:'Sample',retainer:'Retainer',campaign:'Campaign'}[t]||'Deal');
+      }
+    });
+  }
   updateStats();
   goPage(1);
 }
@@ -329,7 +341,7 @@ function renderTable(){
     const selected=_selectedVideoIds.has(v.id);
     return `<tr class="${_editVideosMode?'select-mode ':''}${selected?'selected':''}" onclick="handleVideoRowClick('${v.id}')">
       <td class="muted"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','date')">${fmtDate(v.date)}${fmtTime(v.posted_time)?`<span class="tbl-time">${fmtTime(v.posted_time)}</span>`:''}</span></td>
-      <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','brand')">${esc(v.brand||'No product')}</span>${v.campaign_id?'<span class="tag-campaign">Campaign</span>':''}</div><div class="tbl-hook"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','title')">${esc(v.title||'')}</span></div></td>
+      <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','brand')">${esc(v.brand||'No product')}</span>${v.campaign_id?`<span class="tag-campaign">${esc(v._dealLabel||'Deal')}</span>`:''}</div><div class="tbl-hook"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','title')">${esc(v.title||'')}</span></div></td>
       <td><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','hook')">${esc(hook||'-')}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','views')">${fmtNum(v.views)}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','gmv')">${(Number(v.gmv)||0)>0?'$'+Number(v.gmv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'-'}</span></td>
@@ -522,11 +534,12 @@ async function loadCampaignOptions(selectedId){
   const sel=document.getElementById('fCampaign');
   if(!sel)return;
   sel.innerHTML='<option value="">— None —</option>';
-  const {data}=await db.from('brand_deals').select('id,name,brand').eq('user_id',user.id).eq('type','campaign').order('created_at',{ascending:false});
+  const {data}=await db.from('brand_deals').select('id,name,brand,type').eq('user_id',user.id).order('created_at',{ascending:false});
   (data||[]).forEach(d=>{
     const opt=document.createElement('option');
     opt.value=d.id;
-    opt.textContent=`${d.name}${d.brand?' ('+d.brand+')':''}`;
+    const typeTag=({sample:'Sample',retainer:'Retainer',campaign:'Campaign'}[d.type]||d.type);
+    opt.textContent=`${d.name} — ${typeTag}${d.brand?' · '+d.brand:''}`;  
     if(d.id===selectedId)opt.selected=true;
     sel.appendChild(opt);
   });

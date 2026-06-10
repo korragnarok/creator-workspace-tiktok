@@ -259,36 +259,30 @@ function updateStats(){
   document.getElementById('statCampaigns').textContent=campaigns;
 }
 
-// For non-campaign deals: compute status from done/needed
-function dealStatus(deal){
-  if(deal.type==='campaign') return deal.status||'not-started';
-  const done=Number(deal.done)||0;
-  const needed=Math.max(Number(deal.needed)||1,1);
-  if(done>=needed) return 'completed';
-  if(done>0) return 'in-progress';
-  return deal.status||'not-started';
-}
+
 
 // Campaign progress: query videos by campaign_id within date range
-async function fetchCampaignProgress(deal){
-  let q=db.from('videos').select('gmv,date').eq('user_id',user.id).eq('campaign_id',deal.id);
+async function fetchDealProgress(deal){
+  let q=db.from('videos').select('gmv,date,units').eq('user_id',user.id).eq('campaign_id',deal.id);
   if(deal.received) q=q.gte('date',deal.received);
   if(deal.due) q=q.lte('date',deal.due);
   const {data,error}=await q;
-  if(error||!data) return {videoCount:0,totalGmv:0};
+  if(error||!data) return {videoCount:0,salesCount:0,totalGmv:0};
   return {
     videoCount:data.length,
+    salesCount:data.filter(v=>(Number(v.units)||0)>0).length,
     totalGmv:data.reduce((sum,v)=>sum+(Number(v.gmv)||0),0)
   };
 }
 
-function campaignStatus(deal, videoCount, totalGmv){
+function calcDealStatus(deal, videoCount, salesCount, totalGmv){
   const needVideos=Math.max(Number(deal.needed)||1,1);
   const needGmv=Number(deal.min_gmv)||0;
-  const videosOk=videoCount>=needVideos;
-  const gmvOk=needGmv===0||totalGmv>=needGmv;
+  const count=deal.refundable?salesCount:videoCount;
+  const videosOk=count>=needVideos;
+  const gmvOk=deal.type!=='campaign'||needGmv===0||totalGmv>=needGmv;
   if(videosOk&&gmvOk) return 'completed';
-  if(videoCount>0||totalGmv>0) return 'in-progress';
+  if(videoCount>0||salesCount>0) return 'in-progress';
   return 'not-started';
 }
 
@@ -298,10 +292,10 @@ async function renderDeals(){
   const body=document.getElementById('dealBody');
   if(!rows.length){body.innerHTML='<tr><td colspan="8"><div class="empty">No brand deals yet. Add one above.</div></td></tr>';return;}
 
-  // For campaigns, fetch progress from Supabase in parallel
+  // Fetch progress from tagged videos for all deals in parallel
   const progressMap={};
-  await Promise.all(rows.filter(d=>d.type==='campaign').map(async d=>{
-    progressMap[d.id]=await fetchCampaignProgress(d);
+  await Promise.all(rows.map(async d=>{
+    progressMap[d.id]=await fetchDealProgress(d);
   }));
 
   body.innerHTML=rows.map(deal=>{
@@ -314,7 +308,7 @@ async function renderDeals(){
       const needGmv=Number(deal.min_gmv)||0;
       const videoPct=Math.min(100,Math.round((prog.videoCount/needVideos)*100));
       const gmvPct=needGmv>0?Math.min(100,Math.round((prog.totalGmv/needGmv)*100)):100;
-      status=campaignStatus(deal,prog.videoCount,prog.totalGmv);
+      status=calcDealStatus(deal,prog.videoCount,prog.salesCount,prog.totalGmv);
       const gmvBarColor=prog.totalGmv>=needGmv&&needGmv>0?'var(--sage)':(prog.totalGmv>0?'var(--tan)':' var(--rust)');
       criteriaHtml=`
         <div class="progress-wrap" style="min-width:120px;">
@@ -326,9 +320,11 @@ async function renderDeals(){
           `:`<div style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;color:var(--text-muted);margin-top:2px;">No GMV Req.</div>`}
         </div>`;
     } else {
-      status=dealStatus(deal);
+      const prog=progressMap[deal.id]||{videoCount:0,salesCount:0,totalGmv:0};
+      const count=deal.refundable?prog.salesCount:prog.videoCount;
+      status=calcDealStatus(deal,prog.videoCount,prog.salesCount,prog.totalGmv);
       const needed=Math.max(Number(deal.needed)||1,1);
-      const done=Math.min(Number(deal.done)||0,needed);
+      const done=Math.min(count,needed);
       const pct=Math.min(100,Math.round((done/needed)*100));
       criteriaHtml=`<div class="progress-wrap"><div class="progress-top">${done} / ${needed} <span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);">${deal.refundable?'sales':'videos'}</span></div><div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div>`;
     }
@@ -369,7 +365,7 @@ function toggleModalFields(){
   // due date row — always visible (hidden only when refundable days-to-return is shown)
   document.getElementById('dueDateRow').style.display=isRefundable?'none':'';
   // done/needed rows — hide for campaigns (campaigns count via video tracker)
-  document.getElementById('doneDoneRow').style.display=isCampaign?'none':'';
+  document.getElementById('doneDoneRow').style.display='none'; // always auto-counted from videos
   document.getElementById('doneNeededRow').style.display='';
   // labels
   document.getElementById('labelReceived').textContent=isCampaign?'Campaign Start':'Received';
@@ -395,7 +391,7 @@ function openDealModal(){
   document.getElementById('dealDue').value=todayKey();
   document.getElementById('dealDaysToReturn').value='';
   document.getElementById('returnPreview').textContent='';
-  document.getElementById('dealDone').value=0;
+
   document.getElementById('dealNeeded').value=1;
   document.getElementById('dealMinGmv').value='';
   document.getElementById('dealLink').value='';
@@ -427,7 +423,7 @@ function openEditModal(id){
   }
   toggleModalFields();
   if(deal.refundable)updateReturnPreview();
-  document.getElementById('dealDone').value=deal.done||0;
+
   document.getElementById('dealNeeded').value=deal.needed||1;
   document.getElementById('dealMinGmv').value=deal.min_gmv||0;
   document.getElementById('dealLink').value=deal.link||'';
@@ -501,7 +497,7 @@ async function saveDeal(){
     type,
     received:document.getElementById('dealReceived').value||todayKey(),
     due:computeDueFromDays()||todayKey(),
-    done:Number(document.getElementById('dealDone').value)||0,
+
     needed:Number(document.getElementById('dealNeeded').value)||1,
     min_gmv:type==='campaign'?(parseFloat(document.getElementById('dealMinGmv').value)||0):0,
     link:document.getElementById('dealLink').value.trim(),
