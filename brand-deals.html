@@ -141,7 +141,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
           <th>Brand</th>
           <th>Received</th>
           <th>Due Date</th>
-          <th>Videos</th>
+          <th>Criteria</th>
           <th>Status</th>
           <th>Days Left</th>
           <th></th>
@@ -271,13 +271,13 @@ function renderDeals(){
         <div class="deal-name">
           <div class="deal-thumb">${esc((deal.brand||deal.name||'?').slice(0,1).toUpperCase())}</div>
           <div><div class="deal-title">${esc(deal.name)} <span class="tag ${deal.type}">${esc(typeLabel(deal.type))}</span>${deal.refundable?'<span class="tag refundable">Refundable</span>':''}</div>
-          <div class="deal-meta">${deal.refundable?needed+' sale'+(needed===1?'':'s')+' needed':needed+' video'+(needed===1?'':'s')+' required'}${deal.link?` · <a href="${esc(deal.link)}" target="_blank" rel="noopener">View Product</a>`:''}</div></div>
+          <div class="deal-meta">${deal.link?`<a href="${esc(deal.link)}" target="_blank" rel="noopener">View Product</a>`:''}</div></div>
         </div>
       </td>
       <td>${esc(deal.brand)}</td>
       <td>${esc(monthDay(deal.received))}</td>
       <td>${esc(monthDay(deal.due))}</td>
-      <td><div class="progress-wrap"><div class="progress-top">${done} / ${needed}</div><div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div></td>
+      <td><div class="progress-wrap"><div class="progress-top">${done} / ${needed} <span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);">${deal.refundable?'sales':'videos'}</span></div><div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div></td>
       <td><span class="status ${status}">${esc(statusLabel(status))}</span></td>
       <td>${left<0?'<div class="days overdue">Late</div>':`<div class="days ${dayClass}">${left}</div><div class="days-label">days</div>`}</td>
       <td style="white-space:nowrap;"><button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openEditModal('${esc(deal.id)}')">Edit</button><button class="btn" onclick="event.stopPropagation();removeDeal('${esc(deal.id)}')">Remove</button></td>
