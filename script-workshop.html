@@ -165,15 +165,15 @@ button,input,textarea,select{font:inherit;}
 
   <!-- Mobile action tabs -->
   <div class="mob-tabs">
-    <button class="mob-tab active" data-tab="ai" onclick="mobSetTab('ai')">
+    <button class="mob-tab" onclick="generateAiDraft()">
       <span class="mob-tab-icon">✦</span>
       <span class="mob-tab-label">AI</span>
     </button>
-    <button class="mob-tab" data-tab="gemini" onclick="mobSetTab('gemini')">
+    <button class="mob-tab" id="mGeminiBtn" onclick="toggleGeminiKey()">
       <span class="mob-tab-icon">⚷</span>
       <span class="mob-tab-label">Gemini Key</span>
     </button>
-    <button class="mob-tab" data-tab="new" onclick="newScript()">
+    <button class="mob-tab" onclick="newScript()">
       <span class="mob-tab-icon">＋</span>
       <span class="mob-tab-label">New Script</span>
     </button>
@@ -517,11 +517,19 @@ const isMobile=()=>window.matchMedia('(max-width:768px)').matches;
 
 function mobSync(){
   if(!isMobile())return;
-  document.getElementById('mScriptTitle').value=document.getElementById('scriptTitle').value;
-  document.getElementById('mProductSelect').value=document.getElementById('productSelect').value;
-  document.getElementById('mScriptType').value=document.getElementById('scriptType').value;
-  document.getElementById('mScriptCanvas').value=document.getElementById('scriptCanvas').value;
-  document.getElementById('mScriptNotes').value=document.getElementById('scriptNotes').value;
+  const mTitle=document.getElementById('mScriptTitle');if(mTitle)mTitle.value=document.getElementById('scriptTitle').value;
+  const mProd=document.getElementById('mProductSelect');if(mProd)mProd.value=document.getElementById('productSelect').value;
+  const mType=document.getElementById('mScriptType');if(mType)mType.value=document.getElementById('scriptType').value;
+  const mCanvas=document.getElementById('mScriptCanvas');if(mCanvas)mCanvas.value=document.getElementById('scriptCanvas').value;
+  const mNotes=document.getElementById('mScriptNotes');if(mNotes)mNotes.value=document.getElementById('scriptNotes').value;
+}
+function mobFlushToDesk(){
+  if(!isMobile())return;
+  const mTitle=document.getElementById('mScriptTitle');if(mTitle)document.getElementById('scriptTitle').value=mTitle.value;
+  const mProd=document.getElementById('mProductSelect');if(mProd)document.getElementById('productSelect').value=mProd.value;
+  const mType=document.getElementById('mScriptType');if(mType&&mType.value!==currentFramework)changeFramework(mType.value);
+  const mCanvas=document.getElementById('mScriptCanvas');if(mCanvas)document.getElementById('scriptCanvas').value=mCanvas.value;
+  const mNotes=document.getElementById('mScriptNotes');if(mNotes)document.getElementById('scriptNotes').value=mNotes.value;
 }
 function syncMobToDesk(field){
   if(field==='title') document.getElementById('scriptTitle').value=document.getElementById('mScriptTitle').value;
@@ -533,11 +541,12 @@ function syncMobToDesk(field){
 }
 function mobSetTab(tab){
   const hookPanel=document.getElementById('mobHookPanel');
-  // hide/show hook panel
-  hookPanel.style.display=tab==='hooks'?'':'none';
-  document.querySelectorAll('.mob-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-  if(tab==='ai'){generateAiDraft();}
-  else if(tab==='gemini'){toggleGeminiKey();}
+  if(tab==='hooks'){
+    hookPanel.style.display='';
+    hookPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  } else {
+    hookPanel.style.display='none';
+  }
 }
 function mobSetLibTab(tab){
   activeTab=tab;
@@ -910,14 +919,17 @@ function restoreLocalDraft(){
   }catch(e){}
 }
 async function newScript(){
+  mobFlushToDesk();
   if(fullScript()&&!(await openWorkshopConfirm('Start New Script?','This will clear the current workshop draft on this page.','Start New')))return;
   document.getElementById('scriptTitle').value='';
   document.getElementById('productSelect').value='';
   document.getElementById('scriptNotes').value='';
   document.getElementById('scriptCanvas').value=frameworkTemplate(currentFramework);
   inspo=[];renderInspo();saveLocalDraft();
+  mobSync();
 }
 async function saveDraft(){
+  mobFlushToDesk();
   const script=formattedScript();
   if(!script){showToast('Add script text first','error');return;}
   const product=selectedProduct();
@@ -940,6 +952,7 @@ function toggleGeminiKey(){
 }
 function aiKeyMap(){return AI_FRAMEWORK_KEYS[currentFramework]||AI_FRAMEWORK_KEYS['product-demo'];}
 async function generateAiDraft(){
+  mobFlushToDesk();
   const productSelect=document.getElementById('productSelect');
   const hasText=Boolean(fullScript());
   if(hasText&&!(await openWorkshopConfirm('Replace Current Draft?','Generate with AI will replace the text in your script canvas.','Replace','Cancel')))return;
@@ -977,6 +990,7 @@ Strict Writing Directives:
     const script=await CreatorGemini.generateText(prompt);
     document.getElementById('scriptCanvas').value=String(script||'').replace(/```(?:text)?|```/gi,'').trim();
     saveLocalDraft();
+    mobSync();
     showToast('AI draft added');
   }catch(error){
     console.error('Gemini draft failed',error);
@@ -985,7 +999,7 @@ Strict Writing Directives:
     setAiLoading(false);
   }
 }
-function copyFullScript(){const script=formattedScript();if(!script)return;copyText(script);showToast('Copied');}
+function copyFullScript(){mobFlushToDesk();const script=formattedScript();if(!script)return;copyText(script);showToast('Copied');}
 function copyText(text){navigator.clipboard?.writeText(text);}
 window.generateAiDraft=generateAiDraft;
 document.getElementById('aiDraftBtn')?.addEventListener('click',e=>{
