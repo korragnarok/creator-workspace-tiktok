@@ -410,6 +410,30 @@ function removeDeal(id){
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDealModal();});
 init();
+
+function startPpsEdit(){
+  const stored=localStorage.getItem('take24:pps')||'';
+  document.getElementById('ppsInput').value=stored;
+  document.getElementById('ppsDisplay').style.display='none';
+  document.getElementById('ppsEditWrap').style.display='';
+  setTimeout(()=>document.getElementById('ppsInput').focus(),30);
+}
+function savePps(){
+  const val=document.getElementById('ppsInput').value.trim();
+  if(val!=='')localStorage.setItem('take24:pps',val);
+  else localStorage.removeItem('take24:pps');
+  document.getElementById('statPps').textContent=val||'—';
+  document.getElementById('ppsDisplay').style.display='';
+  document.getElementById('ppsEditWrap').style.display='none';
+}
+function ppsKeydown(e){
+  if(e.key==='Enter'){e.preventDefault();savePps();}
+  if(e.key==='Escape'){document.getElementById('ppsDisplay').style.display='';document.getElementById('ppsEditWrap').style.display='none';}
+}
+function loadPps(){
+  const v=localStorage.getItem('take24:pps');
+  document.getElementById('statPps').textContent=v||'—';
+}
 </script>
 </body>
 </html>
