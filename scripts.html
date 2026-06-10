@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Scripts &mdash; Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=75"></script>
-<link rel="stylesheet" href="layout.css?v=75">
+<script src="theme-init.js?v=76"></script>
+<link rel="stylesheet" href="layout.css?v=76">
 <style>
 
 :root{--r:12px;}
@@ -114,7 +114,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .script-card.select-mode .script-actions{display:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=75"></script>
+<script src="supabase.js?v=76"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link active">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -123,7 +123,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div><div class="page-eyebrow">Script Library</div><div class="page-title">Saved <em>Scripts</em></div><p class="page-sub">Generate scripts with your AI of choice, then paste and save them here.</p></div>
     <div class="header-actions">
       <button class="btn btn-ghost" id="editScriptsBtn" onclick="toggleScriptEditMode()">Edit Scripts</button>
-      <button class="btn btn-primary" onclick="openSaveModal()">+ Save Script</button>
+      <button class="btn btn-primary" onclick="openSaveModal()">+ Add Script</button>
     </div>
   </div>
   <div class="filter-bar">
@@ -151,7 +151,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">&#x2715;</button>
-    <div class="modal-title" id="modalTitle">Save Script</div>
+    <div class="modal-title" id="modalTitle">Add Script</div>
     <div class="form-row"><label class="form-label">Title *</label><input type="text" class="form-input" id="fTitle" placeholder="e.g. PetLab Dental — This saved my dog's breath"></div>
     <div class="form-row-half">
       <div class="form-row" style="margin-bottom:0">
@@ -165,7 +165,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     </div>
     <div class="form-row" style="margin-top:16px"><label class="form-label">Script Text *</label><textarea class="form-input form-script" id="fScript" placeholder="Paste your script here..."></textarea></div>
     <div class="form-row"><label class="form-label">Notes (optional)</label><input type="text" class="form-input" id="fNotes" placeholder="e.g. 30s version, hook A"></div>
-    <div class="modal-actions"><button class="btn btn-primary" style="flex:1;" onclick="saveScript()">Save Script</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-danger" id="deleteBtn" style="display:none;" onclick="deleteScript()">Delete</button></div>
+    <div class="modal-actions"><button class="btn btn-primary" id="saveScriptBtn" style="flex:1;" onclick="saveScript()">Add Script</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-danger" id="deleteBtn" style="display:none;" onclick="deleteScript()">Delete</button></div>
   </div>
 </div>
 <div class="view-modal-overlay" id="viewOverlay">
@@ -182,7 +182,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=75"></script>
+<script src="layout.js?v=76"></script>
 <script>
 let _editScriptsMode = false;
 let _selectedScriptIds = new Set();
@@ -327,7 +327,8 @@ async function init() {
   window.openSaveModal = async function(id) {
     window._editId = id || null;
     const s = id ? (await db.from('scripts').select('*').eq('id',id).single()).data : null;
-    document.getElementById('modalTitle').textContent = s ? 'Edit Script' : 'Save Script';
+    document.getElementById('modalTitle').textContent = s ? 'Edit Script' : 'Add Script';
+    document.getElementById('saveScriptBtn').textContent = s ? 'Save Changes' : 'Add Script';
     document.getElementById('fTitle').value = s?.title || '';
     document.getElementById('fBrand').value = s?.brand || '';
     document.getElementById('fCat').value = s?.cat || 'review';
