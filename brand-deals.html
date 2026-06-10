@@ -101,10 +101,20 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
   </header>
 
   <section class="stats">
-    <div class="stat-card"><div class="stat-icon">$</div><div><div class="stat-label">Total Active</div><div class="stat-value" id="statActive">0</div><div class="stat-sub">brand deals</div></div></div>
-    <div class="stat-card"><div class="stat-icon">!</div><div><div class="stat-label">Due This Week</div><div class="stat-value" id="statWeek">0</div><div class="stat-sub">deadlines</div></div></div>
-    <div class="stat-card"><div class="stat-icon">#</div><div><div class="stat-label">Current Campaigns</div><div class="stat-value" id="statCampaigns">0</div><div class="stat-sub">active now</div></div></div>
-    <div class="stat-card"><div class="stat-icon">P</div><div><div class="stat-label">PPS Score</div><div class="stat-value" id="statPps">0</div><div class="stat-sub">posts per sample</div></div></div>
+    <div class="stat-card"><div class="stat-icon"><img src="icons/brand-deals/active.png" alt="" style="width:28px;height:28px;object-fit:contain;"></div><div><div class="stat-label">Total Active</div><div class="stat-value" id="statActive">0</div><div class="stat-sub">brand deals</div></div></div>
+    <div class="stat-card"><div class="stat-icon"><img src="icons/brand-deals/due.png" alt="" style="width:28px;height:28px;object-fit:contain;"></div><div><div class="stat-label">Due This Week</div><div class="stat-value" id="statWeek">0</div><div class="stat-sub">deadlines</div></div></div>
+    <div class="stat-card"><div class="stat-icon"><img src="icons/brand-deals/campaigns.png" alt="" style="width:28px;height:28px;object-fit:contain;"></div><div><div class="stat-label">Current Campaigns</div><div class="stat-value" id="statCampaigns">0</div><div class="stat-sub">active now</div></div></div>
+    <div class="stat-card pps-card" id="ppsCard" onclick="startPpsEdit()" title="Click to edit PPS score" style="cursor:pointer;">
+      <div class="stat-icon"><img src="icons/brand-deals/pps-score.png" alt="" style="width:28px;height:28px;object-fit:contain;"></div>
+      <div>
+        <div class="stat-label">PPS Score</div>
+        <div id="ppsDisplay"><div class="stat-value" id="statPps">—</div><div class="stat-sub">posts per sample</div></div>
+        <div id="ppsEditWrap" style="display:none;margin-top:4px;">
+          <input id="ppsInput" type="number" min="0" step="0.1" placeholder="e.g. 2.5" style="width:80px;border:1px solid var(--rust);border-radius:7px;background:var(--bg);color:var(--ink);padding:5px 8px;font-family:'Noto Sans Mono',monospace;font-size:16px;font-weight:900;outline:none;" onclick="event.stopPropagation()" onkeydown="ppsKeydown(event)">
+          <button onclick="event.stopPropagation();savePps()" style="margin-left:6px;border:none;border-radius:7px;background:var(--rust);color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;padding:6px 10px;cursor:pointer;">Save</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="toolbar">
@@ -113,6 +123,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
       <button class="pill" data-filter="sample" onclick="setFilter('sample')">Samples</button>
       <button class="pill" data-filter="retainer" onclick="setFilter('retainer')">Retainers</button>
       <button class="pill" data-filter="campaign" onclick="setFilter('campaign')">Campaigns</button>
+      <button class="pill" data-filter="refundable" onclick="setFilter('refundable')">Refundable Samples</button>
     </div>
     <input class="search" id="dealSearch" placeholder="Search brand deals..." oninput="renderDeals()">
   </section>
@@ -150,6 +161,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
       <div class="form-row"><label class="form-label">Videos Done</label><input class="form-input" id="dealDone" type="number" min="0" value="0"></div>
       <div class="form-row"><label class="form-label">Videos Needed</label><input class="form-input" id="dealNeeded" type="number" min="1" value="1"></div>
       <div class="form-row form-wide"><label class="form-label">Product Link</label><input class="form-input" id="dealLink" placeholder="https://..."></div>
+      <div class="form-row form-wide" style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="dealRefundable" style="width:18px;height:18px;accent-color:var(--rust);cursor:pointer;flex-shrink:0;"><label for="dealRefundable" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);cursor:pointer;">Refundable Sample</label></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-primary" onclick="saveDeal()">Save Brand Deal</button>
@@ -184,6 +196,7 @@ async function init(){
   initProfilePopover(user.id);
   loadDeals();
   renderDeals();
+  loadPps();
 }
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function dealKey(){return `${DEAL_KEY_PREFIX}${user?.id||'local'}`;}
@@ -205,8 +218,12 @@ function setFilter(filter){
 }
 function visibleDeals(){
   const q=document.getElementById('dealSearch').value.trim().toLowerCase();
-  return deals.filter(deal=>(activeFilter==='all'||deal.type===activeFilter)
-    &&(!q||`${deal.name} ${deal.brand} ${deal.type} ${deal.status}`.toLowerCase().includes(q)));
+  return deals.filter(deal=>{
+    if(activeFilter==='refundable'){if(!deal.refundable)return false;}
+    else if(activeFilter!=='all'&&deal.type!==activeFilter)return false;
+    if(q&&!`${deal.name} ${deal.brand} ${deal.type} ${deal.status}`.toLowerCase().includes(q))return false;
+    return true;
+  });
 }
 function updateStats(){
   const active=deals.filter(deal=>deal.status!=='completed').length;
@@ -217,7 +234,8 @@ function updateStats(){
   document.getElementById('statActive').textContent=active;
   document.getElementById('statWeek').textContent=week;
   document.getElementById('statCampaigns').textContent=campaigns;
-  document.getElementById('statPps').textContent=(posts/samples).toFixed(1).replace(/\.0$/,'');
+  // PPS is manually set — don't overwrite with calculated value
+  // document.getElementById('statPps').textContent=(posts/samples).toFixed(1).replace(/\.0$/,'');
 }
 function dealStatus(deal){
   const done=Number(deal.done)||0;
@@ -243,7 +261,7 @@ function renderDeals(){
         <div class="deal-name">
           <div class="deal-thumb">${esc((deal.brand||deal.name||'?').slice(0,1).toUpperCase())}</div>
           <div><div class="deal-title">${esc(deal.name)} <span class="tag">${esc(typeLabel(deal.type))}</span></div>
-          <div class="deal-meta">${needed} video${needed===1?'':'s'} required${deal.link?` · <a href="${esc(deal.link)}" target="_blank" rel="noopener">View Product</a>`:''}</div></div>
+          <div class="deal-meta">${needed} video${needed===1?'':'s'} required${deal.refundable?' · <span style="font-family:Stack Sans Notch,sans-serif;font-size:9px;font-weight:900;color:var(--sage);">REFUNDABLE</span>':''}${deal.link?` · <a href="${esc(deal.link)}" target="_blank" rel="noopener">View Product</a>`:''}</div></div>
         </div>
       </td>
       <td class="type-cell">${esc(typeLabel(deal.type))}</td>
@@ -277,11 +295,13 @@ function saveDeal(){
     done:Number(document.getElementById('dealDone').value)||0,
     needed:Number(document.getElementById('dealNeeded').value)||1,
     status:'not-started',
-    link:document.getElementById('dealLink').value.trim()
+    link:document.getElementById('dealLink').value.trim(),
+    refundable:document.getElementById('dealRefundable')?.checked||false
   };
   deals.unshift(deal);
   saveDeals();
   ['dealName','dealBrand','dealLink'].forEach(id=>document.getElementById(id).value='');
+  const dr=document.getElementById('dealRefundable');if(dr)dr.checked=false;
   document.getElementById('dealDone').value=0;
   document.getElementById('dealNeeded').value=1;
   closeDealModal();
