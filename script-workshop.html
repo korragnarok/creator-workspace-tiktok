@@ -962,19 +962,20 @@ function toggleGeminiKey(){
 function aiKeyMap(){return AI_FRAMEWORK_KEYS[currentFramework]||AI_FRAMEWORK_KEYS['product-demo'];}
 async function generateAiDraft(){
   if(!user){showToast('Still loading...','error');return;}
+  if(!CreatorGemini.hasKey()){showToast('Connect your Gemini API key first — tap the Gemini Key button.','error');return;}
   mobFlushToDesk();
   const productSelect=document.getElementById('productSelect');
+  if(!productSelect?.value || productSelect.options[productSelect.selectedIndex]?.textContent === 'Choose product'){
+    showToast('Choose a product first.','error');
+    productSelect?.focus();
+    return;
+  }
   const hasText=Boolean(fullScript());
   if(hasText&&!(await openWorkshopConfirm('Replace Current Draft?','Generate with AI will replace the text in your script canvas.','Replace','Cancel')))return;
   const product=selectedProduct();
   const framework=FRAMEWORKS[currentFramework]||FRAMEWORKS['product-demo'];
   const aiInputs=await openAiGenerationModal();
   if(aiInputs===null)return;
-  if(!productSelect?.value || productSelect.options[productSelect.selectedIndex]?.textContent === 'Choose product'){
-    alert('Please choose a product from the dropdown before generating a script.');
-    productSelect?.focus();
-    return;
-  }
   const selectedProductName=product?.name||'Not selected';
   const prompt=`You are a conversion-focused TikTok Shop scriptwriting expert. Write a highly conversational, authentic script based on these precise structural inputs:
 - Product Name: ${selectedProductName}
@@ -1004,7 +1005,12 @@ Strict Writing Directives:
     showToast('AI draft added');
   }catch(error){
     console.error('Gemini draft failed',error);
-    if(!String(error?.message||'').toLowerCase().includes('api key'))showToast('Gemini could not draft this script.','error');
+    const msg=String(error?.message||'');
+    if(msg.toLowerCase().includes('api key')||msg.toLowerCase().includes('key')){
+      showToast('Connect your Gemini API key first — tap the Gemini Key button.','error');
+    } else {
+      showToast('Gemini could not draft this script. Check your API key.','error');
+    }
   }finally{
     setAiLoading(false);
   }
