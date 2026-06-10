@@ -192,7 +192,7 @@ window.CreatorGemini = (() => {
       config: {
         ...(options.config || {}),
         responseMimeType: 'application/json',
-        responseJsonSchema: schema
+        responseSchema: schema
       }
     });
     return JSON.parse(String(text || '').replace(/```json|```/gi, '').trim());
