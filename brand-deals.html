@@ -167,8 +167,8 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
         <input class="form-input" id="dealDaysToReturn" type="number" min="1" max="365" placeholder="e.g. 118" oninput="updateReturnPreview()">
         <div id="returnPreview" style="font-family:'Noto Sans Mono',monospace;font-size:12px;color:var(--sage);margin-top:6px;min-height:18px;"></div>
       </div>
-      <div class="form-row"><label class="form-label">Videos Done</label><input class="form-input" id="dealDone" type="number" min="0" value="0"></div>
-      <div class="form-row"><label class="form-label">Videos Needed</label><input class="form-input" id="dealNeeded" type="number" min="1" value="1"></div>
+      <div class="form-row"><label class="form-label" id="labelDone">Videos Done</label><input class="form-input" id="dealDone" type="number" min="0" value="0"></div>
+      <div class="form-row"><label class="form-label" id="labelNeeded">Videos Needed</label><input class="form-input" id="dealNeeded" type="number" min="1" value="1"></div>
       <div class="form-row form-wide"><label class="form-label">Product Link</label><input class="form-input" id="dealLink" placeholder="https://..."></div>
       <div class="form-row form-wide" style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="dealRefundable" style="width:18px;height:18px;accent-color:var(--rust);cursor:pointer;flex-shrink:0;" onchange="toggleRefundableFields()"><label for="dealRefundable" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);cursor:pointer;">Refundable Sample</label></div>
     </div>
@@ -271,7 +271,7 @@ function renderDeals(){
         <div class="deal-name">
           <div class="deal-thumb">${esc((deal.brand||deal.name||'?').slice(0,1).toUpperCase())}</div>
           <div><div class="deal-title">${esc(deal.name)} <span class="tag ${deal.type}">${esc(typeLabel(deal.type))}</span>${deal.refundable?'<span class="tag refundable">Refundable</span>':''}</div>
-          <div class="deal-meta">${needed} video${needed===1?'':'s'} required${deal.link?` · <a href="${esc(deal.link)}" target="_blank" rel="noopener">View Product</a>`:''}</div></div>
+          <div class="deal-meta">${deal.refundable?needed+' sale'+(needed===1?'':'s')+' needed':needed+' video'+(needed===1?'':'s')+' required'}${deal.link?` · <a href="${esc(deal.link)}" target="_blank" rel="noopener">View Product</a>`:''}</div></div>
         </div>
       </td>
       <td>${esc(deal.brand)}</td>
@@ -348,6 +348,10 @@ function toggleRefundableFields(){
   const isRefundable=document.getElementById('dealRefundable')?.checked;
   document.getElementById('dueDateRow').style.display=isRefundable?'none':'';
   document.getElementById('daysToReturnRow').style.display=isRefundable?'':'none';
+  const labelDone=document.getElementById('labelDone');
+  const labelNeeded=document.getElementById('labelNeeded');
+  if(labelDone)labelDone.textContent=isRefundable?'Sales Made':'Videos Done';
+  if(labelNeeded)labelNeeded.textContent=isRefundable?'Sales Needed':'Videos Needed';
   if(isRefundable)updateReturnPreview();
 }
 function updateReturnPreview(){
