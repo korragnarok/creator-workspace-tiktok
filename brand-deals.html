@@ -167,7 +167,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
         <input class="form-input" id="dealDaysToReturn" type="number" min="1" max="365" placeholder="e.g. 118" oninput="updateReturnPreview()">
         <div id="returnPreview" style="font-family:'Noto Sans Mono',monospace;font-size:12px;color:var(--sage);margin-top:6px;min-height:18px;"></div>
       </div>
-      <div class="form-row"><label class="form-label" id="labelDone">Videos Done</label><input class="form-input" id="dealDone" type="number" min="0" value="0"></div>
+      <div class="form-row" id="doneDoneRow"><label class="form-label" id="labelDone">Videos Done</label><input class="form-input" id="dealDone" type="number" min="0" value="0"></div>
       <div class="form-row"><label class="form-label" id="labelNeeded">Videos Needed</label><input class="form-input" id="dealNeeded" type="number" min="1" value="1"></div>
       <div class="form-row form-wide" id="minGmvRow" style="display:none;">
         <label class="form-label">Min GMV Required ($)</label>
@@ -175,7 +175,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
         <div style="font-family:'Stack Sans Notch',sans-serif;font-size:10px;color:var(--text-muted);margin-top:5px;letter-spacing:0.06em;">Leave 0 or blank if this campaign has no GMV requirement.</div>
       </div>
       <div class="form-row form-wide"><label class="form-label">Product Link</label><input class="form-input" id="dealLink" placeholder="https://..."></div>
-      <div class="form-row form-wide" style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="dealRefundable" style="width:18px;height:18px;accent-color:var(--rust);cursor:pointer;flex-shrink:0;" onchange="toggleRefundableFields()"><label for="dealRefundable" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);cursor:pointer;">Refundable Sample</label></div>
+      <div class="form-row form-wide" id="refundableRow" style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="dealRefundable" style="width:18px;height:18px;accent-color:var(--rust);cursor:pointer;flex-shrink:0;" onchange="toggleRefundableFields()"><label for="dealRefundable" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);cursor:pointer;">Refundable Sample</label></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-primary" id="dealSaveBtn" onclick="saveDeal()">Save Brand Deal</button>
@@ -359,27 +359,28 @@ let _editingDealId=null;
 function toggleModalFields(){
   const type=document.getElementById('dealType').value;
   const isCampaign=type==='campaign';
-  const isRefundable=document.getElementById('dealRefundable')?.checked;
+  const isRefundable=!isCampaign&&(document.getElementById('dealRefundable')?.checked||false);
   // campaign-only rows
-  document.getElementById('minGmvRow').style.display=isCampaign?'':`none`;
-  // refundable-only rows
-  document.getElementById('daysToReturnRow').style.display=(!isCampaign&&isRefundable)?'':`none`;
-  document.getElementById('dueDateRow').style.display=(!isCampaign&&!isRefundable)?'':`none`;
-  // campaign always shows date range (received=start, due=end) — just update labels
+  document.getElementById('minGmvRow').style.display=isCampaign?'':'none';
+  // refundable checkbox — hide for campaigns
+  document.getElementById('refundableRow').style.display=isCampaign?'none':'';
+  // days to return — only for non-campaign refundable
+  document.getElementById('daysToReturnRow').style.display=isRefundable?'':'none';
+  // due date row — always visible (hidden only when refundable days-to-return is shown)
+  document.getElementById('dueDateRow').style.display=isRefundable?'none':'';
+  // done/needed rows — hide for campaigns (campaigns count via video tracker)
+  document.getElementById('doneDoneRow').style.display=isCampaign?'none':'';
+  document.getElementById('doneNeededRow').style.display='';
+  // labels
   document.getElementById('labelReceived').textContent=isCampaign?'Campaign Start':'Received';
   document.getElementById('labelDue').textContent=isCampaign?'Campaign End':'Due Date';
-  if(!isCampaign){
-    const labelDone=document.getElementById('labelDone');
-    const labelNeeded=document.getElementById('labelNeeded');
-    if(labelDone)labelDone.textContent=isRefundable?'Sales Made':'Videos Done';
-    if(labelNeeded)labelNeeded.textContent=isRefundable?'Sales Needed':'Videos Needed';
+  if(isCampaign){
+    document.getElementById('labelNeeded').textContent='Min Videos Required';
   } else {
-    const labelDone=document.getElementById('labelDone');
-    const labelNeeded=document.getElementById('labelNeeded');
-    if(labelDone)labelDone.textContent='Videos Posted';
-    if(labelNeeded)labelNeeded.textContent='Min Videos Required';
+    document.getElementById('labelDone').textContent=isRefundable?'Sales Made':'Videos Done';
+    document.getElementById('labelNeeded').textContent=isRefundable?'Sales Needed':'Videos Needed';
   }
-  if(isRefundable&&!isCampaign)updateReturnPreview();
+  if(isRefundable)updateReturnPreview();
 }
 
 function openDealModal(){
