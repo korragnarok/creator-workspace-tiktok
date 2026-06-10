@@ -52,7 +52,11 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
 .deal-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .deal-title{font-weight:900;color:var(--ink);line-height:1.2;}
 .deal-meta{font-size:12px;color:var(--text-muted);margin-top:3px;}
-.tag{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;background:color-mix(in srgb,var(--rust) 16%,transparent);color:var(--rust);margin-left:6px;}
+.tag{display:inline-flex;align-items:center;border-radius:999px;padding:4px 10px;font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;margin-left:6px;}
+.tag.sample{background:color-mix(in srgb,#9B7BC8 20%,transparent);color:#C4A0F0;}
+.tag.retainer{background:color-mix(in srgb,#5B8CCC 20%,transparent);color:#89B4F5;}
+.tag.campaign{background:color-mix(in srgb,#E8923A 20%,transparent);color:#F0A855;}
+.tag.refundable{background:color-mix(in srgb,var(--sage) 22%,transparent);color:var(--sage);}
 .type-cell{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;color:var(--text);}
 .progress-wrap{min-width:90px;}
 .progress-top{font-family:'Noto Sans Mono',monospace;color:var(--ink);font-weight:900;margin-bottom:6px;}
@@ -133,7 +137,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
       <thead>
         <tr>
           <th>Brand Deal</th>
-          <th>Type</th>
+          
           <th>Brand</th>
           <th>Received</th>
           <th>Due Date</th>
@@ -151,7 +155,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
 <div class="modal-overlay" id="dealModal">
   <div class="modal">
     <button class="modal-close" onclick="closeDealModal()">×</button>
-    <div class="modal-title">New Brand Deal</div>
+    <div class="modal-title" id="dealModalTitle">New Brand Deal</div>
     <div class="form-grid">
       <div class="form-row form-wide"><label class="form-label">Deal Name</label><input class="form-input" id="dealName" placeholder="e.g., PetLab Probiotic Chew"></div>
       <div class="form-row"><label class="form-label">Brand</label><input class="form-input" id="dealBrand" placeholder="e.g., PetLab Co"></div>
@@ -164,8 +168,9 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
       <div class="form-row form-wide" style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="dealRefundable" style="width:18px;height:18px;accent-color:var(--rust);cursor:pointer;flex-shrink:0;"><label for="dealRefundable" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);cursor:pointer;">Refundable Sample</label></div>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-primary" onclick="saveDeal()">Save Brand Deal</button>
+      <button class="btn btn-primary" id="dealSaveBtn" onclick="saveDeal()">Save Brand Deal</button>
       <button class="btn" onclick="closeDealModal()">Cancel</button>
+      <div id="dealDeleteRow" style="display:none;margin-left:auto;"><button class="btn" style="border-color:var(--rust);color:var(--rust);" onclick="deleteDeal()">Delete</button></div>
     </div>
   </div>
 </div>
@@ -260,33 +265,70 @@ function renderDeals(){
       <td>
         <div class="deal-name">
           <div class="deal-thumb">${esc((deal.brand||deal.name||'?').slice(0,1).toUpperCase())}</div>
-          <div><div class="deal-title">${esc(deal.name)} <span class="tag">${esc(typeLabel(deal.type))}</span></div>
-          <div class="deal-meta">${needed} video${needed===1?'':'s'} required${deal.refundable?' · <span style="font-family:Stack Sans Notch,sans-serif;font-size:9px;font-weight:900;color:var(--sage);">REFUNDABLE</span>':''}${deal.link?` · <a href="${esc(deal.link)}" target="_blank" rel="noopener">View Product</a>`:''}</div></div>
+          <div><div class="deal-title">${esc(deal.name)} <span class="tag ${deal.type}">${esc(typeLabel(deal.type))}</span>${deal.refundable?'<span class="tag refundable">Refundable</span>':''}</div>
+          <div class="deal-meta">${needed} video${needed===1?'':'s'} required${deal.link?` · <a href="${esc(deal.link)}" target="_blank" rel="noopener">View Product</a>`:''}</div></div>
         </div>
       </td>
-      <td class="type-cell">${esc(typeLabel(deal.type))}</td>
       <td>${esc(deal.brand)}</td>
       <td>${esc(monthDay(deal.received))}</td>
       <td>${esc(monthDay(deal.due))}</td>
       <td><div class="progress-wrap"><div class="progress-top">${done} / ${needed}</div><div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div></td>
       <td><span class="status ${status}">${esc(statusLabel(status))}</span></td>
       <td>${left<0?'<div class="days overdue">Late</div>':`<div class="days ${dayClass}">${left}</div><div class="days-label">days</div>`}</td>
-      <td><button class="btn" onclick="removeDeal('${esc(deal.id)}')">Remove</button></td>
+      <td style="white-space:nowrap;"><button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openEditModal('${esc(deal.id)}')">Edit</button><button class="btn" onclick="event.stopPropagation();removeDeal('${esc(deal.id)}')">Remove</button></td>
     </tr>`;
   }).join('');
 }
+let _editingDealId=null;
 function openDealModal(){
-  document.getElementById('dealModal').classList.add('open');
+  _editingDealId=null;
+  document.getElementById('dealModalTitle').textContent='New Brand Deal';
+  document.getElementById('dealSaveBtn').textContent='Save Brand Deal';
+  document.getElementById('dealDeleteRow').style.display='none';
+  document.getElementById('dealName').value='';
+  document.getElementById('dealBrand').value='';
+  document.getElementById('dealType').value='sample';
   document.getElementById('dealReceived').value=todayKey();
   document.getElementById('dealDue').value=todayKey();
+  document.getElementById('dealDone').value=0;
+  document.getElementById('dealNeeded').value=1;
+  document.getElementById('dealLink').value='';
+  const dr=document.getElementById('dealRefundable');if(dr)dr.checked=false;
+  document.getElementById('dealModal').classList.add('open');
   setTimeout(()=>document.getElementById('dealName').focus(),50);
 }
-function closeDealModal(){document.getElementById('dealModal').classList.remove('open');}
+function openEditModal(id){
+  const deal=deals.find(d=>d.id===id);
+  if(!deal)return;
+  _editingDealId=id;
+  document.getElementById('dealModalTitle').textContent='Edit Brand Deal';
+  document.getElementById('dealSaveBtn').textContent='Save Changes';
+  document.getElementById('dealDeleteRow').style.display='';
+  document.getElementById('dealName').value=deal.name||'';
+  document.getElementById('dealBrand').value=deal.brand||'';
+  document.getElementById('dealType').value=deal.type||'sample';
+  document.getElementById('dealReceived').value=deal.received||todayKey();
+  document.getElementById('dealDue').value=deal.due||todayKey();
+  document.getElementById('dealDone').value=deal.done||0;
+  document.getElementById('dealNeeded').value=deal.needed||1;
+  document.getElementById('dealLink').value=deal.link||'';
+  const dr=document.getElementById('dealRefundable');if(dr)dr.checked=!!deal.refundable;
+  document.getElementById('dealModal').classList.add('open');
+  setTimeout(()=>document.getElementById('dealName').focus(),50);
+}
+function deleteDeal(){
+  if(!_editingDealId||!confirm('Delete this deal?'))return;
+  deals=deals.filter(d=>d.id!==_editingDealId);
+  saveDeals();
+  closeDealModal();
+  renderDeals();
+  showToast('Deal deleted');
+}
+function closeDealModal(){document.getElementById('dealModal').classList.remove('open');_editingDealId=null;}
 function saveDeal(){
   const name=document.getElementById('dealName').value.trim();
   if(!name){showToast('Add a deal name first','error');return;}
-  const deal={
-    id:`deal-${Date.now()}`,
+  const vals={
     name,
     brand:document.getElementById('dealBrand').value.trim(),
     type:document.getElementById('dealType').value,
@@ -294,19 +336,20 @@ function saveDeal(){
     due:document.getElementById('dealDue').value||todayKey(),
     done:Number(document.getElementById('dealDone').value)||0,
     needed:Number(document.getElementById('dealNeeded').value)||1,
-    status:'not-started',
     link:document.getElementById('dealLink').value.trim(),
     refundable:document.getElementById('dealRefundable')?.checked||false
   };
-  deals.unshift(deal);
+  if(_editingDealId){
+    const idx=deals.findIndex(d=>d.id===_editingDealId);
+    if(idx>=0)deals[idx]={...deals[idx],...vals};
+    showToast('Deal updated');
+  } else {
+    deals.unshift({id:`deal-${Date.now()}`,status:'not-started',...vals});
+    showToast('Brand deal saved');
+  }
   saveDeals();
-  ['dealName','dealBrand','dealLink'].forEach(id=>document.getElementById(id).value='');
-  const dr=document.getElementById('dealRefundable');if(dr)dr.checked=false;
-  document.getElementById('dealDone').value=0;
-  document.getElementById('dealNeeded').value=1;
   closeDealModal();
   renderDeals();
-  showToast('Brand deal saved');
 }
 function removeDeal(id){
   deals=deals.filter(deal=>deal.id!==id);
