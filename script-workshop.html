@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=84"></script>
-<link rel="stylesheet" href="layout.css?v=84">
+<script src="theme-init.js?v=85"></script>
+<link rel="stylesheet" href="layout.css?v=85">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -102,8 +102,8 @@ button,input,textarea,select{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=84"></script>
-<script src="gemini-ai.js?v=84"></script>
+<script src="supabase.js?v=85"></script>
+<script src="gemini-ai.js?v=85"></script>
 </head>
 <body>
 <div class="mobile-only">
@@ -231,7 +231,7 @@ button,input,textarea,select{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=84"></script>
+<script src="layout.js?v=85"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks', currentFramework='product-demo', pendingDraftProductId='';
 const FRAMEWORKS={
@@ -674,8 +674,12 @@ Strict Writing Directives:
 1. BAN THE 'INFLUENCER VOICE'. Do not start with clichés like "Hey guys!", "Welcome back!", or "I'm obsessed!". Start mid-sentence, completely unfiltered.
 2. Integrate the Creator's Relatability Angle organically. The script must sound like an everyday person sharing a genuine solution, completely customized to their life context.
 3. Structure the hook precisely matching the chosen Hook Style option.
-4. Insert brief visual action cues in brackets [like this] within the dialogue lines so the creator knows what actions to perform on camera.
-5. Keep the content matching the JSON keys exactly for the active framework: ${expectedKeys.join(', ')}`;
+4. The entire script across all sections combined must be under 130 words total (roughly 30–45 seconds of natural speaking time).
+5. Every section must consist of only 1 to 3 short, punchy sentences max. Cut out all fluff, introductory explanations, and wordy transitions.
+6. Write with high organic sales intent. Every single sentence must serve a purpose: either hitting a highly relatable pain point, showing immediate visual proof/results, or driving them to look at the link.
+7. The Call to Action section must be short, fast, and high-urgency. Do not sound like a generic corporate ad. Use phrases like: "The yellow link is on the screen right now—grab one before shipping takes forever" or "If your skin looks like mine did, just tap the cart below while they're still in stock."
+8. Keep stage directions inside the brackets very short (e.g., [shows close-up], [swatches back of hand]) so they don't bloat the text body.
+9. Keep the content matching the JSON keys exactly for the active framework: ${expectedKeys.join(', ')}`;
   try{
     setAiLoading(true);
     const data=await CreatorGemini.generateJson(prompt, aiResponseSchema());
