@@ -18,7 +18,7 @@ body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 
 a{text-decoration:none;color:inherit;}
 button,input,textarea,select{font:inherit;}
 .page{max-width:1220px;margin:0 auto;padding:32px 28px 80px;}
-.mobile-only{display:none;}
+.mobile-only{display:none;pointer-events:none;visibility:hidden;}
 .workshop-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px;}
 .page-title{font-family:'IBM Plex Serif',serif;font-size:42px;font-weight:800;line-height:0.95;color:var(--ink);}
 .page-sub{font-size:13px;color:var(--text-mid);margin-top:8px;}
@@ -527,14 +527,19 @@ function mobFlushToDesk(){
   if(!isMobile())return;
   const mTitle=document.getElementById('mScriptTitle');if(mTitle)document.getElementById('scriptTitle').value=mTitle.value;
   const mProd=document.getElementById('mProductSelect');if(mProd)document.getElementById('productSelect').value=mProd.value;
-  const mType=document.getElementById('mScriptType');if(mType&&mType.value!==currentFramework)changeFramework(mType.value);
+  const mType=document.getElementById('mScriptType');
+  if(mType&&mType.value&&mType.value!==currentFramework){
+    currentFramework=mType.value;
+    const deskType=document.getElementById('scriptType');
+    if(deskType)deskType.value=currentFramework;
+  }
   const mCanvas=document.getElementById('mScriptCanvas');if(mCanvas)document.getElementById('scriptCanvas').value=mCanvas.value;
   const mNotes=document.getElementById('mScriptNotes');if(mNotes)document.getElementById('scriptNotes').value=mNotes.value;
 }
 function syncMobToDesk(field){
   if(field==='title') document.getElementById('scriptTitle').value=document.getElementById('mScriptTitle').value;
-  else if(field==='product') document.getElementById('productSelect').value=document.getElementById('mProductSelect').value;
-  else if(field==='framework'){const v=document.getElementById('mScriptType').value;changeFramework(v);}
+  else if(field==='product'){document.getElementById('productSelect').value=document.getElementById('mProductSelect').value;if(user)saveLocalDraft();}
+  else if(field==='framework'){const v=document.getElementById('mScriptType').value;if(v&&v!==currentFramework){currentFramework=v;const d=document.getElementById('scriptType');if(d)d.value=v;if(user)saveLocalDraft();}}
   else if(field==='canvas'){document.getElementById('scriptCanvas').value=document.getElementById('mScriptCanvas').value;}
   else if(field==='notes') document.getElementById('scriptNotes').value=document.getElementById('mScriptNotes').value;
   saveLocalDraft();
@@ -755,7 +760,7 @@ async function applyProductHandoff(){
     || products.find(p=>productName&&String(p.name||'').toLowerCase().includes(productName)&&(!brand||String(p.brand||'').toLowerCase()===brand));
   if(!product)return;
   const currentProductId=document.getElementById('productSelect').value;
-  const hasDraftText=Boolean(fullScript()||document.getElementById('scriptTitle').value.trim()||document.getElementById('scriptNotes').value.trim()||inspo.length);
+  const hasDraftText=Boolean(fullScript()||document.getElementById('scriptNotes').value.trim()||inspo.length);
   if(hasDraftText&&currentProductId!==product.id){
     const startNew=await openWorkshopConfirm(
       'Workshop Draft Already Open',
@@ -773,6 +778,7 @@ async function applyProductHandoff(){
     inspo=[];
   }
   document.getElementById('productSelect').value=product.id;
+  const mProd=document.getElementById('mProductSelect');if(mProd)mProd.value=product.id;
   const title=document.getElementById('scriptTitle');
   if(!title.value.trim())title.value=`${product.name} Script`;
   saveLocalDraft();
@@ -900,6 +906,7 @@ function setAiLoading(isLoading){
   }
 }
 function saveLocalDraft(){
+  if(!user)return;
   const draft={title:document.getElementById('scriptTitle').value,productId:document.getElementById('productSelect').value,type:currentFramework,notes:document.getElementById('scriptNotes').value,script:document.getElementById('scriptCanvas').value,inspo};
   try{localStorage.setItem(draftKey(),JSON.stringify(draft));}catch(e){}
   // keep mobile canvas in sync
@@ -919,6 +926,7 @@ function restoreLocalDraft(){
   }catch(e){}
 }
 async function newScript(){
+  if(!user){showToast('Still loading...','error');return;}
   mobFlushToDesk();
   if(fullScript()&&!(await openWorkshopConfirm('Start New Script?','This will clear the current workshop draft on this page.','Start New')))return;
   document.getElementById('scriptTitle').value='';
@@ -929,6 +937,7 @@ async function newScript(){
   mobSync();
 }
 async function saveDraft(){
+  if(!user){showToast('Still loading...','error');return;}
   mobFlushToDesk();
   const script=formattedScript();
   if(!script){showToast('Add script text first','error');return;}
@@ -952,6 +961,7 @@ function toggleGeminiKey(){
 }
 function aiKeyMap(){return AI_FRAMEWORK_KEYS[currentFramework]||AI_FRAMEWORK_KEYS['product-demo'];}
 async function generateAiDraft(){
+  if(!user){showToast('Still loading...','error');return;}
   mobFlushToDesk();
   const productSelect=document.getElementById('productSelect');
   const hasText=Boolean(fullScript());
