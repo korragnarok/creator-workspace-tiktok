@@ -112,7 +112,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
       <div class="stat-icon"><img src="icons/brand-deals/pps-score.png" alt="" style="width:28px;height:28px;object-fit:contain;"></div>
       <div>
         <div class="stat-label">PPS Score</div>
-        <div id="ppsDisplay"><div class="stat-value" id="statPps">—</div><div class="stat-sub">posts per sample</div></div>
+        <div id="ppsDisplay"><div class="stat-value" id="statPps">—</div><div class="stat-sub">promotion performance score</div></div>
         <div id="ppsEditWrap" style="display:none;margin-top:4px;">
           <input id="ppsInput" type="number" min="0" step="0.1" placeholder="e.g. 2.5" style="width:80px;border:1px solid var(--rust);border-radius:7px;background:var(--bg);color:var(--ink);padding:5px 8px;font-family:'Noto Sans Mono',monospace;font-size:16px;font-weight:900;outline:none;" onclick="event.stopPropagation()" onkeydown="ppsKeydown(event)">
           <button onclick="event.stopPropagation();savePps()" style="margin-left:6px;border:none;border-radius:7px;background:var(--rust);color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;padding:6px 10px;cursor:pointer;">Save</button>
@@ -503,7 +503,7 @@ async function saveDeal(){
     received:document.getElementById('dealReceived').value||todayKey(),
     due:computeDueFromDays()||todayKey(),
 
-    done:(isRefundable||type==='campaign')?Number(document.getElementById('dealDone').value)||0:0,
+    done:(document.getElementById('dealRefundable')?.checked||type==='campaign')?Number(document.getElementById('dealDone').value)||0:0,
     needed:Number(document.getElementById('dealNeeded').value)||1,
     min_gmv:type==='campaign'?(parseFloat(document.getElementById('dealMinGmv').value)||0):0,
     link:document.getElementById('dealLink').value.trim(),
