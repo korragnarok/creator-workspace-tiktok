@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Scripts &mdash; Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=74"></script>
-<link rel="stylesheet" href="layout.css?v=74">
+<script src="theme-init.js?v=75"></script>
+<link rel="stylesheet" href="layout.css?v=75">
 <style>
 
 :root{--r:12px;}
@@ -36,6 +36,13 @@ a{text-decoration:none;color:inherit;}
 .form-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-mid);margin-bottom:6px;}
 .form-input{width:100%;padding:10px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;}
 .form-input:focus{border-color:var(--rose);}
+.product-pick-wrap{position:relative;}
+.product-pick-list{display:none;position:absolute;z-index:20;left:0;right:0;top:calc(100% + 6px);max-height:220px;overflow:auto;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--bg-lift);box-shadow:var(--shadow-md);padding:6px;}
+.product-pick-list.open{display:block;}
+.product-pick-item{display:block;width:100%;border:0;background:transparent;text-align:left;border-radius:9px;padding:9px 10px;cursor:pointer;color:var(--text);font-family:'IBM Plex Serif',serif;}
+.product-pick-item:hover{background:var(--surface);}
+.product-pick-name{font-weight:700;color:var(--ink);font-size:13px;}
+.product-pick-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-top:2px;}
 .form-textarea{resize:vertical;min-height:80px;}
 .form-row-half{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .modal-actions{display:flex;gap:10px;margin-top:20px;}
@@ -107,7 +114,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .script-card.select-mode .script-actions{display:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=74"></script>
+<script src="supabase.js?v=75"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link active">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -147,7 +154,13 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="modal-title" id="modalTitle">Save Script</div>
     <div class="form-row"><label class="form-label">Title *</label><input type="text" class="form-input" id="fTitle" placeholder="e.g. PetLab Dental — This saved my dog's breath"></div>
     <div class="form-row-half">
-      <div class="form-row" style="margin-bottom:0"><label class="form-label">Brand / Product</label><input type="text" class="form-input" id="fBrand" placeholder="e.g. PetLab Co."></div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Product</label>
+        <div class="product-pick-wrap">
+          <input type="text" class="form-input" id="fBrand" placeholder="Search products..." autocomplete="off" oninput="filterProductPicker()" onfocus="filterProductPicker()">
+          <div class="product-pick-list" id="productPickList"></div>
+        </div>
+      </div>
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Type</label><select class="form-input" id="fCat"><option value="review">Review</option><option value="tutorial">Tutorial</option><option value="unboxing">Unboxing</option><option value="storytime">Storytime</option><option value="live">Live</option></select></div>
     </div>
     <div class="form-row" style="margin-top:16px"><label class="form-label">Script Text *</label><textarea class="form-input form-script" id="fScript" placeholder="Paste your script here..."></textarea></div>
@@ -169,11 +182,12 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=74"></script>
+<script src="layout.js?v=75"></script>
 <script>
 let _editScriptsMode = false;
 let _selectedScriptIds = new Set();
 let _visibleScriptIds = [];
+let _allProducts = [];
 
 async function init() {
   const user = await requireAuth();
@@ -187,6 +201,38 @@ async function init() {
   window._user = user;
   window._filter = 'all';
   window._viewId = null;
+  await loadScriptProducts();
+
+  async function loadScriptProducts() {
+    const { data } = await db.from('products').select('id,name,brand').eq('user_id', user.id).order('name');
+    _allProducts = data || [];
+  }
+
+  function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+  window.filterProductPicker = function() {
+    const input = document.getElementById('fBrand');
+    const list = document.getElementById('productPickList');
+    if(!input || !list) return;
+    const q = input.value.trim().toLowerCase();
+    const matches = _allProducts
+      .filter(p => !q || `${p.name||''} ${p.brand||''}`.toLowerCase().includes(q))
+      .slice(0, 50);
+    list.innerHTML = matches.length ? matches.map(p => `
+      <button type="button" class="product-pick-item" onclick="selectScriptProduct('${esc(p.id)}')">
+        <div class="product-pick-name">${esc(p.name)}</div>
+        ${p.brand?`<div class="product-pick-brand">${esc(p.brand)}</div>`:''}
+      </button>
+    `).join('') : '<div class="empty-sub" style="padding:10px;">No matching products.</div>';
+    list.classList.add('open');
+  };
+
+  window.selectScriptProduct = function(id) {
+    const product = _allProducts.find(p => p.id === id);
+    if(!product) return;
+    document.getElementById('fBrand').value = product.name || '';
+    document.getElementById('productPickList').classList.remove('open');
+  };
 
   async function renderScripts() {
     const q = document.getElementById('searchBox').value.toLowerCase();
@@ -328,6 +374,7 @@ async function init() {
   window.editFromView = function() { const id=window._viewId; closeView(); openSaveModal(id); };
   document.getElementById('modalOverlay').addEventListener('keydown',e=>enterSaves(e,window.saveScript));
   document.getElementById('viewOverlay').addEventListener('click',function(e){if(e.target===this)window.closeView();});
+  document.addEventListener('click',e=>{if(!e.target.closest?.('.product-pick-wrap'))document.getElementById('productPickList')?.classList.remove('open');});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')window.closeView();});
   await renderScripts();
 
