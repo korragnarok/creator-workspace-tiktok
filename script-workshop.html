@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=92"></script>
-<link rel="stylesheet" href="layout.css?v=92">
+<script src="theme-init.js?v=93"></script>
+<link rel="stylesheet" href="layout.css?v=93">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -88,7 +88,7 @@ button,input,textarea,select{font:inherit;}
 .empty{padding:22px;text-align:center;color:var(--text-muted);font-style:italic;}
 .workshop-modal-overlay{display:none;position:fixed;inset:0;z-index:700;align-items:center;justify-content:center;background:rgba(0,0,0,0.48);backdrop-filter:blur(5px);padding:24px;}
 .workshop-modal-overlay.open{display:flex;}
-.workshop-modal{width:min(520px,100%);border:1px solid var(--border-mid);border-radius:16px;background:var(--bg-lift);box-shadow:var(--shadow-md);padding:24px;}
+.workshop-modal{width:min(520px,100%);max-height:calc(100vh - 48px);overflow:auto;border:1px solid var(--border-mid);border-radius:16px;background:var(--bg-lift);box-shadow:var(--shadow-md);padding:24px;}
 .workshop-modal-title{font-family:'IBM Plex Serif',serif;font-size:26px;font-weight:800;line-height:1.05;color:var(--ink);margin-bottom:8px;}
 .workshop-modal-message{font-size:14px;color:var(--text-mid);margin-bottom:18px;}
 .workshop-modal-input{width:100%;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);color:var(--ink);padding:12px 14px;outline:none;margin-bottom:18px;}
@@ -97,8 +97,10 @@ button,input,textarea,select{font:inherit;}
 .ai-modal{width:min(720px,100%);}
 .ai-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
 .ai-form .field-wide{grid-column:1/-1;}
-.ai-field textarea{min-height:108px;resize:vertical;}
+.ai-field textarea{min-height:86px;resize:vertical;}
+.ai-field textarea.ai-short{min-height:54px;}
 .ai-field select,.ai-field textarea,.ai-field input{width:100%;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);color:var(--ink);padding:12px 14px;outline:none;}
+.ai-field input[readonly]{opacity:0.72;cursor:default;}
 .ai-field select{padding-right:48px;}
 .ai-field select:focus,.ai-field textarea:focus,.ai-field input:focus{border-color:var(--rust);}
 .ai-field-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px;}
@@ -153,8 +155,8 @@ button,input,textarea,select{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=92"></script>
-<script src="gemini-ai.js?v=92"></script>
+<script src="supabase.js?v=93"></script>
+<script src="gemini-ai.js?v=93"></script>
 </head>
 <body>
 <div class="mobile-only" id="mobileWorkshop">
@@ -350,12 +352,28 @@ button,input,textarea,select{font:inherit;}
     <div class="workshop-modal-message">Add the details Gemini should use to write a stronger, more specific script.</div>
     <div class="ai-form">
       <div class="ai-field">
-        <div class="ai-field-label">Features &amp; Selling Points</div>
-        <textarea id="aiFeatures" placeholder="e.g., Full coverage, 72-hour wear, doesn't cake up"></textarea>
+        <div class="ai-field-label">Product</div>
+        <input id="aiProduct" readonly>
       </div>
       <div class="ai-field">
-        <div class="ai-field-label">Your Angle / Relatability Context</div>
-        <textarea id="aiAngle" placeholder="e.g., Busy mom with zero time to get ready, covering up dark circles, trying to look alive on a budget"></textarea>
+        <div class="ai-field-label">Length</div>
+        <input id="aiLength" placeholder="15s">
+      </div>
+      <div class="ai-field">
+        <div class="ai-field-label">Framework</div>
+        <input id="aiFramework" readonly>
+      </div>
+      <div class="ai-field">
+        <div class="ai-field-label">My Personal Detail</div>
+        <textarea class="ai-short" id="aiPersonalDetail" placeholder="specific result, moment, or reaction I had"></textarea>
+      </div>
+      <div class="ai-field">
+        <div class="ai-field-label">My Audience</div>
+        <input id="aiAudience" placeholder="toddler moms">
+      </div>
+      <div class="ai-field">
+        <div class="ai-field-label">Tone</div>
+        <textarea class="ai-short" id="aiTone" placeholder="Like I'm recommending to a friend, not selling."></textarea>
       </div>
       <div class="ai-field">
         <div class="ai-field-label">Hook Style</div>
@@ -368,16 +386,8 @@ button,input,textarea,select{font:inherit;}
         </select>
       </div>
       <div class="ai-field">
-        <div class="ai-field-label">Extra Creative Direction / Notes (Optional)</div>
-        <textarea id="aiCustomNotes" placeholder="Tip: Fill this out like you're talking to a friend to get the best script.
-Product: [name]
-Format: [15s voiceover / 30s talking head / faceless]
-My personal detail: [specific result, moment, or reaction I had]
-My audience: [who this is for]
-Tone: Like I'm recommending to a friend, not selling.
-Skeptical → convinced arc preferred.
-No hype words. Short sentences.
-CTA should be soft — not pushy, but still evoke urgency.'"></textarea>
+        <div class="ai-field-label">CTA</div>
+        <textarea class="ai-short" id="aiCta" placeholder="should be soft, not pushy, but still evoke urgency"></textarea>
       </div>
     </div>
     <div class="workshop-modal-actions">
@@ -387,7 +397,7 @@ CTA should be soft — not pushy, but still evoke urgency.'"></textarea>
   </div>
 </div>
 
-<script src="layout.js?v=92"></script>
+<script src="layout.js?v=93"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks', currentFramework='product-demo', pendingDraftProductId='';
 const FRAMEWORKS={
@@ -714,19 +724,32 @@ function closeAiModal(value=null){
   document.getElementById('aiModal').classList.remove('open');
   if(aiModalResolve){aiModalResolve(value);aiModalResolve=null;}
 }
+function syncAiModalContext(){
+  const product=selectedProduct();
+  const framework=FRAMEWORKS[currentFramework]||FRAMEWORKS['product-demo'];
+  const productField=document.getElementById('aiProduct');
+  const frameworkField=document.getElementById('aiFramework');
+  if(productField)productField.value=product?.name||'';
+  if(frameworkField)frameworkField.value=framework.label||'';
+}
 function openAiGenerationModal(){
   const overlay=document.getElementById('aiModal');
   aiModalResolve=null;
+  syncAiModalContext();
   overlay.classList.add('open');
-  setTimeout(()=>document.getElementById('aiFeatures')?.focus(),60);
+  setTimeout(()=>document.getElementById('aiLength')?.focus(),60);
   return new Promise(resolve=>{aiModalResolve=resolve;});
 }
 function aiModalValues(){
   return {
-    features:document.getElementById('aiFeatures').value.trim(),
-    angle:document.getElementById('aiAngle').value.trim(),
+    product:document.getElementById('aiProduct').value.trim(),
+    length:document.getElementById('aiLength').value.trim(),
+    framework:document.getElementById('aiFramework').value.trim(),
+    personalDetail:document.getElementById('aiPersonalDetail').value.trim(),
+    audience:document.getElementById('aiAudience').value.trim(),
+    tone:document.getElementById('aiTone').value.trim(),
     hookStyle:document.getElementById('aiHookStyle').value,
-    customNotes:document.getElementById('aiCustomNotes').value.trim()
+    cta:document.getElementById('aiCta').value.trim()
   };
 }
 document.getElementById('aiModalCancel').addEventListener('click',()=>closeAiModal(null));
@@ -982,14 +1005,17 @@ async function generateAiDraft(){
   const framework=FRAMEWORKS[currentFramework]||FRAMEWORKS['product-demo'];
   const aiInputs=await openAiGenerationModal();
   if(aiInputs===null)return;
-  const selectedProductName=product?.name||'Not selected';
+  const selectedProductName=aiInputs.product||product?.name||'Not selected';
+  const selectedFrameworkLabel=aiInputs.framework||framework.label;
   const prompt=`You are a conversion-focused TikTok Shop scriptwriting expert writing for a creator who uses sarcastic, anti-influencer humor. Write a highly conversational script based on these inputs:
 - Product Name: ${selectedProductName}
-- Chosen Framework: ${framework.label}
-- Target Features: ${aiInputs.features}
-- Creator's Relatability Angle: ${aiInputs.angle}
+- Chosen Framework: ${selectedFrameworkLabel}
+- Target Length: ${aiInputs.length || '15s'}
+- Creator's Personal Detail: ${aiInputs.personalDetail}
+- Intended Audience: ${aiInputs.audience || 'toddler moms'}
+- Tone: ${aiInputs.tone || "Like I'm recommending to a friend, not selling."}
 - Preferred Hook Style: ${aiInputs.hookStyle}
-- Custom Direction: ${aiInputs.customNotes}
+- CTA Direction: ${aiInputs.cta || 'should be soft, not pushy, but still evoke urgency'}
 
 Strict Writing Directives:
 1. NARRATIVE ARC: Structure the script as a "Skeptical → Convinced" journey. Start with genuine doubt or low expectations, and move toward matter-of-fact proof based on the creator's personal details.
