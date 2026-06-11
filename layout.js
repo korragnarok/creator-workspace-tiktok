@@ -11,6 +11,7 @@
   ];
 
   const MOBILE_ITEMS = NAV_ITEMS.filter(item => !item.desktopOnly);
+  const MORE_ITEMS = NAV_ITEMS.filter(item => item.desktopOnly);
 
   function currentPage() {
     const file = window.location.pathname.split('/').pop() || 'index.html';
@@ -64,19 +65,77 @@
       <a href="${item.href}" class="tab-item${isActive(item, page) ? ' active' : ''}">
         <div>${iconImg(item, 'tab-icon-img')}</div><div>${item.mobileLabel || item.label}</div>
       </a>`).join('');
+    const moreActive = MORE_ITEMS.some(item => isActive(item, page));
 
     return `
       <div class="tab-bar" data-shared-layout="true">
         ${links}
-
+        <button type="button" class="tab-item tab-more${moreActive ? ' active' : ''}" aria-expanded="false" aria-controls="mobileMoreSheet" onclick="openMobileMoreSheet()">
+          <span class="tab-more-icon" aria-hidden="true">•••</span><span>More</span>
+        </button>
       </div>`;
+  }
+
+  function mobileMoreSheet(page) {
+    if (!MORE_ITEMS.length) return '';
+    const links = MORE_ITEMS.map(item => `
+      <a href="${item.href}" class="mobile-more-link${isActive(item, page) ? ' active' : ''}">
+        <span class="mobile-more-icon">${iconImg(item)}</span>
+        <span>${item.label}</span>
+      </a>`).join('');
+    return `
+      <div class="mobile-more-overlay" id="mobileMoreOverlay" data-shared-layout="true" onclick="closeMobileMoreSheet()"></div>
+      <div class="mobile-more-sheet" id="mobileMoreSheet" data-shared-layout="true" role="dialog" aria-modal="true" aria-label="More navigation">
+        <button type="button" class="mobile-more-handle" aria-label="Close more navigation" onclick="closeMobileMoreSheet()"></button>
+        <div class="mobile-more-title">More</div>
+        <div class="mobile-more-list">${links}</div>
+      </div>`;
+  }
+
+  function openMobileMoreSheet() {
+    document.body.classList.add('mobile-more-open');
+    document.querySelector('.tab-more')?.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeMobileMoreSheet() {
+    document.body.classList.remove('mobile-more-open');
+    document.querySelector('.tab-more')?.setAttribute('aria-expanded', 'false');
+  }
+
+  function initMobileMoreGestures() {
+    const sheet = document.getElementById('mobileMoreSheet');
+    if (!sheet) return;
+    let startY = 0;
+    let currentY = 0;
+    let dragging = false;
+    sheet.addEventListener('touchstart', event => {
+      if (!document.body.classList.contains('mobile-more-open')) return;
+      startY = event.touches[0].clientY;
+      currentY = startY;
+      dragging = true;
+      sheet.classList.add('dragging');
+    }, { passive: true });
+    sheet.addEventListener('touchmove', event => {
+      if (!dragging) return;
+      currentY = event.touches[0].clientY;
+      const delta = Math.max(0, currentY - startY);
+      sheet.style.transform = `translateY(${delta}px)`;
+    }, { passive: true });
+    sheet.addEventListener('touchend', () => {
+      if (!dragging) return;
+      const delta = Math.max(0, currentY - startY);
+      dragging = false;
+      sheet.classList.remove('dragging');
+      sheet.style.transform = '';
+      if (delta > 70) closeMobileMoreSheet();
+    });
   }
 
   function injectSharedLayoutStyles() {
     if (document.querySelector('link[data-shared-layout-styles], link[href*="layout.css"]')) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'layout.css?v=89';
+    link.href = 'layout.css?v=91';
     link.dataset.sharedLayoutStyles = 'true';
     document.head.appendChild(link);
   }
@@ -95,9 +154,13 @@
     else document.body.insertAdjacentHTML('afterbegin', sidebar(page));
 
     document.body.insertAdjacentHTML('beforeend', mobileNav(page));
+    document.body.insertAdjacentHTML('beforeend', mobileMoreSheet(page));
+    initMobileMoreGestures();
     if (typeof applyThemeIcons === 'function') applyThemeIcons(_cachedTheme?.() || DEFAULT_THEME);
   }
 
+  window.openMobileMoreSheet = openMobileMoreSheet;
+  window.closeMobileMoreSheet = closeMobileMoreSheet;
   window.renderSharedLayout = renderSharedLayout;
   renderSharedLayout();
 })();
