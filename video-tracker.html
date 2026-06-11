@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Videos &mdash; Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=108"></script>
-<link rel="stylesheet" href="layout.css?v=108">
+<script src="theme-init.js?v=110"></script>
+<link rel="stylesheet" href="layout.css?v=110">
 <style>
 
 :root{--r:12px;}
@@ -36,6 +36,7 @@ a{text-decoration:none;color:inherit;}
 .form-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-mid);margin-bottom:6px;}
 .form-input{width:100%;padding:10px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);color:var(--text);font-size:13px;font-family:'IBM Plex Serif',serif;outline:none;transition:border-color 0.15s;}
 .form-input:focus{border-color:var(--rose);}
+.form-hint{font-size:11px;color:var(--text-muted);margin-top:5px;line-height:1.4;}
 .form-textarea{resize:vertical;min-height:80px;}
 .form-row-half{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .modal-actions{display:flex;gap:10px;margin-top:20px;}
@@ -139,7 +140,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=108"></script>
+<script src="supabase.js?v=110"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link active">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -194,7 +195,13 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="modal-title" id="modalTitle">Log Video</div>
     <div class="form-row"><label class="form-label">Title / Hook *</label><input type="text" class="form-input" id="fTitle" placeholder="What was the hook?"></div>
     <div class="form-row-half">
-      <div class="form-row" style="margin-bottom:0"><label class="form-label">Product</label><input type="text" class="form-input" id="fBrand" placeholder="e.g. PetLab Co."></div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Product</label>
+        <input type="text" class="form-input" id="fBrand" list="productOptions" placeholder="Search products..." autocomplete="off" oninput="syncSelectedProduct()">
+        <input type="hidden" id="fProdId">
+        <datalist id="productOptions"></datalist>
+        <div class="form-hint">Choose from your Products DB so counts stay matched.</div>
+      </div>
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Date Posted</label><input type="date" class="form-input" id="fDate"></div>
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Time Posted</label><input type="time" class="form-input" id="fTime" step="1"></div>
     </div>
@@ -211,11 +218,12 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=108"></script>
+<script src="layout.js?v=110"></script>
 <script>
 const PAGE_SIZE=25;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
 let _editVideosMode=false,_selectedVideoIds=new Set(),_visibleVideoIds=[];
+let PRODUCT_OPTIONS=[];
 
 async function init() {
   user = await requireAuth();
@@ -396,6 +404,40 @@ function normProductName(value) {
 function videoProductName(video) {
   return String(video?.brand || '').trim();
 }
+function selectedProductFromInput() {
+  const value = document.getElementById('fBrand')?.value || '';
+  const hiddenId = document.getElementById('fProdId')?.value || '';
+  return PRODUCT_OPTIONS.find(product => product.id === hiddenId)
+    || PRODUCT_OPTIONS.find(product => normProductName(product.name) === normProductName(value))
+    || null;
+}
+async function loadProductOptions(selectedProductId, selectedName) {
+  const list = document.getElementById('productOptions');
+  if(list) list.innerHTML = '';
+  const { data, error } = await db.from('products').select('id,name,brand').eq('user_id', user.id).order('name');
+  if(error) {
+    console.warn('Could not load products for video picker', error);
+    PRODUCT_OPTIONS = [];
+    return;
+  }
+  PRODUCT_OPTIONS = data || [];
+  PRODUCT_OPTIONS.forEach(product => {
+    const opt = document.createElement('option');
+    opt.value = product.name || '';
+    opt.label = product.brand ? `${product.name} — ${product.brand}` : product.name || '';
+    opt.dataset.id = product.id;
+    list?.appendChild(opt);
+  });
+  const selected = PRODUCT_OPTIONS.find(product => product.id === selectedProductId)
+    || PRODUCT_OPTIONS.find(product => normProductName(product.name) === normProductName(selectedName));
+  document.getElementById('fProdId').value = selected?.id || '';
+  if(selected && !selectedName) document.getElementById('fBrand').value = selected.name || '';
+}
+function syncSelectedProduct() {
+  const selected = selectedProductFromInput();
+  document.getElementById('fProdId').value = selected?.id || '';
+}
+window.syncSelectedProduct = syncSelectedProduct;
 
 async function adjustProductUnits(productName, delta) {
   const amount = Number(delta) || 0;
@@ -413,18 +455,39 @@ async function adjustProductUnits(productName, delta) {
   await db.from('products').update({ units_sold: nextUnits }).eq('id', product.id).eq('user_id', user.id);
 }
 
+async function adjustProductUnitsById(productId, delta) {
+  const amount = Number(delta) || 0;
+  if(!productId || !amount) return false;
+  const { data, error } = await db.from('products').select('id,units_sold').eq('id', productId).eq('user_id', user.id).single();
+  if(error || !data) return false;
+  const nextUnits = Math.max(0, (Number(data.units_sold) || 0) + amount);
+  await db.from('products').update({ units_sold: nextUnits }).eq('id', productId).eq('user_id', user.id);
+  return true;
+}
 async function syncVideoUnitsToProduct(previousVideo, nextVideo) {
   const prevUnits = Number(previousVideo?.units) || 0;
   const nextUnits = Number(nextVideo?.units) || 0;
+  const prevProductId = previousVideo?.prod_id || null;
+  const nextProductId = nextVideo?.prod_id || null;
   const prevProduct = videoProductName(previousVideo);
   const nextProduct = videoProductName(nextVideo);
   if(!prevUnits && !nextUnits) return;
-  if(normProductName(prevProduct) === normProductName(nextProduct)) {
+
+  if(prevProductId && prevProductId === nextProductId) {
+    if(await adjustProductUnitsById(nextProductId, nextUnits - prevUnits)) return;
+  }
+
+  let prevHandled = false;
+  let nextHandled = false;
+  if(prevProductId) prevHandled = await adjustProductUnitsById(prevProductId, -prevUnits);
+  if(nextProductId) nextHandled = await adjustProductUnitsById(nextProductId, nextUnits);
+
+  if(!prevHandled && !nextHandled && normProductName(prevProduct) === normProductName(nextProduct)) {
     await adjustProductUnits(nextProduct, nextUnits - prevUnits);
     return;
   }
-  await adjustProductUnits(prevProduct, -prevUnits);
-  await adjustProductUnits(nextProduct, nextUnits);
+  if(!prevHandled) await adjustProductUnits(prevProduct, -prevUnits);
+  if(!nextHandled) await adjustProductUnits(nextProduct, nextUnits);
 }
 
 function inlineEditingEnabled() {
@@ -540,6 +603,8 @@ async function openModal(id){
   document.getElementById('modalTitle').textContent=v?'Edit Video':'Log Video';
   document.getElementById('fTitle').value=v?.title||'';
   document.getElementById('fBrand').value=v?.brand||'';
+  document.getElementById('fProdId').value=v?.prod_id||'';
+  await loadProductOptions(v?.prod_id||null, v?.brand||'');
   document.getElementById('fDate').value=v?.date||new Date().toISOString().slice(0,10);
   document.getElementById('fTime').value=String(v?.posted_time||currentTimeValue()).slice(0,8);
   document.getElementById('fStatus').value=v?.status||'live';
@@ -557,12 +622,22 @@ function closeModal(){document.getElementById('modalOverlay').classList.remove('
 async function saveVideo(){
   const title=document.getElementById('fTitle').value.trim();
   if(!title){document.getElementById('fTitle').focus();return;}
+  syncSelectedProduct();
+  const selectedProduct = selectedProductFromInput();
+  const productName = document.getElementById('fBrand').value.trim();
+  if(PRODUCT_OPTIONS.length && !selectedProduct) {
+    alert('Please choose a product from your Products DB so the name matches.');
+    document.getElementById('fBrand').focus();
+    return;
+  }
   const campaignVal=document.getElementById('fCampaign').value||null;
   const previousVideo=window._editId?DATA.find(video=>video.id===window._editId):null;
-  const row={user_id:user.id,title,brand:document.getElementById('fBrand').value.trim(),date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes:document.getElementById('fNotes').value.trim(),link:document.getElementById('fLink').value.trim(),campaign_id:campaignVal};
+  const row={user_id:user.id,title,brand:selectedProduct?.name||productName,date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes:document.getElementById('fNotes').value.trim(),link:document.getElementById('fLink').value.trim(),campaign_id:campaignVal,prod_id:selectedProduct?.id||null};
   let result=window._editId?await db.from('videos').update(row).eq('id',window._editId):await db.from('videos').insert(row);
-  if(result.error&&/posted_time/i.test(result.error.message||'')){
-    const {posted_time,...fallbackRow}=row;
+  if(result.error&&/(posted_time|prod_id)/i.test(result.error.message||'')){
+    const fallbackRow={...row};
+    if(/posted_time/i.test(result.error.message||''))delete fallbackRow.posted_time;
+    if(/prod_id/i.test(result.error.message||''))delete fallbackRow.prod_id;
     result=window._editId?await db.from('videos').update(fallbackRow).eq('id',window._editId):await db.from('videos').insert(fallbackRow);
   }
   if(result.error){showToast(result.error.message,'error');return;}

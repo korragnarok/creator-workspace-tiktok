@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=108"></script>
-<link rel="stylesheet" href="layout.css?v=108">
+<script src="theme-init.js?v=110"></script>
+<link rel="stylesheet" href="layout.css?v=110">
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -100,30 +100,34 @@ button,input{font:inherit;}
 .today-content-list{display:flex;flex-direction:column;gap:6px;flex:1;}
 /* ── Filming Schedule ── */
 .sched-list{display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;max-height:600px;scrollbar-width:thin;scrollbar-color:var(--border-mid) transparent;}
-.sched-list-inner{display:flex;flex-direction:column;}
-.sched-row{display:grid;grid-template-columns:56px 24px minmax(0,1fr) minmax(112px,160px) auto 22px;gap:10px;align-items:center;padding:8px 12px;border:none;border-radius:0;background:transparent;border-bottom:1px solid var(--border);}
-.sched-row:last-child{border-bottom:none;}
+.sched-list-inner{display:flex;flex-direction:column;gap:6px;}
+.sched-row{display:grid;grid-template-columns:minmax(86px,0.55fr) minmax(220px,1.65fr) minmax(116px,0.65fr) minmax(118px,0.7fr);gap:12px;align-items:center;padding:12px 14px;border:1px solid color-mix(in srgb,var(--border) 78%,transparent);border-radius:9px;background:color-mix(in srgb,var(--surface) 76%,var(--bg) 24%);}
+.sched-row:last-child{border-bottom:1px solid color-mix(in srgb,var(--border) 78%,transparent);}
 .sched-row.done{opacity:0.5;}
 .sched-row.done .sched-name{text-decoration:line-through;}
-.sched-time{font-family:'Noto Sans Mono',monospace;font-size:11px;font-weight:700;color:var(--text-mid);white-space:nowrap;cursor:pointer;padding:4px 6px;border-radius:6px;border:1px solid transparent;transition:border-color 0.12s;text-align:center;}
+.sched-time-cell{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;}
+.sched-time{font-family:'Noto Sans Mono',monospace;font-size:13px;font-weight:900;color:var(--ink);white-space:nowrap;cursor:pointer;padding:2px 0;border-radius:6px;border:1px solid transparent;transition:border-color 0.12s;text-align:left;}
 .sched-time:hover{border-color:var(--border-mid);}
 .sched-time.no-time{color:var(--text-muted);font-style:italic;font-size:10px;}
+.sched-format{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap;}
 .sched-body{min-width:0;}
-.sched-name{font-weight:700;color:var(--ink);font-size:13px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sched-name{font-weight:900;color:var(--ink);font-size:17px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sched-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;}
-.sched-brand{font-size:11px;color:var(--text-muted);}
+.sched-brand{font-size:12px;color:var(--text-muted);}
+.sched-angle{font-size:11px;color:var(--text-muted);font-style:italic;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;}
 .sched-type-tag{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:color-mix(in srgb,var(--rust) 14%,var(--surface) 86%);color:var(--rust);}
-.sched-location-cell{justify-self:start;min-width:0;}
-.sched-location-tag{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:6px 10px;border-radius:6px;border:1px solid var(--border-mid);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;min-width:84px;}
-.sched-location-tag.bedroom{background:color-mix(in srgb,var(--sage) 22%,transparent);border-color:color-mix(in srgb,var(--sage) 34%,transparent);color:var(--sage);}
-.sched-location-tag.outside{background:color-mix(in srgb,#5B8CCC 20%,transparent);border-color:color-mix(in srgb,#5B8CCC 34%,transparent);color:#89B4F5;}
-.sched-location-tag.kitchen{background:color-mix(in srgb,var(--rose) 24%,transparent);border-color:color-mix(in srgb,var(--rose) 38%,transparent);color:var(--rose);}
-.sched-location-tag.living-room{background:color-mix(in srgb,#9B7BC8 22%,transparent);border-color:color-mix(in srgb,#9B7BC8 36%,transparent);color:#C4A0F0;}
-.sched-location-tag.car{background:color-mix(in srgb,var(--tan) 22%,transparent);border-color:color-mix(in srgb,var(--tan) 36%,transparent);color:var(--tan);}
-.sched-location-tag.other{background:color-mix(in srgb,#E0C45C 24%,transparent);border-color:color-mix(in srgb,#E0C45C 38%,transparent);color:#E0C45C;}
-.sched-status-icon{width:24px;height:24px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;flex-shrink:0;background:none;border:none;padding:0;transition:transform 0.12s;}
-.sched-status-icon:hover{transform:scale(1.1);}
-.sched-status-icon img{width:24px;height:24px;max-width:24px;max-height:24px;object-fit:contain;display:block;}
+.sched-location-cell{justify-self:center;min-width:0;width:100%;display:flex;justify-content:center;}
+.sched-location-tag{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:7px 10px;border-radius:6px;border:1px solid var(--border-mid);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;min-width:94px;width:100%;}
+.sched-location-tag.bedroom{background:color-mix(in srgb,#24533B 38%,transparent);border-color:color-mix(in srgb,#24533B 58%,transparent);color:#9AC8A8;}
+.sched-location-tag.outside{background:color-mix(in srgb,#253C56 42%,transparent);border-color:color-mix(in srgb,#253C56 64%,transparent);color:#A5C5E8;}
+.sched-location-tag.kitchen{background:color-mix(in srgb,#6A334F 36%,transparent);border-color:color-mix(in srgb,#6A334F 58%,transparent);color:#E0A9C2;}
+.sched-location-tag.living-room{background:color-mix(in srgb,#4B3868 38%,transparent);border-color:color-mix(in srgb,#4B3868 60%,transparent);color:#C5B3E6;}
+.sched-location-tag.car{background:color-mix(in srgb,#5B4635 42%,transparent);border-color:color-mix(in srgb,#5B4635 62%,transparent);color:#D8BA93;}
+.sched-location-tag.airport{background:color-mix(in srgb,#6A4A1F 42%,transparent);border-color:color-mix(in srgb,#6A4A1F 62%,transparent);color:#E1B977;}
+.sched-location-tag.other{background:color-mix(in srgb,#6A5A25 38%,transparent);border-color:color-mix(in srgb,#6A5A25 60%,transparent);color:#E2D083;}
+.sched-actions{display:flex;flex-direction:column;align-items:flex-end;gap:7px;min-width:0;}
+.sched-script-link{border:none;background:none;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0;}
+.sched-script-link:hover{color:var(--rust);}
 .sched-status{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:99px;white-space:nowrap;cursor:pointer;border:none;transition:all 0.15s;line-height:1;}
 .sched-status.not-started{background:color-mix(in srgb,var(--border-mid) 50%,var(--surface) 50%);color:var(--text-mid);}
 .sched-status.in-progress{background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);color:var(--rust);}
@@ -255,15 +259,21 @@ button,input{font:inherit;}
   .chart-card{overflow:hidden;}
   .chart-wrap{width:100%;height:180px;}
   .tier-tooltip{white-space:normal;max-width:calc(100vw - 32px);text-align:center;}
-  .sched-row{grid-template-columns:56px 24px 1fr auto 22px;}
-  .sched-location-cell{display:none;}
+  .sched-row{grid-template-columns:1fr;gap:10px;align-items:stretch;padding:14px;}
+  .sched-time-cell{flex-direction:row;align-items:center;justify-content:space-between;}
+  .sched-name{font-size:16px;white-space:normal;}
+  .sched-angle{white-space:normal;max-width:none;}
+  .sched-location-cell{display:flex;justify-content:flex-start;}
+  .sched-location-tag{width:auto;min-width:110px;}
+  .sched-actions{align-items:center;flex-direction:row;justify-content:space-between;}
+  .sched-remove{opacity:1;pointer-events:auto;}
   .stat-card-streak{display:flex;}
   .app-shell{grid-template-columns:1fr !important;}
   .workspace{grid-column:1 !important;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=108"></script>
+<script src="supabase.js?v=110"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -400,7 +410,7 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=108"></script>
+<script src="layout.js?v=110"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0, _postedToday=0, _streakGoal=1;
@@ -746,6 +756,20 @@ function parseSchedType(notes){
   const m=String(notes||'').match(/TYPE:([A-Za-z /]+)/i);
   return m?m[1].trim():'';
 }
+function schedFormatLabel(value){
+  const raw=String(value||'').trim();
+  const lower=raw.toLowerCase();
+  if(lower.includes('voice'))return '🎙️ Voiceover';
+  if(lower.includes('faceless')||lower.includes('b-roll')||lower.includes('broll'))return '📦 Faceless B-Roll';
+  if(lower.includes('demo'))return '📦 Product Demo';
+  if(lower.includes('skit'))return '🎭 Skit';
+  if(lower.includes('talk'))return '🗣️ Talking Head';
+  return raw ? `🗣️ ${raw}` : '🗣️ Talking Head';
+}
+function schedAngleLabel(value){
+  const clean=String(value||'').replace(/^Hook:\s*/i,'').trim();
+  return clean ? `Angle: ${clean}` : 'Angle: choose hook';
+}
 function parseSchedLocation(notes){
   const raw=(String(notes||'').match(/^LOCATION\s*:\s*([^\n]*)/im)?.[1]||'').trim();
   if(!raw)return null;
@@ -757,7 +781,8 @@ function parseSchedLocation(notes){
     outside:'Outside',
     car:'Car',
     kitchen:'Kitchen',
-    'living-room':'Living Room'
+    'living-room':'Living Room',
+    airport:'Airport'
   };
   return {type:labels[type]?type:'other',label:labels[type]||raw};
 }
@@ -794,28 +819,35 @@ function renderTodayContent(){
     const rawTime=parseSchedTime(q.notes);
     const timeLabel=rawTime?fmtSchedTime(rawTime):'+ time';
     const cleanLine=String(q.notes||'').split('\n').find(l=>l.trim()&&!/^SCHED_TIME:/i.test(l)&&!/^STATUS:/i.test(l)&&!/^LOCATION:/i.test(l))||'';
-    const typeTag=parseSchedType(q.notes)||cleanLine.trim().slice(0,24)||'';
+    const typeTag=parseSchedType(q.notes);
+    const formatLabel=schedFormatLabel(typeTag);
+    const angleLabel=schedAngleLabel(cleanLine);
     const location=parseSchedLocation(q.notes);
-    const brandMeta=q.brand?`<div class="sched-meta"><span class="sched-brand">${esc(q.brand)}</span></div>`:'';
+    const brandMeta=`<div class="sched-meta">${q.brand?`<span class="sched-brand">${esc(q.brand)}</span>`:''}<span class="sched-angle">${esc(angleLabel)}</span></div>`;
     const locationTag=location?`<div class="sched-location-cell"><span class="sched-location-tag ${esc(location.type)}">${esc(location.label)}</span></div>`:'<div class="sched-location-cell"></div>';
     const storedSt=String(q.notes||'').match(/STATUS:(in-progress|filmed)/i)?.[1]?.toLowerCase()||'';
     const statusClass=q.done?'filmed':storedSt==='in-progress'?'in-progress':'not-started';
     const statusLabel=q.done?'Filmed':storedSt==='in-progress'?'In Progress':'Not Started';
-    const statusIcon=statusClass==='filmed'?'icons/workshop/status-filmed.png':statusClass==='in-progress'?'icons/workshop/status-in-progress.png':'icons/workshop/status-not-started.png';
     const nameKey=(q.name||'').trim().toLowerCase();
     const isDupe=nameCounts[nameKey]>1;
     nameCounters[nameKey]=(nameCounters[nameKey]||0)+1;
     const scriptLabel=isDupe?`<span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);margin-left:6px;">Script ${nameCounters[nameKey]}</span>`:'';
+    const dailyUrl='daily-todo.html'+(q.brand?`?brand=${encodeURIComponent(q.brand)}`:'');
     return`<div class="sched-row${q.done?' done':''}">
-      <span class="sched-time${rawTime?'':' no-time'}" onclick="openTimePopover('${q.id}',this)" title="Set time">${esc(timeLabel)}</span>
-      <button class="sched-status-icon" onclick="cycleSchedStatus('${q.id}')" title="${statusLabel}"><img src="${statusIcon}" alt="${statusLabel}"></button>
+      <div class="sched-time-cell">
+        <span class="sched-time${rawTime?'':' no-time'}" onclick="openTimePopover('${q.id}',this)" title="Set time">${esc(timeLabel)}</span>
+        <span class="sched-format">${esc(formatLabel)}</span>
+      </div>
       <div class="sched-body">
         <div class="sched-name">${esc(q.name)}${scriptLabel}</div>
         ${brandMeta}
       </div>
       ${locationTag}
-      <button class="sched-status ${statusClass}" onclick="cycleSchedStatus('${q.id}')">${statusLabel}</button>
-      <button class="sched-remove" onclick="removeSchedItem('${q.id}')" title="Remove">✕</button>
+      <div class="sched-actions">
+        <a class="sched-script-link" href="${dailyUrl}">View Script</a>
+        <button class="sched-status ${statusClass}" onclick="cycleSchedStatus('${q.id}')">${statusLabel}</button>
+        <button class="sched-remove" onclick="removeSchedItem('${q.id}')" title="Remove">✕</button>
+      </div>
     </div>`;
   }).join('');
   list.innerHTML=`<div class="sched-list-inner">${rows}</div>`;
