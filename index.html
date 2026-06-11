@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=111"></script>
-<link rel="stylesheet" href="layout.css?v=111">
+<script src="theme-init.js?v=113"></script>
+<link rel="stylesheet" href="layout.css?v=113">
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -189,6 +189,23 @@ button,input{font:inherit;}
 .name-input:focus{border-color:var(--rust);}
 .name-save{width:100%;border:none;border-radius:var(--r);background:var(--rust);color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:12px 14px;cursor:pointer;}
 .name-save:hover{background:#9a5a57;}
+.script-modal-overlay{display:none;position:fixed;inset:0;z-index:850;background:rgba(0,0,0,0.54);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;}
+.script-modal-overlay.open{display:flex;}
+.script-modal{width:min(100%,620px);max-height:min(86vh,720px);overflow:auto;background:var(--surface);border:1px solid var(--border-mid);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,0.35);padding:24px;}
+.script-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px;}
+.script-modal-title{font-size:26px;font-weight:800;color:var(--ink);line-height:1.1;}
+.script-modal-sub{font-size:13px;color:var(--text-muted);margin-top:5px;}
+.script-modal-close{border:none;background:none;color:var(--text-muted);font-size:28px;line-height:1;cursor:pointer;padding:0 4px;}
+.script-modal-close:hover{color:var(--rust);}
+.script-modal-box{border:1px solid var(--border);border-radius:10px;background:var(--bg-lift);padding:16px;color:var(--text);line-height:1.75;white-space:pre-wrap;max-height:340px;overflow:auto;}
+.script-modal-empty{border:1px dashed var(--border-mid);border-radius:10px;background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);padding:16px;color:var(--text-muted);font-size:14px;}
+.script-modal-textarea{width:100%;min-height:220px;resize:vertical;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:15px;line-height:1.7;padding:14px;outline:none;}
+.script-modal-textarea:focus{border-color:var(--rust);}
+.script-modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px;}
+.script-modal-btn{border:1px solid var(--border-mid);border-radius:9px;background:transparent;color:var(--text);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:10px 14px;cursor:pointer;}
+.script-modal-btn:hover{border-color:var(--rust);color:var(--rust);}
+.script-modal-btn.primary{border-color:var(--sage);background:var(--sage);color:#fff;}
+.script-modal-btn.primary:hover{filter:brightness(1.08);color:#fff;}
 .mob-mini-ladder-wrap{display:none!important;}
 @media(max-width:1280px) and (min-width:981px){.top-layout{grid-template-columns:minmax(0,1fr) minmax(260px,340px);}.lower-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.lower-grid .mob-order-4{grid-column:1 / -1;}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.stat-card{padding:14px;gap:10px;}.stat-icon{width:44px;height:44px;}.stat-icon img{width:34px;height:34px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}.stat-value{font-size:26px;}.chart-wrap{height:200px;}}
 @media(max-width:980px){.top-layout{grid-template-columns:1fr;}.lower-grid{grid-template-columns:1fr 1fr;}.lower-grid .mob-order-4{grid-column:1 / -1;}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
@@ -267,13 +284,15 @@ button,input{font:inherit;}
   .sched-location-tag{width:auto;min-width:110px;}
   .sched-actions{align-items:center;flex-direction:row;justify-content:space-between;}
   .sched-remove{opacity:1;pointer-events:auto;}
+  .script-modal{padding:18px;}
+  .script-modal-title{font-size:22px;}
   .stat-card-streak{display:flex;}
   .app-shell{grid-template-columns:1fr !important;}
   .workspace{grid-column:1 !important;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=111"></script>
+<script src="supabase.js?v=113"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -401,6 +420,20 @@ button,input{font:inherit;}
   </div>
 </div>
 
+<div class="script-modal-overlay" id="scriptPreviewModal" aria-modal="true" role="dialog" aria-labelledby="scriptPreviewTitle">
+  <div class="script-modal">
+    <div class="script-modal-head">
+      <div>
+        <div class="script-modal-title" id="scriptPreviewTitle">Script</div>
+        <div class="script-modal-sub" id="scriptPreviewSub"></div>
+      </div>
+      <button class="script-modal-close" type="button" onclick="closeDashboardScriptModal()" aria-label="Close script preview">&times;</button>
+    </div>
+    <div id="scriptPreviewBody"></div>
+    <div class="script-modal-actions" id="scriptPreviewActions"></div>
+  </div>
+</div>
+
 <div class="name-modal-overlay" id="nameModal" aria-modal="true" role="dialog">
   <div class="name-modal">
     <div class="name-modal-title">What should we call you?</div>
@@ -410,7 +443,7 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=111"></script>
+<script src="layout.js?v=113"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0, _postedToday=0, _streakGoal=1;
@@ -832,7 +865,6 @@ function renderTodayContent(){
     const isDupe=nameCounts[nameKey]>1;
     nameCounters[nameKey]=(nameCounters[nameKey]||0)+1;
     const scriptLabel=isDupe?`<span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);margin-left:6px;">Script ${nameCounters[nameKey]}</span>`:'';
-    const dailyUrl='daily-todo.html'+(q.brand?`?brand=${encodeURIComponent(q.brand)}`:'');
     return`<div class="sched-row${q.done?' done':''}">
       <div class="sched-time-cell">
         <span class="sched-time${rawTime?'':' no-time'}" onclick="openTimePopover('${q.id}',this)" title="Set time">${esc(timeLabel)}</span>
@@ -844,7 +876,7 @@ function renderTodayContent(){
       </div>
       ${locationTag}
       <div class="sched-actions">
-        <a class="sched-script-link" href="${dailyUrl}">View Script</a>
+        <button class="sched-script-link" type="button" onclick="openDashboardScriptModal('${q.id}')">View Script</button>
         <button class="sched-status ${statusClass}" onclick="cycleSchedStatus('${q.id}')">${statusLabel}</button>
         <button class="sched-remove" onclick="removeSchedItem('${q.id}')" title="Remove">✕</button>
       </div>
@@ -860,6 +892,64 @@ function renderTodayContent(){
     const fill=document.getElementById('sched-progress-fill');
     if(fill)fill.style.width=pct+'%';
   }
+}
+let _scriptModalTaskId=null;
+let _scriptModalEditing=false;
+function openDashboardScriptModal(id, editing=false){
+  const item=_todayQueue.find(q=>q.id===id);
+  if(!item)return;
+  _scriptModalTaskId=id;
+  _scriptModalEditing=editing || !String(item.script||'').trim();
+  document.getElementById('scriptPreviewTitle').textContent=item.name||'Script';
+  document.getElementById('scriptPreviewSub').textContent=[item.brand,'Today’s filming schedule'].filter(Boolean).join(' · ');
+  renderDashboardScriptModal();
+  document.getElementById('scriptPreviewModal').classList.add('open');
+}
+function closeDashboardScriptModal(){
+  document.getElementById('scriptPreviewModal').classList.remove('open');
+  _scriptModalTaskId=null;
+  _scriptModalEditing=false;
+}
+function renderDashboardScriptModal(){
+  const item=_todayQueue.find(q=>q.id===_scriptModalTaskId);
+  const body=document.getElementById('scriptPreviewBody');
+  const actions=document.getElementById('scriptPreviewActions');
+  if(!item||!body||!actions)return;
+  const script=String(item.script||'').trim();
+  if(_scriptModalEditing){
+    body.innerHTML=`<textarea class="script-modal-textarea" id="dashboardScriptText" placeholder="Paste or type the script for this task...">${esc(script)}</textarea>`;
+    actions.innerHTML=`<button class="script-modal-btn" type="button" onclick="${script?'cancelDashboardScriptEdit()':'closeDashboardScriptModal()'}">Cancel</button><button class="script-modal-btn primary" type="button" onclick="saveDashboardScript()">Save Script</button>`;
+    setTimeout(()=>document.getElementById('dashboardScriptText')?.focus(),50);
+    return;
+  }
+  body.innerHTML=script?`<div class="script-modal-box">${esc(script)}</div>`:`<div class="script-modal-empty">No script saved for this task yet.</div>`;
+  actions.innerHTML=`${script?'<button class="script-modal-btn" type="button" onclick="copyDashboardScript()">Copy</button>':''}<button class="script-modal-btn primary" type="button" onclick="editDashboardScript()">${script?'Edit Script':'Add Script'}</button>`;
+}
+function editDashboardScript(){
+  _scriptModalEditing=true;
+  renderDashboardScriptModal();
+}
+function cancelDashboardScriptEdit(){
+  _scriptModalEditing=false;
+  renderDashboardScriptModal();
+}
+async function saveDashboardScript(){
+  const item=_todayQueue.find(q=>q.id===_scriptModalTaskId);
+  const text=document.getElementById('dashboardScriptText')?.value.trim()||'';
+  if(!item||!_dashboardUser)return;
+  const {error}=await db.from('queue').update({script:text}).eq('id',item.id).eq('user_id',_dashboardUser.id);
+  if(error){showToast(error.message,'error');return;}
+  item.script=text;
+  _scriptModalEditing=false;
+  renderDashboardScriptModal();
+  renderTodayContent();
+  showToast(text?'Script saved':'Script cleared');
+}
+function copyDashboardScript(){
+  const item=_todayQueue.find(q=>q.id===_scriptModalTaskId);
+  const script=String(item?.script||'').trim();
+  if(!script)return;
+  navigator.clipboard?.writeText(script).then(()=>showToast('Script copied'));
 }
 async function cycleSchedStatus(id){
   const item=_todayQueue.find(q=>q.id===id);

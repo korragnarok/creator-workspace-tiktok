@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Videos &mdash; Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=111"></script>
-<link rel="stylesheet" href="layout.css?v=111">
+<script src="theme-init.js?v=113"></script>
+<link rel="stylesheet" href="layout.css?v=113">
 <style>
 
 :root{--r:12px;}
@@ -140,7 +140,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=111"></script>
+<script src="supabase.js?v=113"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link active">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -218,7 +218,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=111"></script>
+<script src="layout.js?v=113"></script>
 <script>
 const PAGE_SIZE=25;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
@@ -265,6 +265,17 @@ async function loadVideos(){
     return;
   }
   DATA=data||[];
+  if(DATA.length){
+    const {data:productData,error:productError}=await db.from('products').select('id,name,brand').eq('user_id',user.id);
+    if(!productError){
+      const byId=Object.fromEntries((productData||[]).map(p=>[p.id,p]));
+      const byName=Object.fromEntries((productData||[]).map(p=>[normProductName(p.name),p]));
+      DATA.forEach(video=>{
+        const product=(video.prod_id&&byId[video.prod_id])||byName[normProductName(video.brand)];
+        video._productBrand=product?.brand||'';
+      });
+    }
+  }
   // Enrich videos with deal label for table display
   const dealIds=[...new Set(DATA.filter(v=>v.campaign_id).map(v=>v.campaign_id))];
   if(dealIds.length){
@@ -349,9 +360,10 @@ function renderTable(){
     const hook=hookFromVideo(v);
     const hasSales=(Number(v.units)||0)>0;
     const selected=_selectedVideoIds.has(v.id);
+    const productBrand=String(v._productBrand||'').trim();
     return `<tr class="${_editVideosMode?'select-mode ':''}${selected?'selected':''}" onclick="handleVideoRowClick('${v.id}')">
       <td class="muted"><span class="tbl-posted"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','date')">${fmtDate(v.date)}</span><span class="editable-cell tbl-time" onclick="beginVideoInlineEdit(event,'${v.id}','posted_time')">${fmtTime(v.posted_time)||'Add time'}</span></span></td>
-      <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span>${esc(v.brand||'No product')}</span>${v.campaign_id?`<span class="tag-campaign">${esc(v._dealLabel||'Deal')}</span>`:''}</div><div class="tbl-hook"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','title')">${esc(v.title||'')}</span></div></td>
+      <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span>${esc(v.brand||'No product')}</span>${v.campaign_id?`<span class="tag-campaign">${esc(v._dealLabel||'Deal')}</span>`:''}</div>${productBrand?`<div class="tbl-hook">${esc(productBrand)}</div>`:''}</td>
       <td><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','hook')">${esc(hook||'-')}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','views')">${fmtNum(v.views)}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','gmv')">${(Number(v.gmv)||0)>0?'$'+Number(v.gmv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'-'}</span></td>
