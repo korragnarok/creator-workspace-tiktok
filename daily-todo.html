@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=100"></script>
-<link rel="stylesheet" href="layout.css?v=100">
+<script src="theme-init.js?v=101"></script>
+<link rel="stylesheet" href="layout.css?v=101">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=100"></script>
+<script src="supabase.js?v=101"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -98,6 +98,18 @@ a{text-decoration:none;color:inherit;}
 .script-textarea{width:100%;padding:10px 12px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;line-height:1.75;font-family:'IBM Plex Serif',serif;outline:none;resize:vertical;min-height:100px;transition:border-color 0.15s;}
 .script-textarea:focus{border-color:var(--rust);}
 .script-actions{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.location-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 10px;}
+.location-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);}
+.location-pill{border:1px solid var(--border-mid);border-radius:999px;background:var(--surface);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.05em;text-transform:uppercase;padding:6px 10px;color:var(--text-mid);outline:none;cursor:pointer;}
+.location-pill:focus{border-color:var(--rust);}
+.location-pill.bedroom{background:color-mix(in srgb,var(--sage) 22%,transparent);border-color:color-mix(in srgb,var(--sage) 34%,transparent);color:var(--sage);}
+.location-pill.outside{background:color-mix(in srgb,#5B8CCC 20%,transparent);border-color:color-mix(in srgb,#5B8CCC 34%,transparent);color:#89B4F5;}
+.location-pill.kitchen{background:color-mix(in srgb,var(--rose) 24%,transparent);border-color:color-mix(in srgb,var(--rose) 38%,transparent);color:var(--rose);}
+.location-pill.living-room{background:color-mix(in srgb,#9B7BC8 22%,transparent);border-color:color-mix(in srgb,#9B7BC8 36%,transparent);color:#C4A0F0;}
+.location-pill.car{background:color-mix(in srgb,var(--tan) 22%,transparent);border-color:color-mix(in srgb,var(--tan) 36%,transparent);color:var(--tan);}
+.location-pill.other{background:color-mix(in srgb,#E0C45C 24%,transparent);border-color:color-mix(in srgb,#E0C45C 38%,transparent);color:#E0C45C;}
+.location-other{min-width:160px;max-width:260px;flex:1;border:1px solid var(--border-mid);border-radius:999px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:12px;padding:7px 11px;outline:none;}
+.location-other:focus{border-color:#E0C45C;}
 
 .insp-section{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 .insp-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
@@ -260,7 +272,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=100"></script>
+<script src="layout.js?v=101"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -285,12 +297,66 @@ function addDays(date, amount){const d=new Date(date);d.setDate(d.getDate()+amou
 
 function getLinkLabel(url){try{const u=new URL(url);return u.hostname.replace(/^www\./,'')+(u.pathname.length>1?u.pathname.slice(0,18):'');}catch(e){return url.replace(/^https?:\/\//,'').slice(0,28);}}
 function normalizeUrl(url){const t=(url||'').trim();if(!t)return '';return /^https?:\/\//i.test(t)?t:'https://'+t;}
+const LOCATION_OPTIONS=[
+  {value:'',label:'Set location',cls:''},
+  {value:'bedroom',label:'Bedroom',cls:'bedroom'},
+  {value:'outside',label:'Outside',cls:'outside'},
+  {value:'car',label:'Car',cls:'car'},
+  {value:'kitchen',label:'Kitchen',cls:'kitchen'},
+  {value:'living-room',label:'Living Room',cls:'living-room'},
+  {value:'other',label:'Other',cls:'other'}
+];
 function displayHookText(text){
   return String(text||'')
     .replace(/\bSCHED_TIME\s*:\s*\d{1,2}:?\d{0,2}\b/gi,'')
     .replace(/\bSTATUS\s*:\s*[\w-]+\b/gi,'')
+    .replace(/^LOCATION\s*:[^\n]*\n?/gim,'')
     .replace(/\n{3,}/g,'\n\n')
     .trim();
+}
+function getFilmingLocation(notes){
+  const match=String(notes||'').match(/^LOCATION\s*:\s*([^\n]*)/im);
+  const raw=(match?.[1]||'').trim();
+  if(!raw)return {type:'',label:''};
+  const other=raw.match(/^other\s*:\s*(.*)$/i);
+  if(other)return {type:'other',label:other[1].trim()};
+  const type=raw.toLowerCase().replace(/\s+/g,'-');
+  const option=LOCATION_OPTIONS.find(item=>item.value===type);
+  return {type:option?type:'other',label:option?option.label:raw};
+}
+function withoutMetaLine(notes,key){
+  const pattern=new RegExp(`^${key}\\s*:[^\\n]*\\n?`,'gim');
+  return String(notes||'').replace(pattern,'').trim();
+}
+function setFilmingLocationLine(notes,type,label=''){
+  const body=withoutMetaLine(notes,'LOCATION');
+  const cleanType=String(type||'').trim();
+  if(!cleanType)return body;
+  const value=cleanType==='other'
+    ? `other:${String(label||'').trim()}`
+    : cleanType;
+  return [body,`LOCATION:${value}`].filter(Boolean).join('\n');
+}
+function replaceVisibleHook(notes,nextHook){
+  const hidden=String(notes||'')
+    .split('\n')
+    .map(line=>line.trim())
+    .filter(line=>/^(LOCATION|SCHED_TIME|STATUS)\s*:/i.test(line));
+  return [String(nextHook||'').trim(),...hidden].filter(Boolean).join('\n');
+}
+function locationClass(type){
+  return LOCATION_OPTIONS.find(item=>item.value===type)?.cls||'';
+}
+function locationSelectHtml(cardId,take){
+  const loc=getFilmingLocation(take.hookText);
+  const selectClass=['location-pill',locationClass(loc.type)].filter(Boolean).join(' ');
+  return `<div class="location-row">
+    <span class="location-label">Filming Location</span>
+    <select class="${selectClass}" onchange="setFilmingLocation('${esc(cardId)}','${esc(take.id)}',this.value)">
+      ${LOCATION_OPTIONS.map(option=>`<option value="${esc(option.value)}"${loc.type===option.value?' selected':''}>${esc(option.label)}</option>`).join('')}
+    </select>
+    ${loc.type==='other'?`<input class="location-other" id="loc-${esc(take.id)}" value="${esc(loc.label)}" placeholder="Type location..." onblur="saveOtherLocation('${esc(cardId)}','${esc(take.id)}')" onkeydown="if(event.key==='Enter'){event.preventDefault();saveOtherLocation('${esc(cardId)}','${esc(take.id)}');this.blur();}">`:''}
+  </div>`;
 }
 
 // ─── DATE NAV ─────────────────────────────────────────────
@@ -454,6 +520,7 @@ function render(){
       html+=`<button class="btn btn-ghost btn-xs js-toggle-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">${take.script?(take.editingScript?'Cancel':'Edit Script'):'Add Script'}</button>
         <button class="btn btn-ghost btn-xs" onclick="openScriptModal('${esc(card.id)}','${esc(take.id)}')">${take.script?'Swap':'Browse Scripts'}</button>
       </div>`;
+      html+=locationSelectHtml(card.id,take);
 
       if(take.editingScript){
         html+=`<textarea class="script-textarea" id="sta-${esc(take.id)}" placeholder="Paste or type your script...">${esc(take.script)}</textarea>
@@ -552,10 +619,27 @@ async function toggleDone(cardId,takeId){
   if(!take)return;take.done=!take.done;render();
   if(take.queueId)await db.from('queue').update({done:take.done}).eq('id',take.queueId);
 }
+async function setFilmingLocation(cardId,takeId,type){
+  const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
+  if(!take)return;
+  take.hookText=setFilmingLocationLine(take.hookText,type);
+  render();
+  if(type==='other')setTimeout(()=>document.getElementById('loc-'+takeId)?.focus(),40);
+  if(take.queueId)await saveQueueRow(card,take);
+}
+async function saveOtherLocation(cardId,takeId){
+  const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
+  const input=document.getElementById('loc-'+takeId);
+  if(!take||!input)return;
+  take.hookText=setFilmingLocationLine(take.hookText,'other',input.value);
+  if(take.queueId)await saveQueueRow(card,take);
+}
 function videoRowFromTake(card,take){
   const notes=[];
+  const loc=getFilmingLocation(take.hookText);
   notes.push('Product: '+card.name);
   if(displayHookText(take.hookText))notes.push('Hook: '+displayHookText(take.hookText));
+  if(loc.type)notes.push('Location: '+(loc.type==='other'?(loc.label||'Other'):loc.label));
   if(take.script)notes.push('Script: '+take.script);
   if(take.inspirationLinks?.length)notes.push('Inspiration: '+take.inspirationLinks.join(', '));
 	  return {
@@ -709,14 +793,14 @@ function filterHooks(){
 async function selectHook(hookId){
   const hook=ALL_HOOKS.find(h=>h.id===hookId);if(!hook||!hookTarget)return;
   const take=TODO.find(c=>c.id===hookTarget.cardId)?.takes.find(t=>t.id===hookTarget.takeId);if(!take)return;
-  take.hookText=hook.text;closeHookModal();render();
-  if(take.queueId)await db.from('queue').update({notes:hook.text}).eq('id',take.queueId);
+  take.hookText=replaceVisibleHook(take.hookText,hook.text);closeHookModal();render();
+  if(take.queueId)await db.from('queue').update({notes:take.hookText}).eq('id',take.queueId);
 }
 async function saveCustomHook(){
   const text=document.getElementById('customHookInput').value.trim();if(!text||!hookTarget)return;
   const take=TODO.find(c=>c.id===hookTarget.cardId)?.takes.find(t=>t.id===hookTarget.takeId);if(!take)return;
-  take.hookText=text;closeHookModal();render();
-  if(take.queueId)await db.from('queue').update({notes:text}).eq('id',take.queueId);
+  take.hookText=replaceVisibleHook(take.hookText,text);closeHookModal();render();
+  if(take.queueId)await db.from('queue').update({notes:take.hookText}).eq('id',take.queueId);
 }
 
 // ─── SCRIPT PICKER ────────────────────────────────────────
