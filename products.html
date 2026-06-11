@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Products — Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=107"></script>
-<link rel="stylesheet" href="layout.css?v=107">
+<script src="theme-init.js?v=108"></script>
+<link rel="stylesheet" href="layout.css?v=108">
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -117,7 +117,7 @@ tr.selected .prod-select::after{content:'✓';}
 tr.select-mode .tbl-action{display:none;}
 @media(max-width:768px){
   .product-bank{overflow-x:auto;overflow-y:hidden;width:100%;-webkit-overflow-scrolling:touch;}
-  .product-bank table{min-width:820px;width:max-content;}
+  .product-bank table{min-width:900px;width:max-content;}
   .product-bank::-webkit-scrollbar{height:8px;}
   .product-bank::-webkit-scrollbar-track{background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
   .product-bank::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:999px;}
@@ -126,7 +126,7 @@ tr.select-mode .tbl-action{display:none;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=107"></script>
+<script src="supabase.js?v=108"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand">Creator Hub</a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link active">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -161,13 +161,14 @@ tr.select-mode .tbl-action{display:none;}
           <th class="sortable" data-sort="brand" onclick="sortProducts('brand')">Brand</th>
           <th class="sortable" data-sort="stock" onclick="sortProducts('stock')">Stock</th>
           <th class="num sortable" data-sort="sold" onclick="sortProducts('sold')">Sold</th>
+          <th class="num sortable" data-sort="videos" onclick="sortProducts('videos')">Videos Posted</th>
           <th class="num sortable" data-sort="gmv" onclick="sortProducts('gmv')">GMV</th>
           <th>Features</th>
           <th>Link</th>
           <th></th>
         </tr>
       </thead>
-      <tbody id="prodBody"><tr><td colspan="8"><div class="empty">Loading...</div></td></tr></tbody>
+      <tbody id="prodBody"><tr><td colspan="9"><div class="empty">Loading...</div></td></tr></tbody>
     </table>
   </div>
 </div>
@@ -200,7 +201,7 @@ tr.select-mode .tbl-action{display:none;}
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=107"></script>
+<script src="layout.js?v=108"></script>
 <script>
 function previewProductImg(input) {
   const file = input.files[0];
@@ -230,6 +231,7 @@ let _allProducts = [];
 let _coreNames = [];
 let _sortField = 'product';
 let _sortDir = 1;
+let _videoCountsByProduct = new Map();
 
 async function init() {
   const user = await requireAuth();
@@ -247,6 +249,7 @@ async function init() {
     const q = document.getElementById('searchBox').value.toLowerCase();
     const { data: prods } = await db.from('products').select('*').eq('user_id', user.id).order('created_at', {ascending: false});
     _allProducts = prods || [];
+    _videoCountsByProduct = await loadVideoCounts(_allProducts);
     renderBrandFilters(_allProducts);
     const filtered = _allProducts.filter(p => {
       if(_brandFilter === 'hero' && !isCoreProduct(p)) return false;
@@ -259,18 +262,20 @@ async function init() {
     }).sort(compareProducts);
     _visibleProductIds = filtered.map(p => p.id);
     const body = document.getElementById('prodBody');
-    if(!filtered.length){ body.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div></td></tr>'; updateSortHeaders(); updateEditToolbar(); return; }
+    if(!filtered.length){ body.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div></td></tr>'; updateSortHeaders(); updateEditToolbar(); return; }
     body.innerHTML = filtered.map(p => {
       const selected = _selectedProductIds.has(p.id);
       const inStock = productInStock(p);
       const gmv = productGmv(p);
       const hasCore = isCoreProduct(p);
       const link = String(p.link || '').trim();
+      const videoCount = productVideoCount(p);
       return '<tr class="'+(_editProductsMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleProductRowClick(event,\''+p.id+'\')">'+
         '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'name\')">'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Hero</span>':'')+'</div></td>'+
         '<td><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'brand\')">'+esc(p.brand||'-')+'</span></td>'+
         '<td><span class="editable-cell stock-badge '+(inStock?'stock-in':'stock-out')+'" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'status\')">'+productStockLabel(p)+'</span></td>'+
         '<td class="num"><span class="editable-cell sold-value" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'units_sold\')">'+(Number(p.units_sold)||0).toLocaleString()+'</span></td>'+
+        '<td class="num"><span class="sold-value">'+videoCount.toLocaleString()+'</span></td>'+
         '<td class="num"><span class="gmv-value">'+(gmv?fmtMoney(gmv):'-')+'</span></td>'+
         '<td><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
         '<td>'+(link?'<a class="shop-link" href="'+escAttr(link)+'" target="_blank" rel="noopener">Shop ↗</a>':'-')+'</td>'+
@@ -327,6 +332,44 @@ async function init() {
   function fmtMoney(value) {
     return '$' + Math.round(Number(value) || 0).toLocaleString('en-US');
   }
+  function productVideoCount(p) {
+    return _videoCountsByProduct.get(p.id) || 0;
+  }
+  function normalizeProductKey(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+  function videoProductName(video) {
+    const productLine = String(video.notes || '').match(/^Product:\s*(.+)$/im);
+    return (productLine?.[1] || video.brand || video.title || '').trim();
+  }
+  async function loadVideoCounts(products) {
+    const counts = new Map(products.map(p => [p.id, 0]));
+    const byName = new Map();
+    products.forEach(p => {
+      const key = normalizeProductKey(p.name);
+      if(!key) return;
+      if(!byName.has(key)) byName.set(key, []);
+      byName.get(key).push(p.id);
+    });
+    let result = await db.from('videos').select('id,title,brand,notes,prod_id').eq('user_id', user.id);
+    if(result.error && /prod_id/i.test(result.error.message || '')) {
+      result = await db.from('videos').select('id,title,brand,notes').eq('user_id', user.id);
+    }
+    if(result.error) {
+      console.warn('Could not load video counts', result.error);
+      return counts;
+    }
+    (result.data || []).forEach(video => {
+      if(video.prod_id && counts.has(video.prod_id)) {
+        counts.set(video.prod_id, (counts.get(video.prod_id) || 0) + 1);
+        return;
+      }
+      const key = normalizeProductKey(videoProductName(video));
+      const matches = byName.get(key) || [];
+      matches.forEach(id => counts.set(id, (counts.get(id) || 0) + 1));
+    });
+    return counts;
+  }
   function dateKey(d) {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
@@ -345,6 +388,7 @@ async function init() {
     if(field === 'brand') return String(p.brand || '').toLowerCase();
     if(field === 'stock') return productInStock(p) ? 0 : 1;
     if(field === 'sold') return Number(p.units_sold) || 0;
+    if(field === 'videos') return productVideoCount(p);
     if(field === 'gmv') return productGmv(p);
     return '';
   }
@@ -446,7 +490,7 @@ async function init() {
     if(_sortField === field) _sortDir *= -1;
     else {
       _sortField = field;
-      _sortDir = (field === 'sold' || field === 'gmv') ? -1 : 1;
+      _sortDir = (field === 'sold' || field === 'videos' || field === 'gmv') ? -1 : 1;
     }
     renderProducts();
   };
