@@ -64,7 +64,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
 .footer-note{font-size:11px;color:var(--text-muted);}
 .icon-sm{width:20px;height:20px;object-fit:contain;}
-body{overflow-x:hidden;}
+body{overflow-x:clip;}
 @media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}}
 .brand-filter{display:flex;gap:8px;margin-bottom:22px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
 .brand-filter::-webkit-scrollbar{display:none;}
@@ -232,6 +232,7 @@ let _coreNames = [];
 let _sortField = 'product';
 let _sortDir = 1;
 let _videoCountsByProduct = new Map();
+let _videoUnitsByProduct = new Map();
 
 async function init() {
   const user = await requireAuth();
@@ -274,7 +275,7 @@ async function init() {
         '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'name\')">'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Hero</span>':'')+'</div></td>'+
         '<td><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'brand\')">'+esc(p.brand||'-')+'</span></td>'+
         '<td><span class="editable-cell stock-badge '+(inStock?'stock-in':'stock-out')+'" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'status\')">'+productStockLabel(p)+'</span></td>'+
-        '<td class="num"><span class="editable-cell sold-value" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'units_sold\')">'+(Number(p.units_sold)||0).toLocaleString()+'</span></td>'+
+        '<td class="num"><span class="sold-value">'+(_videoUnitsByProduct.get(p.id)||0).toLocaleString()+'</span></td>'+
         '<td class="num"><span class="sold-value">'+videoCount.toLocaleString()+'</span></td>'+
         '<td class="num"><span class="gmv-value">'+(gmv?fmtMoney(gmv):'-')+'</span></td>'+
         '<td><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
@@ -344,6 +345,7 @@ async function init() {
   }
   async function loadVideoCounts(products) {
     const counts = new Map(products.map(p => [p.id, 0]));
+    const unitSums = new Map(products.map(p => [p.id, 0]));
     const byName = new Map();
     products.forEach(p => {
       const key = normalizeProductKey(p.name);
@@ -351,9 +353,9 @@ async function init() {
       if(!byName.has(key)) byName.set(key, []);
       byName.get(key).push(p.id);
     });
-    let result = await db.from('videos').select('id,title,brand,notes,prod_id').eq('user_id', user.id);
+    let result = await db.from('videos').select('id,title,brand,notes,prod_id,units').eq('user_id', user.id);
     if(result.error && /prod_id/i.test(result.error.message || '')) {
-      result = await db.from('videos').select('id,title,brand,notes').eq('user_id', user.id);
+      result = await db.from('videos').select('id,title,brand,notes,units').eq('user_id', user.id);
     }
     if(result.error) {
       console.warn('Could not load video counts', result.error);
@@ -362,12 +364,17 @@ async function init() {
     (result.data || []).forEach(video => {
       if(video.prod_id && counts.has(video.prod_id)) {
         counts.set(video.prod_id, (counts.get(video.prod_id) || 0) + 1);
+        unitSums.set(video.prod_id, (unitSums.get(video.prod_id) || 0) + (Number(video.units) || 0));
         return;
       }
       const key = normalizeProductKey(videoProductName(video));
       const matches = byName.get(key) || [];
-      matches.forEach(id => counts.set(id, (counts.get(id) || 0) + 1));
+      matches.forEach(id => {
+        counts.set(id, (counts.get(id) || 0) + 1);
+        unitSums.set(id, (unitSums.get(id) || 0) + (Number(video.units) || 0));
+      });
     });
+    _videoUnitsByProduct = unitSums;
     return counts;
   }
   function dateKey(d) {
@@ -387,7 +394,7 @@ async function init() {
     if(field === 'product') return String(p.name || '').toLowerCase();
     if(field === 'brand') return String(p.brand || '').toLowerCase();
     if(field === 'stock') return productInStock(p) ? 0 : 1;
-    if(field === 'sold') return Number(p.units_sold) || 0;
+    if(field === 'sold') return _videoUnitsByProduct.get(p.id) || 0;
     if(field === 'videos') return productVideoCount(p);
     if(field === 'gmv') return productGmv(p);
     return '';
