@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Script Workshop — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=87"></script>
-<link rel="stylesheet" href="layout.css?v=87">
+<script src="theme-init.js?v=88"></script>
+<link rel="stylesheet" href="layout.css?v=88">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 74% 16%,color-mix(in srgb,var(--rust) 10%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
@@ -153,8 +153,8 @@ button,input,textarea,select{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=87"></script>
-<script src="gemini-ai.js?v=87"></script>
+<script src="supabase.js?v=88"></script>
+<script src="gemini-ai.js?v=88"></script>
 </head>
 <body>
 <div class="mobile-only" id="mobileWorkshop">
@@ -369,7 +369,15 @@ button,input,textarea,select{font:inherit;}
       </div>
       <div class="ai-field">
         <div class="ai-field-label">Extra Creative Direction / Notes (Optional)</div>
-        <input id="aiCustomNotes" placeholder="Example: casual TikTok, mention a before/after, keep it punchy">
+        <textarea id="aiCustomNotes" placeholder="Tip: Fill this out like you're talking to a friend to get the best script.
+Product: [name]
+Format: [15s voiceover / 30s talking head / faceless]
+My personal detail: [specific result, moment, or reaction I had]
+My audience: [who this is for]
+Tone: Like I'm recommending to a friend, not selling.
+Skeptical → convinced arc preferred.
+No hype words. Short sentences.
+CTA should be soft — not pushy, but still evoke urgency.'"></textarea>
       </div>
     </div>
     <div class="workshop-modal-actions">
@@ -379,7 +387,7 @@ button,input,textarea,select{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=87"></script>
+<script src="layout.js?v=88"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks', currentFramework='product-demo', pendingDraftProductId='';
 const FRAMEWORKS={
@@ -975,25 +983,24 @@ async function generateAiDraft(){
   const aiInputs=await openAiGenerationModal();
   if(aiInputs===null)return;
   const selectedProductName=product?.name||'Not selected';
-  const prompt=`You are a conversion-focused TikTok Shop scriptwriting expert. Write a highly conversational, authentic script based on these precise structural inputs:
+  const prompt=`You are a conversion-focused TikTok Shop scriptwriting expert writing for a creator who uses sarcastic, anti-influencer humor. Write a highly conversational script based on these inputs:
 - Product Name: ${selectedProductName}
 - Chosen Framework: ${framework.label}
-- Target Features to Emphasize: ${aiInputs.features}
+- Target Features: ${aiInputs.features}
 - Creator's Relatability Angle: ${aiInputs.angle}
 - Preferred Hook Style: ${aiInputs.hookStyle}
 - Custom Direction: ${aiInputs.customNotes}
 
 Strict Writing Directives:
-1. BAN THE 'INFLUENCER VOICE'. Do not start with clichés like "Hey guys!", "Welcome back!", or "I'm obsessed!". Start mid-sentence, completely unfiltered.
-2. Integrate the Creator's Relatability Angle organically. The script must sound like an everyday person sharing a genuine solution, completely customized to their life context.
-3. Structure the hook precisely matching the chosen Hook Style option.
-4. The entire script across all sections combined must be under 130 words total (roughly 30–45 seconds of natural speaking time).
-5. Every section must consist of only 1 to 3 short, punchy sentences max. Cut out all fluff, introductory explanations, and wordy transitions.
-6. Write with high organic sales intent. Every single sentence must serve a purpose: either hitting a highly relatable pain point, showing immediate visual proof/results, or driving them to look at the link.
-7. The Call to Action section must be short, fast, and high-urgency. Do not sound like a generic corporate ad. Use phrases like: "The yellow link is on the screen right now—grab one before shipping takes forever" or "If your skin looks like mine did, just tap the cart below while they're still in stock."
-8. Keep stage directions inside the brackets very short (e.g., [shows close-up], [swatches back of hand]) so they don't bloat the text body.
-9. Instead of generating separate JSON sections, generate the entire script as a single cohesive string of text formatted with clear section headers like [HOOK], [BODY], and [CTA]. The total word count must be under 130 words.
-10. Return only the script text. Do not wrap it in JSON, markdown fences, bullets, or commentary.`;
+1. NARRATIVE ARC: Structure the script as a "Skeptical → Convinced" journey. Start with genuine doubt or low expectations, and move toward matter-of-fact proof based on the creator's personal details.
+2. TONE & PITCH: Speak like a brutally honest,  friend giving a reality check over coffee. BAN THE "INFLUENCER VOICE"—absolutely no clichés like "Hey guys!", "Welcome back!", or "I'm literally obsessed!". Start mid-sentence, completely unfiltered and casual.
+3. BAN AI TRANSITIONS: Do not use predictable transition words like "surprisingly," "turns out," "but then," or "honestly." Just state the facts raw.
+4. SENTENCE PACING: Keep sentences incredibly short (ideally under 8-10 words per sentence). Real people don't talk in long, perfectly flowing paragraphs. Make it punchy.
+5. FORMATTING RULE: Generate the entire script as a single cohesive string of text formatted with clear, bolded section headers exactly like this: **[HOOK]**, **[BODY]**, and **[CTA]**. Do not wrap it in JSON or markdown code blocks.
+6. LENGTH CONSTRAINTS: The entire script across all sections combined must be under 130 words total (roughly 30–45 seconds of natural speaking time). Keep lines short—only 1 to 3 sentences per section max.
+7. STAGE DIRECTIONS: Keep camera action cues inside brackets extremely brief (e.g., [shows close-up], [swatches hand]) so they don't clutter the text.
+8. THE CALL TO ACTION: Keep it soft, matter-of-fact, low-stress, and completely low-pressure. Use natural phrasing like: "The link is right there on the screen if you want it."
+9. CRITICAL TIKTOK COMPLIANCE RULE: Do not mention price, dollar amounts, costs, discounts, or specific numeric sales figures under any circumstances. Always refer to it abstractly (e.g., "the orange link," "the cart below," or "while it's on flash deal").`;
   try{
     setAiLoading(true);
     const script=await CreatorGemini.generateText(prompt);
