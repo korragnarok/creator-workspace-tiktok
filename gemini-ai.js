@@ -1,8 +1,7 @@
 const GEMINI_KEY_STORAGE = 'gemini_api_key';
 
 window.CreatorGemini = (() => {
-  let ai = null;
-  let sdkPromise = null;
+  let activeKey = '';
   let modalPromise = null;
 
   function savedKey() {
@@ -13,18 +12,12 @@ window.CreatorGemini = (() => {
     return String(key || '').trim().length > 0;
   }
 
-  async function loadSdk() {
-    if (!sdkPromise) sdkPromise = import('https://esm.run/@google/genai');
-    return sdkPromise;
-  }
-
-  async function initialize(key) {
+  function initialize(key) {
     const cleanKey = String(key || '').trim();
     if (!looksLikeKey(cleanKey)) throw new Error('Gemini API key does not look valid.');
-    const { GoogleGenAI } = await loadSdk();
-    ai = new GoogleGenAI({ apiKey: cleanKey });
+    activeKey = cleanKey;
     updateIndicator();
-    return ai;
+    return activeKey;
   }
 
   function ensureModal() {
@@ -82,17 +75,17 @@ window.CreatorGemini = (() => {
     const key = input?.value.trim() || '';
     try {
       localStorage.setItem(GEMINI_KEY_STORAGE, key);
-      await initialize(key);
+      initialize(key);
       updateIndicator();
       closeModal();
       if (modalPromise) {
-        modalPromise.resolve(ai);
+        modalPromise.resolve(activeKey);
         modalPromise = null;
       }
     } catch (error) {
-      alert('Could not initialize Gemini with that key. Please check it and try again.');
+      alert('Please paste your Gemini API key before saving.');
       localStorage.removeItem(GEMINI_KEY_STORAGE);
-      ai = null;
+      activeKey = '';
       input?.focus();
     }
   }
@@ -123,10 +116,10 @@ window.CreatorGemini = (() => {
   async function init(options = {}) {
     const key = savedKey();
     if (looksLikeKey(key)) {
-      try { return await initialize(key); }
+      try { return initialize(key); }
       catch(e) {
         localStorage.removeItem(GEMINI_KEY_STORAGE);
-        ai = null;
+        activeKey = '';
         updateIndicator();
       }
     }
@@ -135,7 +128,7 @@ window.CreatorGemini = (() => {
   }
 
   async function requireKey() {
-    if (ai) return ai;
+    if (looksLikeKey(activeKey)) return activeKey;
     const key = savedKey();
     if (looksLikeKey(key)) return initialize(key);
     const prompted = await showKeyPrompt();
@@ -145,14 +138,15 @@ window.CreatorGemini = (() => {
 
   function disconnect() {
     localStorage.removeItem(GEMINI_KEY_STORAGE);
-    ai = null;
+    activeKey = '';
     updateIndicator();
     showKeyPrompt();
   }
 
   function updateIndicator() {
+    const connected = looksLikeKey(activeKey) || looksLikeKey(savedKey());
     window.dispatchEvent(new CustomEvent('creator-gemini-key-change', {
-      detail: { connected: looksLikeKey(savedKey()) }
+      detail: { connected }
     }));
   }
 
@@ -162,23 +156,57 @@ window.CreatorGemini = (() => {
   }
 
   function responseText(response) {
-    return typeof response.text === 'function' ? response.text() : (response.text || '');
+    return response?.candidates?.[0]?.content?.parts
+      ?.map(part => part?.text || '')
+      .join('')
+      .trim() || '';
+  }
+
+  function buildPayload(prompt, options = {}) {
+    const payload = {
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: String(prompt || '') }]
+        }
+      ]
+    };
+    if (options.config && Object.keys(options.config).length) {
+      payload.generationConfig = options.config;
+    }
+    return payload;
+  }
+
+  async function requestGemini(prompt, options = {}) {
+    const key = await requireKey();
+    const model = options.model || 'gemini-2.5-flash';
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buildPayload(prompt, options))
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = data?.error?.message || `Gemini request failed (${response.status})`;
+      const error = new Error(message);
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+    const text = responseText(data);
+    if (!text) throw new Error('Gemini returned an empty response.');
+    return text;
   }
 
   async function generateText(prompt, options = {}) {
     try {
-      const client = await requireKey();
-      const response = await client.models.generateContent({
-        model: options.model || 'gemini-2.5-flash',
-        contents: prompt,
-        config: options.config || undefined
-      });
-      return responseText(response);
+      return await requestGemini(prompt, options);
     } catch (error) {
       if (isAuthError(error)) {
         alert('Your Gemini API key failed. Please enter a new key.');
         localStorage.removeItem(GEMINI_KEY_STORAGE);
-        ai = null;
+        activeKey = '';
         updateIndicator();
         showKeyPrompt();
       }
@@ -198,5 +226,5 @@ window.CreatorGemini = (() => {
     return JSON.parse(String(text || '').replace(/```json|```/gi, '').trim());
   }
 
-  return { init, requireKey, disconnect, generateText, generateJson, hasKey: () => looksLikeKey(savedKey()), showKeyPrompt, updateIndicator };
+  return { init, requireKey, disconnect, generateText, generateJson, hasKey: () => looksLikeKey(activeKey) || looksLikeKey(savedKey()), showKeyPrompt, updateIndicator };
 })();
