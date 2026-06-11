@@ -64,9 +64,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
 .footer-note{font-size:11px;color:var(--text-muted);}
 .icon-sm{width:20px;height:20px;object-fit:contain;}
-body{}
+body{overflow-x:clip;}
 @media(max-width:768px){
-  .page{overflow-x:hidden;}
+  .product-bank-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;}
+  .product-bank{min-width:860px;}
   .page{padding:80px 16px 24px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}}
 .brand-filter{display:flex;gap:8px;margin-bottom:22px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
 .brand-filter::-webkit-scrollbar{display:none;}
@@ -118,11 +119,10 @@ tr.selected .prod-select{background:var(--rust);border-color:var(--rust);}
 tr.selected .prod-select::after{content:'✓';}
 tr.select-mode .tbl-action{display:none;}
 @media(max-width:768px){
-  .product-bank{overflow-x:auto;overflow-y:visible;width:100%;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;}
-  .product-bank table{min-width:900px;width:max-content;}
-  .product-bank::-webkit-scrollbar{height:8px;}
-  .product-bank::-webkit-scrollbar-track{background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
-  .product-bank::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:999px;}
+  .product-bank table{min-width:900px;}
+  .product-bank-scroll::-webkit-scrollbar{height:8px;}
+  .product-bank-scroll::-webkit-scrollbar-track{background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
+  .product-bank-scroll::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:999px;}
   .editable-cell{cursor:pointer;}
   .editable-cell:hover{border-color:transparent;background:transparent;}
 }
@@ -155,7 +155,7 @@ tr.select-mode .tbl-action{display:none;}
       <button class="btn-danger" id="deleteSelectedBtn" onclick="deleteSelectedProducts()">Delete Selected</button>
     </div>
   </div>
-  <div class="product-bank">
+  <div class="product-bank-scroll"><div class="product-bank">
     <table>
       <thead>
         <tr>
@@ -172,6 +172,7 @@ tr.select-mode .tbl-action{display:none;}
       </thead>
       <tbody id="prodBody"><tr><td colspan="9"><div class="empty">Loading...</div></td></tr></tbody>
     </table>
+    </div>
   </div>
 </div>
 <div class="modal-overlay" id="modalOverlay">
