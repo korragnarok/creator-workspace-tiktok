@@ -10,15 +10,15 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Videos &mdash; Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=113"></script>
-<link rel="stylesheet" href="layout.css?v=113">
+<script src="theme-init.js?v=115"></script>
+<link rel="stylesheet" href="layout.css?v=115">
 <style>
 
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 a{text-decoration:none;color:inherit;}
-.page{max-width:1080px;margin:0 auto;padding:0 40px 100px;}
+.page{max-width:1380px;margin:0 auto;padding:0 40px 100px;}
 .page-header{padding:44px 0 32px;border-bottom:1px solid var(--border-mid);margin-bottom:32px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;}
 .page-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
 .page-title{font-family:'IBM Plex Serif',serif;font-size:52px;font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);}
@@ -140,11 +140,11 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=113"></script>
+<script src="supabase.js?v=115"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link active">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
-<div class="page" style="max-width:900px;">
+<div class="page">
   <div class="page-header">
     <div><div class="page-eyebrow">Content Tracker</div><div class="page-title">Videos <em>&amp;</em> Posts</div><p class="page-sub">Track posted content, views, and what's working.</p></div>
     <div class="header-actions">
@@ -218,7 +218,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=113"></script>
+<script src="layout.js?v=115"></script>
 <script>
 const PAGE_SIZE=25;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
@@ -252,6 +252,10 @@ function hookFromVideo(v){
   const line=notes.split('\n').find(value=>/^Hook:/i.test(value.trim()));
   return line ? line.replace(/^Hook:\s*/i,'').trim() : v.title||'';
 }
+function dealTypeLabel(deal){
+  if(deal?.refundable)return 'Refundable Sample';
+  return ({sample:'Sample',retainer:'Retainer',campaign:'Campaign'}[deal?.type]||'Deal');
+}
 async function loadVideos(){
   const tbody=document.getElementById('tbody');
   tbody.innerHTML='<tr><td colspan="8"><div class="empty">Loading...</div></td></tr>';
@@ -279,12 +283,11 @@ async function loadVideos(){
   // Enrich videos with deal label for table display
   const dealIds=[...new Set(DATA.filter(v=>v.campaign_id).map(v=>v.campaign_id))];
   if(dealIds.length){
-    const {data:dealData}=await db.from('brand_deals').select('id,type').in('id',dealIds);
-    const dealMap=Object.fromEntries((dealData||[]).map(d=>[d.id,d.type]));
+    const {data:dealData}=await db.from('brand_deals').select('id,type,refundable').in('id',dealIds);
+    const dealMap=Object.fromEntries((dealData||[]).map(d=>[d.id,d]));
     DATA.forEach(v=>{
       if(v.campaign_id){
-        const t=dealMap[v.campaign_id];
-        v._dealLabel=({sample:'Sample',retainer:'Retainer',campaign:'Campaign'}[t]||'Deal');
+        v._dealLabel=dealTypeLabel(dealMap[v.campaign_id]);
       }
     });
   }
@@ -671,11 +674,11 @@ async function loadCampaignOptions(selectedId){
   const sel=document.getElementById('fCampaign');
   if(!sel)return;
   sel.innerHTML='<option value="">— None —</option>';
-  const {data}=await db.from('brand_deals').select('id,name,brand,type').eq('user_id',user.id).order('created_at',{ascending:false});
+  const {data}=await db.from('brand_deals').select('id,name,brand,type,refundable').eq('user_id',user.id).order('created_at',{ascending:false});
   (data||[]).forEach(d=>{
     const opt=document.createElement('option');
     opt.value=d.id;
-    const typeTag=({sample:'Sample',retainer:'Retainer',campaign:'Campaign'}[d.type]||d.type);
+    const typeTag=dealTypeLabel(d);
     opt.textContent=`${d.name} — ${typeTag}${d.brand?' · '+d.brand:''}`;  
     if(d.id===selectedId)opt.selected=true;
     sel.appendChild(opt);
