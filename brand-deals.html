@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Brand Deals — Take24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=105"></script>
-<link rel="stylesheet" href="layout.css?v=105">
+<script src="theme-init.js?v=106"></script>
+<link rel="stylesheet" href="layout.css?v=106">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:radial-gradient(circle at 72% 8%,color-mix(in srgb,var(--rust) 9%,transparent),transparent 32%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
@@ -70,6 +70,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
 .days{font-family:'Noto Sans Mono',monospace;font-size:18px;font-weight:900;color:var(--sage);line-height:1;}
 .days.due-soon{color:var(--tan);}
 .days.overdue{color:var(--rust);}
+.days.finished{color:var(--sage);}
 .days-label{font-size:11px;color:var(--text-muted);}
 .empty{padding:54px 22px;text-align:center;color:var(--text-muted);font-style:italic;}
 .modal-overlay{display:none;position:fixed;inset:0;z-index:700;align-items:center;justify-content:center;background:rgba(0,0,0,0.48);backdrop-filter:blur(5px);padding:20px;}
@@ -89,7 +90,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
 @media(max-width:640px){.page-head{display:block;}.actions{margin-top:18px}.stats{grid-template-columns:1fr;}.form-grid{grid-template-columns:1fr;}.form-wide{grid-column:auto;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=105"></script>
+<script src="supabase.js?v=106"></script>
 </head>
 <body>
 <main class="page">
@@ -185,7 +186,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
   </div>
 </div>
 
-<script src="layout.js?v=105"></script>
+<script src="layout.js?v=106"></script>
 <script>
 let user=null;
 let deals=[];
@@ -350,7 +351,7 @@ async function renderDeals(){
       <td>${esc(monthDay(deal.due))}</td>
       <td>${criteriaHtml}</td>
       <td><span class="status ${status}">${esc(statusLabel(status))}</span></td>
-      <td>${left<0?'<div class="days overdue">Late</div>':`<div class="days ${dayClass}">${left}</div><div class="days-label">days</div>`}</td>
+      <td>${status==='completed'?'<div class="days finished">Finished</div>':left<0?'<div class="days overdue">Late</div>':`<div class="days ${dayClass}">${left}</div><div class="days-label">days</div>`}</td>
       <td style="white-space:nowrap;"><button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openEditModal('${esc(deal.id)}')">Edit</button><button class="btn" onclick="event.stopPropagation();confirmDeleteDeal('${esc(deal.id)}')">Remove</button></td>
     </tr>`;
   }).join('');
