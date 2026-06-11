@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=97"></script>
-<link rel="stylesheet" href="layout.css?v=97">
+<script src="theme-init.js?v=98"></script>
+<link rel="stylesheet" href="layout.css?v=98">
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -252,7 +252,7 @@ button,input{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=97"></script>
+<script src="supabase.js?v=98"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -389,7 +389,7 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=97"></script>
+<script src="layout.js?v=98"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0, _streakGoal=1;
@@ -583,7 +583,7 @@ async function init() {
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
     db.from('products').select('id,name,brand,units_sold').eq('user_id', user.id).order('created_at', { ascending:false }),
     db.from('videos').select('id,title,brand,status,date').eq('user_id', user.id).order('date', { ascending:false, nullsFirst:false }),
-    db.from('queue').select('id,name,brand,notes,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
+    db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
   ]);
   _todayQueue=queue||[];
   _dashboardVideos=videos||[];
@@ -801,9 +801,9 @@ async function cycleSchedStatus(id){
 }
 // ── Remove with Undo ────────────────────────────────────────────────────────
 let _undoTimer=null, _undoItem=null;
-function removeSchedItem(id){
+async function removeSchedItem(id){
   const item=_todayQueue.find(q=>q.id===id);
-  if(!item)return;
+  if(!item||!_dashboardUser)return;
   // Cancel any pending undo for a previous removal
   if(_undoTimer){clearTimeout(_undoTimer);_commitRemove();}
   // Stash and hide from list optimistically
@@ -811,11 +811,34 @@ function removeSchedItem(id){
   _todayQueue=_todayQueue.filter(q=>q.id!==id);
   renderTodayContent();
   renderLineup(_dashboardUser?.id);
+  const {error}=await db.from('queue').delete().eq('id',id).eq('user_id',_dashboardUser.id);
+  if(error){
+    showToast(error.message,'error');
+    _todayQueue=[..._todayQueue,item].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+    _undoItem=null;
+    renderTodayContent();
+    renderLineup(_dashboardUser?.id);
+    return;
+  }
   // Show undo toast
-  showUndoToast(item.name,()=>{
+  showUndoToast(item.name,async()=>{
     // Undo: restore item
     if(_undoItem){
-      _todayQueue=[..._todayQueue,_undoItem].sort((a,b)=>{
+      const restore={..._undoItem};
+      const {data,error}=await db.from('queue').insert({
+        user_id:_dashboardUser.id,
+        date:localDateKey(),
+        prod_id:restore.prod_id||null,
+        name:restore.name||'',
+        brand:restore.brand||'',
+        notes:restore.notes||'',
+        script:restore.script||'',
+        done:!!restore.done,
+        sort_order:restore.sort_order||0
+      }).select('id').single();
+      if(error){showToast(error.message,'error');_undoItem=null;return;}
+      restore.id=data?.id||restore.id;
+      _todayQueue=[..._todayQueue,restore].sort((a,b)=>{
         const ta=parseSchedTime(a.notes),tb=parseSchedTime(b.notes);
         if(!ta&&!tb)return(a.sort_order||0)-(b.sort_order||0);
         if(!ta)return 1;if(!tb)return -1;
@@ -830,10 +853,7 @@ function removeSchedItem(id){
   _undoTimer=setTimeout(()=>{_commitRemove();},5000);
 }
 function _commitRemove(){
-  if(_undoItem){
-    if(_undoItem.id)db.from('queue').delete().eq('id',_undoItem.id);
-    _undoItem=null;
-  }
+  _undoItem=null;
   _undoTimer=null;
 }
 function showUndoToast(name,onUndo){
