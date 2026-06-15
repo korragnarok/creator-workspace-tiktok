@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=127"></script>
-<link rel="stylesheet" href="layout.css?v=127">
+<script src="theme-init.js?v=128"></script>
+<link rel="stylesheet" href="layout.css?v=128">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=127"></script>
+<script src="supabase.js?v=128"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -286,7 +286,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=127"></script>
+<script src="layout.js?v=128"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -619,9 +619,6 @@ function render(){
       html+=`<button class="btn btn-ghost btn-xs js-toggle-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">${take.script?(take.editingScript?'Cancel':'Edit Script'):'Add Script'}</button>
         <button class="btn btn-ghost btn-xs" onclick="openScriptModal('${esc(card.id)}','${esc(take.id)}')">${take.script?'Swap':'Browse Scripts'}</button>
       </div>`;
-      html+=typeSelectHtml(card.id,take);
-      html+=locationSelectHtml(card.id,take);
-      html+=takeFieldsHtml(card.id,take);
 
       if(take.editingScript){
         html+=`<textarea class="script-textarea" id="sta-${esc(take.id)}" placeholder="Paste or type your script...">${esc(take.script)}</textarea>
@@ -632,6 +629,10 @@ function render(){
       } else if(take.script){
         html+=`<div class="script-display">${esc(take.script).replace(/\n/g,'<br>')}</div>`;
       }
+
+      html+=typeSelectHtml(card.id,take);
+      html+=locationSelectHtml(card.id,take);
+      html+=takeFieldsHtml(card.id,take);
 
       html+=`<div class="insp-section">
         <div class="insp-label">Inspiration</div>
