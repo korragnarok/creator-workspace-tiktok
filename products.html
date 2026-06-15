@@ -10,14 +10,14 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Products — Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=117"></script>
-<link rel="stylesheet" href="layout.css?v=117">
+<script src="theme-init.js?v=119"></script>
+<link rel="stylesheet" href="layout.css?v=119">
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 a{text-decoration:none;color:inherit;}
-.page{max-width:1080px;margin:0 auto;padding:0 40px 100px;}
+.page{max-width:1380px;margin:0 auto;padding:0 40px 100px;min-width:0;}
 .page-header{padding:44px 0 32px;border-bottom:1px solid var(--border-mid);margin-bottom:32px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;}
 .page-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
 .page-title{font-family:'IBM Plex Serif',serif;font-size:52px;font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);}
@@ -64,10 +64,14 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .footer-brand{font-family:'Stack Sans Notch',sans-serif;font-size:16px;font-weight:700;color:var(--ink);}
 .footer-note{font-size:11px;color:var(--text-muted);}
 .icon-sm{width:20px;height:20px;object-fit:contain;}
-body{overflow-x:clip;}
+body{overflow-x:hidden;}
+.product-bank-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;width:100%;max-width:100%;scrollbar-width:thin;scrollbar-color:var(--border-mid) transparent;}
+.product-bank-scroll::-webkit-scrollbar{height:8px;}
+.product-bank-scroll::-webkit-scrollbar-track{background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
+.product-bank-scroll::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:999px;}
+.product-bank{min-width:1180px;}
 @media(max-width:768px){
-  .product-bank-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;}
-  .product-bank{min-width:860px;}
+  .product-bank{min-width:920px;}
   .page{padding:80px 16px 24px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}}
 .brand-filter{display:flex;gap:8px;margin-bottom:22px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
 .brand-filter::-webkit-scrollbar{display:none;}
@@ -119,16 +123,13 @@ tr.selected .prod-select{background:var(--rust);border-color:var(--rust);}
 tr.selected .prod-select::after{content:'✓';}
 tr.select-mode .tbl-action{display:none;}
 @media(max-width:768px){
-  .product-bank table{min-width:900px;}
-  .product-bank-scroll::-webkit-scrollbar{height:8px;}
-  .product-bank-scroll::-webkit-scrollbar-track{background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
-  .product-bank-scroll::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:999px;}
+  .product-bank table{min-width:920px;}
   .editable-cell{cursor:pointer;}
   .editable-cell:hover{border-color:transparent;background:transparent;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=117"></script>
+<script src="supabase.js?v=119"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand">Creator Hub</a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link active">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -204,7 +205,7 @@ tr.select-mode .tbl-action{display:none;}
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=117"></script>
+<script src="layout.js?v=119"></script>
 <script>
 function previewProductImg(input) {
   const file = input.files[0];
