@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=123"></script>
-<link rel="stylesheet" href="layout.css?v=123">
+<script src="theme-init.js?v=124"></script>
+<link rel="stylesheet" href="layout.css?v=124">
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -118,6 +118,8 @@ button,input{font:inherit;}
 .sched-type-tag{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:color-mix(in srgb,var(--rust) 14%,var(--surface) 86%);color:var(--rust);}
 .sched-location-cell{justify-self:center;min-width:0;width:100%;display:flex;justify-content:center;}
 .sched-location-tag{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:7px 10px;border-radius:6px;border:1px solid var(--border-mid);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;min-width:84px;max-width:150px;width:100%;}
+select.sched-location-tag{appearance:none;text-align:center;cursor:pointer;outline:none;}
+select.sched-location-tag:focus{border-color:var(--rust);}
 .sched-location-tag.bedroom{background:color-mix(in srgb,#24533B 38%,transparent);border-color:color-mix(in srgb,#24533B 58%,transparent);color:#9AC8A8;}
 .sched-location-tag.outside{background:color-mix(in srgb,#253C56 42%,transparent);border-color:color-mix(in srgb,#253C56 64%,transparent);color:#A5C5E8;}
 .sched-location-tag.kitchen{background:color-mix(in srgb,#6A334F 36%,transparent);border-color:color-mix(in srgb,#6A334F 58%,transparent);color:#E0A9C2;}
@@ -292,7 +294,7 @@ button,input{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=123"></script>
+<script src="supabase.js?v=124"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -443,10 +445,20 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=123"></script>
+<script src="layout.js?v=124"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0, _postedToday=0, _streakGoal=1;
+const SCHED_LOCATION_OPTIONS=[
+  {value:'',label:'Set location'},
+  {value:'bedroom',label:'Bedroom'},
+  {value:'outside',label:'Outside'},
+  {value:'car',label:'Car'},
+  {value:'kitchen',label:'Kitchen'},
+  {value:'living-room',label:'Living Room'},
+  {value:'airport',label:'Airport'},
+  {value:'other',label:'Other'}
+];
 function fmtMoney(n){if(!n||n===0)return'$0';return'$'+Math.ceil(Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
 function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
 function fmtStreak(value){const streak=Number(value)||0;return streak>0?`${streak} 🔥`:String(streak);}
@@ -815,17 +827,19 @@ function fmtSchedTime(raw){
   return`${h}:${min} ${ampm}`;
 }
 function parseSchedType(notes){
-  const m=String(notes||'').match(/TYPE:([A-Za-z /]+)/i);
+  const m=String(notes||'').match(/^TYPE\s*:\s*([^\n]*)/im);
   return m?m[1].trim():'';
 }
 function schedFormatLabel(value){
   const raw=String(value||'').trim();
   const lower=raw.toLowerCase();
+  if(lower.includes('product-demo')||lower.includes('demo'))return '🎬 Product Demo';
+  if(lower.includes('talking-head')||lower.includes('talk'))return '🗣️ Talking Head';
   if(lower.includes('voice'))return '🎙️ Voiceover';
   if(lower.includes('faceless')||lower.includes('b-roll')||lower.includes('broll'))return '📦 Faceless B-Roll';
-  if(lower.includes('demo'))return '📦 Product Demo';
+  if(lower.includes('asmr')||lower.includes('unboxing'))return '🤫 ASMR / Unboxing';
+  if(lower.includes('before')||lower.includes('after'))return '🔄 Before & After';
   if(lower.includes('skit'))return '🎭 Skit';
-  if(lower.includes('talk'))return '🗣️ Talking Head';
   return raw ? `🗣️ ${raw}` : '🗣️ Talking Head';
 }
 function schedAngleLabel(value){
@@ -847,6 +861,23 @@ function parseSchedLocation(notes){
     airport:'Airport'
   };
   return {type:labels[type]?type:'other',label:labels[type]||raw};
+}
+function withoutQueueMetaLine(notes,key){
+  const pattern=new RegExp(`^${key}\\s*:[^\\n]*\\n?`,'gim');
+  return String(notes||'').replace(pattern,'').trim();
+}
+function setQueueLocationLine(notes,type,label=''){
+  const body=withoutQueueMetaLine(notes,'LOCATION');
+  const cleanType=String(type||'').trim();
+  if(!cleanType)return body;
+  const value=cleanType==='other'?`other:${String(label||'').trim()}`:cleanType;
+  return [body,`LOCATION:${value}`].filter(Boolean).join('\n');
+}
+function schedLocationSelectHtml(item,location){
+  const current=location?.type||'';
+  return `<div class="sched-location-cell"><select class="sched-location-tag ${esc(current)}" onchange="setSchedLocation('${esc(item.id)}',this.value)">
+    ${SCHED_LOCATION_OPTIONS.map(option=>`<option value="${esc(option.value)}"${current===option.value?' selected':''}>${esc(option.label)}</option>`).join('')}
+  </select></div>`;
 }
 function renderTodayContent(){
   const list=document.getElementById('sched-list');
@@ -880,13 +911,13 @@ function renderTodayContent(){
   const rows=sorted.map(q=>{
     const rawTime=parseSchedTime(q.notes);
     const timeLabel=rawTime?fmtSchedTime(rawTime):'+ time';
-    const cleanLine=String(q.notes||'').split('\n').find(l=>l.trim()&&!/^SCHED_TIME:/i.test(l)&&!/^STATUS:/i.test(l)&&!/^LOCATION:/i.test(l))||'';
+    const cleanLine=String(q.notes||'').split('\n').find(l=>l.trim()&&!/^SCHED_TIME:/i.test(l)&&!/^STATUS:/i.test(l)&&!/^LOCATION:/i.test(l)&&!/^TYPE:/i.test(l))||'';
     const typeTag=parseSchedType(q.notes);
     const formatLabel=schedFormatLabel(typeTag);
     const angleLabel=schedAngleLabel(cleanLine);
     const location=parseSchedLocation(q.notes);
     const brandMeta=`<div class="sched-meta">${q.brand?`<span class="sched-brand">${esc(q.brand)}</span>`:''}<span class="sched-angle">${esc(angleLabel)}</span></div>`;
-    const locationTag=location?`<div class="sched-location-cell"><span class="sched-location-tag ${esc(location.type)}">${esc(location.label)}</span></div>`:'<div class="sched-location-cell"></div>';
+    const locationTag=schedLocationSelectHtml(q,location);
     const storedSt=String(q.notes||'').match(/STATUS:(in-progress|filmed)/i)?.[1]?.toLowerCase()||'';
     const statusClass=q.done?'filmed':storedSt==='in-progress'?'in-progress':'not-started';
     const statusLabel=q.done?'Filmed':storedSt==='in-progress'?'In Progress':'Not Started';
@@ -1118,6 +1149,18 @@ async function clearSchedTime(){
   await db.from('queue').update({notes:item.notes}).eq('id',_timePopoverId);
   closeTimePopover();
   renderTodayContent();
+}
+async function setSchedLocation(id,type){
+  const item=_todayQueue.find(q=>q.id===id);
+  if(!item||!_dashboardUser)return;
+  let label='';
+  if(type==='other'){
+    label=window.prompt('Filming location?','')||'Other';
+  }
+  item.notes=setQueueLocationLine(item.notes,type,label);
+  renderTodayContent();
+  const {error}=await db.from('queue').update({notes:item.notes}).eq('id',id).eq('user_id',_dashboardUser.id);
+  if(error)showToast(error.message,'error');
 }
 function queuePreviewDetail(item){
   const lines=String(item.notes||'').split('\n').map(line=>line.trim()).filter(Boolean);

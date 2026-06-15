@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=123"></script>
-<link rel="stylesheet" href="layout.css?v=123">
+<script src="theme-init.js?v=124"></script>
+<link rel="stylesheet" href="layout.css?v=124">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=123"></script>
+<script src="supabase.js?v=124"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -108,6 +108,13 @@ a{text-decoration:none;color:inherit;}
 .location-pill.living-room{background:color-mix(in srgb,#9B7BC8 22%,transparent);border-color:color-mix(in srgb,#9B7BC8 36%,transparent);color:#C4A0F0;}
 .location-pill.car{background:color-mix(in srgb,var(--tan) 22%,transparent);border-color:color-mix(in srgb,var(--tan) 36%,transparent);color:var(--tan);}
 .location-pill.other{background:color-mix(in srgb,#E0C45C 24%,transparent);border-color:color-mix(in srgb,#E0C45C 38%,transparent);color:#E0C45C;}
+.location-pill.type-product-demo{background:color-mix(in srgb,var(--rust) 18%,transparent);border-color:color-mix(in srgb,var(--rust) 30%,transparent);color:var(--rust);}
+.location-pill.type-talking-head{background:color-mix(in srgb,var(--sage) 20%,transparent);border-color:color-mix(in srgb,var(--sage) 32%,transparent);color:var(--sage);}
+.location-pill.type-voiceover{background:color-mix(in srgb,#5B8CCC 20%,transparent);border-color:color-mix(in srgb,#5B8CCC 34%,transparent);color:#89B4F5;}
+.location-pill.type-faceless-b-roll{background:color-mix(in srgb,var(--tan) 22%,transparent);border-color:color-mix(in srgb,var(--tan) 36%,transparent);color:var(--tan);}
+.location-pill.type-asmr-unboxing{background:color-mix(in srgb,#9B7BC8 22%,transparent);border-color:color-mix(in srgb,#9B7BC8 36%,transparent);color:#C4A0F0;}
+.location-pill.type-before-after{background:color-mix(in srgb,var(--rose) 22%,transparent);border-color:color-mix(in srgb,var(--rose) 36%,transparent);color:var(--rose);}
+.location-pill.type-skit{background:color-mix(in srgb,#E0C45C 22%,transparent);border-color:color-mix(in srgb,#E0C45C 36%,transparent);color:#E0C45C;}
 .location-other{min-width:160px;max-width:260px;flex:1;border:1px solid var(--border-mid);border-radius:999px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:12px;padding:7px 11px;outline:none;}
 .location-other:focus{border-color:#E0C45C;}
 
@@ -272,7 +279,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=123"></script>
+<script src="layout.js?v=124"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -306,11 +313,22 @@ const LOCATION_OPTIONS=[
   {value:'living-room',label:'Living Room',cls:'living-room'},
   {value:'other',label:'Other',cls:'other'}
 ];
+const TYPE_OPTIONS=[
+  {value:'',label:'Set type',cls:''},
+  {value:'product-demo',label:'🎬 Product Demo',cls:'type-product-demo'},
+  {value:'talking-head',label:'🗣️ Talking Head',cls:'type-talking-head'},
+  {value:'voiceover',label:'🎙️ Voiceover',cls:'type-voiceover'},
+  {value:'faceless-b-roll',label:'📦 Faceless B-Roll',cls:'type-faceless-b-roll'},
+  {value:'asmr-unboxing',label:'🤫 ASMR / Unboxing',cls:'type-asmr-unboxing'},
+  {value:'before-after',label:'🔄 Before & After',cls:'type-before-after'},
+  {value:'skit',label:'💬 Skit',cls:'type-skit'}
+];
 function displayHookText(text){
   return String(text||'')
     .replace(/\bSCHED_TIME\s*:\s*\d{1,2}:?\d{0,2}\b/gi,'')
     .replace(/\bSTATUS\s*:\s*[\w-]+\b/gi,'')
     .replace(/^LOCATION\s*:[^\n]*\n?/gim,'')
+    .replace(/^TYPE\s*:[^\n]*\n?/gim,'')
     .replace(/\n{3,}/g,'\n\n')
     .trim();
 }
@@ -337,11 +355,24 @@ function setFilmingLocationLine(notes,type,label=''){
     : cleanType;
   return [body,`LOCATION:${value}`].filter(Boolean).join('\n');
 }
+function getFilmingType(notes){
+  const raw=(String(notes||'').match(/^TYPE\s*:\s*([^\n]*)/im)?.[1]||'').trim().toLowerCase();
+  if(!raw)return {type:'',label:''};
+  const type=raw.replace(/\s+/g,'-');
+  const option=TYPE_OPTIONS.find(item=>item.value===type);
+  return {type:option?type:'talking-head',label:option?option.label:'🗣️ Talking Head'};
+}
+function setFilmingTypeLine(notes,type){
+  const body=withoutMetaLine(notes,'TYPE');
+  const cleanType=String(type||'').trim();
+  if(!cleanType)return body;
+  return [body,`TYPE:${cleanType}`].filter(Boolean).join('\n');
+}
 function replaceVisibleHook(notes,nextHook){
   const hidden=String(notes||'')
     .split('\n')
     .map(line=>line.trim())
-    .filter(line=>/^(LOCATION|SCHED_TIME|STATUS)\s*:/i.test(line));
+    .filter(line=>/^(LOCATION|TYPE|SCHED_TIME|STATUS)\s*:/i.test(line));
   return [String(nextHook||'').trim(),...hidden].filter(Boolean).join('\n');
 }
 function locationClass(type){
@@ -356,6 +387,19 @@ function locationSelectHtml(cardId,take){
       ${LOCATION_OPTIONS.map(option=>`<option value="${esc(option.value)}"${loc.type===option.value?' selected':''}>${esc(option.label)}</option>`).join('')}
     </select>
     ${loc.type==='other'?`<input class="location-other" id="loc-${esc(take.id)}" value="${esc(loc.label)}" placeholder="Type location..." onblur="saveOtherLocation('${esc(cardId)}','${esc(take.id)}')" onkeydown="if(event.key==='Enter'){event.preventDefault();saveOtherLocation('${esc(cardId)}','${esc(take.id)}');this.blur();}">`:''}
+  </div>`;
+}
+function typeClass(type){
+  return TYPE_OPTIONS.find(item=>item.value===type)?.cls||'';
+}
+function typeSelectHtml(cardId,take){
+  const type=getFilmingType(take.hookText);
+  const selectClass=['location-pill',typeClass(type.type)].filter(Boolean).join(' ');
+  return `<div class="location-row">
+    <span class="location-label">Type</span>
+    <select class="${selectClass}" onchange="setFilmingType('${esc(cardId)}','${esc(take.id)}',this.value)">
+      ${TYPE_OPTIONS.map(option=>`<option value="${esc(option.value)}"${type.type===option.value?' selected':''}>${esc(option.label)}</option>`).join('')}
+    </select>
   </div>`;
 }
 
@@ -520,6 +564,7 @@ function render(){
       html+=`<button class="btn btn-ghost btn-xs js-toggle-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">${take.script?(take.editingScript?'Cancel':'Edit Script'):'Add Script'}</button>
         <button class="btn btn-ghost btn-xs" onclick="openScriptModal('${esc(card.id)}','${esc(take.id)}')">${take.script?'Swap':'Browse Scripts'}</button>
       </div>`;
+      html+=typeSelectHtml(card.id,take);
       html+=locationSelectHtml(card.id,take);
 
       if(take.editingScript){
@@ -634,12 +679,21 @@ async function saveOtherLocation(cardId,takeId){
   take.hookText=setFilmingLocationLine(take.hookText,'other',input.value);
   if(take.queueId)await saveQueueRow(card,take);
 }
+async function setFilmingType(cardId,takeId,type){
+  const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
+  if(!take)return;
+  take.hookText=setFilmingTypeLine(take.hookText,type);
+  render();
+  if(take.queueId)await saveQueueRow(card,take);
+}
 function videoRowFromTake(card,take){
   const notes=[];
   const loc=getFilmingLocation(take.hookText);
+  const type=getFilmingType(take.hookText);
   notes.push('Product: '+card.name);
   if(displayHookText(take.hookText))notes.push('Hook: '+displayHookText(take.hookText));
   if(loc.type)notes.push('Location: '+(loc.type==='other'?(loc.label||'Other'):loc.label));
+  if(type.type)notes.push('Type: '+type.label);
   if(take.script)notes.push('Script: '+take.script);
   if(take.inspirationLinks?.length)notes.push('Inspiration: '+take.inspirationLinks.join(', '));
 	  return {
