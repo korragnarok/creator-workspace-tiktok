@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=124"></script>
-<link rel="stylesheet" href="layout.css?v=124">
+<script src="theme-init.js?v=125"></script>
+<link rel="stylesheet" href="layout.css?v=125">
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -294,7 +294,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=124"></script>
+<script src="supabase.js?v=125"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -445,7 +445,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   </div>
 </div>
 
-<script src="layout.js?v=124"></script>
+<script src="layout.js?v=125"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0, _postedToday=0, _streakGoal=1;
@@ -626,6 +626,20 @@ function removeLegacyLevelStatCard(){
   const card = document.getElementById('s-level-name')?.closest('.stat-card');
   if(card) card.remove();
 }
+async function fetchDashboardVideos(userId){
+  const base = db.from('videos').select('*').eq('user_id', userId);
+  let result = await base.order('date', { ascending:false, nullsFirst:false });
+  if(result.error){
+    console.warn('Dashboard videos fetch failed, retrying without date order:', result.error);
+    result = await db.from('videos').select('*').eq('user_id', userId);
+  }
+  if(result.error){
+    console.error('Dashboard videos fetch failed:', result.error);
+    showToast('Could not load Content Tracker videos for streak', 'error');
+    return [];
+  }
+  return result.data || [];
+}
 
 async function init() {
   removeLegacyLevelStatCard();
@@ -645,15 +659,15 @@ async function init() {
   const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
   await carryForwardUnfinishedQueue(user.id, todayStr);
 
-  const [{ data: rows }, { data: products }, { data: videos }, { data: queue }] = await Promise.all([
+  const [{ data: rows }, { data: products }, videos, { data: queue }] = await Promise.all([
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
     db.from('products').select('id,name,brand,units_sold').eq('user_id', user.id).order('created_at', { ascending:false }),
-    db.from('videos').select('id,title,brand,status,date,notes,prod_id,units').eq('user_id', user.id).order('date', { ascending:false, nullsFirst:false }),
+    fetchDashboardVideos(user.id),
     db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
   ]);
   _todayQueue=queue||[];
   _dashboardVideos=videos||[];
-  _postedToday=_dashboardVideos.filter(video=>video.date===todayStr).length;
+  _postedToday=_dashboardVideos.filter(video=>videoDateKey(video)===todayStr).length;
 
   // Store raw rows globally so range switching doesn't need a re-fetch
   window._allSalesRows = rows || [];
@@ -715,7 +729,7 @@ async function init() {
 function calcStreak(rows, todayStr, goal = 1) {
   const dailyGoal = 1;
   const dateCounts = rows.reduce((counts, row) => {
-    const key = String(row.date || '').slice(0,10);
+    const key = videoDateKey(row);
     if (key) counts[key] = (counts[key] || 0) + 1;
     return counts;
   }, {});
@@ -737,6 +751,21 @@ function calcStreak(rows, todayStr, goal = 1) {
   const yesterdayKey = yesterday.getFullYear()+'-'+String(yesterday.getMonth()+1).padStart(2,'0')+'-'+String(yesterday.getDate()).padStart(2,'0');
   if((dateCounts[yesterdayKey] || 0) >= dailyGoal) return countBackFrom(yesterdayKey);
   return 0;
+}
+function videoDateKey(row) {
+  const raw = row?.date || row?.posted_at || row?.created_at || row?.inserted_at || '';
+  if(!raw)return '';
+  if(raw instanceof Date && !Number.isNaN(raw.getTime())) {
+    return `${raw.getFullYear()}-${String(raw.getMonth()+1).padStart(2,'0')}-${String(raw.getDate()).padStart(2,'0')}`;
+  }
+  const text = String(raw).trim();
+  const simple = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(simple)return `${simple[1]}-${simple[2]}-${simple[3]}`;
+  const parsed = new Date(text);
+  if(!Number.isNaN(parsed.getTime())) {
+    return `${parsed.getFullYear()}-${String(parsed.getMonth()+1).padStart(2,'0')}-${String(parsed.getDate()).padStart(2,'0')}`;
+  }
+  return '';
 }
 function dateFromKey(key) {
   const [year, month, day] = String(key || localDateKey()).split('-').map(Number);
