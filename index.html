@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=119"></script>
-<link rel="stylesheet" href="layout.css?v=119">
+<script src="theme-init.js?v=120"></script>
+<link rel="stylesheet" href="layout.css?v=120">
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -292,7 +292,7 @@ button,input{font:inherit;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=119"></script>
+<script src="supabase.js?v=120"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -443,7 +443,7 @@ button,input{font:inherit;}
   </div>
 </div>
 
-<script src="layout.js?v=119"></script>
+<script src="layout.js?v=120"></script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _doneToday=0, _postedToday=0, _streakGoal=1;
@@ -636,7 +636,7 @@ async function init() {
   const [{ data: rows }, { data: products }, { data: videos }, { data: queue }] = await Promise.all([
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
     db.from('products').select('id,name,brand,units_sold').eq('user_id', user.id).order('created_at', { ascending:false }),
-    db.from('videos').select('id,title,brand,status,date').eq('user_id', user.id).order('date', { ascending:false, nullsFirst:false }),
+    db.from('videos').select('id,title,brand,status,date,notes,prod_id,units').eq('user_id', user.id).order('date', { ascending:false, nullsFirst:false }),
     db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
   ]);
   _todayQueue=queue||[];
@@ -658,11 +658,12 @@ async function init() {
 
   renderTodayContent();
   renderLineup(user.id);
-  const topProducts=(products||[]).slice().sort((a,b)=>(Number(b.units_sold)||0)-(Number(a.units_sold)||0)).filter(p=>(Number(p.units_sold)||0)>0).slice(0,3);
+  const productUnits=videoUnitsByProduct(products||[], videos||[]);
+  const topProducts=(products||[]).slice().sort((a,b)=>(productUnits.get(b.id)||0)-(productUnits.get(a.id)||0)).filter(p=>(productUnits.get(p.id)||0)>0).slice(0,3);
   if(topProducts.length){
     document.getElementById('top-products').className='top-product-list';
     const rankIcons=['icons/top/first.png','icons/top/second.png','icons/top/third.png'];
-    document.getElementById('top-products').innerHTML=topProducts.map((p,i)=>`<div class="top-product-row" onclick="window.location='products.html?search='+encodeURIComponent(p.name)" title="View in Products"><img class="top-product-rank" src="${rankIcons[i]}" alt="${i+1}"><div style="flex:1;min-width:0;overflow:hidden;"><div class="top-product-name">${p.name}</div><div class="top-product-brand">${p.brand||''}</div></div><div class="top-product-units">${(Number(p.units_sold)||0).toLocaleString()}<span>sold</span></div></div>`).join('');
+    document.getElementById('top-products').innerHTML=topProducts.map((p,i)=>`<div class="top-product-row" onclick="window.location='products.html?search='+encodeURIComponent(p.name)" title="View in Products"><img class="top-product-rank" src="${rankIcons[i]}" alt="${i+1}"><div style="flex:1;min-width:0;overflow:hidden;"><div class="top-product-name">${p.name}</div><div class="top-product-brand">${p.brand||''}</div></div><div class="top-product-units">${(productUnits.get(p.id)||0).toLocaleString()}<span>sold</span></div></div>`).join('');
     // Append View All after the list
     const viewAll = document.createElement('a');
     viewAll.href = 'products.html';
@@ -727,6 +728,33 @@ function calcStreak(rows, todayStr, goal = 1) {
 function dateFromKey(key) {
   const [year, month, day] = String(key || localDateKey()).split('-').map(Number);
   return new Date(year || 1970, (month || 1) - 1, day || 1);
+}
+function normalizeProductKey(value) {
+  return String(value || '').trim().toLowerCase();
+}
+function videoProductName(video) {
+  const productLine = String(video.notes || '').match(/^Product:\s*(.+)$/im);
+  return (productLine?.[1] || video.brand || video.title || '').trim();
+}
+function videoUnitsByProduct(products, videos) {
+  const unitSums = new Map((products || []).map(product => [product.id, 0]));
+  const byName = new Map();
+  (products || []).forEach(product => {
+    const key = normalizeProductKey(product.name);
+    if(!key)return;
+    if(!byName.has(key))byName.set(key, []);
+    byName.get(key).push(product.id);
+  });
+  (videos || []).forEach(video => {
+    const units = Number(video.units) || 0;
+    if(video.prod_id && unitSums.has(video.prod_id)) {
+      unitSums.set(video.prod_id, (unitSums.get(video.prod_id) || 0) + units);
+      return;
+    }
+    const matches = byName.get(normalizeProductKey(videoProductName(video))) || [];
+    matches.forEach(id => unitSums.set(id, (unitSums.get(id) || 0) + units));
+  });
+  return unitSums;
 }
 
 function renderMiniLadder(lvlIdx, monthGmv) {
