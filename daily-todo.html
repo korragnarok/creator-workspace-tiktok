@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=126"></script>
-<link rel="stylesheet" href="layout.css?v=126">
+<script src="theme-init.js?v=127"></script>
+<link rel="stylesheet" href="layout.css?v=127">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=126"></script>
+<script src="supabase.js?v=127"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -98,6 +98,12 @@ a{text-decoration:none;color:inherit;}
 .script-textarea{width:100%;padding:10px 12px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;line-height:1.75;font-family:'IBM Plex Serif',serif;outline:none;resize:vertical;min-height:100px;transition:border-color 0.15s;}
 .script-textarea:focus{border-color:var(--rust);}
 .script-actions{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.take-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0;}
+.take-field{min-width:0;}
+.take-field label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px;}
+.take-field textarea,.take-field input{width:100%;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:12px;line-height:1.45;padding:8px 10px;outline:none;resize:vertical;min-height:42px;}
+.take-field textarea:focus,.take-field input:focus{border-color:var(--rust);}
+.take-field.full{grid-column:1/-1;}
 .location-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 10px;}
 .location-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);}
 .location-pill{border:1px solid var(--border-mid);border-radius:999px;background:var(--surface);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.05em;text-transform:uppercase;padding:6px 10px;color:var(--text-mid);outline:none;cursor:pointer;}
@@ -190,6 +196,7 @@ a{text-decoration:none;color:inherit;}
 @media(max-width:980px){.todo-toolbar{grid-template-columns:auto minmax(0,1fr) auto;}.header-actions{grid-column:1/-1;justify-content:flex-start;}.week-strip{gap:8px;overflow-x:auto;grid-template-columns:repeat(7,minmax(118px,1fr));padding-bottom:4px;scrollbar-width:none;}.week-strip::-webkit-scrollbar{display:none;}}
 body{overflow-x:hidden;}
 @media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:50px;}.date-label{font-size:16px;white-space:normal;}.header-actions .btn{flex:1;justify-content:center;}.modal{max-height:calc(100dvh - 40px);}.modal-list{flex:1;}}
+@media(max-width:768px){.take-fields{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -279,7 +286,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=126"></script>
+<script src="layout.js?v=127"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -329,6 +336,10 @@ function displayHookText(text){
     .replace(/\bSTATUS\s*:\s*[\w-]+\b/gi,'')
     .replace(/^LOCATION\s*:[^\n]*\n?/gim,'')
     .replace(/^TYPE\s*:[^\n]*\n?/gim,'')
+    .replace(/^ON_SCREEN_TEXT\s*:[^\n]*\n?/gim,'')
+    .replace(/^SEO_STRATEGY\s*:[^\n]*\n?/gim,'')
+    .replace(/^CAPTION\s*:[^\n]*\n?/gim,'')
+    .replace(/^HASHTAGS\s*:[^\n]*\n?/gim,'')
     .replace(/\n{3,}/g,'\n\n')
     .trim();
 }
@@ -368,11 +379,37 @@ function setFilmingTypeLine(notes,type){
   if(!cleanType)return body;
   return [body,`TYPE:${cleanType}`].filter(Boolean).join('\n');
 }
+const TAKE_FIELD_META={
+  onscreen:{key:'ON_SCREEN_TEXT',label:'On-screen text',placeholder:'Text viewers should see on screen...'},
+  seo:{key:'SEO_STRATEGY',label:'SEO strategy',placeholder:'Keywords, search phrases, product terms...'},
+  caption:{key:'CAPTION',label:'Caption',placeholder:'Write the caption for this video...'},
+  hashtags:{key:'HASHTAGS',label:'Hashtags',placeholder:'#tiktokshop #productfinds'}
+};
+function encodeTakeField(value){
+  return encodeURIComponent(String(value||'').trim());
+}
+function decodeTakeField(value){
+  try{return decodeURIComponent(String(value||''));}catch(e){return String(value||'');}
+}
+function getTakeField(notes,field){
+  const meta=TAKE_FIELD_META[field];
+  if(!meta)return '';
+  const match=String(notes||'').match(new RegExp(`^${meta.key}\\s*:\\s*([^\\n]*)`,'im'));
+  return match?decodeTakeField(match[1].trim()):'';
+}
+function setTakeFieldLine(notes,field,value){
+  const meta=TAKE_FIELD_META[field];
+  if(!meta)return notes||'';
+  const body=withoutMetaLine(notes,meta.key);
+  const clean=String(value||'').trim();
+  if(!clean)return body;
+  return [body,`${meta.key}:${encodeTakeField(clean)}`].filter(Boolean).join('\n');
+}
 function replaceVisibleHook(notes,nextHook){
   const hidden=String(notes||'')
     .split('\n')
     .map(line=>line.trim())
-    .filter(line=>/^(LOCATION|TYPE|SCHED_TIME|STATUS)\s*:/i.test(line));
+    .filter(line=>/^(LOCATION|TYPE|SCHED_TIME|STATUS|ON_SCREEN_TEXT|SEO_STRATEGY|CAPTION|HASHTAGS)\s*:/i.test(line));
   return [String(nextHook||'').trim(),...hidden].filter(Boolean).join('\n');
 }
 function locationClass(type){
@@ -400,6 +437,24 @@ function typeSelectHtml(cardId,take){
     <select class="${selectClass}" onchange="setFilmingType('${esc(cardId)}','${esc(take.id)}',this.value)">
       ${TYPE_OPTIONS.map(option=>`<option value="${esc(option.value)}"${type.type===option.value?' selected':''}>${esc(option.label)}</option>`).join('')}
     </select>
+  </div>`;
+}
+function takeFieldsHtml(cardId,take){
+  const fieldHtml=(field,extraClass='')=>{
+    const meta=TAKE_FIELD_META[field];
+    const value=getTakeField(take.hookText,field);
+    const inputId=`take-${field}-${take.id}`;
+    const common=`id="${esc(inputId)}" placeholder="${esc(meta.placeholder)}" onblur="saveTakeField('${esc(cardId)}','${esc(take.id)}','${esc(field)}')"`;
+    const control=field==='hashtags'
+      ? `<input type="text" ${common} value="${esc(value)}">`
+      : `<textarea ${common}>${esc(value)}</textarea>`;
+    return `<div class="take-field ${extraClass}"><label for="${esc(inputId)}">${esc(meta.label)}</label>${control}</div>`;
+  };
+  return `<div class="take-fields">
+    ${fieldHtml('onscreen')}
+    ${fieldHtml('seo')}
+    ${fieldHtml('caption','full')}
+    ${fieldHtml('hashtags','full')}
   </div>`;
 }
 
@@ -566,6 +621,7 @@ function render(){
       </div>`;
       html+=typeSelectHtml(card.id,take);
       html+=locationSelectHtml(card.id,take);
+      html+=takeFieldsHtml(card.id,take);
 
       if(take.editingScript){
         html+=`<textarea class="script-textarea" id="sta-${esc(take.id)}" placeholder="Paste or type your script...">${esc(take.script)}</textarea>
@@ -686,14 +742,29 @@ async function setFilmingType(cardId,takeId,type){
   render();
   if(take.queueId)await saveQueueRow(card,take);
 }
+async function saveTakeField(cardId,takeId,field){
+  const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
+  const input=document.getElementById(`take-${field}-${takeId}`);
+  if(!take||!input)return;
+  take.hookText=setTakeFieldLine(take.hookText,field,input.value);
+  if(take.queueId)await saveQueueRow(card,take);
+}
 function videoRowFromTake(card,take){
   const notes=[];
   const loc=getFilmingLocation(take.hookText);
   const type=getFilmingType(take.hookText);
+  const onScreen=getTakeField(take.hookText,'onscreen');
+  const seo=getTakeField(take.hookText,'seo');
+  const caption=getTakeField(take.hookText,'caption');
+  const hashtags=getTakeField(take.hookText,'hashtags');
   notes.push('Product: '+card.name);
   if(displayHookText(take.hookText))notes.push('Hook: '+displayHookText(take.hookText));
   if(loc.type)notes.push('Location: '+(loc.type==='other'?(loc.label||'Other'):loc.label));
   if(type.type)notes.push('Type: '+type.label);
+  if(onScreen)notes.push('On-screen text: '+onScreen);
+  if(seo)notes.push('SEO strategy: '+seo);
+  if(caption)notes.push('Caption: '+caption);
+  if(hashtags)notes.push('Hashtags: '+hashtags);
   if(take.script)notes.push('Script: '+take.script);
   if(take.inspirationLinks?.length)notes.push('Inspiration: '+take.inspirationLinks.join(', '));
 	  return {
