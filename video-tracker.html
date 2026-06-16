@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Videos &mdash; Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=128"></script>
-<link rel="stylesheet" href="layout.css?v=128">
+<script src="theme-init.js?v=129"></script>
+<link rel="stylesheet" href="layout.css?v=129">
 <style>
 
 :root{--r:12px;}
@@ -75,6 +75,9 @@ tbody td.muted{color:var(--text-muted);font-size:12px;}
 .tbl-hook{font-size:12px;color:var(--text-mid);margin-top:2px;line-height:1.35;}
 .tbl-action{border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;}
 .tbl-action:hover{border-color:var(--rust);color:var(--rust);}
+.tbl-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap;}
+.tbl-action.primary{border-color:color-mix(in srgb,var(--sage) 62%,var(--border-mid));color:var(--sage);}
+.tbl-action.primary:hover{background:color-mix(in srgb,var(--sage) 14%,transparent);color:var(--sage);}
 .editable-cell{display:inline-flex;align-items:center;min-height:30px;max-width:260px;border:1px solid transparent;border-radius:7px;padding:3px 7px;margin:-3px -7px;cursor:text;transition:border-color 0.12s,background 0.12s;color:inherit;}
 .editable-cell:hover{border-color:var(--border-mid);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);}
 .editable-cell.status{cursor:pointer;margin:0;justify-content:center;min-width:74px;text-align:center;}
@@ -144,7 +147,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=128"></script>
+<script src="supabase.js?v=129"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link active">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -222,7 +225,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=128"></script>
+<script src="layout.js?v=129"></script>
 <script>
 const PAGE_SIZE=25;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
@@ -256,6 +259,126 @@ function hookFromVideo(v){
   const line=notes.split('\n').find(value=>/^Hook:/i.test(value.trim()));
   return line ? line.replace(/^Hook:\s*/i,'').trim() : v.title||'';
 }
+function todayKey(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function encodeTakeField(value){
+  return encodeURIComponent(String(value||'').trim());
+}
+function decodeTakeSnapshot(value){
+  try{return JSON.parse(decodeURIComponent(String(value||'')));}catch(e){return null;}
+}
+function noteSection(notes,label){
+  const escaped=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const labels='Product|Hook|Location|Type|On-screen text|SEO strategy|Caption|Hashtags|Script|Inspiration|TAKE_SNAPSHOT';
+  const match=String(notes||'').match(new RegExp(`^${escaped}\\s*:\\s*([\\s\\S]*?)(?=\\n(?:${labels})\\s*:|$)`,'im'));
+  return match?match[1].trim():'';
+}
+function locationFromLabel(value){
+  const text=String(value||'').trim();
+  const key=text.toLowerCase();
+  if(!text)return null;
+  if(key.includes('bedroom'))return {type:'bedroom',label:'Bedroom'};
+  if(key.includes('outside'))return {type:'outside',label:'Outside'};
+  if(key.includes('car'))return {type:'car',label:'Car'};
+  if(key.includes('kitchen'))return {type:'kitchen',label:'Kitchen'};
+  if(key.includes('living'))return {type:'living-room',label:'Living Room'};
+  return {type:'other',label:text};
+}
+function typeFromLabel(value){
+  const text=String(value||'').trim();
+  const key=text.toLowerCase();
+  if(!text)return null;
+  if(key.includes('product demo'))return {type:'product-demo',label:'🎬 Product Demo'};
+  if(key.includes('voiceover'))return {type:'voiceover',label:'🎙️ Voiceover'};
+  if(key.includes('faceless'))return {type:'faceless-b-roll',label:'📦 Faceless B-Roll'};
+  if(key.includes('asmr')||key.includes('unboxing'))return {type:'asmr-unboxing',label:'🤫 ASMR / Unboxing'};
+  if(key.includes('before'))return {type:'before-after',label:'🔄 Before & After'};
+  if(key.includes('skit'))return {type:'skit',label:'💬 Skit'};
+  return {type:'talking-head',label:'🗣️ Talking Head'};
+}
+function videoSnapshot(video){
+  const notes=String(video?.notes||'');
+  const rawSnapshot=notes.match(/^TAKE_SNAPSHOT\s*:\s*([^\n]*)/im)?.[1];
+  const saved=rawSnapshot?decodeTakeSnapshot(rawSnapshot):null;
+  if(saved){
+    return {
+      product:saved.product||video.brand||'',
+      brand:saved.brand||video._productBrand||'',
+      prodId:saved.prodId||saved.prod_id||video.prod_id||null,
+      hook:saved.hook||hookFromVideo(video),
+      location:saved.location||null,
+      type:saved.type||null,
+      onScreen:saved.onScreen||'',
+      seo:saved.seo||'',
+      caption:saved.caption||'',
+      hashtags:saved.hashtags||'',
+      script:saved.script||'',
+      inspirationLinks:Array.isArray(saved.inspirationLinks)?saved.inspirationLinks:[]
+    };
+  }
+  const inspiration=noteSection(notes,'Inspiration');
+  return {
+    product:noteSection(notes,'Product')||video.brand||video.title||'Untitled product',
+    brand:video._productBrand||'',
+    prodId:video.prod_id||null,
+    hook:noteSection(notes,'Hook')||hookFromVideo(video),
+    location:locationFromLabel(noteSection(notes,'Location')),
+    type:typeFromLabel(noteSection(notes,'Type')),
+    onScreen:noteSection(notes,'On-screen text'),
+    seo:noteSection(notes,'SEO strategy'),
+    caption:noteSection(notes,'Caption'),
+    hashtags:noteSection(notes,'Hashtags'),
+    script:noteSection(notes,'Script'),
+    inspirationLinks:inspiration?inspiration.split(',').map(value=>value.trim()).filter(Boolean):[]
+  };
+}
+function queueNotesFromSnapshot(snapshot){
+  const lines=[];
+  if(snapshot.hook)lines.push(snapshot.hook);
+  if(snapshot.location?.type){
+    const locValue=snapshot.location.type==='other'
+      ? `other:${snapshot.location.label||'Other'}`
+      : snapshot.location.type;
+    lines.push(`LOCATION:${locValue}`);
+  }
+  if(snapshot.type?.type)lines.push(`TYPE:${snapshot.type.type}`);
+  if(snapshot.onScreen)lines.push(`ON_SCREEN_TEXT:${encodeTakeField(snapshot.onScreen)}`);
+  if(snapshot.seo)lines.push(`SEO_STRATEGY:${encodeTakeField(snapshot.seo)}`);
+  if(snapshot.caption)lines.push(`CAPTION:${encodeTakeField(snapshot.caption)}`);
+  if(snapshot.hashtags)lines.push(`HASHTAGS:${encodeTakeField(snapshot.hashtags)}`);
+  return lines.join('\n');
+}
+async function reuseVideo(id,button){
+  const video=DATA.find(row=>row.id===id);
+  if(!video||!user)return;
+  const original=button?.textContent||'Reuse';
+  if(button){button.disabled=true;button.textContent='Adding...';}
+  const snapshot=videoSnapshot(video);
+  const payload={
+    user_id:user.id,
+    date:todayKey(),
+    prod_id:snapshot.prodId||null,
+    name:snapshot.product||video.brand||'Untitled product',
+    brand:snapshot.brand||'',
+    notes:queueNotesFromSnapshot(snapshot),
+    script:snapshot.script||'',
+    inspiration_links:snapshot.inspirationLinks||[],
+    done:false,
+    sort_order:Math.floor(Date.now()/1000)
+  };
+  let {error}=await db.from('queue').insert(payload);
+  if(error&&/inspiration_links/i.test(error.message||'')){
+    const {inspiration_links,...fallbackPayload}=payload;
+    const retry=await db.from('queue').insert(fallbackPayload);
+    error=retry.error;
+  }
+  if(button){button.disabled=false;button.textContent=original;}
+  if(error){showToast(error.message,'error');return;}
+  showToast('Added back to today’s to do');
+}
+window.reuseVideo=reuseVideo;
 function dealTypeLabel(deal){
   if(deal?.refundable)return 'Refundable Sample';
   return ({sample:'Sample',retainer:'Retainer',campaign:'Campaign'}[deal?.type]||'Deal');
@@ -381,7 +504,7 @@ function renderTable(){
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','gmv')">${(Number(v.gmv)||0)>0?'$'+Number(v.gmv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'-'}</span></td>
       <td><span class="editable-cell status ${hasSales?'status-yes':'status-no'}" onclick="beginVideoInlineEdit(event,'${v.id}','units')">${hasSales?'Yes':'No'}</span></td>
       <td><span class="editable-cell status status-${esc(v.status||'draft')}" onclick="beginVideoInlineEdit(event,'${v.id}','status')">${esc(v.status||'draft')}</span></td>
-      <td><button class="tbl-action" onclick="event.stopPropagation();openModal('${v.id}')">Edit</button></td>
+      <td><div class="tbl-actions"><button class="tbl-action primary" onclick="event.stopPropagation();reuseVideo('${v.id}',this)">Reuse</button><button class="tbl-action" onclick="event.stopPropagation();openModal('${v.id}')">Edit</button></div></td>
     </tr>`;
   }).join('');
   updateVideoEditToolbar();

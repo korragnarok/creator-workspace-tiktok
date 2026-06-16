@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=128"></script>
-<link rel="stylesheet" href="layout.css?v=128">
+<script src="theme-init.js?v=129"></script>
+<link rel="stylesheet" href="layout.css?v=129">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=128"></script>
+<script src="supabase.js?v=129"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -286,7 +286,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=128"></script>
+<script src="layout.js?v=129"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -387,6 +387,9 @@ const TAKE_FIELD_META={
 };
 function encodeTakeField(value){
   return encodeURIComponent(String(value||'').trim());
+}
+function encodeTakeSnapshot(value){
+  return encodeURIComponent(JSON.stringify(value||{}));
 }
 function decodeTakeField(value){
   try{return decodeURIComponent(String(value||''));}catch(e){return String(value||'');}
@@ -758,8 +761,24 @@ function videoRowFromTake(card,take){
   const seo=getTakeField(take.hookText,'seo');
   const caption=getTakeField(take.hookText,'caption');
   const hashtags=getTakeField(take.hookText,'hashtags');
+  const hook=displayHookText(take.hookText);
+  const snapshot={
+    product:card.name||'',
+    brand:card.brand||'',
+    prodId:card.prodId||null,
+    hook,
+    location:loc.type?loc:null,
+    type:type.type?type:null,
+    onScreen,
+    seo,
+    caption,
+    hashtags,
+    script:take.script||'',
+    inspirationLinks:normalizeInspirationLinks(take.inspirationLinks)
+  };
   notes.push('Product: '+card.name);
-  if(displayHookText(take.hookText))notes.push('Hook: '+displayHookText(take.hookText));
+  notes.push('TAKE_SNAPSHOT:'+encodeTakeSnapshot(snapshot));
+  if(hook)notes.push('Hook: '+hook);
   if(loc.type)notes.push('Location: '+(loc.type==='other'?(loc.label||'Other'):loc.label));
   if(type.type)notes.push('Type: '+type.label);
   if(onScreen)notes.push('On-screen text: '+onScreen);
