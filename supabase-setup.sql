@@ -173,3 +173,6 @@ create table if not exists ctas (
 );
 alter table ctas enable row level security;
 create policy "Users manage own ctas" on ctas for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ── 12. BRAND DEAL NOTES ─────────────────────────────────────────────────────
+alter table brand_deals add column if not exists notes text default '';
