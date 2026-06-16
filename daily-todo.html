@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=133"></script>
-<link rel="stylesheet" href="layout.css?v=133">
+<script src="theme-init.js?v=134"></script>
+<link rel="stylesheet" href="layout.css?v=134">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=133"></script>
+<script src="supabase.js?v=134"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -286,7 +286,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=133"></script>
+<script src="layout.js?v=134"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -649,6 +649,7 @@ function render(){
       html+=`<div class="take-footer">
         <span class="take-status${take.done?' filmed':''}">${take.done?'✓ Done':'Not filmed yet'}</span>
         <div class="take-footer-btns">
+          ${take.done?`<button class="tbtn done-active" onclick="clearSingleTake('${esc(card.id)}','${esc(take.id)}',this)">Clear</button>`:''}
           <button class="tbtn${take.done?' done-active':''}" onclick="toggleDone('${esc(card.id)}','${esc(take.id)}')">${take.done?'Undo':'Mark Done'}</button>
           ${takes.length>1?`<button class="tbtn del" onclick="removeTake('${esc(card.id)}','${esc(take.id)}')">Remove</button>`:''}
         </div>
@@ -833,6 +834,28 @@ async function clearDoneToday(btn){
   if(btn)btn.textContent=original;
   render();
   showToast(`Saved ${rows.length} to Content Tracker`);
+}
+async function clearSingleTake(cardId,takeId,btn){
+  const card=TODO.find(c=>c.id===cardId);
+  const take=card?.takes.find(t=>t.id===takeId);
+  if(!card||!take)return;
+  const original=btn?.textContent||'Clear';
+  if(btn){btn.disabled=true;btn.textContent='Clearing...';}
+  const row=videoRowFromTake(card,take);
+  const {error}=await insertVideoRows([row]);
+  if(error){
+    if(btn){btn.disabled=false;btn.textContent=original;}
+    showToast('Could not save to Content Tracker: '+error.message,'error');
+    return;
+  }
+  if(take.queueId){
+    await db.from('queue').delete().eq('id',take.queueId).eq('user_id',_user.id);
+    sessionStorage.removeItem('ts-'+take.queueId);
+  }
+  card.takes=card.takes.filter(item=>item.id!==take.id);
+  TODO=TODO.filter(item=>(item.takes||[]).length>0);
+  render();
+  showToast('Saved to Content Tracker');
 }
 function copyAllScripts(btn){
   const all=[];TODO.forEach(card=>card.takes.forEach((take,i)=>{if(take.script)all.push(`${card.name.toUpperCase()}${card.takes.length>1?' — Take '+(i+1):''}\n${take.script}`);}));
