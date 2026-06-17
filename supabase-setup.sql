@@ -42,7 +42,7 @@ create table if not exists videos (
   date date,
   posted_time time,
   status text default 'live',
-  views integer default 0,
+  views bigint default 0,
   ctr numeric(6,2) default 0,
   units integer default 0,
   notes text default '',
@@ -53,6 +53,7 @@ alter table videos enable row level security;
 create policy "Users manage own videos" on videos for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 alter table videos add column if not exists posted_time time;
 alter table videos add column if not exists ctr numeric(6,2) default 0;
+alter table videos alter column views type bigint using views::bigint;
 
 -- ── 4. HOOKS ────────────────────────────────────────────────────────────────
 create table if not exists hooks (
