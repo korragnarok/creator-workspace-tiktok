@@ -67,6 +67,7 @@ a{text-decoration:none;color:inherit;}
 .brand-pill{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:6px 14px;border-radius:100px;border:1px solid var(--border-mid);background:var(--surface);color:var(--text-mid);cursor:pointer;transition:all 0.12s;}
 .brand-pill:hover{border-color:var(--rust);color:var(--rust);}
 .brand-pill.active{background:var(--rust);color:#fff;border-color:var(--rust);}
+.brand-pill.toggle-active{background:var(--sage);color:var(--bg);border-color:var(--sage);}
 
 .empty-state{text-align:center;padding:64px 24px;}
 .empty-title{font-family:'IBM Plex Serif',serif;font-size:28px;font-weight:700;color:var(--text-mid);margin-bottom:8px;}
@@ -292,6 +293,7 @@ let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
 let TODO = [];
 let activeBrandFilter = 'All';
+let hideFilmed = localStorage.getItem('take24:hideFilmed') === '1';
 // Pre-filter by brand if coming from lineup strip
 const _urlBrand = new URLSearchParams(window.location.search).get('brand');
 if (_urlBrand) activeBrandFilter = _urlBrand;
@@ -544,7 +546,13 @@ async function saveQueueRow(card,take){
 async function deleteQueueRow(take){if(take.queueId){await db.from('queue').delete().eq('id',take.queueId);sessionStorage.removeItem('ts-'+take.queueId);}}
 
 // ─── RENDER ───────────────────────────────────────────────
-function getFilteredCards(){return activeBrandFilter==='All'?TODO:TODO.filter(c=>(c.brand||'')=== activeBrandFilter);}
+function getFilteredCards(){
+  const brandFiltered=activeBrandFilter==='All'?TODO:TODO.filter(c=>(c.brand||'')=== activeBrandFilter);
+  if(!hideFilmed)return brandFiltered;
+  return brandFiltered
+    .map(card=>({...card,_allTakes:card.takes||[],takes:(card.takes||[]).filter(take=>!take.done)}))
+    .filter(card=>(card.takes||[]).length>0);
+}
 function productBankUrl(card){
   const brand=String(card?.brand||'').trim();
   if(brand)return 'products.html?brand='+encodeURIComponent(brand);
@@ -582,8 +590,11 @@ function render(){
 
   const brands=[...new Set(TODO.map(c=>c.brand).filter(Boolean))].sort();
   const fArea=document.getElementById('brandFilterArea');
-  if(brands.length>1){
-    fArea.innerHTML=`<div class="brand-filter"><button class="brand-pill${activeBrandFilter==='All'?' active':''}" onclick="setBrandFilter('All')">All</button>${brands.map(b=>`<button class="brand-pill${activeBrandFilter===b?' active':''}" onclick="setBrandFilter('${esc(b)}')">${esc(b)}</button>`).join('')}</div>`;
+  if(brands.length>1||done>0){
+    const brandButtons=brands.length>1
+      ? `<button class="brand-pill${activeBrandFilter==='All'?' active':''}" onclick="setBrandFilter('All')">All</button>${brands.map(b=>`<button class="brand-pill${activeBrandFilter===b?' active':''}" onclick="setBrandFilter('${esc(b)}')">${esc(b)}</button>`).join('')}`
+      : '';
+    fArea.innerHTML=`<div class="brand-filter">${brandButtons}<button class="brand-pill${hideFilmed?' toggle-active':''}" onclick="toggleHideFilmed()">${hideFilmed?'Show Filmed':'Hide Filmed'}</button></div>`;
   } else fArea.innerHTML='';
 
   const main=document.getElementById('mainContent');
@@ -593,18 +604,22 @@ function render(){
     return;
   }
   if(!filtered.length){
-    main.innerHTML=`<div class="empty-state" style="padding:40px 24px;"><div class="empty-title">No ${esc(activeBrandFilter)} products today</div><button class="btn btn-ghost" onclick="setBrandFilter('All')" style="margin-top:12px;">Show All</button></div>`;
+    const title=hideFilmed?'No unfilmed takes here':`No ${esc(activeBrandFilter)} products today`;
+    const action=hideFilmed
+      ? '<button class="btn btn-ghost" onclick="toggleHideFilmed()" style="margin-top:12px;">Show Filmed</button>'
+      : '<button class="btn btn-ghost" onclick="setBrandFilter(\'All\')" style="margin-top:12px;">Show All</button>';
+    main.innerHTML=`<div class="empty-state" style="padding:40px 24px;"><div class="empty-title">${title}</div>${action}</div>`;
     return;
   }
 
   let html='<div class="cards-list">';
 	  filtered.forEach(card=>{
-	    const takes=card.takes||[],doneTakes=takes.filter(t=>t.done).length;
+	    const takes=card.takes||[],allTakes=card._allTakes||takes,doneTakes=allTakes.filter(t=>t.done).length;
 	    html+=`<div class="pcard" id="${esc(card.id)}">
 	      <div class="pcard-header">
 	        <div><div class="pcard-name"><a href="${esc(productBankUrl(card))}" title="View this brand in Products">${esc(card.name)}</a></div>${card.brand?`<div class="pcard-brand">${esc(card.brand)}</div>`:''}</div>
 	        <div class="pcard-btns">
-          <span style="font-family:'Noto Sans Mono',sans-serif;font-size:11px;color:var(--text-muted);padding:0 4px;">${doneTakes}/${takes.length}</span>
+          <span style="font-family:'Noto Sans Mono',sans-serif;font-size:11px;color:var(--text-muted);padding:0 4px;">${doneTakes}/${allTakes.length}</span>
           <a class="hbtn" href="${esc(scriptWorkshopUrl(card))}">Workshop</a>
           <button class="hbtn danger" onclick="removeCard('${esc(card.id)}')">Remove</button>
         </div>
@@ -665,6 +680,11 @@ function render(){
 }
 
 function setBrandFilter(b){activeBrandFilter=b;history.replaceState({},'','daily-todo.html');render();}
+function toggleHideFilmed(){
+  hideFilmed=!hideFilmed;
+  localStorage.setItem('take24:hideFilmed',hideFilmed?'1':'0');
+  render();
+}
 
 // ─── ACTIONS ──────────────────────────────────────────────
 let _dtUndoTimer=null, _dtUndoCard=null;
