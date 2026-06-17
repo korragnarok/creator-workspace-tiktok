@@ -72,31 +72,38 @@ function queueCarryKey(row) {
 async function carryForwardUnfinishedQueue(userId, targetDate = localDateKey()) {
   if (!userId || !targetDate) return 0;
   const { data: overdue, error } = await db.from('queue')
-    .select('id,prod_id,name,brand,notes,sort_order')
+    .select('id,prod_id,name,brand,notes,sort_order,done')
     .eq('user_id', userId)
-    .eq('done', false)
     .lt('date', targetDate);
   if (error || !overdue?.length) return 0;
 
   const { data: todayRows } = await db.from('queue')
-    .select('prod_id,name,brand,notes,sort_order')
+    .select('id,prod_id,name,brand,notes,sort_order,done')
     .eq('user_id', userId)
     .eq('date', targetDate);
-  const existing = new Set((todayRows || []).map(queueCarryKey));
+  const existing = new Map((todayRows || []).map(row => [queueCarryKey(row), row]));
   const toMove = [];
   const duplicateIds = [];
+  const doneDuplicateIds = [];
 
   overdue.forEach(row => {
     const key = queueCarryKey(row);
-    if (existing.has(key)) duplicateIds.push(row.id);
+    const existingRow = existing.get(key);
+    if (existingRow) {
+      duplicateIds.push(row.id);
+      if (row.done && !existingRow.done) doneDuplicateIds.push(existingRow.id);
+    }
     else {
-      existing.add(key);
+      existing.set(key, row);
       toMove.push(row.id);
     }
   });
 
   if (toMove.length) {
-    await db.from('queue').update({ date: targetDate, done: false }).in('id', toMove).eq('user_id', userId);
+    await db.from('queue').update({ date: targetDate }).in('id', toMove).eq('user_id', userId);
+  }
+  if (doneDuplicateIds.length) {
+    await db.from('queue').update({ done: true }).in('id', doneDuplicateIds).eq('user_id', userId);
   }
   if (duplicateIds.length) {
     await db.from('queue').delete().in('id', duplicateIds).eq('user_id', userId);
