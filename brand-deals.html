@@ -69,7 +69,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
 .status.on-track{background:color-mix(in srgb,var(--sage) 20%,transparent);color:var(--sage);}
 .status.completed{background:color-mix(in srgb,var(--sage) 26%,transparent);color:var(--sage);}
 .days{font-family:'Noto Sans Mono',monospace;font-size:18px;font-weight:900;color:var(--sage);line-height:1;}
-.days.due-soon{color:var(--tan);}
+.days.due-soon,.days-label.due-soon{color:var(--rust);}
 .days.overdue{color:var(--rust);}
 .days.finished{color:var(--sage);}
 .days-label{font-size:11px;color:var(--text-muted);}
@@ -374,7 +374,7 @@ async function renderDeals(){
     }
 
     const left=daysLeft(deal.due);
-    const dayClass=left<0?'overdue':left<=7?'due-soon':'';
+    const dayClass=left<0?'overdue':left<10?'due-soon':'';
     return `<tr>
       <td>
         <div class="deal-name">
@@ -389,7 +389,7 @@ async function renderDeals(){
       <td>${esc(monthDay(deal.due))}</td>
       <td>${criteriaHtml}</td>
       <td><span class="status ${status}">${esc(statusLabel(status))}</span></td>
-      <td>${status==='completed'?'<div class="days finished">Finished</div>':left<0?'<div class="days overdue">Late</div>':left===0?'<div class="days due-soon">Due Today</div>':`<div class="days ${dayClass}">${left}</div><div class="days-label">days</div>`}</td>
+      <td>${status==='completed'?'<div class="days finished">Finished</div>':left<0?'<div class="days overdue">Late</div>':left===0?'<div class="days due-soon">Due Today</div>':`<div class="days ${dayClass}">${left}</div><div class="days-label ${dayClass}">days</div>`}</td>
       <td style="white-space:nowrap;">${deal.notes?`<button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openBriefModal('${esc(deal.id)}')">See Brief</button>`:''}<button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openEditModal('${esc(deal.id)}')">Edit</button><button class="btn" onclick="event.stopPropagation();confirmDeleteDeal('${esc(deal.id)}')">Remove</button></td>
     </tr>`;
   }).join('');
