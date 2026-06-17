@@ -389,7 +389,7 @@ async function renderDeals(){
       <td>${esc(monthDay(deal.due))}</td>
       <td>${criteriaHtml}</td>
       <td><span class="status ${status}">${esc(statusLabel(status))}</span></td>
-      <td>${status==='completed'?'<div class="days finished">Finished</div>':left<0?'<div class="days overdue">Late</div>':`<div class="days ${dayClass}">${left}</div><div class="days-label">days</div>`}</td>
+      <td>${status==='completed'?'<div class="days finished">Finished</div>':left<0?'<div class="days overdue">Late</div>':left===0?'<div class="days due-soon">Due Today</div>':`<div class="days ${dayClass}">${left}</div><div class="days-label">days</div>`}</td>
       <td style="white-space:nowrap;">${deal.notes?`<button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openBriefModal('${esc(deal.id)}')">See Brief</button>`:''}<button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openEditModal('${esc(deal.id)}')">Edit</button><button class="btn" onclick="event.stopPropagation();confirmDeleteDeal('${esc(deal.id)}')">Remove</button></td>
     </tr>`;
   }).join('');
