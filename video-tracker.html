@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Videos &mdash; Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=137"></script>
-<link rel="stylesheet" href="layout.css?v=137">
+<script src="theme-init.js?v=138"></script>
+<link rel="stylesheet" href="layout.css?v=138">
 <style>
 
 :root{--r:12px;}
@@ -148,7 +148,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=137"></script>
+<script src="supabase.js?v=138"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link active">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -187,12 +187,13 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
         <th onclick="sortBy('brand')">Product</th>
         <th>Hook</th>
         <th onclick="sortBy('views')" class="num">Views</th>
+        <th onclick="sortBy('ctr')" class="num">CTR</th>
         <th onclick="sortBy('gmv')" class="num">GMV</th>
         <th onclick="sortBy('units')">Got Sales</th>
         <th onclick="sortBy('status')">Status</th>
         <th></th>
       </tr></thead>
-      <tbody id="tbody"><tr><td colspan="8"><div class="empty">Loading...</div></td></tr></tbody>
+      <tbody id="tbody"><tr><td colspan="9"><div class="empty">Loading...</div></td></tr></tbody>
     </table>
     <div class="pagination"><span id="pageInfo"></span><div class="page-btns" id="pageBtns"></div></div>
   </div>
@@ -216,6 +217,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="form-row" style="margin-top:16px"><label class="form-label">Status</label><select class="form-input" id="fStatus"><option value="live">Live</option><option value="scheduled">Scheduled</option><option value="draft">Draft</option></select></div>
     <div class="form-row-half">
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Views</label><input type="number" class="form-input" id="fViews" placeholder="0" min="0"></div>
+      <div class="form-row" style="margin-bottom:0"><label class="form-label">CTR (%)</label><input type="number" class="form-input" id="fCtr" placeholder="0.00" min="0" step="0.01"></div>
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Units Sold</label><input type="number" class="form-input" id="fUnits" placeholder="0" min="0"></div>
       <div class="form-row" style="margin-bottom:0;grid-column:1/-1"><label class="form-label">GMV ($)</label><input type="number" class="form-input" id="fGmv" placeholder="0.00" min="0" step="0.01"></div>
     </div>
@@ -226,7 +228,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=137"></script>
+<script src="layout.js?v=138"></script>
 <script>
 const PAGE_SIZE=25;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
@@ -250,6 +252,7 @@ async function init() {
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function fmtNum(n){if(!n&&n!==0)return'-';return Number(n||0).toLocaleString('en-US');}
+function fmtPct(n){const value=Number(n)||0;return value>0?value.toLocaleString('en-US',{maximumFractionDigits:2})+'%':'-';}
 function fmtDate(s){if(!s)return'-';return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
 function fmtTime(s){if(!s)return'';const [h,m]=String(s).split(':');if(!h||!m)return'';const d=new Date();d.setHours(Number(h)||0,Number(m)||0,0,0);return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 function currentTimeValue(){const d=new Date();return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;}
@@ -410,14 +413,14 @@ function linkedDealTagsHtml(video){
 }
 async function loadVideos(){
   const tbody=document.getElementById('tbody');
-  tbody.innerHTML='<tr><td colspan="8"><div class="empty">Loading...</div></td></tr>';
+  tbody.innerHTML='<tr><td colspan="9"><div class="empty">Loading...</div></td></tr>';
   let {data,error}=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false}).order('posted_time', {ascending:false, nullsFirst:false});
   if(error&&/posted_time/i.test(error.message||'')){
     const retry=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false});
     data=retry.data;error=retry.error;
   }
   if(error){
-    tbody.innerHTML='<tr><td colspan="8" class="empty">Error loading videos.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="9" class="empty">Error loading videos.</td></tr>';
     return;
   }
   DATA=data||[];
@@ -480,7 +483,7 @@ function getFiltered(){
     return true;
   }).sort((a,b)=>{
     let av=sortField==='date'?videoSortDateTime(a):(a[sortField]||''),bv=sortField==='date'?videoSortDateTime(b):(b[sortField]||'');
-    if(sortField==='views'||sortField==='units'||sortField==='gmv'){av=Number(av)||0;bv=Number(bv)||0;}
+    if(sortField==='views'||sortField==='units'||sortField==='gmv'||sortField==='ctr'){av=Number(av)||0;bv=Number(bv)||0;}
     return av<bv?-1*sortDir:av>bv?1*sortDir:0;
   });
 }
@@ -507,7 +510,7 @@ function renderTable(){
   }
   const tbody=document.getElementById('tbody');
   if(!rows.length){
-    tbody.innerHTML='<tr><td colspan="8" class="empty">No videos found.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="9" class="empty">No videos found.</td></tr>';
     updateVideoEditToolbar();
     return;
   }
@@ -521,6 +524,7 @@ function renderTable(){
       <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span>${esc(v.brand||'No product')}</span>${linkedDealTagsHtml(v)}</div>${productBrand?`<div class="tbl-hook">${esc(productBrand)}</div>`:''}</td>
       <td><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','hook')">${esc(hook||'-')}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','views')">${fmtNum(v.views)}</span></td>
+      <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','ctr')">${fmtPct(v.ctr)}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','gmv')">${(Number(v.gmv)||0)>0?'$'+Number(v.gmv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'-'}</span></td>
       <td><span class="editable-cell status ${hasSales?'status-yes':'status-no'}" onclick="beginVideoInlineEdit(event,'${v.id}','units')">${hasSales?'Yes':'No'}</span></td>
       <td><span class="editable-cell status status-${esc(v.status||'draft')}" onclick="beginVideoInlineEdit(event,'${v.id}','status')">${esc(v.status||'draft')}</span></td>
@@ -686,10 +690,10 @@ function beginVideoInlineEdit(event, id, field) {
     }
   } else {
     editor = document.createElement('input');
-    editor.type = field === 'date' ? 'date' : (field === 'posted_time' ? 'time' : (field === 'views' || field === 'units' || field === 'gmv' ? 'number' : 'text'));
+    editor.type = field === 'date' ? 'date' : (field === 'posted_time' ? 'time' : (field === 'views' || field === 'units' || field === 'gmv' || field === 'ctr' ? 'number' : 'text'));
     if(field === 'posted_time') editor.step = '60';
     if(field === 'views' || field === 'units') { editor.min = '0'; editor.step = '1'; }
-    if(field === 'gmv') { editor.min = '0'; editor.step = '0.01'; }
+    if(field === 'gmv' || field === 'ctr') { editor.min = '0'; editor.step = '0.01'; }
     editor.value = originalValue;
   }
   if(!editor.className) editor.className = 'inline-editor';
@@ -706,6 +710,7 @@ function beginVideoInlineEdit(event, id, field) {
     const patch = {};
     if(field === 'views') patch[field] = Math.max(0, parseInt(editor.value, 10) || 0);
     else if(field === 'gmv') patch[field] = Math.max(0, parseFloat(editor.value) || 0);
+    else if(field === 'ctr') patch[field] = Math.max(0, parseFloat(editor.value) || 0);
     else if(field === 'units') patch.units = editor.value === '1' ? Math.max(1, Number(row.units) || 1) : 0;
     else if(field === 'hook') {
       const nextHook = editor.value.trim();
@@ -717,7 +722,7 @@ function beginVideoInlineEdit(event, id, field) {
     else patch[field] = editor.value.trim() || null;
     const { error } = await db.from('videos').update(patch).eq('id', id).eq('user_id', user.id);
     if(error) {
-      showToast(error.message, 'error');
+      showToast(/ctr/i.test(error.message||'')?'CTR needs the Supabase ctr column before it can save.':error.message, 'error');
       host.innerHTML = originalHtml;
       return;
     }
@@ -776,6 +781,7 @@ async function openModal(id){
   document.getElementById('fTime').value=String(v?.posted_time||currentTimeValue()).slice(0,8);
   document.getElementById('fStatus').value=v?.status||'live';
   document.getElementById('fViews').value=v?.views||'';
+  document.getElementById('fCtr').value=v?.ctr||'';
   document.getElementById('fUnits').value=v?.units||'';
   document.getElementById('fGmv').value=v?.gmv||'';
   document.getElementById('fNotes').value=notesWithoutDealIds(v?.notes||'');
@@ -795,12 +801,17 @@ async function saveVideo(){
   const campaignIds=Array.from(document.getElementById('fCampaign').selectedOptions||[]).map(opt=>opt.value).filter(Boolean);
   const previousVideo=window._editId?DATA.find(video=>video.id===window._editId):null;
   const notes=notesWithDealIds(document.getElementById('fNotes').value.trim(),campaignIds);
-  const row={user_id:user.id,title,brand:selectedProduct?.name||productName,date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes,link:document.getElementById('fLink').value.trim(),campaign_id:campaignIds[0]||null,prod_id:selectedProduct?.id||null};
+  const row={user_id:user.id,title,brand:selectedProduct?.name||productName,date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,ctr:parseFloat(document.getElementById('fCtr').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes,link:document.getElementById('fLink').value.trim(),campaign_id:campaignIds[0]||null,prod_id:selectedProduct?.id||null};
   let result=window._editId?await db.from('videos').update(row).eq('id',window._editId):await db.from('videos').insert(row);
-  if(result.error&&/(posted_time|prod_id)/i.test(result.error.message||'')){
+  if(result.error&&/(posted_time|prod_id|ctr)/i.test(result.error.message||'')){
+    if(/ctr/i.test(result.error.message||'')&&(Number(row.ctr)||0)>0){
+      showToast('CTR needs the Supabase ctr column before it can save.','error');
+      return;
+    }
     const fallbackRow={...row};
     if(/posted_time/i.test(result.error.message||''))delete fallbackRow.posted_time;
     if(/prod_id/i.test(result.error.message||''))delete fallbackRow.prod_id;
+    if(/ctr/i.test(result.error.message||''))delete fallbackRow.ctr;
     result=window._editId?await db.from('videos').update(fallbackRow).eq('id',window._editId):await db.from('videos').insert(fallbackRow);
   }
   if(result.error){showToast(result.error.message,'error');return;}
