@@ -742,9 +742,20 @@ function renderTakesView(card){
   </div>`;
 }
 
+function firstScriptSentence(script){
+  const text=String(script||'')
+    .replace(/\*\*/g,'')
+    .replace(/\[[^\]]+\]/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+  if(!text)return '';
+  const match=text.match(/^(.+?[.!?])(?:\s|$)/);
+  return (match?match[1]:text).trim();
+}
+
 function renderTakeRow(card,take,index,totalTakes){
   const expanded=expandedTakeId===take.id;
-  const hook=displayHookText(take.hookText) || 'Choose hook';
+  const hook=displayHookText(take.hookText) || firstScriptSentence(take.script) || 'Choose hook';
   return `<div class="take-card${take.done?' done':''}${expanded?' expanded':''}" id="${esc(take.id)}" onclick="toggleTakeExpanded(${jsArg(take.id)})">
     <div class="take-row">
       <div>
