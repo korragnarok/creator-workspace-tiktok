@@ -576,6 +576,12 @@ function normalizeInspirationLinks(value){
 
 function render(){
   renderWeekStrip();
+  renderProgress();
+  renderFilterPills();
+  renderCards();
+}
+
+function renderProgress(){
   const allTakes=TODO.flatMap(c=>c.takes),done=allTakes.filter(t=>t.done).length,total=allTakes.length;
   const clearBtn=document.getElementById('clearDoneBtn');
   if(clearBtn) clearBtn.disabled=done===0;
@@ -587,7 +593,10 @@ function render(){
       <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${total?(done/total*100):0}%"></div></div>
     </div>`;
   } else pArea.innerHTML='';
+}
 
+function renderFilterPills(){
+  const done=TODO.flatMap(c=>c.takes).filter(t=>t.done).length;
   const brands=[...new Set(TODO.map(c=>c.brand).filter(Boolean))].sort();
   const fArea=document.getElementById('brandFilterArea');
   if(brands.length>1||done>0){
@@ -596,7 +605,9 @@ function render(){
       : '';
     fArea.innerHTML=`<div class="brand-filter">${brandButtons}<button class="brand-pill${hideFilmed?' toggle-active':''}" onclick="toggleHideFilmed()">${hideFilmed?'Show Filmed':'Hide Filmed'}</button></div>`;
   } else fArea.innerHTML='';
+}
 
+function renderCards(){
   const main=document.getElementById('mainContent');
   const filtered=getFilteredCards();
   if(!TODO.length){
@@ -619,7 +630,7 @@ function render(){
 	      <div class="pcard-header">
 	        <div><div class="pcard-name"><a href="${esc(productBankUrl(card))}" title="View this brand in Products">${esc(card.name)}</a></div>${card.brand?`<div class="pcard-brand">${esc(card.brand)}</div>`:''}</div>
 	        <div class="pcard-btns">
-          <span style="font-family:'Noto Sans Mono',sans-serif;font-size:11px;color:var(--text-muted);padding:0 4px;">${doneTakes}/${allTakes.length}</span>
+          <span class="pcard-count" style="font-family:'Noto Sans Mono',sans-serif;font-size:11px;color:var(--text-muted);padding:0 4px;">${doneTakes}/${allTakes.length}</span>
           <a class="hbtn" href="${esc(scriptWorkshopUrl(card))}">Workshop</a>
           <button class="hbtn danger" onclick="removeCard('${esc(card.id)}')">Remove</button>
         </div>
@@ -628,7 +639,7 @@ function render(){
 
     takes.forEach((take,i)=>{
       html+=`<div class="take-card${take.done?' done':''}" id="${esc(take.id)}">
-        <div class="take-label"><span class="take-num">Take${takes.length>1?' '+(i+1):''}</span>${take.done?'<span style="color:var(--sage);font-size:10px;">✓ Filmed</span>':''}</div>`;
+        <div class="take-label"><span class="take-num">Take${takes.length>1?' '+(i+1):''}</span><span class="take-filmed-marker" style="color:var(--sage);font-size:10px;${take.done?'':'display:none;'}">✓ Filmed</span></div>`;
 
       if(displayHookText(take.hookText)){html+=`<div class="hook-display" onclick="openHookModal('${esc(card.id)}','${esc(take.id)}')">${esc(displayHookText(take.hookText))}</div>`;}
 
@@ -679,11 +690,45 @@ function render(){
   main.innerHTML=html;
 }
 
-function setBrandFilter(b){activeBrandFilter=b;history.replaceState({},'','daily-todo.html');render();}
+function updateCardDoneCount(card){
+  const cardEl=document.getElementById(card?.id);
+  const countEl=cardEl?.querySelector('.pcard-count');
+  if(!countEl)return;
+  const allTakes=card.takes||[];
+  countEl.textContent=`${allTakes.filter(t=>t.done).length}/${allTakes.length}`;
+}
+function updateTakeDoneDom(card,take){
+  const takeEl=document.getElementById(take?.id);
+  if(!takeEl)return false;
+  takeEl.classList.toggle('done',!!take.done);
+  const marker=takeEl.querySelector('.take-filmed-marker');
+  if(marker)marker.style.display=take.done?'':'none';
+  const status=takeEl.querySelector('.take-status');
+  if(status){
+    status.classList.toggle('filmed',!!take.done);
+    status.textContent=take.done?'✓ Done':'Not filmed yet';
+  }
+  const footerBtns=takeEl.querySelector('.take-footer-btns');
+  if(footerBtns){
+    footerBtns.innerHTML=`${take.done?`<button class="tbtn done-active" onclick="clearSingleTake('${esc(card.id)}','${esc(take.id)}',this)">Clear</button>`:''}
+      <button class="tbtn${take.done?' done-active':''}" onclick="toggleDone('${esc(card.id)}','${esc(take.id)}')">${take.done?'Undo':'Mark Done'}</button>
+      ${(card.takes||[]).length>1?`<button class="tbtn del" onclick="removeTake('${esc(card.id)}','${esc(take.id)}')">Remove</button>`:''}`;
+  }
+  updateCardDoneCount(card);
+  return true;
+}
+function refreshProgressAndFilters(){
+  renderWeekStrip();
+  renderProgress();
+  renderFilterPills();
+}
+
+function setBrandFilter(b){activeBrandFilter=b;history.replaceState({},'','daily-todo.html');renderFilterPills();renderCards();}
 function toggleHideFilmed(){
   hideFilmed=!hideFilmed;
   localStorage.setItem('take24:hideFilmed',hideFilmed?'1':'0');
-  render();
+  renderFilterPills();
+  renderCards();
 }
 
 // ─── ACTIONS ──────────────────────────────────────────────
@@ -743,14 +788,21 @@ async function removeTake(cardId,takeId){
 }
 async function toggleDone(cardId,takeId){
   const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
-  if(!take)return;take.done=!take.done;render();
+  if(!take)return;
+  take.done=!take.done;
+  if(hideFilmed&&take.done){
+    renderCards();
+  } else if(!updateTakeDoneDom(card,take)) {
+    renderCards();
+  }
+  refreshProgressAndFilters();
   if(take.queueId)await db.from('queue').update({done:take.done}).eq('id',take.queueId);
 }
 async function setFilmingLocation(cardId,takeId,type){
   const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
   if(!take)return;
   take.hookText=setFilmingLocationLine(take.hookText,type);
-  render();
+  renderCards();
   if(type==='other')setTimeout(()=>document.getElementById('loc-'+takeId)?.focus(),40);
   if(take.queueId)await saveQueueRow(card,take);
 }
@@ -765,7 +817,7 @@ async function setFilmingType(cardId,takeId,type){
   const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
   if(!take)return;
   take.hookText=setFilmingTypeLine(take.hookText,type);
-  render();
+  renderCards();
   if(take.queueId)await saveQueueRow(card,take);
 }
 async function saveTakeField(cardId,takeId,field){
@@ -888,12 +940,12 @@ async function addInspirationLink(cardId,takeId){
   const input=document.getElementById('insp-'+takeId);if(!input)return;
   const url=normalizeUrl(input.value);if(!url)return;
   const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);if(!take)return;
-  take.inspirationLinks=[...(take.inspirationLinks||[]),url];input.value='';render();
+  take.inspirationLinks=[...(take.inspirationLinks||[]),url];input.value='';renderCards();
   if(take.queueId)await saveQueueRow(card,take);
 }
 async function removeInspirationLink(cardId,takeId,index){
   const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);if(!take)return;
-  take.inspirationLinks=(take.inspirationLinks||[]).filter((_,i)=>i!==index);render();
+  take.inspirationLinks=(take.inspirationLinks||[]).filter((_,i)=>i!==index);renderCards();
   if(take.queueId)await saveQueueRow(card,take);
 }
 
@@ -930,7 +982,7 @@ async function saveScriptEdit(cid,tid){
   if(saved){
     const take=TODO.find(c=>c.id===cid)?.takes.find(t=>t.id===tid);
     if(take)take.editingScript=false;
-    render();
+    renderCards();
   }
 }
 function scriptLibraryTitle(card,take){
@@ -966,9 +1018,9 @@ async function saveTakeScriptToLibrary(cid,tid,btn){
 document.body.addEventListener('click',e=>{
   const t=e.target;
   const toggle=t.closest('.js-toggle-script-edit');
-  if(toggle){const{cid,tid}=toggle.dataset;const card=TODO.find(c=>c.id===cid);const take=card?.takes.find(t=>t.id===tid);if(take){take.editingScript=!take.editingScript;render();}return;}
+  if(toggle){const{cid,tid}=toggle.dataset;const card=TODO.find(c=>c.id===cid);const take=card?.takes.find(t=>t.id===tid);if(take){take.editingScript=!take.editingScript;renderCards();}return;}
   const cancel=t.closest('.js-cancel-script-edit');
-  if(cancel){const take=TODO.find(c=>c.id===cancel.dataset.cid)?.takes.find(t=>t.id===cancel.dataset.tid);if(take){take.editingScript=false;render();}return;}
+  if(cancel){const take=TODO.find(c=>c.id===cancel.dataset.cid)?.takes.find(t=>t.id===cancel.dataset.tid);if(take){take.editingScript=false;renderCards();}return;}
   const save=t.closest('.js-save-script-edit');
   if(save){const{cid,tid}=save.dataset;saveScriptEdit(cid,tid);return;}
   const librarySave=t.closest('.js-save-script-library');
@@ -1065,13 +1117,13 @@ function filterHooks(){
 async function selectHook(hookId){
   const hook=ALL_HOOKS.find(h=>h.id===hookId);if(!hook||!hookTarget)return;
   const take=TODO.find(c=>c.id===hookTarget.cardId)?.takes.find(t=>t.id===hookTarget.takeId);if(!take)return;
-  take.hookText=replaceVisibleHook(take.hookText,hook.text);closeHookModal();render();
+  take.hookText=replaceVisibleHook(take.hookText,hook.text);closeHookModal();renderCards();
   if(take.queueId)await db.from('queue').update({notes:take.hookText}).eq('id',take.queueId);
 }
 async function saveCustomHook(){
   const text=document.getElementById('customHookInput').value.trim();if(!text||!hookTarget)return;
   const take=TODO.find(c=>c.id===hookTarget.cardId)?.takes.find(t=>t.id===hookTarget.takeId);if(!take)return;
-  take.hookText=replaceVisibleHook(take.hookText,text);closeHookModal();render();
+  take.hookText=replaceVisibleHook(take.hookText,text);closeHookModal();renderCards();
   if(take.queueId)await db.from('queue').update({notes:take.hookText}).eq('id',take.queueId);
 }
 
@@ -1094,7 +1146,7 @@ function selectScript(scriptId){
   const card=TODO.find(c=>c.id===scriptTarget.cardId);
   const take=card?.takes.find(t=>t.id===scriptTarget.takeId);if(!take)return;
   take.script=script.script;
-  closeScriptModal();render();
+  closeScriptModal();renderCards();
   if(take.queueId) saveQueueRow(card,take);
 }
 
@@ -1113,9 +1165,6 @@ async function init(){
   render();
 }
 init();
-</script>
-<script>
-if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(e=>console.warn('SW:',e));});}
 </script>
 </body>
 </html>

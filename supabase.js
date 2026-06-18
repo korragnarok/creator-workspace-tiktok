@@ -19,7 +19,7 @@ function registerAppServiceWorker() {
       if (sessionStorage.getItem(key)) return;
       sessionStorage.setItem(key, '1');
     } catch(e) {}
-    window.location.reload();
+    console.info('Creator Hub updated in the background. Refresh when you are ready to load the newest cached files.');
   });
 }
 
