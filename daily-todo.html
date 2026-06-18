@@ -1011,7 +1011,7 @@ function videoRowFromTake(card,take){
   const seo=getTakeField(take.hookText,'seo');
   const caption=getTakeField(take.hookText,'caption');
   const hashtags=getTakeField(take.hookText,'hashtags');
-  const hook=displayHookText(take.hookText);
+  const hook=displayHookText(take.hookText) || firstScriptSentence(take.script);
   const snapshot={
     product:card.name||'',
     brand:card.brand||'',
