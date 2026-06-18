@@ -375,6 +375,9 @@ async function init() {
     const counts = new Map(products.map(p => [p.id, 0]));
     const unitSums = new Map(products.map(p => [p.id, 0]));
     const byId = new Map(products.map(p => [p.id, p]));
+    const productKeys = products
+      .map(p => ({ id: p.id, key: normalizeProductKey(p.name) }))
+      .filter(item => item.key && item.key.length >= 3);
     const byName = new Map();
     products.forEach(p => {
       const key = normalizeProductKey(p.name);
@@ -399,6 +402,10 @@ async function init() {
       const linkedMatchesText = linkedProduct && (!candidateKeys.length || candidateKeys.includes(linkedKey));
       if(linkedMatchesText) matchedIds.add(video.prod_id);
       candidateKeys.forEach(key => (byName.get(key) || []).forEach(id => matchedIds.add(id)));
+      const haystack = ` ${normalizeProductKey([video.brand, video.title, video.notes].join(' '))} `;
+      productKeys.forEach(item => {
+        if(haystack.includes(` ${item.key} `)) matchedIds.add(item.id);
+      });
       if(!matchedIds.size && linkedProduct) matchedIds.add(video.prod_id);
       matchedIds.forEach(id => {
         counts.set(id, (counts.get(id) || 0) + 1);
