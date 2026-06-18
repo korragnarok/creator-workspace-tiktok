@@ -354,15 +354,27 @@ async function init() {
     return _videoCountsByProduct.get(p.id) || 0;
   }
   function normalizeProductKey(value) {
-    return String(value || '').trim().toLowerCase();
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/&/g,'and')
+      .replace(/[^a-z0-9]+/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
   }
-  function videoProductName(video) {
+  function noteProductName(video) {
     const productLine = String(video.notes || '').match(/^Product:\s*(.+)$/im);
-    return (productLine?.[1] || video.brand || video.title || '').trim();
+    return (productLine?.[1] || '').trim();
+  }
+  function videoProductCandidates(video) {
+    return [noteProductName(video), video.brand, video.title]
+      .map(value => String(value || '').trim())
+      .filter(Boolean);
   }
   async function loadVideoCounts(products) {
     const counts = new Map(products.map(p => [p.id, 0]));
     const unitSums = new Map(products.map(p => [p.id, 0]));
+    const byId = new Map(products.map(p => [p.id, p]));
     const byName = new Map();
     products.forEach(p => {
       const key = normalizeProductKey(p.name);
@@ -379,14 +391,16 @@ async function init() {
       return counts;
     }
     (result.data || []).forEach(video => {
-      if(video.prod_id && counts.has(video.prod_id)) {
-        counts.set(video.prod_id, (counts.get(video.prod_id) || 0) + 1);
-        unitSums.set(video.prod_id, (unitSums.get(video.prod_id) || 0) + (Number(video.units) || 0));
-        return;
-      }
-      const key = normalizeProductKey(videoProductName(video));
-      const matches = byName.get(key) || [];
-      matches.forEach(id => {
+      const candidates = videoProductCandidates(video);
+      const candidateKeys = candidates.map(normalizeProductKey).filter(Boolean);
+      const matchedIds = new Set();
+      const linkedProduct = byId.get(video.prod_id);
+      const linkedKey = normalizeProductKey(linkedProduct?.name);
+      const linkedMatchesText = linkedProduct && (!candidateKeys.length || candidateKeys.includes(linkedKey));
+      if(linkedMatchesText) matchedIds.add(video.prod_id);
+      candidateKeys.forEach(key => (byName.get(key) || []).forEach(id => matchedIds.add(id)));
+      if(!matchedIds.size && linkedProduct) matchedIds.add(video.prod_id);
+      matchedIds.forEach(id => {
         counts.set(id, (counts.get(id) || 0) + 1);
         unitSums.set(id, (unitSums.get(id) || 0) + (Number(video.units) || 0));
       });
