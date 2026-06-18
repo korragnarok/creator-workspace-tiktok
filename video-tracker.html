@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Videos &mdash; Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=140"></script>
-<link rel="stylesheet" href="layout.css?v=140">
+<script src="theme-init.js?v=141"></script>
+<link rel="stylesheet" href="layout.css?v=141">
 <style>
 
 :root{--r:12px;}
@@ -70,6 +70,11 @@ tbody td{padding:13px 14px;font-size:13px;color:var(--text);vertical-align:middl
 tbody td.num{text-align:right;font-family:'Noto Sans Mono',sans-serif;font-weight:700;}
 tbody td.muted{color:var(--text-muted);font-size:12px;}
 	.tbl-product{font-weight:700;color:var(--ink);line-height:1.25;}
+.product-thumb-cell{width:62px;text-align:center;}
+.product-thumb{width:44px;height:44px;border-radius:10px;border:1px solid var(--border-mid);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);overflow:hidden;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;box-shadow:var(--shadow-sm);}
+.product-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.product-thumb.placeholder{opacity:0.45;}
+.product-thumb.placeholder img{padding:8px;object-fit:contain;}
 .tbl-posted{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;max-width:140px;}
 .tbl-time{font-family:'Stack Sans Notch',sans-serif;font-size:10px;letter-spacing:0.06em;color:var(--text-muted);}
 .tbl-posted .editable-cell{margin:0;padding:2px 6px;min-height:24px;}
@@ -148,7 +153,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=140"></script>
+<script src="supabase.js?v=141"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link active">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
@@ -184,6 +189,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <table>
       <thead><tr>
         <th onclick="sortBy('date')">Posted</th>
+        <th></th>
         <th onclick="sortBy('brand')">Product</th>
         <th>Hook</th>
         <th onclick="sortBy('views')" class="num">Views</th>
@@ -193,7 +199,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
         <th onclick="sortBy('status')">Status</th>
         <th></th>
       </tr></thead>
-      <tbody id="tbody"><tr><td colspan="9"><div class="empty">Loading...</div></td></tr></tbody>
+      <tbody id="tbody"><tr><td colspan="10"><div class="empty">Loading...</div></td></tr></tbody>
     </table>
     <div class="pagination"><span id="pageInfo"></span><div class="page-btns" id="pageBtns"></div></div>
   </div>
@@ -228,7 +234,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
-<script src="layout.js?v=140"></script>
+<script src="layout.js?v=141"></script>
 <script>
 const PAGE_SIZE=25;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
@@ -411,6 +417,11 @@ function notesWithDealIds(notes,ids){
 function linkedDealTagsHtml(video){
   return (video._dealTags||[]).map(tag=>`<span class="tag-campaign ${esc(tag.cls||'sample')}">${esc(tag.label||'Deal')}</span>`).join('');
 }
+function productThumbHtml(video){
+  const src=String(video?._productImage||'').trim()||'icons/default-product.png';
+  const placeholder=!String(video?._productImage||'').trim();
+  return `<span class="product-thumb${placeholder?' placeholder':''}"><img src="${esc(src)}" alt=""></span>`;
+}
 function videoSaveErrorMessage(error){
   const message=String(error?.message||'');
   if(/views/i.test(message)&&/(overflow|out of range|smallint|integer)/i.test(message)){
@@ -423,7 +434,7 @@ function videoSaveErrorMessage(error){
 }
 async function loadVideos(pageToShow=currentPage){
   const tbody=document.getElementById('tbody');
-  tbody.innerHTML='<tr><td colspan="9"><div class="empty">Loading...</div></td></tr>';
+  tbody.innerHTML='<tr><td colspan="10"><div class="empty">Loading...</div></td></tr>';
   let {data,error}=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false}).order('posted_time', {ascending:false, nullsFirst:false});
   if(error&&/posted_time/i.test(error.message||'')){
     const retry=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false});
@@ -435,13 +446,14 @@ async function loadVideos(pageToShow=currentPage){
   }
   DATA=data||[];
   if(DATA.length){
-    const {data:productData,error:productError}=await db.from('products').select('id,name,brand').eq('user_id',user.id);
+    const {data:productData,error:productError}=await db.from('products').select('id,name,brand,image_url').eq('user_id',user.id);
     if(!productError){
       const byId=Object.fromEntries((productData||[]).map(p=>[p.id,p]));
       const byName=Object.fromEntries((productData||[]).map(p=>[normProductName(p.name),p]));
       DATA.forEach(video=>{
         const product=(video.prod_id&&byId[video.prod_id])||byName[normProductName(video.brand)];
         video._productBrand=product?.brand||'';
+        video._productImage=product?.image_url||'';
       });
     }
   }
@@ -520,7 +532,7 @@ function renderTable(){
   }
   const tbody=document.getElementById('tbody');
   if(!rows.length){
-    tbody.innerHTML='<tr><td colspan="9" class="empty">No videos found.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="10" class="empty">No videos found.</td></tr>';
     updateVideoEditToolbar();
     return;
   }
@@ -531,6 +543,7 @@ function renderTable(){
     const productBrand=String(v._productBrand||'').trim();
     return `<tr class="${_editVideosMode?'select-mode ':''}${selected?'selected':''}" onclick="handleVideoRowClick('${v.id}')">
       <td class="muted"><span class="tbl-posted"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','date')">${fmtDate(v.date)}</span><span class="editable-cell tbl-time" onclick="beginVideoInlineEdit(event,'${v.id}','posted_time')">${fmtTime(v.posted_time)||'Add time'}</span></span></td>
+      <td class="product-thumb-cell">${productThumbHtml(v)}</td>
       <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span>${esc(v.brand||'No product')}</span>${linkedDealTagsHtml(v)}</div>${productBrand?`<div class="tbl-hook">${esc(productBrand)}</div>`:''}</td>
       <td><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','hook')">${esc(hook||'-')}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','views')">${fmtNum(v.views)}</span></td>
