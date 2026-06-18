@@ -69,9 +69,9 @@ body{overflow-x:hidden;}
 .product-bank-scroll::-webkit-scrollbar{height:8px;}
 .product-bank-scroll::-webkit-scrollbar-track{background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
 .product-bank-scroll::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:999px;}
-.product-bank{min-width:1180px;}
+.product-bank{min-width:1240px;}
 @media(max-width:768px){
-  .product-bank{min-width:920px;}
+  .product-bank{min-width:980px;}
   .page{padding:80px 16px 24px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}}
 .brand-filter{display:flex;gap:8px;margin-bottom:22px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
 .brand-filter::-webkit-scrollbar{display:none;}
@@ -98,6 +98,11 @@ tbody tr.select-mode{cursor:pointer;}
 tbody tr.selected{background:color-mix(in srgb,var(--rust) 14%,transparent);}
 tbody tr.selected:hover{background:color-mix(in srgb,var(--rust) 18%,transparent);}
 tbody td{padding:14px 16px;color:var(--text-mid);vertical-align:middle;}
+.product-thumb-cell{width:62px;text-align:center;}
+.product-thumb{width:44px;height:44px;border-radius:10px;border:1px solid var(--border-mid);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);overflow:hidden;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;box-shadow:var(--shadow-sm);}
+.product-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.product-thumb.placeholder{opacity:0.45;}
+.product-thumb.placeholder img{padding:8px;object-fit:contain;}
 .product-cell{display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:800;line-height:1.25;}
 .core-badge{display:inline-flex;align-items:center;border-radius:100px;background:var(--tan);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;padding:2px 7px;text-transform:uppercase;}
 .stock-badge{display:inline-flex;align-items:center;border-radius:6px;padding:3px 8px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.02em;}
@@ -123,7 +128,7 @@ tr.selected .prod-select{background:var(--rust);border-color:var(--rust);}
 tr.selected .prod-select::after{content:'✓';}
 tr.select-mode .tbl-action{display:none;}
 @media(max-width:768px){
-  .product-bank table{min-width:920px;}
+  .product-bank table{min-width:980px;}
   .editable-cell{cursor:pointer;}
   .editable-cell:hover{border-color:transparent;background:transparent;}
 }
@@ -160,6 +165,7 @@ tr.select-mode .tbl-action{display:none;}
     <table>
       <thead>
         <tr>
+          <th></th>
           <th class="sortable" data-sort="product" onclick="sortProducts('product')">Product</th>
           <th class="sortable" data-sort="brand" onclick="sortProducts('brand')">Brand</th>
           <th class="sortable" data-sort="stock" onclick="sortProducts('stock')">Stock</th>
@@ -171,7 +177,7 @@ tr.select-mode .tbl-action{display:none;}
           <th></th>
         </tr>
       </thead>
-      <tbody id="prodBody"><tr><td colspan="9"><div class="empty">Loading...</div></td></tr></tbody>
+      <tbody id="prodBody"><tr><td colspan="10"><div class="empty">Loading...</div></td></tr></tbody>
     </table>
     </div>
   </div>
@@ -267,7 +273,7 @@ async function init() {
     }).sort(compareProducts);
     _visibleProductIds = filtered.map(p => p.id);
     const body = document.getElementById('prodBody');
-    if(!filtered.length){ body.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div></td></tr>'; updateSortHeaders(); updateEditToolbar(); return; }
+    if(!filtered.length){ body.innerHTML='<tr><td colspan="10"><div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div></td></tr>'; updateSortHeaders(); updateEditToolbar(); return; }
     body.innerHTML = filtered.map(p => {
       const selected = _selectedProductIds.has(p.id);
       const inStock = productInStock(p);
@@ -276,6 +282,7 @@ async function init() {
       const link = String(p.link || '').trim();
       const videoCount = productVideoCount(p);
       return '<tr class="'+(_editProductsMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleProductRowClick(event,\''+p.id+'\')">'+
+        '<td class="product-thumb-cell">'+productThumbHtml(p)+'</td>'+
         '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'name\')">'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Hero</span>':'')+'</div></td>'+
         '<td><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'brand\')">'+esc(p.brand||'-')+'</span></td>'+
         '<td><span class="editable-cell stock-badge '+(inStock?'stock-in':'stock-out')+'" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'status\')">'+productStockLabel(p)+'</span></td>'+
@@ -297,6 +304,12 @@ async function init() {
   }
   function escAttr(s) {
     return esc(s).replace(/`/g, '&#96;');
+  }
+  function productThumbHtml(product) {
+    const imageUrl = String(product?.image_url || '').trim();
+    const src = imageUrl || 'icons/default-product.png';
+    const placeholder = !imageUrl;
+    return '<span class="product-thumb'+(placeholder?' placeholder':'')+'"><img src="'+escAttr(src)+'" alt="" onerror="this.onerror=null;this.src=\'icons/default-product.png\';var holder=this.closest(\'.product-thumb\');if(holder)holder.classList.add(\'placeholder\');"></span>';
   }
   function brandKey(brand) {
     return String(brand || 'No Brand').trim().toLowerCase();

@@ -420,7 +420,7 @@ function linkedDealTagsHtml(video){
 function productThumbHtml(video){
   const src=String(video?._productImage||'').trim()||'icons/default-product.png';
   const placeholder=!String(video?._productImage||'').trim();
-  return `<span class="product-thumb${placeholder?' placeholder':''}"><img src="${esc(src)}" alt=""></span>`;
+  return `<span class="product-thumb${placeholder?' placeholder':''}"><img src="${esc(src)}" alt="" onerror="this.onerror=null;this.src='icons/default-product.png';this.closest('.product-thumb')?.classList.add('placeholder');"></span>`;
 }
 function videoSaveErrorMessage(error){
   const message=String(error?.message||'');
@@ -450,8 +450,15 @@ async function loadVideos(pageToShow=currentPage){
     if(!productError){
       const byId=Object.fromEntries((productData||[]).map(p=>[p.id,p]));
       const byName=Object.fromEntries((productData||[]).map(p=>[normProductName(p.name),p]));
+      const byBrand={};
+      (productData||[]).forEach(p=>{
+        const key=normProductName(p.brand);
+        if(!key)return;
+        byBrand[key]=byBrand[key]===undefined?p:null;
+      });
       DATA.forEach(video=>{
-        const product=(video.prod_id&&byId[video.prod_id])||byName[normProductName(video.brand)];
+        const key=normProductName(video.brand);
+        const product=(video.prod_id&&byId[video.prod_id])||byName[key]||byBrand[key];
         video._productBrand=product?.brand||'';
         video._productImage=product?.image_url||'';
       });
@@ -592,7 +599,13 @@ function updateVideoLocal(id, patch) {
 }
 
 function normProductName(value) {
-  return String(value || '').trim().toLowerCase();
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g,'and')
+    .replace(/[^a-z0-9]+/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
 }
 
 function videoProductName(video) {
