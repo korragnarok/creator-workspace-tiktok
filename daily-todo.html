@@ -754,7 +754,7 @@ function renderTakeRow(card,take,index,totalTakes){
       </div>
       <span class="take-status${take.done?' filmed':''}">${take.done?'✓ Done':'Not filmed yet'}</span>
     </div>
-    ${expanded?`<div class="take-expanded" onclick="event.stopPropagation();">${renderTakeExpanded(card,take,totalTakes)}</div>`:''}
+    ${expanded?`<div class="take-expanded" onclick="handleTakeExpandedClick(event)">${renderTakeExpanded(card,take,totalTakes)}</div>`:''}
   </div>`;
 }
 
@@ -830,6 +830,59 @@ function refreshProgressAndFilters(){
   renderWeekStrip();
   renderProgress();
   renderFilterPills();
+}
+
+function handleTakeExpandedClick(e){
+  const t=e.target;
+  const toggle=t.closest?.('.js-toggle-script-edit');
+  if(toggle){
+    e.preventDefault();
+    e.stopPropagation();
+    const{cid,tid}=toggle.dataset;
+    const card=TODO.find(c=>c.id===cid);
+    const take=card?.takes.find(t=>t.id===tid);
+    if(take){
+      take.editingScript=!take.editingScript;
+      renderCards();
+    }
+    return;
+  }
+  const cancel=t.closest?.('.js-cancel-script-edit');
+  if(cancel){
+    e.preventDefault();
+    e.stopPropagation();
+    const take=TODO.find(c=>c.id===cancel.dataset.cid)?.takes.find(t=>t.id===cancel.dataset.tid);
+    if(take){
+      take.editingScript=false;
+      renderCards();
+    }
+    return;
+  }
+  const save=t.closest?.('.js-save-script-edit');
+  if(save){
+    e.preventDefault();
+    e.stopPropagation();
+    const{cid,tid}=save.dataset;
+    saveScriptEdit(cid,tid);
+    return;
+  }
+  const librarySave=t.closest?.('.js-save-script-library');
+  if(librarySave){
+    e.preventDefault();
+    e.stopPropagation();
+    const{cid,tid}=librarySave.dataset;
+    saveTakeScriptToLibrary(cid,tid,librarySave);
+    return;
+  }
+  const copy=t.closest?.('.js-copy-take-script');
+  if(copy){
+    e.preventDefault();
+    e.stopPropagation();
+    const take=TODO.find(c=>c.id===copy.dataset.cid)?.takes.find(t=>t.id===copy.dataset.tid);
+    if(take?.script)navigator.clipboard.writeText(take.script).then(()=>showToast('Copied!'));
+    return;
+  }
+  e.stopPropagation();
 }
 
 function setBrandFilter(b){activeBrandFilter=b;selectedProductId=null;expandedTakeId=null;history.replaceState({},'','daily-todo.html');renderFilterPills();renderCards();}
