@@ -75,6 +75,18 @@ a{text-decoration:none;color:inherit;}
 
 .cards-list{display:flex;flex-direction:column;gap:14px;}
 .pcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.product-list-card{width:100%;text-align:left;cursor:pointer;transition:border-color 0.14s,background 0.14s,transform 0.14s;}
+.product-list-card:hover{border-color:var(--rust);background:color-mix(in srgb,var(--surface) 90%,var(--rust) 10%);transform:translateY(-1px);}
+.product-card-row{padding:18px 20px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;}
+.product-card-main{min-width:0;}
+.product-card-name{font-family:'IBM Plex Serif',serif;font-size:24px;font-weight:800;line-height:1.1;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.product-card-brand{font-size:12px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.08em;text-transform:uppercase;margin-top:5px;}
+.product-progress-count{font-family:'Noto Sans Mono',monospace;font-size:14px;font-weight:900;color:var(--ink);background:color-mix(in srgb,var(--bg) 58%,var(--surface) 42%);border:1px solid var(--border-mid);border-radius:999px;padding:6px 12px;white-space:nowrap;}
+.takes-view-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.takes-back{background:transparent;border:1px solid var(--border-mid);border-radius:8px;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:7px 12px;cursor:pointer;}
+.takes-back:hover{border-color:var(--rust);color:var(--rust);}
+.takes-title{font-family:'IBM Plex Serif',serif;font-size:30px;font-weight:800;line-height:1.05;color:var(--ink);}
+.takes-sub{font-size:12px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.08em;text-transform:uppercase;margin-top:4px;}
 	.pcard-header{background:color-mix(in srgb,var(--surface) 55%,var(--bg) 45%);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);}
 	.pcard-name{font-family:'Stack Sans Notch',sans-serif;font-size:15px;font-weight:800;color:var(--ink);}
 	.pcard-name a{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color 0.12s,color 0.12s;}
@@ -88,6 +100,11 @@ a{text-decoration:none;color:inherit;}
 .takes-wrap{padding:14px 18px;display:flex;flex-direction:column;gap:10px;}
 .take-card{background:color-mix(in srgb,var(--bg) 55%,var(--surface) 45%);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:opacity 0.15s;}
 .take-card.done{opacity:0.5;}
+.take-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;cursor:pointer;}
+.take-row-hook{font-size:14px;color:var(--ink);font-weight:700;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.take-row-meta{font-size:11px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.06em;text-transform:uppercase;margin-top:3px;}
+.take-card.expanded{opacity:1;}
+.take-expanded{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
 .take-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
 .take-num{color:var(--rust);}
 
@@ -197,7 +214,7 @@ a{text-decoration:none;color:inherit;}
 @media(max-width:980px){.todo-toolbar{grid-template-columns:auto minmax(0,1fr) auto;}.header-actions{grid-column:1/-1;justify-content:flex-start;}.week-strip{gap:8px;overflow-x:auto;grid-template-columns:repeat(7,minmax(118px,1fr));padding-bottom:4px;scrollbar-width:none;}.week-strip::-webkit-scrollbar{display:none;}}
 body{overflow-x:hidden;}
 @media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:50px;}.date-label{font-size:16px;white-space:normal;}.header-actions .btn{flex:1;justify-content:center;}.modal{max-height:calc(100dvh - 40px);}.modal-list{flex:1;}}
-@media(max-width:768px){.take-fields{grid-template-columns:1fr;}}
+@media(max-width:768px){.take-fields{grid-template-columns:1fr;}.product-card-row{grid-template-columns:minmax(0,1fr) auto;}.product-card-row .pcard-btns{grid-column:1/-1;justify-content:flex-start;}.product-card-name{font-size:21px;}}
 </style>
 </head>
 <body>
@@ -294,6 +311,8 @@ let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
 let TODO = [];
 let activeBrandFilter = 'All';
 let hideFilmed = localStorage.getItem('take24:hideFilmed') === '1';
+let selectedProductId = null;
+let expandedTakeId = null;
 // Pre-filter by brand if coming from lineup strip
 const _urlBrand = new URLSearchParams(window.location.search).get('brand');
 if (_urlBrand) activeBrandFilter = _urlBrand;
@@ -574,6 +593,49 @@ function normalizeInspirationLinks(value){
   return [];
 }
 
+function selectedProductFromUrl(){
+  return new URLSearchParams(window.location.search).get('product') || null;
+}
+function jsArg(value){
+  return esc(JSON.stringify(String(value ?? '')));
+}
+function replaceProductUrl(cardId){
+  const params=new URLSearchParams(window.location.search);
+  if(cardId)params.set('product',cardId);
+  else params.delete('product');
+  const next=window.location.pathname+(params.toString()?'?'+params.toString():'');
+  history.replaceState({},'',next);
+}
+function pushProductUrl(cardId){
+  const params=new URLSearchParams(window.location.search);
+  if(cardId)params.set('product',cardId);
+  else params.delete('product');
+  const next=window.location.pathname+(params.toString()?'?'+params.toString():'');
+  history.pushState({},'',next);
+}
+function openProductTakes(cardId){
+  selectedProductId=cardId;
+  expandedTakeId=null;
+  pushProductUrl(cardId);
+  renderCards();
+}
+function showProductList(push=false){
+  selectedProductId=null;
+  expandedTakeId=null;
+  if(push)pushProductUrl(null);
+  else replaceProductUrl(null);
+  renderCards();
+}
+function toggleTakeExpanded(takeId){
+  expandedTakeId=expandedTakeId===takeId?null:takeId;
+  renderCards();
+}
+window.addEventListener('popstate',()=>{
+  selectedProductId=selectedProductFromUrl();
+  expandedTakeId=null;
+  renderCards();
+});
+
 function render(){
   renderWeekStrip();
   renderProgress();
@@ -601,7 +663,7 @@ function renderFilterPills(){
   const fArea=document.getElementById('brandFilterArea');
   if(brands.length>1||done>0){
     const brandButtons=brands.length>1
-      ? `<button class="brand-pill${activeBrandFilter==='All'?' active':''}" onclick="setBrandFilter('All')">All</button>${brands.map(b=>`<button class="brand-pill${activeBrandFilter===b?' active':''}" onclick="setBrandFilter('${esc(b)}')">${esc(b)}</button>`).join('')}`
+      ? `<button class="brand-pill${activeBrandFilter==='All'?' active':''}" onclick="setBrandFilter(${jsArg('All')})">All</button>${brands.map(b=>`<button class="brand-pill${activeBrandFilter===b?' active':''}" onclick="setBrandFilter(${jsArg(b)})">${esc(b)}</button>`).join('')}`
       : '';
     fArea.innerHTML=`<div class="brand-filter">${brandButtons}<button class="brand-pill${hideFilmed?' toggle-active':''}" onclick="toggleHideFilmed()">${hideFilmed?'Show Filmed':'Hide Filmed'}</button></div>`;
   } else fArea.innerHTML='';
@@ -610,6 +672,16 @@ function renderFilterPills(){
 function renderCards(){
   const main=document.getElementById('mainContent');
   const filtered=getFilteredCards();
+  if(selectedProductId){
+    const card=TODO.find(item=>item.id===selectedProductId);
+    if(card){
+      main.innerHTML=renderTakesView(card);
+      return;
+    }
+    selectedProductId=null;
+    expandedTakeId=null;
+    replaceProductUrl(null);
+  }
   if(!TODO.length){
     main.innerHTML=`<div class="empty-state"><div class="empty-title">Nothing planned yet</div><div class="empty-sub">Tap "+ Product" to pick products you're filming today.</div><button class="btn btn-primary" onclick="openPicker()">+ Product</button></div>`;
     return;
@@ -626,76 +698,114 @@ function renderCards(){
   let html='<div class="cards-list">';
 	  filtered.forEach(card=>{
 	    const takes=card.takes||[],allTakes=card._allTakes||takes,doneTakes=allTakes.filter(t=>t.done).length;
-	    html+=`<div class="pcard" id="${esc(card.id)}">
-	      <div class="pcard-header">
-	        <div><div class="pcard-name"><a href="${esc(productBankUrl(card))}" title="View this brand in Products">${esc(card.name)}</a></div>${card.brand?`<div class="pcard-brand">${esc(card.brand)}</div>`:''}</div>
-	        <div class="pcard-btns">
-          <span class="pcard-count" style="font-family:'Noto Sans Mono',sans-serif;font-size:11px;color:var(--text-muted);padding:0 4px;">${doneTakes}/${allTakes.length}</span>
-          <a class="hbtn" href="${esc(scriptWorkshopUrl(card))}">Workshop</a>
-          <button class="hbtn danger" onclick="removeCard('${esc(card.id)}')">Remove</button>
-        </div>
-      </div>
-      <div class="takes-wrap">`;
-
-    takes.forEach((take,i)=>{
-      html+=`<div class="take-card${take.done?' done':''}" id="${esc(take.id)}">
-        <div class="take-label"><span class="take-num">Take${takes.length>1?' '+(i+1):''}</span><span class="take-filmed-marker" style="color:var(--sage);font-size:10px;${take.done?'':'display:none;'}">✓ Filmed</span></div>`;
-
-      if(displayHookText(take.hookText)){html+=`<div class="hook-display" onclick="openHookModal('${esc(card.id)}','${esc(take.id)}')">${esc(displayHookText(take.hookText))}</div>`;}
-
-      html+=`<div class="script-actions">`;
-      if(take.script)html+=`<button class="btn btn-ghost btn-xs js-copy-take-script" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Copy</button>`;
-      html+=`<button class="btn btn-ghost btn-xs js-toggle-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">${take.script?(take.editingScript?'Cancel':'Edit'):'Add Script'}</button>
-        ${take.script?`<button class="btn btn-ghost btn-xs js-save-script-library" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Save</button>`:''}
-        <button class="btn btn-ghost btn-xs" onclick="openScriptModal('${esc(card.id)}','${esc(take.id)}')">${take.script?'Swap':'Browse Scripts'}</button>
-      </div>`;
-
-      if(take.editingScript){
-        html+=`<textarea class="script-textarea" id="sta-${esc(take.id)}" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}" placeholder="Paste or type your script...">${esc(take.script)}</textarea>
-          <div style="display:flex;gap:6px;margin-top:6px;">
-            <button class="btn btn-ghost btn-xs js-cancel-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Cancel</button>
-            <button class="btn btn-primary btn-xs js-save-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Save</button>
-          </div>`;
-      } else if(take.script){
-        html+=`<div class="script-display">${esc(take.script).replace(/\n/g,'<br>')}</div>`;
-      }
-
-      html+=typeSelectHtml(card.id,take);
-      html+=locationSelectHtml(card.id,take);
-      html+=takeFieldsHtml(card.id,take);
-
-      html+=`<div class="insp-section">
-        <div class="insp-label">Inspiration</div>
-        <div class="insp-links">${(take.inspirationLinks||[]).map((url,li)=>`<a href="${esc(url)}" target="_blank" rel="noopener" class="insp-link"><span>${esc(getLinkLabel(url))}</span></a><button class="insp-remove" onclick="removeInspirationLink('${esc(card.id)}','${esc(take.id)}',${li})">×</button>`).join('')}</div>
-        <div class="insp-add">
-          <input type="url" class="insp-input" id="insp-${esc(take.id)}" placeholder="Paste a TikTok or inspo link..." onkeydown="if(event.key==='Enter'){event.preventDefault();addInspirationLink('${esc(card.id)}','${esc(take.id)}');}">
-          <button class="insp-add-btn" onclick="addInspirationLink('${esc(card.id)}','${esc(take.id)}')">Add</button>
+	    html+=`<div class="pcard product-list-card" id="${esc(card.id)}" onclick="openProductTakes(${jsArg(card.id)})">
+        <div class="product-card-row">
+          <div class="product-card-main">
+            <div class="product-card-name">${esc(card.name)}</div>
+            ${card.brand?`<div class="product-card-brand">${esc(card.brand)}</div>`:''}
+          </div>
+          <span class="product-progress-count pcard-count">${doneTakes}/${allTakes.length} done</span>
+          <div class="pcard-btns" onclick="event.stopPropagation();">
+            <a class="hbtn" href="${esc(scriptWorkshopUrl(card))}">Workshop</a>
+            <button class="hbtn danger" onclick="removeCard(${jsArg(card.id)})">Remove</button>
+          </div>
         </div>
       </div>`;
-
-      html+=`<div class="take-footer">
-        <span class="take-status${take.done?' filmed':''}">${take.done?'✓ Done':'Not filmed yet'}</span>
-        <div class="take-footer-btns">
-          ${take.done?`<button class="tbtn done-active" onclick="clearSingleTake('${esc(card.id)}','${esc(take.id)}',this)">Clear</button>`:''}
-          <button class="tbtn${take.done?' done-active':''}" onclick="toggleDone('${esc(card.id)}','${esc(take.id)}')">${take.done?'Undo':'Mark Done'}</button>
-          ${takes.length>1?`<button class="tbtn del" onclick="removeTake('${esc(card.id)}','${esc(take.id)}')">Remove</button>`:''}
-        </div>
-      </div></div>`;
-    });
-
-    html+=`<button class="add-take-btn" onclick="addTake('${esc(card.id)}')">+ Add Take</button></div></div>`;
   });
 
   html+='</div>';
   main.innerHTML=html;
 }
 
+function renderTakesView(card){
+  const takes=card.takes||[];
+  const doneTakes=takes.filter(t=>t.done).length;
+  return `<div class="takes-view">
+    <div class="takes-view-head">
+      <div>
+        <button class="takes-back" onclick="showProductList()">← Products</button>
+        <div class="takes-title">${esc(card.name)}</div>
+        ${card.brand?`<div class="takes-sub">${esc(card.brand)} · <span class="takes-sub-count">${doneTakes}/${takes.length} done</span></div>`:`<div class="takes-sub"><span class="takes-sub-count">${doneTakes}/${takes.length} done</span></div>`}
+      </div>
+      <div class="pcard-btns">
+        <a class="hbtn" href="${esc(productBankUrl(card))}">Products DB</a>
+        <a class="hbtn" href="${esc(scriptWorkshopUrl(card))}">Workshop</a>
+        <button class="hbtn danger" onclick="removeCard(${jsArg(card.id)})">Remove</button>
+      </div>
+    </div>
+    <div class="pcard" id="${esc(card.id)}">
+      <div class="takes-wrap">
+        ${takes.map((take,i)=>renderTakeRow(card,take,i,takes.length)).join('')}
+        <button class="add-take-btn" onclick="addTake(${jsArg(card.id)})">+ Add Take</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTakeRow(card,take,index,totalTakes){
+  const expanded=expandedTakeId===take.id;
+  const hook=displayHookText(take.hookText) || 'Choose hook';
+  return `<div class="take-card${take.done?' done':''}${expanded?' expanded':''}" id="${esc(take.id)}" onclick="toggleTakeExpanded(${jsArg(take.id)})">
+    <div class="take-row">
+      <div>
+        <div class="take-label" style="margin-bottom:6px;"><span class="take-num">Take${totalTakes>1?' '+(index+1):''}</span><span class="take-filmed-marker" style="color:var(--sage);font-size:10px;${take.done?'':'display:none;'}">✓ Filmed</span></div>
+        <div class="take-row-hook">${esc(hook)}</div>
+        <div class="take-row-meta">${take.script?'Script saved':'No script yet'}</div>
+      </div>
+      <span class="take-status${take.done?' filmed':''}">${take.done?'✓ Done':'Not filmed yet'}</span>
+    </div>
+    ${expanded?`<div class="take-expanded" onclick="event.stopPropagation();">${renderTakeExpanded(card,take,totalTakes)}</div>`:''}
+  </div>`;
+}
+
+function renderTakeExpanded(card,take,totalTakes){
+  let html='';
+  if(displayHookText(take.hookText)){html+=`<div class="hook-display" onclick="openHookModal('${esc(card.id)}','${esc(take.id)}')">${esc(displayHookText(take.hookText))}</div>`;}
+  html+=`<div class="script-actions">`;
+  if(take.script)html+=`<button class="btn btn-ghost btn-xs js-copy-take-script" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Copy</button>`;
+  html+=`<button class="btn btn-ghost btn-xs js-toggle-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">${take.script?(take.editingScript?'Cancel':'Edit'):'Add Script'}</button>
+    ${take.script?`<button class="btn btn-ghost btn-xs js-save-script-library" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Save</button>`:''}
+    <button class="btn btn-ghost btn-xs" onclick="openScriptModal('${esc(card.id)}','${esc(take.id)}')">${take.script?'Swap':'Browse Scripts'}</button>
+  </div>`;
+  if(take.editingScript){
+    html+=`<textarea class="script-textarea" id="sta-${esc(take.id)}" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}" placeholder="Paste or type your script...">${esc(take.script)}</textarea>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <button class="btn btn-ghost btn-xs js-cancel-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Cancel</button>
+        <button class="btn btn-primary btn-xs js-save-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Save</button>
+      </div>`;
+  } else if(take.script){
+    html+=`<div class="script-display">${esc(take.script).replace(/\n/g,'<br>')}</div>`;
+  }
+  html+=typeSelectHtml(card.id,take);
+  html+=locationSelectHtml(card.id,take);
+  html+=takeFieldsHtml(card.id,take);
+  html+=`<div class="insp-section">
+    <div class="insp-label">Inspiration</div>
+    <div class="insp-links">${(take.inspirationLinks||[]).map((url,li)=>`<a href="${esc(url)}" target="_blank" rel="noopener" class="insp-link"><span>${esc(getLinkLabel(url))}</span></a><button class="insp-remove" onclick="removeInspirationLink('${esc(card.id)}','${esc(take.id)}',${li})">×</button>`).join('')}</div>
+    <div class="insp-add">
+      <input type="url" class="insp-input" id="insp-${esc(take.id)}" placeholder="Paste a TikTok or inspo link..." onkeydown="if(event.key==='Enter'){event.preventDefault();addInspirationLink('${esc(card.id)}','${esc(take.id)}');}">
+      <button class="insp-add-btn" onclick="addInspirationLink('${esc(card.id)}','${esc(take.id)}')">Add</button>
+    </div>
+  </div>
+  <div class="take-footer">
+    <span class="take-status${take.done?' filmed':''}">${take.done?'✓ Done':'Not filmed yet'}</span>
+    <div class="take-footer-btns">
+      ${take.done?`<button class="tbtn done-active" onclick="clearSingleTake('${esc(card.id)}','${esc(take.id)}',this)">Clear</button>`:''}
+      <button class="tbtn${take.done?' done-active':''}" onclick="toggleDone('${esc(card.id)}','${esc(take.id)}')">${take.done?'Undo':'Mark Done'}</button>
+      ${totalTakes>1?`<button class="tbtn del" onclick="removeTake('${esc(card.id)}','${esc(take.id)}')">Remove</button>`:''}
+    </div>
+  </div>`;
+  return html;
+}
+
 function updateCardDoneCount(card){
   const cardEl=document.getElementById(card?.id);
   const countEl=cardEl?.querySelector('.pcard-count');
-  if(!countEl)return;
   const allTakes=card.takes||[];
-  countEl.textContent=`${allTakes.filter(t=>t.done).length}/${allTakes.length}`;
+  const text=`${allTakes.filter(t=>t.done).length}/${allTakes.length}`;
+  if(countEl)countEl.textContent=countEl.classList.contains('product-progress-count')?`${text} done`:text;
+  const subCount=document.querySelector('.takes-sub-count');
+  if(subCount&&selectedProductId===card.id)subCount.textContent=`${text} done`;
 }
 function updateTakeDoneDom(card,take){
   const takeEl=document.getElementById(take?.id);
@@ -703,11 +813,10 @@ function updateTakeDoneDom(card,take){
   takeEl.classList.toggle('done',!!take.done);
   const marker=takeEl.querySelector('.take-filmed-marker');
   if(marker)marker.style.display=take.done?'':'none';
-  const status=takeEl.querySelector('.take-status');
-  if(status){
+  takeEl.querySelectorAll('.take-status').forEach(status=>{
     status.classList.toggle('filmed',!!take.done);
     status.textContent=take.done?'✓ Done':'Not filmed yet';
-  }
+  });
   const footerBtns=takeEl.querySelector('.take-footer-btns');
   if(footerBtns){
     footerBtns.innerHTML=`${take.done?`<button class="tbtn done-active" onclick="clearSingleTake('${esc(card.id)}','${esc(take.id)}',this)">Clear</button>`:''}
@@ -723,10 +832,13 @@ function refreshProgressAndFilters(){
   renderFilterPills();
 }
 
-function setBrandFilter(b){activeBrandFilter=b;history.replaceState({},'','daily-todo.html');renderFilterPills();renderCards();}
+function setBrandFilter(b){activeBrandFilter=b;selectedProductId=null;expandedTakeId=null;history.replaceState({},'','daily-todo.html');renderFilterPills();renderCards();}
 function toggleHideFilmed(){
   hideFilmed=!hideFilmed;
   localStorage.setItem('take24:hideFilmed',hideFilmed?'1':'0');
+  selectedProductId=null;
+  expandedTakeId=null;
+  replaceProductUrl(null);
   renderFilterPills();
   renderCards();
 }
@@ -1162,6 +1274,7 @@ async function init(){
   initProfilePopover(_user.id);
   updateDateDisplay();
   await Promise.all([loadProducts(),loadHooks(),loadScripts(),loadQueue()]);
+  selectedProductId=selectedProductFromUrl();
   render();
 }
 init();
