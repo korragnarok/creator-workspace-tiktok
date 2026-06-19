@@ -29,6 +29,9 @@ a{text-decoration:none;color:inherit;}
 .btn-primary:hover{opacity:0.88;background:var(--tan);}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px;}
 .stat-card{display:flex;align-items:center;gap:14px;min-height:96px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);padding:18px;box-shadow:var(--shadow-sm);}
+.stat-card.clickable{cursor:pointer;transition:border-color 0.14s,background 0.14s,transform 0.14s;}
+.stat-card.clickable:hover,.stat-card.clickable.active{border-color:var(--rust);background:color-mix(in srgb,var(--surface) 76%,var(--rust) 14%);}
+.stat-card.clickable:hover{transform:translateY(-1px);}
 .stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);color:var(--rust);font-family:'Noto Sans Mono',monospace;font-size:22px;font-weight:900;flex-shrink:0;}
 .stat-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-mid);}
 .stat-value{font-family:'Noto Sans Mono',monospace;font-size:30px;font-weight:900;color:var(--ink);line-height:1;margin-top:6px;}
@@ -109,7 +112,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
 
   <section class="stats">
     <div class="stat-card"><div class="stat-icon"><img src="icons/brand-deals/active.png" alt="" style="width:28px;height:28px;object-fit:contain;"></div><div><div class="stat-label">Total Active</div><div class="stat-value" id="statActive">0</div><div class="stat-sub">brand deals</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><img src="icons/brand-deals/due.png" alt="" style="width:28px;height:28px;object-fit:contain;"></div><div><div class="stat-label">Due This Week</div><div class="stat-value" id="statWeek">0</div><div class="stat-sub">deadlines</div></div></div>
+    <div class="stat-card clickable" id="weekStatCard" onclick="toggleWeekFilter()"><div class="stat-icon"><img src="icons/brand-deals/due.png" alt="" style="width:28px;height:28px;object-fit:contain;"></div><div><div class="stat-label">Due This Week</div><div class="stat-value" id="statWeek">0</div><div class="stat-sub">deadlines</div></div></div>
     <div class="stat-card"><div class="stat-icon"><img src="icons/brand-deals/campaigns.png" alt="" style="width:28px;height:28px;object-fit:contain;"></div><div><div class="stat-label">Current Campaigns</div><div class="stat-value" id="statCampaigns">0</div><div class="stat-sub">active now</div></div></div>
     <div class="stat-card pps-card" id="ppsCard" onclick="startPpsEdit()" title="Click to edit PPS score" style="cursor:pointer;">
       <div class="stat-icon"><img src="icons/brand-deals/pps-score.png" alt="" style="width:28px;height:28px;object-fit:contain;"></div>
@@ -131,6 +134,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
       <button class="pill" data-filter="retainer" onclick="setFilter('retainer')">Retainers</button>
       <button class="pill" data-filter="campaign" onclick="setFilter('campaign')">Campaigns</button>
       <button class="pill" data-filter="refundable" onclick="setFilter('refundable')">Refundable Samples</button>
+      <button class="pill" data-filter="week" onclick="setFilter('week')">Due This Week</button>
     </div>
     <input class="search" id="dealSearch" placeholder="Search brand deals..." oninput="renderDeals()">
   </section>
@@ -265,13 +269,22 @@ async function deleteDealFromDb(id){
 function setFilter(filter){
   activeFilter=filter;
   document.querySelectorAll('.pill').forEach(btn=>btn.classList.toggle('active',btn.dataset.filter===filter));
+  document.getElementById('weekStatCard')?.classList.toggle('active',filter==='week');
   renderDeals();
+}
+
+function toggleWeekFilter(){
+  setFilter(activeFilter==='week'?'all':'week');
 }
 
 function visibleDeals(){
   const q=document.getElementById('dealSearch').value.trim().toLowerCase();
   return deals.filter(deal=>{
-    if(activeFilter==='refundable'){if(!deal.refundable)return false;}
+    if(activeFilter==='week'){
+      const left=daysLeft(deal.due);
+      if(deal.status==='completed'||left<0||left>7)return false;
+    }
+    else if(activeFilter==='refundable'){if(!deal.refundable)return false;}
     else if(activeFilter!=='all'&&deal.type!==activeFilter)return false;
     if(q&&!`${deal.name} ${deal.brand} ${deal.type} ${deal.status}`.toLowerCase().includes(q))return false;
     return true;
