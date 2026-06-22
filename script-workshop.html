@@ -34,6 +34,14 @@ button,input,textarea,select{font:inherit;}
 .field-input,.field-select{width:100%;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--ink);padding:10px 12px;outline:none;}
 .field-select{padding-right:48px;}
 .field-input:focus,.field-select:focus{border-color:var(--rust);}
+.hidden-select{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;}
+.product-combo{position:relative;}
+.product-search-menu{display:none;position:absolute;z-index:40;top:calc(100% + 6px);left:0;right:0;max-height:240px;overflow:auto;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg-lift);box-shadow:var(--shadow-md);padding:6px;}
+.product-combo.open .product-search-menu{display:block;}
+.product-option{width:100%;display:block;text-align:left;border:0;border-radius:8px;background:transparent;color:var(--ink);padding:10px 11px;cursor:pointer;font-family:'IBM Plex Serif',serif;}
+.product-option:hover,.product-option.active{background:color-mix(in srgb,var(--surface) 72%,var(--rust) 10%);}
+.product-option-name{display:block;font-weight:700;color:var(--ink);line-height:1.25;}
+.product-option-brand{display:block;font-size:12px;color:var(--text-muted);margin-top:2px;}
 .slider-field{display:flex;align-items:center;gap:14px;width:100%;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);padding:10px 12px;min-height:42px;}
 .slider-field .field-input[type="range"]{padding:0;height:42px;accent-color:var(--sage);cursor:pointer;}
 .slider-value{font-family:'Noto Sans Mono',monospace;font-size:13px;font-weight:900;color:var(--cream);letter-spacing:0;}
@@ -192,7 +200,11 @@ button,input,textarea,select{font:inherit;}
     </div>
     <div class="mob-field">
       <div class="mob-field-label">Product</div>
-      <select class="mob-input mob-select" id="mProductSelect" onchange="syncMobToDesk('product')"></select>
+      <div class="product-combo" id="mProductCombo">
+        <input class="mob-input" id="mProductSearch" placeholder="Search products..." autocomplete="off" oninput="renderProductSearchMenu('mobile')" onfocus="openProductSearch('mobile')">
+        <select class="hidden-select" id="mProductSelect" onchange="syncMobToDesk('product')"></select>
+        <div class="product-search-menu" id="mProductSearchMenu"></div>
+      </div>
     </div>
     <div class="mob-field">
       <div class="mob-field-label">Script Similarity <span id="mSliderValue">50%</span></div>
@@ -271,7 +283,11 @@ button,input,textarea,select{font:inherit;}
     </div>
     <div class="field">
       <div class="field-label">Product</div>
-      <select class="field-select" id="productSelect"></select>
+      <div class="product-combo" id="productCombo">
+        <input class="field-input" id="productSearch" placeholder="Search products..." autocomplete="off" oninput="renderProductSearchMenu('desktop')" onfocus="openProductSearch('desktop')">
+        <select class="hidden-select" id="productSelect"></select>
+        <div class="product-search-menu" id="productSearchMenu"></div>
+      </div>
     </div>
     <div class="field">
       <div class="field-label">Script Similarity <span class="slider-value" id="sliderValue">50%</span></div>
@@ -525,6 +541,7 @@ function mobSync(){
   if(!isMobile())return;
   const mTitle=document.getElementById('mScriptTitle');if(mTitle)mTitle.value=document.getElementById('scriptTitle').value;
   const mProd=document.getElementById('mProductSelect');if(mProd)mProd.value=document.getElementById('productSelect').value;
+  syncProductSearchFromSelect('mobile');
   const mSimilarity=document.getElementById('mSimilaritySlider');if(mSimilarity)mSimilarity.value=document.getElementById('similaritySlider')?.value||'50';
   updateSimilarityDisplay(document.getElementById('similaritySlider')?.value||'50');
   const mCanvas=document.getElementById('mScriptCanvas');if(mCanvas)mCanvas.value=document.getElementById('scriptCanvas').value;
@@ -544,7 +561,7 @@ function mobFlushToDesk(){
 }
 function syncMobToDesk(field){
   if(field==='title') document.getElementById('scriptTitle').value=document.getElementById('mScriptTitle').value;
-  else if(field==='product'){document.getElementById('productSelect').value=document.getElementById('mProductSelect').value;if(user)saveLocalDraft();}
+  else if(field==='product'){selectProduct(document.getElementById('mProductSelect').value,'mobile');if(user)saveLocalDraft();}
   else if(field==='similarity'){
     const v=document.getElementById('mSimilaritySlider').value;
     const d=document.getElementById('similaritySlider');
@@ -637,7 +654,7 @@ async function init(){
   await Promise.all([loadProducts(),loadLibraries()]);
   restoreLocalDraft();
   renderProducts();
-  if(pendingDraftProductId)document.getElementById('productSelect').value=pendingDraftProductId;
+  if(pendingDraftProductId)selectProduct(pendingDraftProductId,'desktop');
   await applyProductHandoff();
   updateSimilarityDisplay(document.getElementById('similaritySlider')?.value||'50');
   renderLibrary();
@@ -790,7 +807,76 @@ function renderProducts(){
   sel.innerHTML=opts;
   const msel=document.getElementById('mProductSelect');
   if(msel)msel.innerHTML=opts;
+  syncProductSearchFromSelect('desktop');
+  syncProductSearchFromSelect('mobile');
+  renderProductSearchMenu('desktop');
+  renderProductSearchMenu('mobile');
+  closeProductSearch('desktop');
+  closeProductSearch('mobile');
 }
+function productLabel(product){
+  return product ? `${product.name || ''}${product.brand ? ' — '+product.brand : ''}`.trim() : '';
+}
+function productSearchParts(mode='desktop'){
+  const mobile=mode==='mobile';
+  return {
+    combo:document.getElementById(mobile?'mProductCombo':'productCombo'),
+    input:document.getElementById(mobile?'mProductSearch':'productSearch'),
+    menu:document.getElementById(mobile?'mProductSearchMenu':'productSearchMenu'),
+    select:document.getElementById(mobile?'mProductSelect':'productSelect')
+  };
+}
+function syncProductSearchFromSelect(mode='desktop'){
+  const {input,select}=productSearchParts(mode);
+  if(!input||!select)return;
+  const product=products.find(p=>p.id===select.value);
+  input.value=productLabel(product);
+}
+function openProductSearch(mode='desktop'){
+  const {combo}=productSearchParts(mode);
+  combo?.classList.add('open');
+  renderProductSearchMenu(mode);
+}
+function closeProductSearch(mode='desktop'){
+  productSearchParts(mode).combo?.classList.remove('open');
+}
+function renderProductSearchMenu(mode='desktop'){
+  const {input,menu,select}=productSearchParts(mode);
+  if(!input||!menu)return;
+  const current=products.find(p=>p.id===select?.value);
+  if(current&&input.value.trim()!==productLabel(current)){
+    if(select)select.value='';
+    const other=productSearchParts(mode==='mobile'?'desktop':'mobile').select;
+    if(other)other.value='';
+  }
+  const q=input.value.trim().toLowerCase();
+  const rows=products
+    .filter(p=>!q||`${p.name||''} ${p.brand||''}`.toLowerCase().includes(q))
+    .slice(0,80);
+  menu.innerHTML=rows.length?rows.map(p=>`
+    <button type="button" class="product-option" onclick="selectProduct('${esc(p.id)}','${mode}')">
+      <span class="product-option-name">${esc(p.name)}</span>
+      ${p.brand?`<span class="product-option-brand">${esc(p.brand)}</span>`:''}
+    </button>
+  `).join(''):'<div class="empty" style="padding:12px;">No products found.</div>';
+  productSearchParts(mode).combo?.classList.add('open');
+}
+function selectProduct(productId,mode='desktop'){
+  const product=products.find(p=>p.id===productId);
+  const desk=productSearchParts('desktop');
+  const mob=productSearchParts('mobile');
+  if(desk.select)desk.select.value=productId||'';
+  if(mob.select)mob.select.value=productId||'';
+  if(desk.input)desk.input.value=productLabel(product);
+  if(mob.input)mob.input.value=productLabel(product);
+  closeProductSearch('desktop');
+  closeProductSearch('mobile');
+  if(user)saveLocalDraft();
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest?.('#productCombo'))closeProductSearch('desktop');
+  if(!e.target.closest?.('#mProductCombo'))closeProductSearch('mobile');
+});
 async function applyProductHandoff(){
   const params=new URLSearchParams(window.location.search);
   const productId=params.get('productId')||'';
@@ -821,6 +907,8 @@ async function applyProductHandoff(){
   }
   document.getElementById('productSelect').value=product.id;
   const mProd=document.getElementById('mProductSelect');if(mProd)mProd.value=product.id;
+  syncProductSearchFromSelect('desktop');
+  syncProductSearchFromSelect('mobile');
   const title=document.getElementById('scriptTitle');
   if(!title.value.trim())title.value=`${product.name} Script`;
   saveLocalDraft();
@@ -979,7 +1067,7 @@ async function newScript(){
   mobFlushToDesk();
   if(fullScript()&&!(await openWorkshopConfirm('Start New Script?','This will clear the current workshop draft on this page.','Start New')))return;
   document.getElementById('scriptTitle').value='';
-  document.getElementById('productSelect').value='';
+  selectProduct('','desktop');
   document.getElementById('scriptNotes').value='';
   document.getElementById('scriptCanvas').value='';
   updateSimilarityDisplay('50');
@@ -1034,7 +1122,7 @@ async function generateAiDraft(){
   const productSelect=document.getElementById('productSelect');
   if(!productSelect?.value || productSelect.options[productSelect.selectedIndex]?.textContent === 'Choose product'){
     showToast('Choose a product first.','error');
-    productSelect?.focus();
+    document.getElementById('productSearch')?.focus();
     return;
   }
   const sourceScript=fullScript();
