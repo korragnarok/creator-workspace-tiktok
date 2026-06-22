@@ -5,6 +5,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 const DEFAULT_STREAK_GOAL = 1;
+const DEFAULT_AI_TONE = 'Realistic and conversational, with lazy mom energy. Not extremely salesy, not too bubbly or upbeat. Sound like a normal person talking through what works and why.';
 
 function registerAppServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
@@ -333,6 +334,40 @@ async function saveUserPrefs(userId, patch) {
 
 function _streakGoalKey(userId) {
   return `creatorHub:streakGoal:${userId || 'local'}`;
+}
+
+function _aiToneKey(userId) {
+  return `creatorHub:aiTone:${userId || 'local'}`;
+}
+
+function _normalizeAiTone(value) {
+  return String(value || '').trim();
+}
+
+function _cachedAiTone(userId) {
+  try { return _normalizeAiTone(localStorage.getItem(_aiToneKey(userId))); }
+  catch(e) { return ''; }
+}
+
+function resolveAiTone(user, prefs = null) {
+  return _normalizeAiTone(user?.user_metadata?.ai_tone)
+    || _normalizeAiTone(prefs?.ai_tone)
+    || _cachedAiTone(user?.id)
+    || '';
+}
+
+async function saveAiTone(userId, value) {
+  const tone = _normalizeAiTone(value);
+  if (!tone) return { tone: '', error: new Error('Missing tone') };
+  try { localStorage.setItem(_aiToneKey(userId), tone); } catch(e) {}
+  let error = null;
+  try {
+    const result = await db.auth.updateUser({ data: { ai_tone: tone } });
+    error = result.error || null;
+  } catch(e) {
+    error = e;
+  }
+  return { tone, error };
 }
 
 function _normalizeStreakGoal(value, fallback = DEFAULT_STREAK_GOAL) {

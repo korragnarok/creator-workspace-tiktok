@@ -387,6 +387,7 @@ button,input,textarea,select{font:inherit;}
 <script src="layout.js?v=140"></script>
 <script>
 let user=null, products=[], hooks=[], scripts=[], ctas=[], activeTab='hooks', currentFramework='product-demo', pendingDraftProductId='';
+let userPrefs=null;
 const FRAMEWORKS={
   'product-demo':{label:'Product Demo / Problem Solution',addLabel:'+ Add Section',sections:['Hook','Problem','Demo','Proof','CTA']},
   skit:{label:'Skit',addLabel:'+ Add Dialogue',sections:['Person 1','Person 2'],promptTitle:'Add Dialogue',promptMessage:'Who is speaking in this new dialogue box?',promptPlaceholder:'Person 3'},
@@ -625,10 +626,10 @@ const _origRenderProducts=typeof renderProducts!=='undefined'?renderProducts:nul
 async function init(){
   user=await requireAuth();
   if(!user)return;
-  const prefs=await loadUserPrefs(user.id);
-  await initDisplayName(user,prefs);
-  await initCore5(user.id,prefs);
-  await initTheme(user.id,prefs);
+  userPrefs=await loadUserPrefs(user.id);
+  await initDisplayName(user,userPrefs);
+  await initCore5(user.id,userPrefs);
+  await initTheme(user.id,userPrefs);
   initProfilePopover(user.id);
   CreatorGemini.init({autoPrompt:false});
   updateGeminiKeyButton();
@@ -1009,6 +1010,23 @@ function toggleGeminiKey(){
   else CreatorGemini.showKeyPrompt();
 }
 function aiKeyMap(){return AI_FRAMEWORK_KEYS[currentFramework]||AI_FRAMEWORK_KEYS['product-demo'];}
+async function ensureAiTone(){
+  let tone=resolveAiTone(user,userPrefs);
+  if(tone)return tone;
+  tone=await openWorkshopPrompt({
+    title:'Choose Your AI Tone',
+    message:'How should Gemini sound when it remixes scripts for you? You can change this later in Settings.',
+    placeholder:DEFAULT_AI_TONE,
+    value:DEFAULT_AI_TONE,
+    confirmText:'Save Tone'
+  });
+  tone=String(tone||'').trim()||DEFAULT_AI_TONE;
+  const { error }=await saveAiTone(user.id,tone);
+  user={...user,user_metadata:{...(user.user_metadata||{}),ai_tone:tone}};
+  userPrefs={...(userPrefs||{}),ai_tone:tone};
+  if(error)showToast('Tone saved on this browser only','error');
+  return tone;
+}
 async function generateAiDraft(){
   if(!user){showToast('Still loading...','error');return;}
   if(!CreatorGemini.hasKey()){showToast('Connect your Gemini API key first — tap the Gemini Key button.','error');return;}
@@ -1028,6 +1046,7 @@ async function generateAiDraft(){
   const product=selectedProduct();
   const selectedProductName=product?.name||'Not selected';
   const similarity=document.getElementById('similaritySlider')?.value||'50';
+  const aiTone=await ensureAiTone();
   const prompt=`You are an elite TikTok Shop content strategist and scriptwriting expert specializing in hook conversion analysis. Your job is to take an original reference script, look at its fundamental sales psychology structure, and adapt it flawlessly for a brand new product using my specific brand voice guidelines.
 
 Here are your structural inputs:
@@ -1039,7 +1058,7 @@ Here are your structural inputs:
 
 Strict Copywriting Guidelines:
 0. REMIX ANALYSIS FIRST: Silently identify what made the reference script work: the hook mechanism, pacing, objection handled, proof moment, emotional payoff, and CTA pressure. Do not explain that analysis. Use it to recreate the same conversion logic for the target product.
-1. VOICE LOCK: Write for a creator who uses dry, deadpan, anti-influencer humor (Aubrey Plaza "lazy mom" energy). BAN THE INFLUENCER VOICE: No hyperactive intros like "Hey guys!", "Welcome back!", or "I'm literally obsessed!". Start directly mid-sentence.
+1. VOICE LOCK: Use this creator tone preference exactly: "${aiTone}". Keep it realistic and conversational. It should not feel extremely salesy, but it also should not feel too bubbly, polished, or overly upbeat. BAN THE INFLUENCER VOICE: No hyperactive intros like "Hey guys!", "Welcome back!", or "I'm literally obsessed!". Start directly mid-sentence.
 2. PRODUCT TRANSLATION: If the original script is for an entirely different item category (e.g., a hat) but the target is completely different (e.g., a shoe), seamlessly swap the product context. Map the structural utility hooks gracefully (e.g., a hat covering messy hair translates structurally to a shoe being quick to slip on when rushing out the door).
 3. NO PRICE MENTIONS: Strictly follow TikTok Shop compliance. Do not mention specific costs, discounts, dollar figures, or pricing numbers under any circumstances. Always refer to it abstractly as "the yellow link" or "the cart below".
 4. VISUAL ACTION DIRECTIONS: Keep bracketed scene directions extremely brief (e.g., [shows close-up], [points downward]).

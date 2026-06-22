@@ -119,6 +119,17 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="saveStreakGoalBtn" onclick="saveStreakGoalSetting()">Save Streak Goal</button>
   </div>
 
+  <!-- AI Tone -->
+  <div class="settings-section">
+    <div class="section-title">AI Writing Tone</div>
+    <div class="form-group">
+      <label class="form-label">Tone Preference</label>
+      <textarea class="form-input" id="aiToneInput" rows="4" placeholder="Realistic and conversational, with lazy mom energy. Not extremely salesy, not too bubbly or upbeat."></textarea>
+      <div class="form-hint">Used by Script Workshop when Gemini remixes a script.</div>
+    </div>
+    <button class="btn btn-primary" id="saveAiToneBtn" onclick="saveAiToneSetting()">Save AI Tone</button>
+  </div>
+
   <!-- Theme -->
   <div class="settings-section">
     <div class="section-title">Color Theme</div>
@@ -342,6 +353,19 @@ async function saveStreakGoalSetting() {
   showToast(error && metaError ? 'Streak goal saved on this browser only' : 'Streak goal updated', error && metaError ? 'error' : 'success');
 }
 
+async function saveAiToneSetting() {
+  const input = document.getElementById('aiToneInput');
+  const btn = document.getElementById('saveAiToneBtn');
+  const tone = (input?.value || '').trim();
+  if (!tone) { input?.focus(); return; }
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const { error } = await saveAiTone(_user.id, tone);
+  if (!error) _user = { ..._user, user_metadata: { ...(_user.user_metadata || {}), ai_tone: tone } };
+  _prefs = { ...(_prefs || {}), ai_tone: tone };
+  btn.disabled = false; btn.textContent = 'Save AI Tone';
+  showToast(error ? 'AI tone saved on this browser only' : 'AI tone updated', error ? 'error' : 'success');
+}
+
 async function savePassword() {
   const np = document.getElementById('newPass').value;
   const cp = document.getElementById('confirmPass').value;
@@ -383,6 +407,8 @@ async function init() {
   if (currentName) currentName.textContent = savedName || 'Not set yet';
   const streakInput = document.getElementById('streakGoalInput');
   if (streakInput) streakInput.value = resolveStreakGoal(_user, _prefs);
+  const aiToneInput = document.getElementById('aiToneInput');
+  if (aiToneInput) aiToneInput.value = resolveAiTone(_user, _prefs) || DEFAULT_AI_TONE;
 
   const activeTheme = document.documentElement.dataset.theme || _prefs.theme || DEFAULT_THEME;
   buildThemeGrid(activeTheme);
