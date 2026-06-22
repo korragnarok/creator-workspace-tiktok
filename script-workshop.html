@@ -1019,8 +1019,12 @@ async function generateAiDraft(){
     productSelect?.focus();
     return;
   }
-  const hasText=Boolean(fullScript());
-  if(hasText&&!(await openWorkshopConfirm('Replace Current Draft?','Generate with AI will replace the text in your script canvas.','Replace','Cancel')))return;
+  const sourceScript=fullScript();
+  if(!sourceScript){
+    showToast('Paste a script to remix first.','error');
+    document.getElementById('scriptCanvas')?.focus();
+    return;
+  }
   const product=selectedProduct();
   const aiInputs=await openAiGenerationModal();
   if(aiInputs===null)return;
@@ -1028,13 +1032,14 @@ async function generateAiDraft(){
   const prompt=`You are an elite TikTok Shop content strategist and scriptwriting expert specializing in hook conversion analysis. Your job is to take an original reference script, look at its fundamental sales psychology structure, and adapt it flawlessly for a brand new product using my specific brand voice guidelines.
 
 Here are your structural inputs:
-- Original Reference Script to Transform: "${document.getElementById('scriptCanvas').value}"
+- Original Reference Script to Transform: "${sourceScript}"
 - Target Product to Adapt Into: "${selectedProductName}"
 - Target Length: "${aiInputs.length || '30s'}"
 - Script Similarity Constraint: ${document.getElementById('similaritySlider').value}% (Note: 0% means keep only the high-level abstract concept and rewrite everything creatively. 100% means match the line-by-line cadence, sentence lengths, visual action tempos, and hook placement exactly, changing ONLY the product names and unique feature facts to fit the new product).
 - Custom Structural Directives: "${aiInputs.customNotes}"
 
 Strict Copywriting Guidelines:
+0. REMIX ANALYSIS FIRST: Silently identify what made the reference script work: the hook mechanism, pacing, objection handled, proof moment, emotional payoff, and CTA pressure. Do not explain that analysis. Use it to recreate the same conversion logic for the target product.
 1. VOICE LOCK: Write for a creator who uses dry, deadpan, anti-influencer humor (Aubrey Plaza "lazy mom" energy). BAN THE INFLUENCER VOICE: No hyperactive intros like "Hey guys!", "Welcome back!", or "I'm literally obsessed!". Start directly mid-sentence.
 2. PRODUCT TRANSLATION: If the original script is for an entirely different item category (e.g., a hat) but the target is completely different (e.g., a shoe), seamlessly swap the product context. Map the structural utility hooks gracefully (e.g., a hat covering messy hair translates structurally to a shoe being quick to slip on when rushing out the door).
 3. NO PRICE MENTIONS: Strictly follow TikTok Shop compliance. Do not mention specific costs, discounts, dollar figures, or pricing numbers under any circumstances. Always refer to it abstractly as "the yellow link" or "the cart below".
