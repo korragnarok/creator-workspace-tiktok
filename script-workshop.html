@@ -34,7 +34,7 @@ button,input,textarea,select{font:inherit;}
 .field-input,.field-select{width:100%;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--ink);padding:10px 12px;outline:none;}
 .field-select{padding-right:48px;}
 .field-input:focus,.field-select:focus{border-color:var(--rust);}
-.slider-field{display:flex;align-items:center;gap:14px;}
+.slider-field{display:flex;align-items:center;gap:14px;width:100%;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);padding:10px 12px;min-height:42px;}
 .slider-field .field-input[type="range"]{padding:0;height:42px;accent-color:var(--sage);cursor:pointer;}
 .slider-value{font-family:'Noto Sans Mono',monospace;font-size:13px;font-weight:900;color:var(--cream);letter-spacing:0;}
 .workshop-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,0.75fr);gap:16px;align-items:start;}
@@ -196,7 +196,7 @@ button,input,textarea,select{font:inherit;}
     </div>
     <div class="mob-field">
       <div class="mob-field-label">Script Similarity <span id="mSliderValue">50%</span></div>
-      <input class="mob-input" id="mSimilaritySlider" type="range" min="0" max="100" value="50" oninput="syncMobToDesk('similarity')">
+      <input class="mob-input" id="mSimilaritySlider" type="range" min="0" max="100" step="10" value="50" oninput="syncMobToDesk('similarity')">
     </div>
   </div>
 
@@ -276,7 +276,7 @@ button,input,textarea,select{font:inherit;}
     <div class="field">
       <div class="field-label">Script Similarity <span class="slider-value" id="sliderValue">50%</span></div>
       <div class="slider-field">
-        <input type="range" id="similaritySlider" min="0" max="100" value="50" class="field-input">
+        <input type="range" id="similaritySlider" min="0" max="100" step="10" value="50" class="field-input">
       </div>
     </div>
   </section>
