@@ -577,11 +577,14 @@ function productBankUrl(card){
   if(brand)return 'products.html?brand='+encodeURIComponent(brand);
   return 'products.html?search='+encodeURIComponent(String(card?.name||'').trim());
 }
-function scriptWorkshopUrl(card){
+function scriptWorkshopUrl(card,take=null){
   const params=new URLSearchParams();
   if(card?.prodId)params.set('productId',card.prodId);
   if(card?.name)params.set('productName',card.name);
   if(card?.brand)params.set('brand',card.brand);
+  if(card?.id)params.set('cardId',card.id);
+  if(take?.id)params.set('takeId',take.id);
+  if(take?.queueId)params.set('queueId',take.queueId);
   return 'script-workshop.html'+(params.toString()?'?'+params.toString():'');
 }
 function normalizeInspirationLinks(value){
@@ -776,6 +779,7 @@ function renderTakeExpanded(card,take,totalTakes){
   if(take.script)html+=`<button class="btn btn-ghost btn-xs js-copy-take-script" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Copy</button>`;
   html+=`<button class="btn btn-ghost btn-xs js-toggle-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">${take.script?(take.editingScript?'Cancel':'Edit'):'Add Script'}</button>
     ${take.script?`<button class="btn btn-ghost btn-xs js-save-script-library" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Save</button>`:''}
+    <a class="btn btn-ghost btn-xs" href="${esc(scriptWorkshopUrl(card,take))}" onclick="event.stopPropagation()">Workshop</a>
     <button class="btn btn-ghost btn-xs" onclick="openScriptModal('${esc(card.id)}','${esc(take.id)}')">${take.script?'Swap':'Browse Scripts'}</button>
   </div>`;
   if(take.editingScript){

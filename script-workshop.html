@@ -70,8 +70,8 @@ button,input,textarea,select{font:inherit;}
 .icon-btn:hover{opacity:0.78;}
 .icon-btn img{width:22px;height:22px;object-fit:contain;display:block;}
 .add-section{border:1px dashed var(--border-mid);background:transparent;color:var(--text-mid);padding:12px;border-radius:10px;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;margin-top:8px;}
-.notes-panel{margin-top:12px;padding:14px;}
-.notes-head{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);margin-bottom:8px;}
+.notes-panel{margin-top:12px;padding:16px;}
+.detail-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:10px;}
 .notes-area{width:100%;min-height:140px;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--text);padding:12px;resize:vertical;outline:none;}
 .side-stack{display:flex;flex-direction:column;gap:14px;}
 .library{padding:16px;}
@@ -255,8 +255,13 @@ button,input,textarea,select{font:inherit;}
 
   <!-- Notes -->
   <div class="mob-card">
-    <div class="mob-section-title" style="padding:0 0 8px;">Notes</div>
-    <textarea class="mob-input" id="mScriptNotes" rows="4" placeholder="Filming reminders, angles, B-roll ideas, or alternate wording..." oninput="syncMobToDesk('notes')" style="resize:vertical;min-height:90px;"></textarea>
+    <div class="mob-section-title" style="padding:0 0 8px;">Creative Details</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+      <button class="mob-lib-tab active" data-mdetail-tab="onscreen" onclick="setDetailTab('onscreen')">On-Screen</button>
+      <button class="mob-lib-tab" data-mdetail-tab="caption" onclick="setDetailTab('caption')">Caption</button>
+      <button class="mob-lib-tab" data-mdetail-tab="seo" onclick="setDetailTab('seo')">SEO</button>
+    </div>
+    <textarea class="mob-input" id="mScriptNotes" rows="4" placeholder="AI details will show here..." oninput="syncMobToDesk('notes')" style="resize:vertical;min-height:90px;"></textarea>
   </div>
 
   <!-- Bottom actions -->
@@ -311,8 +316,15 @@ button,input,textarea,select{font:inherit;}
         <textarea class="script-canvas" id="scriptCanvas" placeholder="Paste a viral script or a hook sequence from another creator here to remix it..."></textarea>
       </div>
       <div class="panel notes-panel">
-        <div class="notes-head">Notes</div>
-        <textarea class="notes-area" id="scriptNotes" placeholder="Filming reminders, angles, B-roll ideas, or alternate wording..."></textarea>
+        <div class="detail-head">
+          <div class="library-title" id="detailTitle">On-Screen Text</div>
+          <div class="library-tabs">
+            <button class="tab active" data-detail-tab="onscreen" onclick="setDetailTab('onscreen')">On-Screen Text</button>
+            <button class="tab" data-detail-tab="caption" onclick="setDetailTab('caption')">Caption</button>
+            <button class="tab" data-detail-tab="seo" onclick="setDetailTab('seo')">SEO Strategy</button>
+          </div>
+        </div>
+        <textarea class="notes-area" id="scriptNotes" placeholder="AI-generated on-screen text will show here..."></textarea>
       </div>
     </div>
 
@@ -512,6 +524,59 @@ let sections=makeFrameworkSections(currentFramework);
 let inspo=[];
 let workshopModalResolve=null;
 let aiModalResolve=null;
+let workshopReturnContext=null;
+let activeDetailTab='onscreen';
+let detailDraft={onscreen:'',caption:'',seo:''};
+const DETAIL_TABS={
+  onscreen:{label:'On-Screen Text',placeholder:'AI-generated on-screen text ideas will show here...'},
+  caption:{label:'Caption',placeholder:'AI-generated caption will show here...'},
+  seo:{label:'SEO Strategy',placeholder:'AI-generated keywords and search phrases will show here...'}
+};
+
+function saveActiveDetail(){
+  const box=document.getElementById('scriptNotes');
+  if(box&&DETAIL_TABS[activeDetailTab])detailDraft[activeDetailTab]=box.value;
+}
+function renderDetailTabs(){
+  const meta=DETAIL_TABS[activeDetailTab]||DETAIL_TABS.onscreen;
+  const title=document.getElementById('detailTitle');
+  if(title)title.textContent=meta.label;
+  document.querySelectorAll('[data-detail-tab]').forEach(btn=>btn.classList.toggle('active',btn.dataset.detailTab===activeDetailTab));
+  document.querySelectorAll('[data-mdetail-tab]').forEach(btn=>btn.classList.toggle('active',btn.dataset.mdetailTab===activeDetailTab));
+  const box=document.getElementById('scriptNotes');
+  if(box){
+    box.placeholder=meta.placeholder;
+    box.value=detailDraft[activeDetailTab]||'';
+  }
+  const mob=document.getElementById('mScriptNotes');
+  if(mob){
+    mob.placeholder=meta.placeholder;
+    mob.value=detailDraft[activeDetailTab]||'';
+  }
+}
+function setDetailTab(tab){
+  if(!DETAIL_TABS[tab])return;
+  saveActiveDetail();
+  activeDetailTab=tab;
+  renderDetailTabs();
+  saveLocalDraft();
+}
+function detailSummaryText(){
+  saveActiveDetail();
+  return [
+    detailDraft.onscreen?`On-screen text:\n${detailDraft.onscreen}`:'',
+    detailDraft.caption?`Caption:\n${detailDraft.caption}`:'',
+    detailDraft.seo?`SEO strategy:\n${detailDraft.seo}`:''
+  ].filter(Boolean).join('\n\n');
+}
+function setDetailDraft(next){
+  detailDraft={
+    onscreen:String(next?.onscreen||''),
+    caption:String(next?.caption||''),
+    seo:String(next?.seo||'')
+  };
+  renderDetailTabs();
+}
 
 // ── Mobile Workshop JS ──
 const isMobile=()=>window.matchMedia('(max-width:768px)').matches;
@@ -524,7 +589,8 @@ function mobSync(){
   const mSimilarity=document.getElementById('mSimilaritySlider');if(mSimilarity)mSimilarity.value=document.getElementById('similaritySlider')?.value||'50';
   updateSimilarityDisplay(document.getElementById('similaritySlider')?.value||'50');
   const mCanvas=document.getElementById('mScriptCanvas');if(mCanvas)mCanvas.value=document.getElementById('scriptCanvas').value;
-  const mNotes=document.getElementById('mScriptNotes');if(mNotes)mNotes.value=document.getElementById('scriptNotes').value;
+  saveActiveDetail();
+  const mNotes=document.getElementById('mScriptNotes');if(mNotes)mNotes.value=detailDraft[activeDetailTab]||'';
 }
 function mobFlushToDesk(){
   if(!isMobile())return;
@@ -536,7 +602,10 @@ function mobFlushToDesk(){
     updateSimilarityDisplay(mSimilarity.value);
   }
   const mCanvas=document.getElementById('mScriptCanvas');if(mCanvas)document.getElementById('scriptCanvas').value=mCanvas.value;
-  const mNotes=document.getElementById('mScriptNotes');if(mNotes)document.getElementById('scriptNotes').value=mNotes.value;
+  const mNotes=document.getElementById('mScriptNotes');if(mNotes){
+    detailDraft[activeDetailTab]=mNotes.value;
+    const desk=document.getElementById('scriptNotes');if(desk)desk.value=mNotes.value;
+  }
 }
 function syncMobToDesk(field){
   if(field==='title') document.getElementById('scriptTitle').value=document.getElementById('mScriptTitle').value;
@@ -548,7 +617,10 @@ function syncMobToDesk(field){
     updateSimilarityDisplay(v);
   }
   else if(field==='canvas'){document.getElementById('scriptCanvas').value=document.getElementById('mScriptCanvas').value;}
-  else if(field==='notes') document.getElementById('scriptNotes').value=document.getElementById('mScriptNotes').value;
+  else if(field==='notes'){
+    detailDraft[activeDetailTab]=document.getElementById('mScriptNotes').value;
+    document.getElementById('scriptNotes').value=detailDraft[activeDetailTab];
+  }
   saveLocalDraft();
 }
 function mobSetTab(tab){
@@ -863,13 +935,19 @@ async function applyProductHandoff(){
   const productId=params.get('productId')||'';
   const productName=String(params.get('productName')||'').trim().toLowerCase();
   const brand=String(params.get('brand')||'').trim().toLowerCase();
+  const incomingContext={
+    cardId:params.get('cardId')||'',
+    takeId:params.get('takeId')||'',
+    queueId:params.get('queueId')||''
+  };
+  if(incomingContext.cardId||incomingContext.takeId||incomingContext.queueId)workshopReturnContext=incomingContext;
   if(!productId&&!productName&&!brand)return false;
   const product=products.find(p=>productId&&p.id===productId)
     || products.find(p=>productName&&String(p.name||'').trim().toLowerCase()===productName)
     || products.find(p=>productName&&String(p.name||'').toLowerCase().includes(productName)&&(!brand||String(p.brand||'').toLowerCase()===brand));
   if(!product)return;
   const currentProductId=document.getElementById('productSelect').value;
-  const hasDraftText=Boolean(fullScript()||document.getElementById('scriptNotes').value.trim()||inspo.length);
+  const hasDraftText=Boolean(fullScript()||detailSummaryText()||inspo.length);
   if(hasDraftText&&currentProductId!==product.id){
     const startNew=await openWorkshopConfirm(
       'Workshop Draft Already Open',
@@ -882,7 +960,7 @@ async function applyProductHandoff(){
       return false;
     }
     document.getElementById('scriptTitle').value='';
-    document.getElementById('scriptNotes').value='';
+    setDetailDraft({});
     document.getElementById('scriptCanvas').value='';
     inspo=[];
   }
@@ -999,15 +1077,27 @@ function selectedProduct(){
   const id=document.getElementById('productSelect').value;
   return products.find(p=>p.id===id);
 }
-function splitAiScriptAndNotes(text){
+function splitAiScriptAndDetails(text){
   const cleaned=String(text||'').replace(/```(?:text)?|```/gi,'').trim();
-  const marker=/\n?\s*(?:\*\*)?ON_SCREEN_TEXT_NOTES(?:\*\*)?\s*:\s*/i;
-  const parts=cleaned.split(marker);
-  if(parts.length<2)return {script:formatScriptForFilming(cleaned),notes:''};
-  return {
-    script:formatScriptForFilming(parts[0]),
-    notes:parts.slice(1).join('ON_SCREEN_TEXT_NOTES:').trim()
-  };
+  const marker=/^\s*(?:\*\*)?(AUDIENCE|ON_SCREEN_TEXT_NOTES|CAPTION|SEO_STRATEGY)(?:\*\*)?\s*:\s*/gim;
+  const matches=[...cleaned.matchAll(marker)];
+  if(!matches.length)return {script:formatScriptForFilming(cleaned),audience:'',onscreen:'',caption:'',seo:''};
+  const details={audience:'',onscreen:'',caption:'',seo:''};
+  const script=cleaned.slice(0,matches[0].index).trim();
+  matches.forEach((match,index)=>{
+    const key=match[1].toUpperCase();
+    const start=match.index+match[0].length;
+    const end=index+1<matches.length?matches[index+1].index:cleaned.length;
+    const value=cleaned.slice(start,end).trim();
+    if(key==='AUDIENCE')details.audience=value;
+    if(key==='ON_SCREEN_TEXT_NOTES')details.onscreen=value;
+    if(key==='CAPTION')details.caption=value;
+    if(key==='SEO_STRATEGY')details.seo=value;
+  });
+  if(details.audience){
+    details.seo=[`Audience: ${details.audience}`,details.seo].filter(Boolean).join('\n');
+  }
+  return {script:formatScriptForFilming(script),...details};
 }
 function formatScriptForFilming(text){
   const withoutHeaders=String(text||'')
@@ -1040,14 +1130,17 @@ function setAiLoading(isLoading){
 }
 function saveLocalDraft(){
   if(!user)return;
+  saveActiveDetail();
   const draft={
     title:document.getElementById('scriptTitle').value,
     productId:document.getElementById('productSelect').value,
     type:'viral-remix',
     similarity:document.getElementById('similaritySlider')?.value||'50',
-    notes:document.getElementById('scriptNotes').value,
+    details:detailDraft,
+    notes:detailSummaryText(),
     script:document.getElementById('scriptCanvas').value,
-    inspo
+    inspo,
+    returnContext:workshopReturnContext
   };
   try{localStorage.setItem(draftKey(),JSON.stringify(draft));}catch(e){}
   // keep mobile canvas in sync
@@ -1059,11 +1152,12 @@ function restoreLocalDraft(){
     const draft=JSON.parse(localStorage.getItem(draftKey())||'null');
     if(!draft)return;
     document.getElementById('scriptTitle').value=draft.title||'';
-    document.getElementById('scriptNotes').value=draft.notes||'';
+    setDetailDraft(draft.details||{onscreen:draft.notes||''});
     document.getElementById('scriptCanvas').value=draft.script||sectionDraftToText(draft.sections)||'';
     updateSimilarityDisplay(draft.similarity||'50');
     inspo=Array.isArray(draft.inspo)?draft.inspo:[];
     pendingDraftProductId=draft.productId||'';
+    workshopReturnContext=draft.returnContext||workshopReturnContext;
   }catch(e){}
 }
 async function newScript(){
@@ -1072,11 +1166,47 @@ async function newScript(){
   if(fullScript()&&!(await openWorkshopConfirm('Start New Script?','This will clear the current workshop draft on this page.','Start New')))return;
   document.getElementById('scriptTitle').value='';
   selectProduct('','desktop');
-  document.getElementById('scriptNotes').value='';
+  setDetailDraft({});
   document.getElementById('scriptCanvas').value='';
   updateSimilarityDisplay('50');
   inspo=[];renderInspo();saveLocalDraft();
   mobSync();
+}
+function encodeDailyField(value){
+  return encodeURIComponent(String(value||'').trim());
+}
+function removeDailyMetaLine(notes,key){
+  const re=new RegExp(`^${key}\\s*:\\s*[^\\n]*(?:\\n|$)`,'gim');
+  return String(notes||'').replace(re,'').trim();
+}
+function setDailyFieldLine(notes,key,value){
+  const body=removeDailyMetaLine(notes,key);
+  const clean=String(value||'').trim();
+  if(!clean)return body;
+  return [body,`${key}:${encodeDailyField(clean)}`].filter(Boolean).join('\n');
+}
+function setVisibleHook(notes,hook){
+  const metaLines=String(notes||'').split('\n').map(line=>line.trim()).filter(line=>/^(LOCATION|TYPE|SCHED_TIME|STATUS|ON_SCREEN_TEXT|SEO_STRATEGY|CAPTION|HASHTAGS)\s*:/i.test(line));
+  return [String(hook||'').trim(),...metaLines].filter(Boolean).join('\n');
+}
+function firstSentenceForHook(script){
+  const text=String(script||'').replace(/\*\*/g,'').replace(/\[[^\]]+\]/g,'').replace(/\s+/g,' ').trim();
+  const match=text.match(/^(.+?[.!?])(?:\s|$)/);
+  return (match?match[1]:text).trim();
+}
+async function saveBackToTodo(script){
+  const queueId=workshopReturnContext?.queueId;
+  if(!queueId)return false;
+  saveActiveDetail();
+  const {data,error}=await db.from('queue').select('id,notes').eq('id',queueId).single();
+  if(error){throw new Error(error.message||'Could not find the To Do item to update.');}
+  let notes=setVisibleHook(data?.notes||'',firstSentenceForHook(script));
+  notes=setDailyFieldLine(notes,'ON_SCREEN_TEXT',detailDraft.onscreen);
+  notes=setDailyFieldLine(notes,'CAPTION',detailDraft.caption);
+  notes=setDailyFieldLine(notes,'SEO_STRATEGY',detailDraft.seo);
+  const update=await db.from('queue').update({script,notes}).eq('id',queueId);
+  if(update.error){throw new Error(update.error.message||'Could not update the To Do item.');}
+  return true;
 }
 async function saveDraft(){
   if(!user){showToast('Still loading...','error');return;}
@@ -1086,11 +1216,17 @@ async function saveDraft(){
   const product=selectedProduct();
   const title=document.getElementById('scriptTitle').value.trim()||`${product?.name||'Untitled'} Script`;
   const similarity=document.getElementById('similaritySlider')?.value||'50';
-  const notes=['Remix similarity: '+similarity+'%',document.getElementById('scriptNotes').value.trim(),inspo.length?'Inspiration: '+inspo.join(', '):''].filter(Boolean).join('\n');
+  const notes=['Remix similarity: '+similarity+'%',detailSummaryText(),inspo.length?'Inspiration: '+inspo.join(', '):''].filter(Boolean).join('\n');
   const row={user_id:user.id,title,brand:product?.name||'',cat:'Viral Remix',script,notes};
   const {error}=await db.from('scripts').insert(row);
   if(error){showToast(error.message,'error');return;}
-  saveLocalDraft();await loadLibraries();renderLibrary();showToast('Draft saved');
+  try{
+    const synced=await saveBackToTodo(script);
+    saveLocalDraft();await loadLibraries();renderLibrary();showToast(synced?'Draft saved to library + To Do':'Draft saved');
+  }catch(syncError){
+    console.error('To Do sync failed',syncError);
+    saveLocalDraft();await loadLibraries();renderLibrary();showToast('Draft saved, but To Do sync failed','error');
+  }
 }
 function updateGeminiKeyButton(){
   const btn=document.getElementById('geminiKeyToggleBtn');
@@ -1162,18 +1298,17 @@ Strict Copywriting Guidelines:
 5. NO PRICE MENTIONS: Strictly follow TikTok Shop compliance. Do not mention specific costs, discounts, dollar figures, or pricing numbers under any circumstances. Always refer to it abstractly as "the yellow link" or "the cart below".
 6. VISUAL ACTION DIRECTIONS: Keep bracketed scene directions extremely brief (e.g., [shows close-up], [points downward]).
 7. FORMATTING OUTPUT: Return the remixed script as plain spoken script text only. Do not include section labels like HOOK, BODY, CTA, or bracketed headers. Put every sentence on its own line with a blank line between sentences. Under no circumstances wrap the output in markdown code fences, JSON blocks, or extra commentary text.
-8. ON-SCREEN TEXT NOTES: After the script, add a separate section that starts exactly with ON_SCREEN_TEXT_NOTES:. In that section, write 5 to 8 short on-screen text ideas with emojis. Make them punchy, TikTok-native, and useful for captions/text overlays. Keep each line short.`;
+8. CREATIVE DETAILS: After the script, add these exact sections, each starting on its own line with the exact label:
+AUDIENCE: Pick one specific viewer this script is calling out.
+ON_SCREEN_TEXT_NOTES: Write 5 to 8 short on-screen text ideas with emojis. Make them punchy, TikTok-native, and useful for text overlays. Keep each line short.
+CAPTION: Write one natural TikTok caption for this exact product and audience. Keep it conversational and not too salesy.
+SEO_STRATEGY: Write comma-separated keywords and search phrases the TikTok algorithm should understand for this video. Include the product type, brand/product name, use case, pain points, and audience.`;
   try{
     setAiLoading(true);
     const response=await CreatorGemini.generateText(prompt,{tools:[{google_search:{}}]});
-    const {script,notes}=splitAiScriptAndNotes(response);
+    const {script,onscreen,caption,seo}=splitAiScriptAndDetails(response);
     document.getElementById('scriptCanvas').value=script;
-    if(notes){
-      const notesBox=document.getElementById('scriptNotes');
-      notesBox.value=notesBox.value.trim()
-        ? `${notesBox.value.trim()}\n\nOn-screen text ideas:\n${notes}`
-        : `On-screen text ideas:\n${notes}`;
-    }
+    setDetailDraft({onscreen,caption,seo});
     saveLocalDraft();
     mobSync();
     showToast('AI draft added');
