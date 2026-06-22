@@ -34,6 +34,9 @@ button,input,textarea,select{font:inherit;}
 .field-input,.field-select{width:100%;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--ink);padding:10px 12px;outline:none;}
 .field-select{padding-right:48px;}
 .field-input:focus,.field-select:focus{border-color:var(--rust);}
+.slider-field{display:flex;align-items:center;gap:14px;}
+.slider-field .field-input[type="range"]{padding:0;height:42px;accent-color:var(--sage);cursor:pointer;}
+.slider-value{font-family:'Noto Sans Mono',monospace;font-size:13px;font-weight:900;color:var(--cream);letter-spacing:0;}
 .workshop-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,0.75fr);gap:16px;align-items:start;}
 .panel{background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sm);}
 .canvas-panel{padding:16px;}
@@ -192,17 +195,8 @@ button,input,textarea,select{font:inherit;}
       <select class="mob-input mob-select" id="mProductSelect" onchange="syncMobToDesk('product')"></select>
     </div>
     <div class="mob-field">
-      <div class="mob-field-label">Framework</div>
-      <select class="mob-input mob-select" id="mScriptType" onchange="syncMobToDesk('framework')">
-        <option value="product-demo">Product Demo / Problem Solution</option>
-        <option value="skit">Skit</option>
-        <option value="aesthetic">Aesthetic</option>
-        <option value="storytelling">Storytelling</option>
-        <option value="testimonial">Testimonial</option>
-        <option value="pov">POV</option>
-        <option value="comparison">Comparison</option>
-        <option value="voiceover">Voiceover</option>
-      </select>
+      <div class="mob-field-label">Script Similarity <span id="mSliderValue">50%</span></div>
+      <input class="mob-input" id="mSimilaritySlider" type="range" min="0" max="100" value="50" oninput="syncMobToDesk('similarity')">
     </div>
   </div>
 
@@ -212,7 +206,7 @@ button,input,textarea,select{font:inherit;}
       <span class="mob-section-title">Script Canvas</span>
       <button class="mob-expand-btn" onclick="mobExpandCanvas()" title="Expand">⤢</button>
     </div>
-    <textarea class="mob-canvas" id="mScriptCanvas" placeholder="[HOOK]&#10;Start with the moment that makes someone stop scrolling.&#10;&#10;[BODY]&#10;Show the problem, proof, and result.&#10;&#10;[CTA]&#10;Tell them exactly where to tap." oninput="syncMobToDesk('canvas')"></textarea>
+    <textarea class="mob-canvas" id="mScriptCanvas" placeholder="Paste a viral script or a hook sequence from another creator here to remix it..." oninput="syncMobToDesk('canvas')"></textarea>
   </div>
 
   <!-- Quick Actions -->
@@ -280,17 +274,10 @@ button,input,textarea,select{font:inherit;}
       <select class="field-select" id="productSelect"></select>
     </div>
     <div class="field">
-      <div class="field-label">Framework</div>
-      <select class="field-select" id="scriptType">
-        <option value="product-demo">Product Demo / Problem Solution</option>
-        <option value="skit">Skit</option>
-        <option value="aesthetic">Aesthetic</option>
-        <option value="storytelling">Storytelling</option>
-        <option value="testimonial">Testimonial</option>
-        <option value="pov">POV</option>
-        <option value="comparison">Comparison</option>
-        <option value="voiceover">Voiceover</option>
-      </select>
+      <div class="field-label">Script Similarity <span class="slider-value" id="sliderValue">50%</span></div>
+      <div class="slider-field">
+        <input type="range" id="similaritySlider" min="0" max="100" value="50" class="field-input">
+      </div>
     </div>
   </section>
 
@@ -301,7 +288,7 @@ button,input,textarea,select{font:inherit;}
           <div class="canvas-title">Script Canvas</div>
           <div class="canvas-hint">Write, paste, or generate the full script here.</div>
         </div>
-        <textarea class="script-canvas" id="scriptCanvas" placeholder="[HOOK]\nStart with the moment that makes someone stop scrolling.\n\n[BODY]\nShow the problem, proof, and product in motion.\n\n[CTA]\nTell them exactly where to tap."></textarea>
+        <textarea class="script-canvas" id="scriptCanvas" placeholder="Paste a viral script or a hook sequence from another creator here to remix it..."></textarea>
       </div>
       <div class="panel notes-panel">
         <div class="notes-head">Notes</div>
@@ -360,10 +347,6 @@ button,input,textarea,select{font:inherit;}
         <input id="aiLength" placeholder="15s">
       </div>
       <div class="ai-field">
-        <div class="ai-field-label">Framework</div>
-        <input id="aiFramework" readonly>
-      </div>
-      <div class="ai-field">
         <div class="ai-field-label">My Personal Detail</div>
         <textarea class="ai-short" id="aiPersonalDetail" placeholder="specific result, moment, or reaction I had"></textarea>
       </div>
@@ -388,6 +371,10 @@ button,input,textarea,select{font:inherit;}
       <div class="ai-field">
         <div class="ai-field-label">CTA</div>
         <textarea class="ai-short" id="aiCta" placeholder="should be soft, not pushy, but still evoke urgency"></textarea>
+      </div>
+      <div class="ai-field field-wide">
+        <div class="ai-field-label">Custom Structural Directives</div>
+        <textarea class="ai-short" id="aiCustomNotes" placeholder="Tip: For best results, guide the AI's transformation direction (e.g., 'Make it more sarcastic', 'Adapt this hat script perfectly to fit my new shoe product specs')."></textarea>
       </div>
     </div>
     <div class="workshop-modal-actions">
@@ -537,7 +524,8 @@ function mobSync(){
   if(!isMobile())return;
   const mTitle=document.getElementById('mScriptTitle');if(mTitle)mTitle.value=document.getElementById('scriptTitle').value;
   const mProd=document.getElementById('mProductSelect');if(mProd)mProd.value=document.getElementById('productSelect').value;
-  const mType=document.getElementById('mScriptType');if(mType)mType.value=document.getElementById('scriptType').value;
+  const mSimilarity=document.getElementById('mSimilaritySlider');if(mSimilarity)mSimilarity.value=document.getElementById('similaritySlider')?.value||'50';
+  updateSimilarityDisplay(document.getElementById('similaritySlider')?.value||'50');
   const mCanvas=document.getElementById('mScriptCanvas');if(mCanvas)mCanvas.value=document.getElementById('scriptCanvas').value;
   const mNotes=document.getElementById('mScriptNotes');if(mNotes)mNotes.value=document.getElementById('scriptNotes').value;
 }
@@ -545,11 +533,10 @@ function mobFlushToDesk(){
   if(!isMobile())return;
   const mTitle=document.getElementById('mScriptTitle');if(mTitle)document.getElementById('scriptTitle').value=mTitle.value;
   const mProd=document.getElementById('mProductSelect');if(mProd)document.getElementById('productSelect').value=mProd.value;
-  const mType=document.getElementById('mScriptType');
-  if(mType&&mType.value&&mType.value!==currentFramework){
-    currentFramework=mType.value;
-    const deskType=document.getElementById('scriptType');
-    if(deskType)deskType.value=currentFramework;
+  const mSimilarity=document.getElementById('mSimilaritySlider');
+  if(mSimilarity&&document.getElementById('similaritySlider')){
+    document.getElementById('similaritySlider').value=mSimilarity.value;
+    updateSimilarityDisplay(mSimilarity.value);
   }
   const mCanvas=document.getElementById('mScriptCanvas');if(mCanvas)document.getElementById('scriptCanvas').value=mCanvas.value;
   const mNotes=document.getElementById('mScriptNotes');if(mNotes)document.getElementById('scriptNotes').value=mNotes.value;
@@ -557,7 +544,12 @@ function mobFlushToDesk(){
 function syncMobToDesk(field){
   if(field==='title') document.getElementById('scriptTitle').value=document.getElementById('mScriptTitle').value;
   else if(field==='product'){document.getElementById('productSelect').value=document.getElementById('mProductSelect').value;if(user)saveLocalDraft();}
-  else if(field==='framework'){const v=document.getElementById('mScriptType').value;if(v&&v!==currentFramework){currentFramework=v;const d=document.getElementById('scriptType');if(d)d.value=v;if(user)saveLocalDraft();}}
+  else if(field==='similarity'){
+    const v=document.getElementById('mSimilaritySlider').value;
+    const d=document.getElementById('similaritySlider');
+    if(d)d.value=v;
+    updateSimilarityDisplay(v);
+  }
   else if(field==='canvas'){document.getElementById('scriptCanvas').value=document.getElementById('mScriptCanvas').value;}
   else if(field==='notes') document.getElementById('scriptNotes').value=document.getElementById('mScriptNotes').value;
   saveLocalDraft();
@@ -646,7 +638,7 @@ async function init(){
   renderProducts();
   if(pendingDraftProductId)document.getElementById('productSelect').value=pendingDraftProductId;
   await applyProductHandoff();
-  if(!document.getElementById('scriptCanvas').value.trim())injectFrameworkTemplate(currentFramework);
+  updateSimilarityDisplay(document.getElementById('similaritySlider')?.value||'50');
   renderLibrary();
   renderInspo();
   mobSync();
@@ -685,12 +677,21 @@ function nextPersonLabel(){
 }
 function changeFramework(value){
   currentFramework=normalizeFramework(value);
-  document.getElementById('scriptType').value=currentFramework;
-  injectFrameworkTemplate(currentFramework);
   saveLocalDraft();
 }
 function frameworkTemplate(frameworkKey){return FRAMEWORK_PLACEHOLDERS[normalizeFramework(frameworkKey)]||FRAMEWORK_PLACEHOLDERS['product-demo'];}
-function injectFrameworkTemplate(frameworkKey){document.getElementById('scriptCanvas').value=frameworkTemplate(frameworkKey);}
+function injectFrameworkTemplate(frameworkKey){}
+function updateSimilarityDisplay(value){
+  const normalized=String(value||'50');
+  const slider=document.getElementById('similaritySlider');
+  const mobSlider=document.getElementById('mSimilaritySlider');
+  if(slider&&slider.value!==normalized)slider.value=normalized;
+  if(mobSlider&&mobSlider.value!==normalized)mobSlider.value=normalized;
+  const label=document.getElementById('sliderValue');
+  const mobLabel=document.getElementById('mSliderValue');
+  if(label)label.textContent=`${normalized}%`;
+  if(mobLabel)mobLabel.textContent=`${normalized}%`;
+}
 function closeWorkshopModal(value=null){
   document.getElementById('workshopModalOverlay').classList.remove('open');
   if(workshopModalResolve){workshopModalResolve(value);workshopModalResolve=null;}
@@ -726,11 +727,8 @@ function closeAiModal(value=null){
 }
 function syncAiModalContext(){
   const product=selectedProduct();
-  const framework=FRAMEWORKS[currentFramework]||FRAMEWORKS['product-demo'];
   const productField=document.getElementById('aiProduct');
-  const frameworkField=document.getElementById('aiFramework');
   if(productField)productField.value=product?.name||'';
-  if(frameworkField)frameworkField.value=framework.label||'';
 }
 function openAiGenerationModal(){
   const overlay=document.getElementById('aiModal');
@@ -741,15 +739,29 @@ function openAiGenerationModal(){
   return new Promise(resolve=>{aiModalResolve=resolve;});
 }
 function aiModalValues(){
+  const personalDetail=document.getElementById('aiPersonalDetail').value.trim();
+  const audience=document.getElementById('aiAudience').value.trim();
+  const tone=document.getElementById('aiTone').value.trim();
+  const hookStyle=document.getElementById('aiHookStyle').value;
+  const cta=document.getElementById('aiCta').value.trim();
+  const customNotes=document.getElementById('aiCustomNotes').value.trim();
+  const structuralDirectives=[
+    personalDetail?'Personal detail: '+personalDetail:'',
+    audience?'Audience: '+audience:'',
+    tone?'Tone: '+tone:'',
+    hookStyle?'Hook style: '+hookStyle:'',
+    cta?'CTA direction: '+cta:'',
+    customNotes
+  ].filter(Boolean).join('\n');
   return {
     product:document.getElementById('aiProduct').value.trim(),
     length:document.getElementById('aiLength').value.trim(),
-    framework:document.getElementById('aiFramework').value.trim(),
-    personalDetail:document.getElementById('aiPersonalDetail').value.trim(),
-    audience:document.getElementById('aiAudience').value.trim(),
-    tone:document.getElementById('aiTone').value.trim(),
-    hookStyle:document.getElementById('aiHookStyle').value,
-    cta:document.getElementById('aiCta').value.trim()
+    personalDetail,
+    audience,
+    tone,
+    hookStyle,
+    cta,
+    customNotes:structuralDirectives
   };
 }
 document.getElementById('aiModalCancel').addEventListener('click',()=>closeAiModal(null));
@@ -803,7 +815,7 @@ async function applyProductHandoff(){
     }
     document.getElementById('scriptTitle').value='';
     document.getElementById('scriptNotes').value='';
-    document.getElementById('scriptCanvas').value=frameworkTemplate(currentFramework);
+    document.getElementById('scriptCanvas').value='';
     inspo=[];
   }
   document.getElementById('productSelect').value=product.id;
@@ -910,8 +922,7 @@ function sectionDraftToText(draftSections){
 }
 function canvasText(){return document.getElementById('scriptCanvas').value.trim();}
 function fullScript(){
-  const text=canvasText();
-  return text===frameworkTemplate(currentFramework).trim()?'':text;
+  return canvasText();
 }
 function formattedScript(){return fullScript();}
 function selectedProduct(){
@@ -936,20 +947,28 @@ function setAiLoading(isLoading){
 }
 function saveLocalDraft(){
   if(!user)return;
-  const draft={title:document.getElementById('scriptTitle').value,productId:document.getElementById('productSelect').value,type:currentFramework,notes:document.getElementById('scriptNotes').value,script:document.getElementById('scriptCanvas').value,inspo};
+  const draft={
+    title:document.getElementById('scriptTitle').value,
+    productId:document.getElementById('productSelect').value,
+    type:'viral-remix',
+    similarity:document.getElementById('similaritySlider')?.value||'50',
+    notes:document.getElementById('scriptNotes').value,
+    script:document.getElementById('scriptCanvas').value,
+    inspo
+  };
   try{localStorage.setItem(draftKey(),JSON.stringify(draft));}catch(e){}
   // keep mobile canvas in sync
   const mc=document.getElementById('mScriptCanvas');if(mc&&document.getElementById('scriptCanvas'))mc.value=document.getElementById('scriptCanvas').value;
+  updateSimilarityDisplay(draft.similarity);
 }
 function restoreLocalDraft(){
   try{
     const draft=JSON.parse(localStorage.getItem(draftKey())||'null');
     if(!draft)return;
-    currentFramework=normalizeFramework(draft.type);
     document.getElementById('scriptTitle').value=draft.title||'';
-    document.getElementById('scriptType').value=currentFramework;
     document.getElementById('scriptNotes').value=draft.notes||'';
     document.getElementById('scriptCanvas').value=draft.script||sectionDraftToText(draft.sections)||'';
+    updateSimilarityDisplay(draft.similarity||'50');
     inspo=Array.isArray(draft.inspo)?draft.inspo:[];
     pendingDraftProductId=draft.productId||'';
   }catch(e){}
@@ -961,7 +980,8 @@ async function newScript(){
   document.getElementById('scriptTitle').value='';
   document.getElementById('productSelect').value='';
   document.getElementById('scriptNotes').value='';
-  document.getElementById('scriptCanvas').value=frameworkTemplate(currentFramework);
+  document.getElementById('scriptCanvas').value='';
+  updateSimilarityDisplay('50');
   inspo=[];renderInspo();saveLocalDraft();
   mobSync();
 }
@@ -972,9 +992,9 @@ async function saveDraft(){
   if(!script){showToast('Add script text first','error');return;}
   const product=selectedProduct();
   const title=document.getElementById('scriptTitle').value.trim()||`${product?.name||'Untitled'} Script`;
-  const frameworkLabel=FRAMEWORKS[currentFramework]?.label||currentFramework;
-  const notes=['Framework: '+frameworkLabel,document.getElementById('scriptNotes').value.trim(),inspo.length?'Inspiration: '+inspo.join(', '):''].filter(Boolean).join('\n');
-  const row={user_id:user.id,title,brand:product?.name||'',cat:frameworkLabel,script,notes};
+  const similarity=document.getElementById('similaritySlider')?.value||'50';
+  const notes=['Remix similarity: '+similarity+'%',document.getElementById('scriptNotes').value.trim(),inspo.length?'Inspiration: '+inspo.join(', '):''].filter(Boolean).join('\n');
+  const row={user_id:user.id,title,brand:product?.name||'',cat:'Viral Remix',script,notes};
   const {error}=await db.from('scripts').insert(row);
   if(error){showToast(error.message,'error');return;}
   saveLocalDraft();await loadLibraries();renderLibrary();showToast('Draft saved');
@@ -1002,31 +1022,24 @@ async function generateAiDraft(){
   const hasText=Boolean(fullScript());
   if(hasText&&!(await openWorkshopConfirm('Replace Current Draft?','Generate with AI will replace the text in your script canvas.','Replace','Cancel')))return;
   const product=selectedProduct();
-  const framework=FRAMEWORKS[currentFramework]||FRAMEWORKS['product-demo'];
   const aiInputs=await openAiGenerationModal();
   if(aiInputs===null)return;
   const selectedProductName=aiInputs.product||product?.name||'Not selected';
-  const selectedFrameworkLabel=aiInputs.framework||framework.label;
-  const prompt=`You are a conversion-focused TikTok Shop scriptwriting expert writing for a creator who uses sarcastic, anti-influencer humor. Write a highly conversational script based on these inputs:
-- Product Name: ${selectedProductName}
-- Chosen Framework: ${selectedFrameworkLabel}
-- Target Length: ${aiInputs.length || '15s'}
-- Creator's Personal Detail: ${aiInputs.personalDetail}
-- Intended Audience: ${aiInputs.audience || 'toddler moms'}
-- Tone: ${aiInputs.tone || "Like I'm recommending to a friend, not selling."}
-- Preferred Hook Style: ${aiInputs.hookStyle}
-- CTA Direction: ${aiInputs.cta || 'should be soft, not pushy, but still evoke urgency'}
+  const prompt=`You are an elite TikTok Shop content strategist and scriptwriting expert specializing in hook conversion analysis. Your job is to take an original reference script, look at its fundamental sales psychology structure, and adapt it flawlessly for a brand new product using my specific brand voice guidelines.
 
-Strict Writing Directives:
-1. NARRATIVE ARC: Structure the script as a "Skeptical → Convinced" journey. Start with genuine doubt or low expectations, and move toward matter-of-fact proof based on the creator's personal details.
-2. TONE & PITCH: Speak like a brutally honest,  friend giving a reality check over coffee. BAN THE "INFLUENCER VOICE"—absolutely no clichés like "Hey guys!", "Welcome back!", or "I'm literally obsessed!". Start mid-sentence, completely unfiltered and casual.
-3. BAN AI TRANSITIONS: Do not use predictable transition words like "surprisingly," "turns out," "but then," or "honestly." Just state the facts raw.
-4. SENTENCE PACING: Keep sentences incredibly short (ideally under 8-10 words per sentence). Real people don't talk in long, perfectly flowing paragraphs. Make it punchy.
-5. FORMATTING RULE: Generate the entire script as a single cohesive string of text formatted with clear, bolded section headers exactly like this: **[HOOK]**, **[BODY]**, and **[CTA]**. Do not wrap it in JSON or markdown code blocks.
-6. LENGTH CONSTRAINTS: The entire script across all sections combined must be under 130 words total (roughly 30–45 seconds of natural speaking time). Keep lines short—only 1 to 3 sentences per section max.
-7. STAGE DIRECTIONS: Keep camera action cues inside brackets extremely brief (e.g., [shows close-up], [swatches hand]) so they don't clutter the text.
-8. THE CALL TO ACTION: Keep it soft, matter-of-fact, low-stress, and completely low-pressure. Use natural phrasing like: "The link is right there on the screen if you want it."
-9. CRITICAL TIKTOK COMPLIANCE RULE: Do not mention price, dollar amounts, costs, discounts, or specific numeric sales figures under any circumstances. Always refer to it abstractly (e.g., "the orange link," "the cart below," or "while it's on flash deal").`;
+Here are your structural inputs:
+- Original Reference Script to Transform: "${document.getElementById('scriptCanvas').value}"
+- Target Product to Adapt Into: "${selectedProductName}"
+- Target Length: "${aiInputs.length || '30s'}"
+- Script Similarity Constraint: ${document.getElementById('similaritySlider').value}% (Note: 0% means keep only the high-level abstract concept and rewrite everything creatively. 100% means match the line-by-line cadence, sentence lengths, visual action tempos, and hook placement exactly, changing ONLY the product names and unique feature facts to fit the new product).
+- Custom Structural Directives: "${aiInputs.customNotes}"
+
+Strict Copywriting Guidelines:
+1. VOICE LOCK: Write for a creator who uses dry, deadpan, anti-influencer humor (Aubrey Plaza "lazy mom" energy). BAN THE INFLUENCER VOICE: No hyperactive intros like "Hey guys!", "Welcome back!", or "I'm literally obsessed!". Start directly mid-sentence.
+2. PRODUCT TRANSLATION: If the original script is for an entirely different item category (e.g., a hat) but the target is completely different (e.g., a shoe), seamlessly swap the product context. Map the structural utility hooks gracefully (e.g., a hat covering messy hair translates structurally to a shoe being quick to slip on when rushing out the door).
+3. NO PRICE MENTIONS: Strictly follow TikTok Shop compliance. Do not mention specific costs, discounts, dollar figures, or pricing numbers under any circumstances. Always refer to it abstractly as "the yellow link" or "the cart below".
+4. VISUAL ACTION DIRECTIONS: Keep bracketed scene directions extremely brief (e.g., [shows close-up], [points downward]).
+5. FORMATTING OUTPUT: Return the remixed script as a single cohesive block of text broken into clear bolded section tags: **[HOOK]**, **[BODY]**, and **[CTA]**. Under no circumstances wrap the output in markdown code fences, JSON blocks, or extra commentary text.`;
   try{
     setAiLoading(true);
     const script=await CreatorGemini.generateText(prompt);
@@ -1053,7 +1066,10 @@ document.getElementById('aiDraftBtn')?.addEventListener('click',e=>{
   e.preventDefault();
   generateAiDraft();
 });
-document.getElementById('scriptType')?.addEventListener('change',e=>changeFramework(e.target.value));
+document.getElementById('similaritySlider')?.addEventListener('input',e=>{
+  updateSimilarityDisplay(e.target.value);
+  saveLocalDraft();
+});
 document.addEventListener('input',e=>{if(e.target.closest('.page'))saveLocalDraft();});
 init();
 </script>
