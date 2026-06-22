@@ -579,12 +579,17 @@ function productBankUrl(card){
 }
 function scriptWorkshopUrl(card,take=null){
   const params=new URLSearchParams();
+  const targetTake=take
+    || (card?.takes||[]).find(item=>!item.script)
+    || (card?.takes||[]).find(item=>!item.done)
+    || (card?.takes||[])[0]
+    || null;
   if(card?.prodId)params.set('productId',card.prodId);
   if(card?.name)params.set('productName',card.name);
   if(card?.brand)params.set('brand',card.brand);
   if(card?.id)params.set('cardId',card.id);
-  if(take?.id)params.set('takeId',take.id);
-  if(take?.queueId)params.set('queueId',take.queueId);
+  if(targetTake?.id)params.set('takeId',targetTake.id);
+  if(targetTake?.queueId)params.set('queueId',targetTake.queueId);
   return 'script-workshop.html'+(params.toString()?'?'+params.toString():'');
 }
 function normalizeInspirationLinks(value){
