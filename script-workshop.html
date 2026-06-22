@@ -999,6 +999,16 @@ function selectedProduct(){
   const id=document.getElementById('productSelect').value;
   return products.find(p=>p.id===id);
 }
+function splitAiScriptAndNotes(text){
+  const cleaned=String(text||'').replace(/```(?:text)?|```/gi,'').trim();
+  const marker=/\n?\s*(?:\*\*)?ON_SCREEN_TEXT_NOTES(?:\*\*)?\s*:\s*/i;
+  const parts=cleaned.split(marker);
+  if(parts.length<2)return {script:cleaned,notes:''};
+  return {
+    script:parts[0].trim(),
+    notes:parts.slice(1).join('ON_SCREEN_TEXT_NOTES:').trim()
+  };
+}
 function setAiLoading(isLoading){
   document.querySelectorAll('.page input,.page textarea,.page select,.page button').forEach(el=>{
     if(isLoading){
@@ -1138,11 +1148,19 @@ Strict Copywriting Guidelines:
 4. PRODUCT TRANSLATION: If the original script is for an entirely different item category (e.g., a hat) but the target is completely different (e.g., a shoe), seamlessly swap the product context. Map the structural utility hooks gracefully (e.g., a hat covering messy hair translates structurally to a shoe being quick to slip on when rushing out the door).
 5. NO PRICE MENTIONS: Strictly follow TikTok Shop compliance. Do not mention specific costs, discounts, dollar figures, or pricing numbers under any circumstances. Always refer to it abstractly as "the yellow link" or "the cart below".
 6. VISUAL ACTION DIRECTIONS: Keep bracketed scene directions extremely brief (e.g., [shows close-up], [points downward]).
-7. FORMATTING OUTPUT: Return the remixed script as a single cohesive block of text broken into clear bolded section tags: **[HOOK]**, **[BODY]**, and **[CTA]**. Under no circumstances wrap the output in markdown code fences, JSON blocks, or extra commentary text.`;
+7. FORMATTING OUTPUT: Return the remixed script as a single cohesive block of text broken into clear bolded section tags: **[HOOK]**, **[BODY]**, and **[CTA]**. Under no circumstances wrap the output in markdown code fences, JSON blocks, or extra commentary text.
+8. ON-SCREEN TEXT NOTES: After the script, add a separate section that starts exactly with ON_SCREEN_TEXT_NOTES:. In that section, write 5 to 8 short on-screen text ideas with emojis. Make them punchy, TikTok-native, and useful for captions/text overlays. Keep each line short.`;
   try{
     setAiLoading(true);
-    const script=await CreatorGemini.generateText(prompt,{tools:[{google_search:{}}]});
-    document.getElementById('scriptCanvas').value=String(script||'').replace(/```(?:text)?|```/gi,'').trim();
+    const response=await CreatorGemini.generateText(prompt,{tools:[{google_search:{}}]});
+    const {script,notes}=splitAiScriptAndNotes(response);
+    document.getElementById('scriptCanvas').value=script;
+    if(notes){
+      const notesBox=document.getElementById('scriptNotes');
+      notesBox.value=notesBox.value.trim()
+        ? `${notesBox.value.trim()}\n\nOn-screen text ideas:\n${notes}`
+        : `On-screen text ideas:\n${notes}`;
+    }
     saveLocalDraft();
     mobSync();
     showToast('AI draft added');
