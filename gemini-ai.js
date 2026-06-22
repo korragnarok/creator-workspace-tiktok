@@ -174,6 +174,9 @@ window.CreatorGemini = (() => {
     if (options.config && Object.keys(options.config).length) {
       payload.generationConfig = options.config;
     }
+    if (Array.isArray(options.tools) && options.tools.length) {
+      payload.tools = options.tools;
+    }
     return payload;
   }
 

@@ -1142,18 +1142,19 @@ Here are your structural inputs:
 - Target Product to Adapt Into: "${selectedProductName}"
 - Target Length: "30s"
 - Script Similarity Constraint: ${similarity}% (Note: 0% means keep only the high-level abstract concept and rewrite everything creatively. 100% means match the line-by-line cadence, sentence lengths, visual action tempos, and hook placement exactly, changing ONLY the product names and unique feature facts to fit the new product).
-- Custom Structural Directives: "Use only the pasted reference script, target product, and script similarity setting. Do not ask follow-up questions."
+- Custom Structural Directives: "Use the pasted reference script, target product, script similarity setting, and current web context about the target product. Do not ask follow-up questions."
 
 Strict Copywriting Guidelines:
-0. REMIX ANALYSIS FIRST: Silently identify what made the reference script work: the hook mechanism, pacing, objection handled, proof moment, emotional payoff, and CTA pressure. Do not explain that analysis. Use it to recreate the same conversion logic for the target product.
-1. VOICE LOCK: Use this creator tone preference exactly: "${aiTone}". Keep it realistic and conversational. It should not feel extremely salesy, but it also should not feel too bubbly, polished, or overly upbeat. BAN THE INFLUENCER VOICE: No hyperactive intros like "Hey guys!", "Welcome back!", or "I'm literally obsessed!". Start directly mid-sentence.
-2. PRODUCT TRANSLATION: If the original script is for an entirely different item category (e.g., a hat) but the target is completely different (e.g., a shoe), seamlessly swap the product context. Map the structural utility hooks gracefully (e.g., a hat covering messy hair translates structurally to a shoe being quick to slip on when rushing out the door).
-3. NO PRICE MENTIONS: Strictly follow TikTok Shop compliance. Do not mention specific costs, discounts, dollar figures, or pricing numbers under any circumstances. Always refer to it abstractly as "the yellow link" or "the cart below".
-4. VISUAL ACTION DIRECTIONS: Keep bracketed scene directions extremely brief (e.g., [shows close-up], [points downward]).
-5. FORMATTING OUTPUT: Return the remixed script as a single cohesive block of text broken into clear bolded section tags: **[HOOK]**, **[BODY]**, and **[CTA]**. Under no circumstances wrap the output in markdown code fences, JSON blocks, or extra commentary text.`;
+1. PRODUCT RESEARCH FIRST: Use Google Search grounding to get a basic understanding of the target product before writing. Silently identify what the product is, its likely use case, practical benefits, standout specs, and common buyer pain points. Do not cite sources or mention that you searched. If search results are thin or unclear, stay conservative and avoid making specific claims.
+2. REMIX ANALYSIS FIRST: Silently identify what made the reference script work: the hook mechanism, pacing, objection handled, proof moment, emotional payoff, and CTA pressure. Do not explain that analysis. Use it to recreate the same conversion logic for the target product.
+3. VOICE LOCK: Use this creator tone preference exactly: "${aiTone}". Keep it realistic and conversational. It should not feel extremely salesy, but it also should not feel too bubbly, polished, or overly upbeat. BAN THE INFLUENCER VOICE: No hyperactive intros like "Hey guys!", "Welcome back!", or "I'm literally obsessed!". Start directly mid-sentence.
+4. PRODUCT TRANSLATION: If the original script is for an entirely different item category (e.g., a hat) but the target is completely different (e.g., a shoe), seamlessly swap the product context. Map the structural utility hooks gracefully (e.g., a hat covering messy hair translates structurally to a shoe being quick to slip on when rushing out the door).
+5. NO PRICE MENTIONS: Strictly follow TikTok Shop compliance. Do not mention specific costs, discounts, dollar figures, or pricing numbers under any circumstances. Always refer to it abstractly as "the yellow link" or "the cart below".
+6. VISUAL ACTION DIRECTIONS: Keep bracketed scene directions extremely brief (e.g., [shows close-up], [points downward]).
+7. FORMATTING OUTPUT: Return the remixed script as a single cohesive block of text broken into clear bolded section tags: **[HOOK]**, **[BODY]**, and **[CTA]**. Under no circumstances wrap the output in markdown code fences, JSON blocks, or extra commentary text.`;
   try{
     setAiLoading(true);
-    const script=await CreatorGemini.generateText(prompt);
+    const script=await CreatorGemini.generateText(prompt,{tools:[{google_search:{}}]});
     document.getElementById('scriptCanvas').value=String(script||'').replace(/```(?:text)?|```/gi,'').trim();
     saveLocalDraft();
     mobSync();
