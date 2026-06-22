@@ -1026,17 +1026,16 @@ async function generateAiDraft(){
     return;
   }
   const product=selectedProduct();
-  const aiInputs=await openAiGenerationModal();
-  if(aiInputs===null)return;
-  const selectedProductName=aiInputs.product||product?.name||'Not selected';
+  const selectedProductName=product?.name||'Not selected';
+  const similarity=document.getElementById('similaritySlider')?.value||'50';
   const prompt=`You are an elite TikTok Shop content strategist and scriptwriting expert specializing in hook conversion analysis. Your job is to take an original reference script, look at its fundamental sales psychology structure, and adapt it flawlessly for a brand new product using my specific brand voice guidelines.
 
 Here are your structural inputs:
 - Original Reference Script to Transform: "${sourceScript}"
 - Target Product to Adapt Into: "${selectedProductName}"
-- Target Length: "${aiInputs.length || '30s'}"
-- Script Similarity Constraint: ${document.getElementById('similaritySlider').value}% (Note: 0% means keep only the high-level abstract concept and rewrite everything creatively. 100% means match the line-by-line cadence, sentence lengths, visual action tempos, and hook placement exactly, changing ONLY the product names and unique feature facts to fit the new product).
-- Custom Structural Directives: "${aiInputs.customNotes}"
+- Target Length: "30s"
+- Script Similarity Constraint: ${similarity}% (Note: 0% means keep only the high-level abstract concept and rewrite everything creatively. 100% means match the line-by-line cadence, sentence lengths, visual action tempos, and hook placement exactly, changing ONLY the product names and unique feature facts to fit the new product).
+- Custom Structural Directives: "Use only the pasted reference script, target product, and script similarity setting. Do not ask follow-up questions."
 
 Strict Copywriting Guidelines:
 0. REMIX ANALYSIS FIRST: Silently identify what made the reference script work: the hook mechanism, pacing, objection handled, proof moment, emotional payoff, and CTA pressure. Do not explain that analysis. Use it to recreate the same conversion logic for the target product.
