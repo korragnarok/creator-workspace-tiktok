@@ -7,6 +7,7 @@
     { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products', desktopOnly: true },
     { href: 'scripts.html', label: 'Scripts', icon: 'scripts' },
     { href: 'script-workshop.html', label: 'Script Workshop', icon: 'workshop', desktopOnly: true },
+    { href: 'notes.html', label: 'Notes', icon: 'scripts' },
     { href: 'sales-calendar.html', label: 'Sales Log', mobileLabel: 'Sales', icon: 'sales' }
   ];
 

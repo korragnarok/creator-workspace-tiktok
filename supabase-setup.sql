@@ -179,3 +179,19 @@ create policy "Users manage own ctas" on ctas for all using (auth.uid() = user_i
 
 -- ── 12. BRAND DEAL NOTES ─────────────────────────────────────────────────────
 alter table brand_deals add column if not exists notes text default '';
+
+-- ── 13. CREATOR NOTES ───────────────────────────────────────────────────────
+create table if not exists creator_notes (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  title text not null,
+  body text default '',
+  category text default 'general',
+  icon text default '✦',
+  pinned boolean default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+alter table creator_notes enable row level security;
+create policy "Users manage own creator notes" on creator_notes
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

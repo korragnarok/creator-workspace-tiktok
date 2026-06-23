@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F8F5F1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/pwa/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
+<title>Notes &mdash; Creator Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script src="theme-init.js?v=141"></script>
+<link rel="stylesheet" href="layout.css?v=141">
+<style>
+:root{--r:12px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:radial-gradient(circle at top right,color-mix(in srgb,var(--surface) 42%,transparent) 0,transparent 34rem),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+button,input,textarea,select{font:inherit;}
+.page{max-width:1480px;margin:0 auto;padding:42px 38px 104px;}
+.page-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end;padding-bottom:26px;border-bottom:1px solid var(--border-mid);margin-bottom:20px;}
+.eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;color:var(--rust);margin-bottom:8px;}
+.page-title{font-family:'IBM Plex Serif',serif;font-size:42px;font-weight:800;line-height:1;color:var(--ink);letter-spacing:-0.02em;}
+.page-sub{font-size:14px;color:var(--text-mid);margin-top:10px;}
+.header-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+.search-wrap{position:relative;min-width:280px;}
+.search-wrap::before{content:'⌕';position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-weight:800;}
+.search{width:100%;border:1px solid var(--border-mid);border-radius:9px;background:color-mix(in srgb,var(--surface) 80%,var(--bg) 20%);color:var(--ink);padding:11px 14px 11px 38px;outline:none;}
+.search:focus{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 14%,transparent);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border-mid);border-radius:9px;background:transparent;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.07em;text-transform:uppercase;padding:11px 18px;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.btn:hover{background:color-mix(in srgb,var(--surface) 76%,var(--bg) 24%);color:var(--ink);}
+.btn-primary{background:var(--sage);border-color:var(--sage);color:#fff;}
+.btn-primary:hover{background:color-mix(in srgb,var(--sage) 78%,var(--ink) 22%);border-color:color-mix(in srgb,var(--sage) 78%,var(--ink) 22%);color:#fff;}
+.btn-danger{border-color:color-mix(in srgb,var(--rust) 60%,var(--border-mid) 40%);color:var(--rust);}
+.btn-danger:hover{background:var(--rust);border-color:var(--rust);color:#fff;}
+.toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;margin-bottom:20px;}
+.filters{display:flex;gap:9px;align-items:center;overflow-x:auto;padding:2px 0 8px;scrollbar-width:thin;}
+.pill{border:1px solid var(--border-mid);border-radius:999px;background:color-mix(in srgb,var(--surface) 80%,var(--bg) 20%);color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.04em;padding:8px 14px;white-space:nowrap;cursor:pointer;transition:all 0.15s;}
+.pill.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+.pill:hover:not(.active){background:var(--surface-2);color:var(--ink);}
+.pill-count{opacity:.72;margin-left:5px;font-family:'Noto Sans Mono',monospace;font-size:10px;}
+.sort{border:1px solid var(--border-mid);border-radius:9px;background:color-mix(in srgb,var(--surface) 80%,var(--bg) 20%);color:var(--text);padding:10px 34px 10px 12px;outline:none;min-width:150px;}
+.view-toggle{display:flex;border:1px solid var(--border-mid);border-radius:9px;overflow:hidden;background:color-mix(in srgb,var(--surface) 80%,var(--bg) 20%);}
+.view-btn{border:0;background:transparent;color:var(--text-mid);width:42px;height:40px;font-family:'Stack Sans Notch',sans-serif;font-size:18px;font-weight:900;cursor:pointer;}
+.view-btn.active{background:var(--surface-2);color:var(--ink);}
+.notes-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:24px;align-items:start;}
+.notes-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
+.notes-grid.list{grid-template-columns:1fr;}
+.note-card{border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);padding:18px;min-height:214px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:12px;cursor:pointer;transition:transform 0.15s,border-color 0.15s,background 0.15s;}
+.note-card:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--rust) 70%,var(--border) 30%);background:color-mix(in srgb,var(--surface) 90%,var(--rust) 7%);}
+.note-card.list{min-height:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;}
+.note-top{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.note-icon{--cat:var(--text-mid);width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--cat) 18%,var(--surface) 82%);color:var(--cat);font-family:'Stack Sans Notch',sans-serif;font-size:20px;font-weight:900;flex-shrink:0;}
+.cat-tips{--cat:var(--sage);}
+.cat-shop{--cat:var(--rose);}
+.cat-ideas{--cat:var(--tan);}
+.cat-scripts{--cat:var(--rust);}
+.cat-general{--cat:var(--text-mid);}
+.pin-btn{border:0;background:transparent;color:var(--text-muted);font-size:18px;line-height:1;cursor:pointer;padding:4px;border-radius:6px;}
+.pin-btn:hover,.pin-btn.pinned{color:var(--rust);background:color-mix(in srgb,var(--rust) 12%,transparent);}
+.note-title{font-size:18px;font-weight:800;line-height:1.18;color:var(--ink);}
+.note-excerpt{color:var(--text-mid);font-size:13px;line-height:1.65;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.note-meta{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--text-muted);font-size:12px;}
+.note-card.list .note-meta{margin-top:0;justify-content:flex-end;}
+.category-pill{--cat:var(--text-mid);display:inline-flex;align-items:center;width:max-content;border-radius:7px;background:color-mix(in srgb,var(--cat) 18%,var(--surface) 82%);color:var(--cat);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.03em;padding:4px 8px;}
+.sidebar-stack{display:flex;flex-direction:column;gap:14px;position:sticky;top:18px;}
+.side-card{border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);padding:18px;box-shadow:var(--shadow-sm);}
+.side-title{font-size:17px;font-weight:800;color:var(--ink);margin-bottom:14px;}
+.category-row{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;padding:7px 0;color:var(--text-mid);font-size:13px;}
+.category-dot{--cat:var(--text-mid);width:9px;height:9px;border-radius:50%;background:var(--cat);}
+.side-count{font-family:'Noto Sans Mono',monospace;color:var(--text-muted);}
+.pinned-body{font-size:13px;color:var(--text-mid);line-height:1.6;margin:10px 0 14px;white-space:pre-line;}
+.quick-text{font-size:13px;color:var(--text-mid);line-height:1.6;margin-bottom:14px;}
+.empty{border:1px dashed var(--border-mid);border-radius:12px;padding:42px 22px;text-align:center;color:var(--text-mid);background:color-mix(in srgb,var(--surface) 54%,transparent);}
+.empty-title{font-size:22px;font-weight:800;color:var(--ink);margin-bottom:6px;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.44);backdrop-filter:blur(5px);z-index:600;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{width:min(720px,100%);max-height:92vh;overflow:auto;border:1px solid var(--border-mid);border-radius:16px;background:var(--bg-lift);box-shadow:0 22px 70px rgba(0,0,0,0.35);padding:28px;position:relative;}
+.modal-head{display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:20px;}
+.modal-title{font-size:31px;font-weight:800;color:var(--ink);line-height:1.05;}
+.modal-close{border:0;background:transparent;color:var(--text-muted);font-size:24px;cursor:pointer;line-height:1;padding:4px;}
+.form-grid{display:grid;grid-template-columns:1.2fr .7fr .35fr;gap:12px;}
+.form-row{margin-bottom:14px;}
+.form-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px;}
+.form-input{width:100%;border:1px solid var(--border-mid);border-radius:9px;background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);color:var(--ink);padding:11px 13px;outline:none;}
+.form-input:focus{border-color:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 12%,transparent);}
+textarea.form-input{min-height:280px;resize:vertical;line-height:1.75;}
+.check-row{display:flex;align-items:center;gap:9px;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--border);}
+@media(max-width:1260px){.notes-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.notes-layout{grid-template-columns:1fr;}.sidebar-stack{position:static;grid-template-columns:repeat(3,1fr);display:grid;}.side-card{min-width:0;}}
+@media(max-width:860px){.page{padding:86px 18px 112px;}.page-header{grid-template-columns:1fr;align-items:start;}.header-actions{justify-content:stretch;}.search-wrap{min-width:0;width:100%;}.btn-primary{flex:1;}.toolbar{grid-template-columns:1fr;}.notes-grid{grid-template-columns:1fr;}.sidebar-stack{grid-template-columns:1fr;}.form-grid{grid-template-columns:1fr;}.modal{padding:22px;}.page-title{font-size:36px;}.note-card.list{display:flex;align-items:stretch;}.note-card.list .note-meta{justify-content:space-between;}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=141"></script>
+</head>
+<body>
+<main class="page">
+  <header class="page-header">
+    <div>
+      <div class="eyebrow">Creator notebook</div>
+      <h1 class="page-title">My Notes</h1>
+      <p class="page-sub">A place for ideas, tips, strategies, scripts, and everything in between.</p>
+    </div>
+    <div class="header-actions">
+      <div class="search-wrap"><input id="searchInput" class="search" type="search" placeholder="Search notes..." oninput="renderNotes()"></div>
+      <button class="btn" type="button" onclick="clearFilters()">Clear</button>
+      <button class="btn btn-primary" type="button" onclick="openNoteModal()">+ New Note</button>
+    </div>
+  </header>
+
+  <section class="toolbar" aria-label="Notes controls">
+    <div class="filters" id="filterBar"></div>
+    <select id="sortSelect" class="sort" onchange="renderNotes()" aria-label="Sort notes">
+      <option value="newest">Sort: Newest</option>
+      <option value="oldest">Sort: Oldest</option>
+      <option value="title">Sort: Title</option>
+      <option value="pinned">Sort: Pinned</option>
+    </select>
+    <div class="view-toggle" aria-label="View mode">
+      <button class="view-btn active" id="gridBtn" type="button" onclick="setView('grid')" aria-label="Grid view">▦</button>
+      <button class="view-btn" id="listBtn" type="button" onclick="setView('list')" aria-label="List view">☰</button>
+    </div>
+  </section>
+
+  <section class="notes-layout">
+    <div>
+      <div id="notesGrid" class="notes-grid"></div>
+    </div>
+    <aside class="sidebar-stack">
+      <div class="side-card">
+        <h2 class="side-title">Categories</h2>
+        <div id="categorySummary"></div>
+      </div>
+      <div class="side-card">
+        <h2 class="side-title">Pinned Note</h2>
+        <div id="pinnedSummary"></div>
+      </div>
+      <div class="side-card">
+        <h2 class="side-title">Quick Capture</h2>
+        <p class="quick-text">Thought of something useful? Jot it down before it wanders off.</p>
+        <button class="btn btn-primary" style="width:100%" type="button" onclick="openNoteModal()">+ New Note</button>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<div class="modal-overlay" id="noteModal" onclick="overlayClose(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h2 class="modal-title" id="modalTitle">New Note</h2>
+      <button class="modal-close" type="button" onclick="closeNoteModal()" aria-label="Close note">×</button>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="noteTitle">Title</label>
+      <input class="form-input" id="noteTitle" placeholder="Give this note a name..." onkeydown="enterSaves(event)">
+    </div>
+    <div class="form-grid">
+      <div class="form-row">
+        <label class="form-label" for="noteCategory">Category</label>
+        <select class="form-input" id="noteCategory">
+          <option value="tips">Tips & Tricks</option>
+          <option value="shop">TikTok Shop</option>
+          <option value="ideas">Content Ideas</option>
+          <option value="scripts">Scripts</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="noteIcon">Icon</label>
+        <input class="form-input" id="noteIcon" maxlength="2" placeholder="✦">
+      </div>
+      <div class="form-row">
+        <label class="form-label">&nbsp;</label>
+        <label class="check-row"><input id="notePinned" type="checkbox"> Pin</label>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label" for="noteBody">Note</label>
+      <textarea class="form-input" id="noteBody" placeholder="Write the idea, checklist, reminder, script note, or strategy here..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" id="deleteNoteBtn" type="button" onclick="deleteNote()" style="margin-right:auto;display:none;">Delete</button>
+      <button class="btn" type="button" onclick="closeNoteModal()">Cancel</button>
+      <button class="btn btn-primary" type="button" onclick="saveNote()">Save Note</button>
+    </div>
+  </div>
+</div>
+
+<footer style="border-top:1px solid var(--border);padding:24px 38px;color:var(--text-muted);font-size:12px;">Creator Hub</footer>
+
+<script src="layout.js?v=141"></script>
+<script>
+const CATEGORIES = [
+  { key: 'all', label: 'All Notes', icon: '✦' },
+  { key: 'tips', label: 'Tips & Tricks', icon: '◌' },
+  { key: 'shop', label: 'TikTok Shop', icon: '□' },
+  { key: 'ideas', label: 'Content Ideas', icon: '☆' },
+  { key: 'scripts', label: 'Scripts', icon: '✎' },
+  { key: 'general', label: 'General', icon: '✓' }
+];
+
+const SEED_NOTES = [
+  { title: '3 Second Hook Ideas', body: 'Quick hooks that stop the scroll and get people watching.\n\nStart with the weird result first, then explain the product after they care.', category: 'tips', icon: '◌', pinned: false },
+  { title: 'TikTok Shop Algorithm Notes', body: 'The algorithm favors watch time, saves, shares, and people clicking through without feeling pushed.', category: 'shop', icon: '□', pinned: true },
+  { title: 'Video Structure That Converts', body: 'Hook, proof, product in action, fast reason to care, soft CTA. Keep the boring explanation out of the first three seconds.', category: 'ideas', icon: '▷', pinned: false },
+  { title: 'QVC Collaboration Tips', body: 'Keep product names clean, show the real use case quickly, and make brand details easy to find later.', category: 'general', icon: '▤', pinned: false },
+  { title: 'Script Writing Tips', body: 'Write like you are texting a friend. Short lines. One idea per sentence. No fake hype.', category: 'scripts', icon: '✎', pinned: false }
+];
+
+let _user = null;
+let _notes = [];
+let _storageMode = 'supabase';
+let _activeCategory = 'all';
+let _viewMode = 'grid';
+let _editingId = null;
+
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
+function noteKey() {
+  return `creatorHub:notes:${_user?.id || 'local'}`;
+}
+
+function categoryMeta(key) {
+  return CATEGORIES.find(cat => cat.key === key) || CATEGORIES.find(cat => cat.key === 'general');
+}
+
+function noteDate(note) {
+  const raw = note.updated_at || note.created_at || new Date().toISOString();
+  return new Date(raw).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function normalizeNote(note) {
+  const now = new Date().toISOString();
+  return {
+    id: note.id || crypto.randomUUID(),
+    user_id: note.user_id || _user?.id || '',
+    title: note.title || 'Untitled note',
+    body: note.body || '',
+    category: note.category || 'general',
+    icon: note.icon || categoryMeta(note.category || 'general').icon,
+    pinned: Boolean(note.pinned),
+    created_at: note.created_at || now,
+    updated_at: note.updated_at || note.created_at || now
+  };
+}
+
+function toast(message, type = 'success') {
+  if (typeof showToast === 'function') showToast(message, type);
+  else console.log(message);
+}
+
+function saveLocal() {
+  localStorage.setItem(noteKey(), JSON.stringify(_notes));
+}
+
+function loadLocal() {
+  const saved = localStorage.getItem(noteKey());
+  if (saved) {
+    try { return JSON.parse(saved).map(normalizeNote); } catch (error) { console.warn(error); }
+  }
+  const seeded = SEED_NOTES.map(normalizeNote);
+  localStorage.setItem(noteKey(), JSON.stringify(seeded));
+  return seeded;
+}
+
+async function loadNotes() {
+  try {
+    const { data, error } = await db
+      .from('creator_notes')
+      .select('*')
+      .eq('user_id', _user.id)
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    _storageMode = 'supabase';
+    _notes = (data || []).map(normalizeNote);
+  } catch (error) {
+    console.warn('Notes table unavailable, using local storage.', error);
+    _storageMode = 'local';
+    _notes = loadLocal();
+  }
+}
+
+async function persistNote(note) {
+  const clean = normalizeNote(note);
+  clean.updated_at = new Date().toISOString();
+  if (_storageMode === 'supabase') {
+    const { data, error } = await db
+      .from('creator_notes')
+      .upsert(clean, { onConflict: 'id' })
+      .select()
+      .single();
+    if (error) {
+      _storageMode = 'local';
+      _notes = _notes.map(item => item.id === clean.id ? clean : item);
+      if (!_notes.some(item => item.id === clean.id)) _notes.unshift(clean);
+      saveLocal();
+      throw error;
+    }
+    return normalizeNote(data);
+  }
+  _notes = _notes.map(item => item.id === clean.id ? clean : item);
+  if (!_notes.some(item => item.id === clean.id)) _notes.unshift(clean);
+  saveLocal();
+  return clean;
+}
+
+async function removeNote(id) {
+  if (_storageMode === 'supabase') {
+    const { error } = await db.from('creator_notes').delete().eq('id', id).eq('user_id', _user.id);
+    if (error) throw error;
+  }
+  _notes = _notes.filter(note => note.id !== id);
+  if (_storageMode === 'local') saveLocal();
+}
+
+function counts() {
+  const map = { all: _notes.length };
+  CATEGORIES.filter(cat => cat.key !== 'all').forEach(cat => {
+    map[cat.key] = _notes.filter(note => note.category === cat.key).length;
+  });
+  return map;
+}
+
+function filteredNotes() {
+  const query = document.getElementById('searchInput')?.value.trim().toLowerCase() || '';
+  const sort = document.getElementById('sortSelect')?.value || 'newest';
+  let list = _notes.filter(note => {
+    const categoryMatch = _activeCategory === 'all' || note.category === _activeCategory;
+    const searchMatch = !query || `${note.title} ${note.body} ${categoryMeta(note.category).label}`.toLowerCase().includes(query);
+    return categoryMatch && searchMatch;
+  });
+  list = [...list].sort((a, b) => {
+    if (sort === 'oldest') return new Date(a.updated_at) - new Date(b.updated_at);
+    if (sort === 'title') return a.title.localeCompare(b.title);
+    if (sort === 'pinned') return Number(b.pinned) - Number(a.pinned) || new Date(b.updated_at) - new Date(a.updated_at);
+    return new Date(b.updated_at) - new Date(a.updated_at);
+  });
+  return list;
+}
+
+function renderFilters() {
+  const total = counts();
+  document.getElementById('filterBar').innerHTML = CATEGORIES.map(cat => `
+    <button class="pill ${_activeCategory === cat.key ? 'active' : ''}" type="button" onclick="setCategory('${cat.key}')">
+      ${escapeHtml(cat.label)} <span class="pill-count">${total[cat.key] || 0}</span>
+    </button>
+  `).join('');
+}
+
+function renderSidebar() {
+  const total = counts();
+  document.getElementById('categorySummary').innerHTML = CATEGORIES.filter(cat => cat.key !== 'all').map(cat => `
+    <div class="category-row">
+      <span class="category-dot cat-${cat.key}"></span>
+      <span>${escapeHtml(cat.label)}</span>
+      <span class="side-count">${total[cat.key] || 0}</span>
+    </div>
+  `).join('');
+
+  const pinned = _notes.find(note => note.pinned) || _notes[0];
+  document.getElementById('pinnedSummary').innerHTML = pinned ? `
+    <div class="category-pill cat-${pinned.category}">${escapeHtml(categoryMeta(pinned.category).label)}</div>
+    <h3 class="note-title" style="margin-top:10px;">${escapeHtml(pinned.title)}</h3>
+    <div class="pinned-body">${escapeHtml((pinned.body || 'No details yet.').split('\n').slice(0, 5).join('\n'))}</div>
+    <button class="btn" style="width:100%" type="button" onclick="openNoteModal('${pinned.id}')">View Note</button>
+  ` : `
+    <p class="quick-text">Pin a note and it will show up here.</p>
+  `;
+}
+
+function noteCard(note) {
+  const meta = categoryMeta(note.category);
+  const excerpt = note.body || 'No note body yet.';
+  return `
+    <article class="note-card ${_viewMode === 'list' ? 'list' : ''}" onclick="openNoteModal('${note.id}')">
+      <div class="note-top">
+        <div class="note-icon cat-${note.category}">${escapeHtml(note.icon || meta.icon)}</div>
+        <button class="pin-btn ${note.pinned ? 'pinned' : ''}" type="button" aria-label="Pin note" onclick="event.stopPropagation(); togglePin('${note.id}')">⌖</button>
+      </div>
+      <div>
+        <h3 class="note-title">${escapeHtml(note.title)}</h3>
+        <p class="note-excerpt">${escapeHtml(excerpt)}</p>
+      </div>
+      <div class="note-meta">
+        <span class="category-pill cat-${note.category}">${escapeHtml(meta.label)}</span>
+        <span>${noteDate(note)}</span>
+      </div>
+    </article>
+  `;
+}
+
+function renderNotes() {
+  renderFilters();
+  renderSidebar();
+  const grid = document.getElementById('notesGrid');
+  const list = filteredNotes();
+  grid.className = `notes-grid ${_viewMode === 'list' ? 'list' : ''}`;
+  grid.innerHTML = list.length
+    ? list.map(noteCard).join('')
+    : `<div class="empty"><div class="empty-title">No notes found</div><div>Try another filter or add a fresh note.</div></div>`;
+}
+
+function setCategory(key) {
+  _activeCategory = key;
+  renderNotes();
+}
+
+function setView(mode) {
+  _viewMode = mode;
+  document.getElementById('gridBtn').classList.toggle('active', mode === 'grid');
+  document.getElementById('listBtn').classList.toggle('active', mode === 'list');
+  renderNotes();
+}
+
+function clearFilters() {
+  _activeCategory = 'all';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('sortSelect').value = 'newest';
+  renderNotes();
+}
+
+function openNoteModal(id = null) {
+  _editingId = id;
+  const note = id ? _notes.find(item => item.id === id) : null;
+  document.getElementById('modalTitle').textContent = note ? 'Edit Note' : 'New Note';
+  document.getElementById('noteTitle').value = note?.title || '';
+  document.getElementById('noteCategory').value = note?.category || (_activeCategory === 'all' ? 'ideas' : _activeCategory);
+  document.getElementById('noteIcon').value = note?.icon || categoryMeta(document.getElementById('noteCategory').value).icon;
+  document.getElementById('notePinned').checked = Boolean(note?.pinned);
+  document.getElementById('noteBody').value = note?.body || '';
+  document.getElementById('deleteNoteBtn').style.display = note ? 'inline-flex' : 'none';
+  document.getElementById('noteModal').classList.add('open');
+  setTimeout(() => document.getElementById('noteTitle').focus(), 40);
+}
+
+function closeNoteModal() {
+  document.getElementById('noteModal').classList.remove('open');
+  _editingId = null;
+}
+
+function overlayClose(event) {
+  if (event.target.id === 'noteModal') closeNoteModal();
+}
+
+function enterSaves(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    saveNote();
+  }
+}
+
+async function saveNote() {
+  const title = document.getElementById('noteTitle').value.trim();
+  const body = document.getElementById('noteBody').value.trim();
+  const category = document.getElementById('noteCategory').value;
+  if (!title && !body) {
+    toast('Add a title or note first.', 'error');
+    return;
+  }
+  const existing = _editingId ? _notes.find(note => note.id === _editingId) : null;
+  const note = normalizeNote({
+    ...existing,
+    id: existing?.id || crypto.randomUUID(),
+    user_id: _user.id,
+    title: title || 'Untitled note',
+    body,
+    category,
+    icon: document.getElementById('noteIcon').value.trim() || categoryMeta(category).icon,
+    pinned: document.getElementById('notePinned').checked,
+    created_at: existing?.created_at || new Date().toISOString()
+  });
+  try {
+    const saved = await persistNote(note);
+    _notes = _notes.filter(item => item.id !== saved.id);
+    _notes.unshift(saved);
+    saveLocal();
+    closeNoteModal();
+    renderNotes();
+    toast(_storageMode === 'local' ? 'Saved on this device.' : 'Note saved.');
+  } catch (error) {
+    console.warn(error);
+    closeNoteModal();
+    renderNotes();
+    toast('Saved locally. Run the notes SQL to sync it across devices.', 'error');
+  }
+}
+
+async function deleteNote() {
+  if (!_editingId) return;
+  if (!confirm('Delete this note?')) return;
+  try {
+    await removeNote(_editingId);
+    closeNoteModal();
+    renderNotes();
+    toast('Note deleted.');
+  } catch (error) {
+    console.warn(error);
+    toast('Could not delete that note.', 'error');
+  }
+}
+
+async function togglePin(id) {
+  const note = _notes.find(item => item.id === id);
+  if (!note) return;
+  note.pinned = !note.pinned;
+  try {
+    const saved = await persistNote(note);
+    _notes = _notes.map(item => item.id === id ? saved : item);
+    saveLocal();
+    renderNotes();
+  } catch (error) {
+    console.warn(error);
+    renderNotes();
+  }
+}
+
+async function init() {
+  const user = await requireAuth();
+  if (!user) return;
+  const prefs = await loadUserPrefs(user.id);
+  await initDisplayName(user, prefs);
+  await initCore5(user.id, prefs);
+  await initTheme(user.id, prefs);
+  initProfilePopover(user.id);
+  _user = user;
+  await loadNotes();
+  renderNotes();
+}
+
+document.getElementById('noteCategory').addEventListener('change', event => {
+  const iconInput = document.getElementById('noteIcon');
+  if (!iconInput.value.trim()) iconInput.value = categoryMeta(event.target.value).icon;
+});
+
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') closeNoteModal();
+});
+
+init();
+</script>
+</body>
+</html>
