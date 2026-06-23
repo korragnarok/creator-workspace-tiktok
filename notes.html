@@ -148,7 +148,7 @@ textarea.form-input{min-height:280px;resize:vertical;line-height:1.75;}
   </section>
 </main>
 
-<div class="modal-overlay" id="noteModal" onclick="overlayClose(event)">
+<div class="modal-overlay" id="noteModal">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-head">
       <h2 class="modal-title" id="modalTitle">New Note</h2>
@@ -221,6 +221,10 @@ function escapeHtml(value) {
 
 function noteKey() {
   return `creatorHub:notes:${_user?.id || 'local'}`;
+}
+
+function draftKey() {
+  return `${noteKey()}:draft`;
 }
 
 function slugifyCategory(value) {
@@ -472,15 +476,71 @@ function renderCategoryOptions(selected = 'ideas') {
   customInput.value = hasSelected ? '' : labelFromKey(selectedKey);
 }
 
+function currentDraft() {
+  return {
+    title: document.getElementById('noteTitle').value,
+    selectedCategory: document.getElementById('noteCategory').value,
+    customCategory: document.getElementById('customCategory').value,
+    icon: document.getElementById('noteIcon').value,
+    pinned: document.getElementById('notePinned').checked,
+    body: document.getElementById('noteBody').value
+  };
+}
+
+function draftHasContent(draft) {
+  return Boolean((draft.title || '').trim() || (draft.body || '').trim() || (draft.customCategory || '').trim());
+}
+
+function saveNoteDraft() {
+  if (_editingId) return;
+  const draft = currentDraft();
+  if (!draftHasContent(draft)) {
+    localStorage.removeItem(draftKey());
+    return;
+  }
+  localStorage.setItem(draftKey(), JSON.stringify(draft));
+}
+
+function restoreNoteDraft() {
+  const raw = localStorage.getItem(draftKey());
+  if (!raw) return false;
+  try {
+    const draft = JSON.parse(raw);
+    if (!draftHasContent(draft)) return false;
+    const selected = draft.selectedCategory === CUSTOM_CATEGORY_VALUE
+      ? draft.customCategory
+      : draft.selectedCategory;
+    renderCategoryOptions(selected || 'ideas');
+    if (draft.selectedCategory === CUSTOM_CATEGORY_VALUE) {
+      document.getElementById('noteCategory').value = CUSTOM_CATEGORY_VALUE;
+      document.getElementById('customCategory').style.display = 'block';
+      document.getElementById('customCategory').value = draft.customCategory || '';
+    }
+    document.getElementById('noteTitle').value = draft.title || '';
+    document.getElementById('noteIcon').value = draft.icon || categoryMeta(document.getElementById('noteCategory').value).icon;
+    document.getElementById('notePinned').checked = Boolean(draft.pinned);
+    document.getElementById('noteBody').value = draft.body || '';
+    return true;
+  } catch (error) {
+    console.warn(error);
+    localStorage.removeItem(draftKey());
+    return false;
+  }
+}
+
 function openNoteModal(id = null) {
   _editingId = id;
   const note = id ? _notes.find(item => item.id === id) : null;
   document.getElementById('modalTitle').textContent = note ? 'Edit Note' : 'New Note';
-  document.getElementById('noteTitle').value = note?.title || '';
-  renderCategoryOptions(note?.category || (_activeCategory === 'all' ? 'ideas' : _activeCategory));
-  document.getElementById('noteIcon').value = note?.icon || categoryMeta(document.getElementById('noteCategory').value).icon;
-  document.getElementById('notePinned').checked = Boolean(note?.pinned);
-  document.getElementById('noteBody').value = note?.body || '';
+  if (!note && restoreNoteDraft()) {
+    toast('Restored your unsaved note draft.');
+  } else {
+    document.getElementById('noteTitle').value = note?.title || '';
+    renderCategoryOptions(note?.category || (_activeCategory === 'all' ? 'ideas' : _activeCategory));
+    document.getElementById('noteIcon').value = note?.icon || categoryMeta(document.getElementById('noteCategory').value).icon;
+    document.getElementById('notePinned').checked = Boolean(note?.pinned);
+    document.getElementById('noteBody').value = note?.body || '';
+  }
   document.getElementById('deleteNoteBtn').style.display = note ? 'inline-flex' : 'none';
   document.getElementById('noteModal').classList.add('open');
   setTimeout(() => document.getElementById('noteTitle').focus(), 40);
@@ -489,10 +549,6 @@ function openNoteModal(id = null) {
 function closeNoteModal() {
   document.getElementById('noteModal').classList.remove('open');
   _editingId = null;
-}
-
-function overlayClose(event) {
-  if (event.target.id === 'noteModal') closeNoteModal();
 }
 
 function enterSaves(event) {
@@ -535,6 +591,7 @@ async function saveNote() {
     _notes = _notes.filter(item => item.id !== saved.id);
     _notes.unshift(saved);
     saveLocal();
+    localStorage.removeItem(draftKey());
     closeNoteModal();
     renderNotes();
     toast(_storageMode === 'local' ? 'Saved on this device.' : 'Note saved.');
@@ -593,11 +650,18 @@ document.getElementById('noteCategory').addEventListener('change', event => {
   customInput.style.display = event.target.value === CUSTOM_CATEGORY_VALUE ? 'block' : 'none';
   if (event.target.value === CUSTOM_CATEGORY_VALUE) {
     customInput.focus();
+    saveNoteDraft();
     return;
   }
   const iconInput = document.getElementById('noteIcon');
   if (!iconInput.value.trim()) iconInput.value = categoryMeta(event.target.value).icon;
+  saveNoteDraft();
 });
+
+['noteTitle', 'customCategory', 'noteIcon', 'noteBody'].forEach(id => {
+  document.getElementById(id).addEventListener('input', saveNoteDraft);
+});
+document.getElementById('notePinned').addEventListener('change', saveNoteDraft);
 
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape') closeNoteModal();
