@@ -1204,7 +1204,12 @@ async function saveBackToTodo(script){
   notes=setDailyFieldLine(notes,'ON_SCREEN_TEXT',detailDraft.onscreen);
   notes=setDailyFieldLine(notes,'CAPTION',detailDraft.caption);
   notes=setDailyFieldLine(notes,'SEO_STRATEGY',detailDraft.seo);
-  const update=await db.from('queue').update({script,notes}).eq('id',queueId);
+  const updatePayload={script,notes,inspiration_links:inspo};
+  let update=await db.from('queue').update(updatePayload).eq('id',queueId);
+  if(update.error && /inspiration_links/i.test(update.error.message||'')){
+    const {inspiration_links,...fallbackPayload}=updatePayload;
+    update=await db.from('queue').update(fallbackPayload).eq('id',queueId);
+  }
   if(update.error){throw new Error(update.error.message||'Could not update the To Do item.');}
   return true;
 }
