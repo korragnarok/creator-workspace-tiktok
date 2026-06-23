@@ -59,6 +59,7 @@ button,input,textarea,select{font:inherit;}
 .cat-ideas{--cat:var(--tan);}
 .cat-scripts{--cat:var(--rust);}
 .cat-general{--cat:var(--text-mid);}
+.cat-custom{--cat:var(--text-mid);}
 .pin-btn{border:0;background:transparent;color:var(--text-muted);font-size:18px;line-height:1;cursor:pointer;padding:4px;border-radius:6px;}
 .pin-btn:hover,.pin-btn.pinned{color:var(--rust);background:color-mix(in srgb,var(--rust) 12%,transparent);}
 .note-title{font-size:18px;font-weight:800;line-height:1.18;color:var(--ink);}
@@ -160,13 +161,8 @@ textarea.form-input{min-height:280px;resize:vertical;line-height:1.75;}
     <div class="form-grid">
       <div class="form-row">
         <label class="form-label" for="noteCategory">Category</label>
-        <select class="form-input" id="noteCategory">
-          <option value="tips">Tips & Tricks</option>
-          <option value="shop">TikTok Shop</option>
-          <option value="ideas">Content Ideas</option>
-          <option value="scripts">Scripts</option>
-          <option value="general">General</option>
-        </select>
+        <select class="form-input" id="noteCategory"></select>
+        <input class="form-input" id="customCategory" placeholder="New category name..." style="display:none;margin-top:8px;">
       </div>
       <div class="form-row">
         <label class="form-label" for="noteIcon">Icon</label>
@@ -193,14 +189,16 @@ textarea.form-input{min-height:280px;resize:vertical;line-height:1.75;}
 
 <script src="layout.js?v=141"></script>
 <script>
-const CATEGORIES = [
-  { key: 'all', label: 'All Notes', icon: '✦' },
+const BASE_CATEGORIES = [
   { key: 'tips', label: 'Tips & Tricks', icon: '◌' },
   { key: 'shop', label: 'TikTok Shop', icon: '□' },
   { key: 'ideas', label: 'Content Ideas', icon: '☆' },
   { key: 'scripts', label: 'Scripts', icon: '✎' },
   { key: 'general', label: 'General', icon: '✓' }
 ];
+
+const CUSTOM_CATEGORY_VALUE = '__custom';
+const ALL_CATEGORY = { key: 'all', label: 'All Notes', icon: '✦' };
 
 const SEED_NOTES = [
   { title: '3 Second Hook Ideas', body: 'Quick hooks that stop the scroll and get people watching.\n\nStart with the weird result first, then explain the product after they care.', category: 'tips', icon: '◌', pinned: false },
@@ -225,8 +223,39 @@ function noteKey() {
   return `creatorHub:notes:${_user?.id || 'local'}`;
 }
 
+function slugifyCategory(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'general';
+}
+
+function labelFromKey(key) {
+  return String(key || 'general')
+    .split('-')
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+function allCategoryOptions() {
+  const base = [...BASE_CATEGORIES];
+  const baseKeys = new Set(base.map(cat => cat.key));
+  const custom = [...new Set(_notes.map(note => note.category).filter(Boolean))]
+    .filter(key => !baseKeys.has(key))
+    .sort((a, b) => labelFromKey(a).localeCompare(labelFromKey(b)))
+    .map(key => ({ key, label: labelFromKey(key), icon: '✦', custom: true }));
+  return [...base, ...custom];
+}
+
 function categoryMeta(key) {
-  return CATEGORIES.find(cat => cat.key === key) || CATEGORIES.find(cat => cat.key === 'general');
+  return allCategoryOptions().find(cat => cat.key === key)
+    || BASE_CATEGORIES.find(cat => cat.key === 'general');
+}
+
+function categoryClass(key) {
+  return BASE_CATEGORIES.some(cat => cat.key === key) ? `cat-${key}` : 'cat-custom';
 }
 
 function noteDate(note) {
@@ -241,7 +270,7 @@ function normalizeNote(note) {
     user_id: note.user_id || _user?.id || '',
     title: note.title || 'Untitled note',
     body: note.body || '',
-    category: note.category || 'general',
+    category: slugifyCategory(note.category || 'general'),
     icon: note.icon || categoryMeta(note.category || 'general').icon,
     pinned: Boolean(note.pinned),
     created_at: note.created_at || now,
@@ -320,7 +349,7 @@ async function removeNote(id) {
 
 function counts() {
   const map = { all: _notes.length };
-  CATEGORIES.filter(cat => cat.key !== 'all').forEach(cat => {
+  allCategoryOptions().forEach(cat => {
     map[cat.key] = _notes.filter(note => note.category === cat.key).length;
   });
   return map;
@@ -345,7 +374,8 @@ function filteredNotes() {
 
 function renderFilters() {
   const total = counts();
-  document.getElementById('filterBar').innerHTML = CATEGORIES.map(cat => `
+  const visible = [ALL_CATEGORY, ...allCategoryOptions().filter(cat => total[cat.key] > 0 || cat.key === _activeCategory)];
+  document.getElementById('filterBar').innerHTML = visible.map(cat => `
     <button class="pill ${_activeCategory === cat.key ? 'active' : ''}" type="button" onclick="setCategory('${cat.key}')">
       ${escapeHtml(cat.label)} <span class="pill-count">${total[cat.key] || 0}</span>
     </button>
@@ -354,17 +384,18 @@ function renderFilters() {
 
 function renderSidebar() {
   const total = counts();
-  document.getElementById('categorySummary').innerHTML = CATEGORIES.filter(cat => cat.key !== 'all').map(cat => `
+  const visible = allCategoryOptions().filter(cat => total[cat.key] > 0);
+  document.getElementById('categorySummary').innerHTML = visible.length ? visible.map(cat => `
     <div class="category-row">
-      <span class="category-dot cat-${cat.key}"></span>
+      <span class="category-dot ${categoryClass(cat.key)}"></span>
       <span>${escapeHtml(cat.label)}</span>
       <span class="side-count">${total[cat.key] || 0}</span>
     </div>
-  `).join('');
+  `).join('') : '<p class="quick-text">Categories will show here once notes are saved.</p>';
 
   const pinned = _notes.find(note => note.pinned) || _notes[0];
   document.getElementById('pinnedSummary').innerHTML = pinned ? `
-    <div class="category-pill cat-${pinned.category}">${escapeHtml(categoryMeta(pinned.category).label)}</div>
+    <div class="category-pill ${categoryClass(pinned.category)}">${escapeHtml(categoryMeta(pinned.category).label)}</div>
     <h3 class="note-title" style="margin-top:10px;">${escapeHtml(pinned.title)}</h3>
     <div class="pinned-body">${escapeHtml((pinned.body || 'No details yet.').split('\n').slice(0, 5).join('\n'))}</div>
     <button class="btn" style="width:100%" type="button" onclick="openNoteModal('${pinned.id}')">View Note</button>
@@ -379,7 +410,7 @@ function noteCard(note) {
   return `
     <article class="note-card ${_viewMode === 'list' ? 'list' : ''}" onclick="openNoteModal('${note.id}')">
       <div class="note-top">
-        <div class="note-icon cat-${note.category}">${escapeHtml(note.icon || meta.icon)}</div>
+        <div class="note-icon ${categoryClass(note.category)}">${escapeHtml(note.icon || meta.icon)}</div>
         <button class="pin-btn ${note.pinned ? 'pinned' : ''}" type="button" aria-label="Pin note" onclick="event.stopPropagation(); togglePin('${note.id}')">⌖</button>
       </div>
       <div>
@@ -387,7 +418,7 @@ function noteCard(note) {
         <p class="note-excerpt">${escapeHtml(excerpt)}</p>
       </div>
       <div class="note-meta">
-        <span class="category-pill cat-${note.category}">${escapeHtml(meta.label)}</span>
+        <span class="category-pill ${categoryClass(note.category)}">${escapeHtml(meta.label)}</span>
         <span>${noteDate(note)}</span>
       </div>
     </article>
@@ -395,6 +426,8 @@ function noteCard(note) {
 }
 
 function renderNotes() {
+  const total = counts();
+  if (_activeCategory !== 'all' && !total[_activeCategory]) _activeCategory = 'all';
   renderFilters();
   renderSidebar();
   const grid = document.getElementById('notesGrid');
@@ -424,12 +457,27 @@ function clearFilters() {
   renderNotes();
 }
 
+function renderCategoryOptions(selected = 'ideas') {
+  const select = document.getElementById('noteCategory');
+  const selectedKey = slugifyCategory(selected);
+  const options = allCategoryOptions();
+  const hasSelected = options.some(cat => cat.key === selectedKey);
+  select.innerHTML = [
+    ...options.map(cat => `<option value="${cat.key}">${escapeHtml(cat.label)}</option>`),
+    `<option value="${CUSTOM_CATEGORY_VALUE}">+ Custom category</option>`
+  ].join('');
+  select.value = hasSelected ? selectedKey : CUSTOM_CATEGORY_VALUE;
+  const customInput = document.getElementById('customCategory');
+  customInput.style.display = hasSelected ? 'none' : 'block';
+  customInput.value = hasSelected ? '' : labelFromKey(selectedKey);
+}
+
 function openNoteModal(id = null) {
   _editingId = id;
   const note = id ? _notes.find(item => item.id === id) : null;
   document.getElementById('modalTitle').textContent = note ? 'Edit Note' : 'New Note';
   document.getElementById('noteTitle').value = note?.title || '';
-  document.getElementById('noteCategory').value = note?.category || (_activeCategory === 'all' ? 'ideas' : _activeCategory);
+  renderCategoryOptions(note?.category || (_activeCategory === 'all' ? 'ideas' : _activeCategory));
   document.getElementById('noteIcon').value = note?.icon || categoryMeta(document.getElementById('noteCategory').value).icon;
   document.getElementById('notePinned').checked = Boolean(note?.pinned);
   document.getElementById('noteBody').value = note?.body || '';
@@ -457,9 +505,17 @@ function enterSaves(event) {
 async function saveNote() {
   const title = document.getElementById('noteTitle').value.trim();
   const body = document.getElementById('noteBody').value.trim();
-  const category = document.getElementById('noteCategory').value;
+  const selectedCategory = document.getElementById('noteCategory').value;
+  const customCategory = document.getElementById('customCategory').value.trim();
+  const category = selectedCategory === CUSTOM_CATEGORY_VALUE
+    ? slugifyCategory(customCategory)
+    : slugifyCategory(selectedCategory);
   if (!title && !body) {
     toast('Add a title or note first.', 'error');
+    return;
+  }
+  if (selectedCategory === CUSTOM_CATEGORY_VALUE && !customCategory) {
+    toast('Name the new category first.', 'error');
     return;
   }
   const existing = _editingId ? _notes.find(note => note.id === _editingId) : null;
@@ -533,6 +589,12 @@ async function init() {
 }
 
 document.getElementById('noteCategory').addEventListener('change', event => {
+  const customInput = document.getElementById('customCategory');
+  customInput.style.display = event.target.value === CUSTOM_CATEGORY_VALUE ? 'block' : 'none';
+  if (event.target.value === CUSTOM_CATEGORY_VALUE) {
+    customInput.focus();
+    return;
+  }
   const iconInput = document.getElementById('noteIcon');
   if (!iconInput.value.trim()) iconInput.value = categoryMeta(event.target.value).icon;
 });
