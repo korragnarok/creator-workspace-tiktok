@@ -240,6 +240,7 @@ const PAGE_SIZE=25;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
 let _editVideosMode=false,_selectedVideoIds=new Set(),_visibleVideoIds=[];
 let PRODUCT_OPTIONS=[];
+let productFilterId=null,productFilterName='';
 
 async function init() {
   user = await requireAuth();
@@ -422,6 +423,33 @@ function productThumbHtml(video){
   const placeholder=!String(video?._productImage||'').trim();
   return `<span class="product-thumb${placeholder?' placeholder':''}"><img src="${esc(src)}" alt="" onerror="this.onerror=null;this.src='icons/default-product.png';this.closest('.product-thumb')?.classList.add('placeholder');"></span>`;
 }
+function applyProductFilterFromUrl(products){
+  const params=new URLSearchParams(window.location.search);
+  productFilterId=params.get('product')||null;
+  productFilterName=params.get('productName')||'';
+  if(productFilterId&&products?.length){
+    const product=products.find(item=>item.id===productFilterId);
+    if(product) productFilterName=product.name||productFilterName;
+  }
+  if(productFilterName){
+    const search=document.getElementById('searchBox');
+    if(search&&!search.value) search.value=productFilterName;
+  }
+}
+function videoMatchesProductFilter(video){
+  if(!productFilterId&&!productFilterName)return true;
+  if(productFilterId&&String(video.prod_id||'')===String(productFilterId))return true;
+  const target=normProductName(productFilterName);
+  if(!target)return true;
+  const snapshot=videoSnapshot(video);
+  const names=[
+    video.brand,
+    video.title,
+    noteSection(video.notes,'Product'),
+    snapshot.product
+  ].map(normProductName).filter(Boolean);
+  return names.includes(target);
+}
 function videoSaveErrorMessage(error){
   const message=String(error?.message||'');
   if(/views/i.test(message)&&/(overflow|out of range|smallint|integer)/i.test(message)){
@@ -448,6 +476,7 @@ async function loadVideos(pageToShow=currentPage){
   if(DATA.length){
     const {data:productData,error:productError}=await db.from('products').select('id,name,brand,image_url').eq('user_id',user.id);
     if(!productError){
+      applyProductFilterFromUrl(productData||[]);
       const byId=Object.fromEntries((productData||[]).map(p=>[p.id,p]));
       const byName=Object.fromEntries((productData||[]).map(p=>[normProductName(p.name),p]));
       const byBrand={};
@@ -463,6 +492,8 @@ async function loadVideos(pageToShow=currentPage){
         video._productImage=product?.image_url||'';
       });
     }
+  } else {
+    applyProductFilterFromUrl([]);
   }
   // Enrich videos with one or more deal labels for table display.
   const dealIds=[...new Set(DATA.flatMap(v=>selectedDealIdsFromVideo(v)))];
@@ -508,6 +539,7 @@ function getFiltered(){
     const hasSales=(Number(v.units)||0)>0;
     if(filterStatus==='sales'&&!hasSales)return false;
     if(filterStatus==='nosales'&&hasSales)return false;
+    if(!videoMatchesProductFilter(v))return false;
     if(q&&!((v.title||'')+(v.brand||'')+(v.notes||'')+(v.status||'')).toLowerCase().includes(q))return false;
     return true;
   }).sort((a,b)=>{

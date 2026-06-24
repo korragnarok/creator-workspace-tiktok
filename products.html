@@ -293,7 +293,7 @@ async function init() {
         '<td class="num"><span class="gmv-value">'+(gmv?fmtMoney(gmv):'-')+'</span></td>'+
         '<td><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
         '<td>'+(link?'<a class="shop-link" href="'+escAttr(link)+'" target="_blank" rel="noopener">Shop ↗</a>':'-')+'</td>'+
-        '<td><div class="tbl-actions"><button class="tbl-action" onclick="event.stopPropagation();makeContent(\''+p.id+'\')">Make Content</button><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button></div></td>'+
+        '<td><div class="tbl-actions"><button class="tbl-action" onclick="event.stopPropagation();viewProductVideos(\''+p.id+'\')">View Videos</button><button class="tbl-action" onclick="event.stopPropagation();makeContent(\''+p.id+'\')">Make Content</button><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button></div></td>'+
       '</tr>';
     }).join('');
     updateSortHeaders();
@@ -656,6 +656,14 @@ async function init() {
     }
     showToast('Added to today\'s to-do list');
     window.location.href = dailyTodoUrl;
+  };
+  window.viewProductVideos = function(id) {
+    const product = _allProducts.find(p => p.id === id);
+    if(!product) return;
+    const params = new URLSearchParams();
+    params.set('product', product.id);
+    params.set('productName', product.name || '');
+    window.location.href = 'video-tracker.html?' + params.toString();
   };
 
   function inlineEditingEnabled() {
