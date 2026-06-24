@@ -12,7 +12,6 @@
         { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products' }
       ]
     },
-    { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products' },
     {
       href: 'scripts.html',
       label: 'Scripts',
