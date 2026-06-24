@@ -121,6 +121,8 @@ button,input{font:inherit;}
 .sched-type-tag{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:color-mix(in srgb,var(--rust) 14%,var(--surface) 86%);color:var(--rust);}
 .sched-type-cell{display:flex;align-items:center;justify-content:flex-start;min-width:0;}
 .sched-type-pill{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.07em;text-transform:uppercase;padding:7px 10px;border-radius:7px;border:1px solid var(--border-mid);background:color-mix(in srgb,var(--bg-lift) 70%,var(--surface) 30%);color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+select.sched-type-pill{appearance:none;cursor:pointer;outline:none;width:100%;min-width:0;text-align:center;}
+select.sched-type-pill:focus{border-color:var(--rust);}
 .sched-location-cell{justify-self:stretch;min-width:0;width:100%;display:flex;justify-content:flex-start;}
 .sched-location-tag{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:7px 9px;border-radius:6px;border:1px solid var(--border-mid);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;min-width:0;max-width:150px;width:100%;}
 select.sched-location-tag{appearance:none;text-align:center;cursor:pointer;outline:none;}
@@ -253,7 +255,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .chart-card{min-height:0;}
   .chart-top,.chart-metrics{flex:0 0 auto;}
   .chart-metrics{margin:8px 0 4px;}
-  .chart-wrap{height:160px;min-height:140px;flex:0 0 auto;}
+  .chart-wrap{height:174px;min-height:150px;flex:0 0 auto;}
   #top-products{min-height:0;overflow:auto;}
 }
 @media(max-width:1280px) and (min-width:981px){.top-layout{grid-template-columns:minmax(0,1fr) minmax(260px,340px);}.lower-grid{grid-template-columns:minmax(0,1fr);}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.stat-card{padding:14px;gap:10px;}.stat-icon{width:44px;height:44px;}.stat-icon img{width:34px;height:34px;}.stat-label{font-size:9px;}.stat-sub{font-size:11px;}.stat-value{font-size:26px;}.chart-wrap{height:200px;}}
@@ -514,6 +516,15 @@ const SCHED_LOCATION_OPTIONS=[
   {value:'airport',label:'Airport'},
   {value:'other',label:'Other'}
 ];
+const SCHED_TYPE_OPTIONS=[
+  {value:'product-demo',label:'🎬 Product Demo'},
+  {value:'talking-head',label:'🗣️ Talking Head'},
+  {value:'voiceover',label:'🎙️ Voiceover'},
+  {value:'faceless-b-roll',label:'📦 Faceless B-Roll'},
+  {value:'asmr-unboxing',label:'🤫 ASMR / Unboxing'},
+  {value:'before-after',label:'🔄 Before & After'},
+  {value:'skit',label:'💬 Skit'}
+];
 function fmtMoney(n){if(!n||n===0)return'$0';return'$'+Math.ceil(Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
 function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
 function fmtStreak(value){const streak=Number(value)||0;return streak>0?`${streak} 🔥`:String(streak);}
@@ -631,7 +642,7 @@ function renderSalesChart(labels, commData, gmvData){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,width,height);
   const colors=chartThemeOptions();
-  const pad={left:38,right:14,top:14,bottom:24};
+  const pad={left:38,right:14,top:12,bottom:36};
   const plotW=width-pad.left-pad.right;
   const plotH=height-pad.top-pad.bottom;
   const all=[...commData,...gmvData].map(Number);
@@ -915,17 +926,22 @@ function parseSchedType(notes){
   const m=String(notes||'').match(/^TYPE\s*:\s*([^\n]*)/im);
   return m?m[1].trim():'';
 }
-function schedFormatLabel(value){
+function normalizeSchedType(value){
   const raw=String(value||'').trim();
   const lower=raw.toLowerCase();
-  if(lower.includes('product-demo')||lower.includes('demo'))return '🎬 Product Demo';
-  if(lower.includes('talking-head')||lower.includes('talk'))return '🗣️ Talking Head';
-  if(lower.includes('voice'))return '🎙️ Voiceover';
-  if(lower.includes('faceless')||lower.includes('b-roll')||lower.includes('broll'))return '📦 Faceless B-Roll';
-  if(lower.includes('asmr')||lower.includes('unboxing'))return '🤫 ASMR / Unboxing';
-  if(lower.includes('before')||lower.includes('after'))return '🔄 Before & After';
-  if(lower.includes('skit'))return '🎭 Skit';
-  return raw ? `🗣️ ${raw}` : '🗣️ Talking Head';
+  if(!lower)return 'talking-head';
+  if(lower.includes('product-demo')||lower.includes('product demo')||lower.includes('demo'))return 'product-demo';
+  if(lower.includes('talking-head')||lower.includes('talking head')||lower.includes('talk'))return 'talking-head';
+  if(lower.includes('voice'))return 'voiceover';
+  if(lower.includes('faceless')||lower.includes('b-roll')||lower.includes('broll'))return 'faceless-b-roll';
+  if(lower.includes('asmr')||lower.includes('unboxing'))return 'asmr-unboxing';
+  if(lower.includes('before')||lower.includes('after'))return 'before-after';
+  if(lower.includes('skit'))return 'skit';
+  return raw;
+}
+function schedFormatLabel(value){
+  const type=normalizeSchedType(value);
+  return SCHED_TYPE_OPTIONS.find(option=>option.value===type)?.label || '🗣️ Talking Head';
 }
 function schedAngleLabel(value){
   const clean=String(value||'').replace(/^Hook:\s*/i,'').trim();
@@ -957,6 +973,18 @@ function setQueueLocationLine(notes,type,label=''){
   if(!cleanType)return body;
   const value=cleanType==='other'?`other:${String(label||'').trim()}`:cleanType;
   return [body,`LOCATION:${value}`].filter(Boolean).join('\n');
+}
+function setQueueTypeLine(notes,type){
+  const body=withoutQueueMetaLine(notes,'TYPE');
+  const cleanType=normalizeSchedType(type);
+  if(!cleanType)return body;
+  return [body,`TYPE:${cleanType}`].filter(Boolean).join('\n');
+}
+function schedTypeSelectHtml(item,type){
+  const current=normalizeSchedType(type);
+  return `<div class="sched-type-cell"><select class="sched-type-pill" onchange="setSchedType('${esc(item.id)}',this.value)">
+    ${SCHED_TYPE_OPTIONS.map(option=>`<option value="${esc(option.value)}"${current===option.value?' selected':''}>${esc(option.label)}</option>`).join('')}
+  </select></div>`;
 }
 function schedLocationSelectHtml(item,location){
   const current=location?.type||'';
@@ -1047,9 +1075,7 @@ function renderTodayContent(){
           ${brandMeta}
         </div>
       </div>
-      <div class="sched-type-cell">
-        <span class="sched-type-pill">${esc(formatLabel)}</span>
-      </div>
+      ${schedTypeSelectHtml(q,typeTag)}
       ${locationTag}
       <button class="sched-status ${statusClass}" onclick="cycleSchedStatus('${q.id}')">${statusLabel}</button>
       <div class="sched-actions">
@@ -1060,7 +1086,7 @@ function renderTodayContent(){
     </div>`;
   }).join('');
   list.innerHTML=`<div class="sched-list-inner">
-    <div class="sched-table-head"><span>Time</span><span>Product</span><span>Script Type</span><span>Setup / Location</span><span>Status</span><span>Actions</span></div>
+    <div class="sched-table-head"><span>Time</span><span>Product</span><span>Script Type</span><span>Location</span><span>Status</span><span>Actions</span></div>
     ${rows}
   </div>`;
   // Progress bar
@@ -1284,6 +1310,14 @@ async function setSchedLocation(id,type){
     label=window.prompt('Filming location?','')||'Other';
   }
   item.notes=setQueueLocationLine(item.notes,type,label);
+  renderTodayContent();
+  const {error}=await db.from('queue').update({notes:item.notes}).eq('id',id).eq('user_id',_dashboardUser.id);
+  if(error)showToast(error.message,'error');
+}
+async function setSchedType(id,type){
+  const item=_todayQueue.find(q=>q.id===id);
+  if(!item||!_dashboardUser)return;
+  item.notes=setQueueTypeLine(item.notes,type);
   renderTodayContent();
   const {error}=await db.from('queue').update({notes:item.notes}).eq('id',id).eq('user_id',_dashboardUser.id);
   if(error)showToast(error.message,'error');
