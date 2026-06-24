@@ -531,7 +531,7 @@ async function refreshDay(btn){
 // ─── DATA ─────────────────────────────────────────────────
 async function loadProducts(){const{data}=await db.from('products').select('id,name,brand,link,notes').eq('user_id',_user.id).order('name');ALL_PRODUCTS=data||[];}
 async function loadHooks(){const{data}=await db.from('hooks').select('id,text,cat').eq('user_id',_user.id).order('cat');ALL_HOOKS=data||[];}
-async function loadScripts(){const{data}=await db.from('scripts').select('id,title,brand,script').eq('user_id',_user.id).order('title');ALL_SCRIPTS=data||[];}
+async function loadScripts(){const{data}=await db.from('scripts').select('id,title,brand,script,notes').eq('user_id',_user.id).order('title');ALL_SCRIPTS=data||[];}
 
 async function loadQueue(){
   if(currentKey()===todayKey) await carryForwardUnfinishedQueue(_user.id, todayKey);
@@ -1188,10 +1188,14 @@ async function saveTakeScriptToLibrary(cid,tid,btn){
     script:take.script.trim(),
     notes:[
       card.brand?`Brand: ${card.brand}`:'',
-      displayHookText(take.hookText)?`Hook: ${displayHookText(take.hookText)}`:''
+      displayHookText(take.hookText)?`Hook: ${displayHookText(take.hookText)}`:'',
+      getTakeField(take.hookText,'onscreen')?`On-screen text:\n${getTakeField(take.hookText,'onscreen')}`:'',
+      getTakeField(take.hookText,'caption')?`Caption:\n${getTakeField(take.hookText,'caption')}`:'',
+      getTakeField(take.hookText,'seo')?`SEO strategy:\n${getTakeField(take.hookText,'seo')}`:'',
+      getTakeField(take.hookText,'hashtags')?`Hashtags:\n${getTakeField(take.hookText,'hashtags')}`:''
     ].filter(Boolean).join('\n')
   };
-  const {data,error}=await db.from('scripts').insert(row).select('id,title,brand,script').single();
+  const {data,error}=await db.from('scripts').insert(row).select('id,title,brand,script,notes').single();
   if(btn){btn.disabled=false;btn.textContent=original;}
   if(error){showToast('Could not save to Scripts: '+error.message,'error');return;}
   if(data)ALL_SCRIPTS=[data,...ALL_SCRIPTS];
@@ -1325,11 +1329,31 @@ function filterScripts(){
   const filtered=sorted.filter(s=>!q||s.title.toLowerCase().includes(q)||(s.brand||'').toLowerCase().includes(q)||s.script.toLowerCase().includes(q));
   document.getElementById('scriptList').innerHTML=filtered.map(s=>`<div class="script-pick-item" onclick="selectScript('${s.id}')">${s.brand?`<div class="script-pick-brand">${esc(s.brand)}</div>`:''}<div class="script-pick-title">${esc(s.title)}</div><div class="script-pick-preview">${esc(s.script)}</div></div>`).join('')||'<div style="text-align:center;padding:24px;color:var(--text-muted);font-style:italic;">No scripts yet — add some on the Scripts page!</div>';
 }
+function scriptNoteSection(notes,label){
+  const safeLabel=String(label||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const next='Brand|Hook|On-screen text|Caption|SEO strategy|Hashtags|Remix similarity|Inspiration';
+  const re=new RegExp(`(?:^|\\n)${safeLabel}\\s*:\\s*\\n?([\\s\\S]*?)(?=\\n(?:${next})\\s*:|\\n\\n(?:${next})\\s*:|$)`,'i');
+  const match=String(notes||'').match(re);
+  return match?match[1].trim():'';
+}
+function applyScriptDetailsToTake(take,scriptRow){
+  const notes=scriptRow?.notes||'';
+  const details={
+    onscreen:scriptNoteSection(notes,'On-screen text'),
+    caption:scriptNoteSection(notes,'Caption'),
+    seo:scriptNoteSection(notes,'SEO strategy'),
+    hashtags:scriptNoteSection(notes,'Hashtags')
+  };
+  Object.entries(details).forEach(([field,value])=>{
+    if(value)take.hookText=setTakeFieldLine(take.hookText,field,value);
+  });
+}
 function selectScript(scriptId){
   const script=ALL_SCRIPTS.find(s=>s.id===scriptId);if(!script||!scriptTarget)return;
   const card=TODO.find(c=>c.id===scriptTarget.cardId);
   const take=card?.takes.find(t=>t.id===scriptTarget.takeId);if(!take)return;
   take.script=script.script;
+  applyScriptDetailsToTake(take,script);
   closeScriptModal();renderCards();
   if(take.queueId) saveQueueRow(card,take);
 }
