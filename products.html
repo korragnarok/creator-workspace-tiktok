@@ -151,6 +151,7 @@ tr.select-mode .tbl-action{display:none;}
     <button class="stock-pill active" data-stock="all" onclick="setStockFilter(this,'all')">All Stock</button>
     <button class="stock-pill" data-stock="in" onclick="setStockFilter(this,'in')">In Stock</button>
     <button class="stock-pill" data-stock="out" onclick="setStockFilter(this,'out')">Out of Stock</button>
+    <button class="stock-pill" data-stock="sales" onclick="setStockFilter(this,'sales')">Got Sales</button>
     <input type="text" class="search-box" id="searchBox" placeholder="Search products..." oninput="renderProducts()">
   </div>
   <div class="edit-toolbar" id="editToolbar">
@@ -268,6 +269,7 @@ async function init() {
       const inStock = productInStock(p);
       if(_stockFilter === 'in' && !inStock) return false;
       if(_stockFilter === 'out' && inStock) return false;
+      if(_stockFilter === 'sales' && !((_videoUnitsByProduct.get(p.id) || 0) > 0)) return false;
       if(q) return (p.name + (p.brand||'') + (p.tags||'') + (p.notes||'')).toLowerCase().includes(q);
       return true;
     }).sort(compareProducts);
@@ -321,7 +323,7 @@ async function init() {
     const stock = params.get('stock');
     if(brand) _brandFilter = brandKey(brand);
     if(search) document.getElementById('searchBox').value = search;
-    if(['all','in','out'].includes(stock)) {
+    if(['all','in','out','sales'].includes(stock)) {
       _stockFilter = stock;
       document.querySelectorAll('.stock-pill').forEach(p => p.classList.toggle('active', p.dataset.stock === stock));
     }
