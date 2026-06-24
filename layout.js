@@ -2,17 +2,47 @@
   const NAV_ITEMS = [
     { href: 'index.html', label: 'Home', icon: 'home', aliases: [''] },
     { href: 'daily-todo.html', label: 'Daily To Do', mobileLabel: 'To Do', icon: 'todo' },
-    { href: 'video-tracker.html', label: 'Content Tracker', mobileLabel: 'Content', icon: 'video' },
-    { href: 'products.html', label: 'Products', icon: 'products' },
-    { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products', desktopOnly: true },
-    { href: 'scripts.html', label: 'Scripts', icon: 'scripts' },
-    { href: 'script-workshop.html', label: 'Script Workshop', icon: 'workshop', desktopOnly: true },
+    { href: 'video-tracker.html', label: 'Content Tracker', icon: 'video' },
+    {
+      href: 'products.html',
+      label: 'Products',
+      icon: 'products',
+      children: [
+        { href: 'products.html', label: 'Products', icon: 'products' },
+        { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products' }
+      ]
+    },
+    { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products' },
+    {
+      href: 'scripts.html',
+      label: 'Scripts',
+      icon: 'scripts',
+      activePages: ['script-workshop.html', 'hooks.html', 'ctas.html'],
+      children: [
+        { href: 'scripts.html', label: 'Script Vault', icon: 'scripts' },
+        { href: 'script-workshop.html', label: 'Script Workshop', icon: 'workshop' },
+        { href: 'hooks.html', label: 'Hooks', icon: 'hooks' },
+        { href: 'ctas.html', label: 'CTAs', icon: 'scripts' }
+      ]
+    },
     { href: 'notes.html', label: 'Notes', icon: 'scripts' },
     { href: 'sales-calendar.html', label: 'Sales Log', mobileLabel: 'Sales', icon: 'sales' }
   ];
 
-  const MOBILE_ITEMS = NAV_ITEMS.filter(item => !item.desktopOnly);
-  const MORE_ITEMS = NAV_ITEMS.filter(item => item.desktopOnly);
+  const MOBILE_ITEMS = [
+    { href: 'index.html', label: 'Home', icon: 'home', aliases: [''] },
+    { href: 'daily-todo.html', label: 'To Do', icon: 'todo' },
+    { href: 'products.html', label: 'Products', icon: 'products' },
+    { href: 'scripts.html', label: 'Scripts', icon: 'scripts', activePages: ['script-workshop.html', 'hooks.html', 'ctas.html'] }
+  ];
+
+  const MORE_ITEMS = [
+    { href: 'video-tracker.html', label: 'Content Tracker', icon: 'video' },
+    { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products' },
+    { href: 'notes.html', label: 'Notes', icon: 'scripts' },
+    { href: 'sales-calendar.html', label: 'Sales Log', icon: 'sales' },
+    { href: 'settings.html', label: 'Settings', icon: 'scripts' }
+  ];
 
   function currentPage() {
     const file = window.location.pathname.split('/').pop() || 'index.html';
@@ -20,7 +50,7 @@
   }
 
   function isActive(item, page) {
-    return item.href === page || (item.aliases || []).includes(page);
+    return item.href === page || (item.aliases || []).includes(page) || (item.activePages || []).includes(page);
   }
 
   function iconImg(item, className = '') {
@@ -44,10 +74,24 @@
   }
 
   function sidebar(page) {
-    const links = NAV_ITEMS.map(item => `
-      <a href="${item.href}" class="side-link${isActive(item, page) ? ' active' : ''}">
-        <span class="nav-icon">${iconImg(item)}</span>${item.label}
-      </a>`).join('');
+    const links = NAV_ITEMS.map(item => {
+      const submenu = Array.isArray(item.children) && item.children.length
+        ? `<div class="side-submenu" role="menu" aria-label="${item.label} menu">
+            ${item.children.map(child => `
+              <a href="${child.href}" class="side-submenu-link${isActive(child, page) ? ' active' : ''}" role="menuitem">
+                <span class="side-submenu-icon">${iconImg(child)}</span>
+                <span>${child.label}</span>
+              </a>`).join('')}
+          </div>`
+        : '';
+      return `
+        <div class="side-nav-item${submenu ? ' has-submenu' : ''}">
+          <a href="${item.href}" class="side-link${isActive(item, page) ? ' active' : ''}">
+            <span class="nav-icon">${iconImg(item)}</span><span class="side-link-label">${item.label}</span>
+          </a>
+          ${submenu}
+        </div>`;
+    }).join('');
 
     return `
       <aside class="desktop-sidebar sidebar" data-shared-layout="true">
@@ -136,7 +180,7 @@
     if (document.querySelector('link[data-shared-layout-styles], link[href*="layout.css"]')) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'layout.css?v=140';
+    link.href = 'layout.css?v=142';
     link.dataset.sharedLayoutStyles = 'true';
     document.head.appendChild(link);
   }

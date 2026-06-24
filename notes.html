@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
 <script src="theme-init.js?v=141"></script>
-<link rel="stylesheet" href="layout.css?v=141">
+<link rel="stylesheet" href="layout.css?v=142">
 <style>
 :root{--r:12px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -187,25 +187,27 @@ textarea.form-input{min-height:280px;resize:vertical;line-height:1.75;}
 
 <footer style="border-top:1px solid var(--border);padding:24px 38px;color:var(--text-muted);font-size:12px;">Creator Hub</footer>
 
-<script src="layout.js?v=141"></script>
+<script src="layout.js?v=142"></script>
 <script>
 const BASE_CATEGORIES = [
-  { key: 'tips', label: 'Tips & Tricks', icon: '◌' },
-  { key: 'shop', label: 'TikTok Shop', icon: '□' },
-  { key: 'ideas', label: 'Content Ideas', icon: '☆' },
-  { key: 'scripts', label: 'Scripts', icon: '✎' },
-  { key: 'general', label: 'General', icon: '✓' }
+  { key: 'products', label: 'Products', icon: '📦' },
+  { key: 'ideas', label: 'Content Ideas', icon: '🎥' },
+  { key: 'scripts', label: 'Scripts', icon: '📝' },
+  { key: 'tips', label: 'Tips & Tricks', icon: '✌🏼' },
+  { key: 'shop', label: 'TikTok Shop', icon: '🛍️' },
+  { key: 'general', label: 'General', icon: '🧠' },
+  { key: 'meetings', label: 'Meetings', icon: '📅' }
 ];
 
 const CUSTOM_CATEGORY_VALUE = '__custom';
 const ALL_CATEGORY = { key: 'all', label: 'All Notes', icon: '✦' };
 
 const SEED_NOTES = [
-  { title: '3 Second Hook Ideas', body: 'Quick hooks that stop the scroll and get people watching.\n\nStart with the weird result first, then explain the product after they care.', category: 'tips', icon: '◌', pinned: false },
-  { title: 'TikTok Shop Algorithm Notes', body: 'The algorithm favors watch time, saves, shares, and people clicking through without feeling pushed.', category: 'shop', icon: '□', pinned: true },
-  { title: 'Video Structure That Converts', body: 'Hook, proof, product in action, fast reason to care, soft CTA. Keep the boring explanation out of the first three seconds.', category: 'ideas', icon: '▷', pinned: false },
-  { title: 'QVC Collaboration Tips', body: 'Keep product names clean, show the real use case quickly, and make brand details easy to find later.', category: 'general', icon: '▤', pinned: false },
-  { title: 'Script Writing Tips', body: 'Write like you are texting a friend. Short lines. One idea per sentence. No fake hype.', category: 'scripts', icon: '✎', pinned: false }
+  { title: '3 Second Hook Ideas', body: 'Quick hooks that stop the scroll and get people watching.\n\nStart with the weird result first, then explain the product after they care.', category: 'tips', icon: '✌🏼', pinned: false },
+  { title: 'TikTok Shop Algorithm Notes', body: 'The algorithm favors watch time, saves, shares, and people clicking through without feeling pushed.', category: 'shop', icon: '🛍️', pinned: true },
+  { title: 'Video Structure That Converts', body: 'Hook, proof, product in action, fast reason to care, soft CTA. Keep the boring explanation out of the first three seconds.', category: 'ideas', icon: '🎥', pinned: false },
+  { title: 'QVC Collaboration Tips', body: 'Keep product names clean, show the real use case quickly, and make brand details easy to find later.', category: 'general', icon: '🧠', pinned: false },
+  { title: 'Script Writing Tips', body: 'Write like you are texting a friend. Short lines. One idea per sentence. No fake hype.', category: 'scripts', icon: '📝', pinned: false }
 ];
 
 let _user = null;
@@ -415,7 +417,7 @@ function noteCard(note) {
     <article class="note-card ${_viewMode === 'list' ? 'list' : ''}" onclick="openNoteModal('${note.id}')">
       <div class="note-top">
         <div class="note-icon ${categoryClass(note.category)}">${escapeHtml(note.icon || meta.icon)}</div>
-        <button class="pin-btn ${note.pinned ? 'pinned' : ''}" type="button" aria-label="Pin note" onclick="event.stopPropagation(); togglePin('${note.id}')">⌖</button>
+        <button class="pin-btn ${note.pinned ? 'pinned' : ''}" type="button" aria-label="Pin note" onclick="event.stopPropagation(); togglePin('${note.id}')">📍</button>
       </div>
       <div>
         <h3 class="note-title">${escapeHtml(note.title)}</h3>
