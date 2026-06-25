@@ -373,15 +373,62 @@ function normalizeImportImage(product) {
   }
   return importImageUrlFrom(product);
 }
+function importTextFrom(value, keys=[]) {
+  if(value == null) return '';
+  if(typeof value === 'string' || typeof value === 'number') return String(value).trim();
+  if(Array.isArray(value)) {
+    for(const item of value) {
+      const found = importTextFrom(item, keys);
+      if(found) return found;
+    }
+    return '';
+  }
+  if(typeof value === 'object') {
+    for(const key of keys) {
+      const found = importTextFrom(value[key], keys);
+      if(found) return found;
+    }
+  }
+  return '';
+}
+function normalizeImportShopName(product) {
+  return importTextFrom(product, [
+    'brand',
+    'brand_name',
+    'shop_name',
+    'shopName',
+    'seller_name',
+    'sellerName',
+    'store_name',
+    'storeName',
+    'author_name',
+    'creator_name'
+  ]) || importTextFrom(product.shop, ['name','shop_name','title']) || importTextFrom(product.seller, ['name','shop_name','seller_name','title']) || importTextFrom(product.store, ['name','store_name','title']);
+}
 function normalizeImportLink(product) {
-  return String(product.url || product.product_url || product.share_url || product.link || product.detail_url || '').trim();
+  return importTextFrom(product, [
+    'url',
+    'product_url',
+    'productUrl',
+    'product_detail_url',
+    'productDetailUrl',
+    'share_url',
+    'shareUrl',
+    'link',
+    'detail_url',
+    'detailUrl',
+    'web_url',
+    'webUrl',
+    'pdp_url',
+    'pdpUrl'
+  ]) || importTextFrom(product.share_info, ['share_url','url','link']) || importTextFrom(product.product, ['url','product_url','share_url','detail_url','link']);
 }
 function normalizeImportProduct(product) {
   const price = normalizeImportPrice(product.price || product.sale_price || product.original_price || product.price_info);
   const sold = Number(product.sold_count || product.sales_count || product.total_sold || product.units_sold || 0) || 0;
   return {
     name: String(product.title || product.name || product.product_name || product.product_title || '').trim(),
-    brand: String(product.brand || product.shop_name || product.seller?.name || product.store_name || '').trim(),
+    brand: normalizeImportShopName(product),
     price,
     sold,
     link: normalizeImportLink(product),
