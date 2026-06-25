@@ -903,6 +903,33 @@ function importImageUrlFrom(value){
   candidates.sort((a,b)=>b.score-a.score);
   return candidates[0]?.url||'';
 }
+function tikTokThumbnailFrom(raw){
+  return importImageUrlFrom([
+    raw?.video?.dynamic_cover,
+    raw?.video?.dynamicCover,
+    raw?.video?.animated_cover,
+    raw?.video?.animatedCover,
+    raw?.video?.cover,
+    raw?.video?.coverUrl,
+    raw?.video?.origin_cover,
+    raw?.video?.originCover,
+    raw?.dynamic_cover,
+    raw?.dynamicCover,
+    raw?.animated_cover,
+    raw?.animatedCover,
+    raw?.cover,
+    raw?.coverUrl,
+    raw?.cover_url,
+    raw?.origin_cover,
+    raw?.originCover,
+    raw?.thumbnail,
+    raw?.thumbnailUrl,
+    raw?.image_post_info?.images?.map(image=>image?.thumbnail||image?.display_image||image),
+    raw?.images,
+    raw?.image,
+    raw
+  ]);
+}
 function deepTextFrom(value,keys=[],depth=5){
   if(value==null||depth<0)return '';
   if(typeof value==='string'||typeof value==='number')return String(value).trim();
@@ -917,6 +944,32 @@ function deepTextFrom(value,keys=[],depth=5){
     }
     for(const item of Object.values(value)){
       const found=deepTextFrom(item,keys,depth-1);
+      if(found)return found;
+    }
+  }
+  return '';
+}
+function deepKeyTextFrom(value,keys=[],depth=6){
+  if(value==null||depth<0)return '';
+  const wanted=new Set(keys.map(key=>String(key).toLowerCase()));
+  function primitiveText(item){
+    return (typeof item==='string'||typeof item==='number')?String(item).trim():'';
+  }
+  if(Array.isArray(value)){
+    for(const item of value){const found=deepKeyTextFrom(item,keys,depth-1);if(found)return found;}
+    return '';
+  }
+  if(typeof value==='object'){
+    for(const [key,item] of Object.entries(value)){
+      if(wanted.has(String(key).toLowerCase())){
+        const direct=primitiveText(item);
+        if(direct)return direct;
+        const nested=deepKeyTextFrom(item,keys,depth-1);
+        if(nested)return nested;
+      }
+    }
+    for(const item of Object.values(value)){
+      const found=deepKeyTextFrom(item,keys,depth-1);
       if(found)return found;
     }
   }
@@ -967,7 +1020,7 @@ function normalizeTikTokUrl(raw){
   return id&&author?`https://www.tiktok.com/@${encodeURIComponent(String(author).replace(/^@/,''))}/video/${encodeURIComponent(id)}`:'';
 }
 function normalizeTikTokVideo(raw){
-  const caption=deepTextFrom(raw,['desc','description','caption','title','text']);
+  const caption=deepKeyTextFrom(raw,['desc','description','caption','title','text']);
   const stats=raw?.statistics||raw?.stats||raw?.video_stats||raw?.videoStats||raw;
   const posted=normalizeTikTokDate(raw);
   const hashtags=[];
@@ -980,7 +1033,7 @@ function normalizeTikTokVideo(raw){
     caption,
     hook:firstSentence(caption),
     url:normalizeTikTokUrl(raw),
-    thumbnail:importImageUrlFrom(raw?.cover||raw?.coverUrl||raw?.cover_url||raw?.dynamicCover||raw?.dynamic_cover||raw?.originCover||raw?.origin_cover||raw?.thumbnail||raw?.thumbnailUrl||raw?.image||raw?.images||raw?.video?.cover||raw?.video?.coverUrl||raw?.video?.dynamicCover||raw?.video?.dynamic_cover||raw?.video?.originCover||raw?.video?.origin_cover||raw?.video||raw),
+    thumbnail:tikTokThumbnailFrom(raw),
     views:deepNumberFrom(stats,['play_count','playCount','view_count','viewCount','views']),
     likes:deepNumberFrom(stats,['digg_count','diggCount','like_count','likeCount','likes']),
     shares:deepNumberFrom(stats,['share_count','shareCount','shares']),
