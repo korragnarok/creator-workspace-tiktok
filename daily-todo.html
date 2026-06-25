@@ -179,7 +179,18 @@ a{text-decoration:none;color:inherit;}
 .add-take-btn{width:100%;background:none;border:1px dashed var(--border-mid);border-radius:10px;padding:9px;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:'Stack Sans Notch',sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;}
 .add-take-btn:hover{border-color:var(--rust);color:var(--rust);}
 .weekly-wrap{display:flex;flex-direction:column;gap:10px;}
-.weekly-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:130px minmax(0,1fr) auto;gap:14px;align-items:center;}
+.weekly-product-group{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.weekly-product-head{width:100%;border:0;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);color:var(--text);padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;text-align:left;cursor:pointer;}
+.weekly-product-head:hover{background:color-mix(in srgb,var(--surface) 82%,var(--rust) 8%);}
+.weekly-group-title{font-family:'IBM Plex Serif',serif;font-size:20px;font-weight:800;color:var(--ink);line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.weekly-group-meta{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-top:4px;}
+.weekly-group-count{font-family:'Noto Sans Mono',monospace;font-size:13px;font-weight:900;color:var(--ink);background:color-mix(in srgb,var(--bg) 58%,var(--surface) 42%);border:1px solid var(--border-mid);border-radius:999px;padding:5px 11px;white-space:nowrap;}
+.weekly-group-toggle{font-family:'Stack Sans Notch',sans-serif;font-size:18px;font-weight:900;color:var(--text-muted);line-height:1;transition:transform 0.15s;}
+.weekly-product-group.collapsed .weekly-group-toggle{transform:rotate(-90deg);}
+.weekly-group-body{display:flex;flex-direction:column;}
+.weekly-product-group.collapsed .weekly-group-body{display:none;}
+.weekly-card{background:transparent;border:0;border-bottom:1px solid var(--border);border-radius:0;padding:14px 16px;display:grid;grid-template-columns:130px minmax(0,1fr) auto;gap:14px;align-items:center;}
+.weekly-card:last-child{border-bottom:0;}
 .weekly-date{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);}
 .weekly-date strong{display:block;font-family:'Noto Sans Mono',monospace;font-size:16px;color:var(--ink);letter-spacing:0;margin-top:2px;}
 .weekly-main{min-width:0;}
@@ -187,6 +198,8 @@ a{text-decoration:none;color:inherit;}
 .weekly-meta{font-size:12px;color:var(--text-muted);margin-top:4px;}
 .weekly-hook{font-size:13px;color:var(--text-mid);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .weekly-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap;}
+.weekly-remove{width:30px;height:30px;border:1px solid var(--border-mid);border-radius:8px;background:transparent;color:var(--text-muted);font-size:18px;font-weight:800;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all 0.12s;}
+.weekly-remove:hover{background:rgba(180,50,40,0.12);border-color:rgba(180,50,40,0.35);color:#c83c32;}
 .weekly-date-input{border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-family:'Noto Sans Mono',monospace;font-size:12px;padding:7px 9px;outline:none;}
 .weekly-date-input:focus{border-color:var(--rust);}
 .weekly-empty{background:var(--surface);border:1px dashed var(--border-mid);border-radius:14px;padding:36px;text-align:center;color:var(--text-muted);}
@@ -237,7 +250,7 @@ a{text-decoration:none;color:inherit;}
 @media(max-width:980px){.todo-toolbar{grid-template-columns:auto minmax(0,1fr) auto;}.header-actions{grid-column:1/-1;justify-content:flex-start;}.week-strip{gap:8px;overflow-x:auto;grid-template-columns:repeat(7,minmax(118px,1fr));padding-bottom:4px;scrollbar-width:none;}.week-strip::-webkit-scrollbar{display:none;}}
 body{overflow-x:hidden;}
 @media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:50px;}.date-label{font-size:16px;white-space:normal;}.header-actions .btn{flex:1;justify-content:center;}.modal{max-height:calc(100dvh - 40px);}.modal-list{flex:1;}}
-@media(max-width:768px){.take-fields{grid-template-columns:1fr;}.product-card-row{grid-template-columns:minmax(0,1fr) auto;}.product-card-row .pcard-btns{grid-column:1/-1;justify-content:flex-start;}.product-card-name{font-size:21px;}.weekly-card{grid-template-columns:1fr;}.weekly-actions{justify-content:flex-start;}.weekly-product{white-space:normal;}}
+@media(max-width:768px){.take-fields{grid-template-columns:1fr;}.product-card-row{grid-template-columns:minmax(0,1fr) auto;}.product-card-row .pcard-btns{grid-column:1/-1;justify-content:flex-start;}.product-card-name{font-size:21px;}.weekly-product-head{grid-template-columns:minmax(0,1fr) auto auto;}.weekly-group-title{white-space:normal;font-size:18px;}.weekly-card{grid-template-columns:1fr;}.weekly-actions{justify-content:flex-start;}.weekly-product{white-space:normal;}}
 </style>
 </head>
 <body>
@@ -339,6 +352,7 @@ let activeBrandFilter = 'All';
 let hideFilmed = localStorage.getItem('take24:hideFilmed') === '1';
 let selectedProductId = null;
 let expandedTakeId = null;
+let collapsedWeeklyProducts = loadCollapsedWeeklyProducts();
 // Pre-filter by brand if coming from lineup strip
 const _urlBrand = new URLSearchParams(window.location.search).get('brand');
 if (_urlBrand) activeBrandFilter = _urlBrand;
@@ -755,6 +769,49 @@ function weeklyDateLabel(key){
   const d=new Date(`${key}T12:00:00`);
   return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
 }
+function loadCollapsedWeeklyProducts(){
+  try{
+    return new Set(JSON.parse(localStorage.getItem('take24:collapsedWeeklyProducts') || '[]'));
+  }catch(e){
+    return new Set();
+  }
+}
+function weeklyProductKey(item){
+  return String(item?.prodId || item?.name || 'unlisted').trim() || 'unlisted';
+}
+function saveCollapsedWeeklyProducts(){
+  localStorage.setItem('take24:collapsedWeeklyProducts', JSON.stringify([...collapsedWeeklyProducts]));
+}
+function toggleWeeklyProduct(key){
+  const clean=String(key||'');
+  if(!clean)return;
+  if(collapsedWeeklyProducts.has(clean)) collapsedWeeklyProducts.delete(clean);
+  else collapsedWeeklyProducts.add(clean);
+  saveCollapsedWeeklyProducts();
+  renderWeeklyView();
+}
+function groupWeeklyItems(items){
+  const groups=new Map();
+  items.forEach(item=>{
+    const key=weeklyProductKey(item);
+    if(!groups.has(key)){
+      groups.set(key,{
+        key,
+        name:item.name||'Untitled product',
+        brand:item.brand||'',
+        items:[]
+      });
+    }
+    const group=groups.get(key);
+    if(!group.brand && item.brand) group.brand=item.brand;
+    group.items.push(item);
+  });
+  return [...groups.values()].sort((a,b)=>{
+    const aDate=a.items[0]?.date||'';
+    const bDate=b.items[0]?.date||'';
+    return aDate.localeCompare(bDate) || a.name.localeCompare(b.name);
+  });
+}
 
 function renderWeeklyView(){
   const main=document.getElementById('mainContent');
@@ -769,6 +826,7 @@ function renderWeeklyView(){
     return;
   }
   const rows=[...WEEK_ITEMS].sort((a,b)=>String(a.date).localeCompare(String(b.date))||(a.sortOrder||0)-(b.sortOrder||0));
+  const groups=groupWeeklyItems(rows);
   main.innerHTML=`<div class="takes-view">
     <div class="takes-view-head">
       <div>
@@ -778,7 +836,26 @@ function renderWeeklyView(){
       <button class="btn btn-primary" onclick="openPicker()">+ Product</button>
     </div>
     <div class="weekly-wrap">
-      ${rows.map(item=>renderWeeklyItem(item)).join('')}
+      ${groups.map(group=>renderWeeklyGroup(group)).join('')}
+    </div>
+  </div>`;
+}
+
+function renderWeeklyGroup(group){
+  const isCollapsed=collapsedWeeklyProducts.has(group.key);
+  const done=group.items.filter(item=>item.done).length;
+  const dates=[...new Set(group.items.map(item=>weeklyDateLabel(item.date)))].join(' · ');
+  return `<div class="weekly-product-group${isCollapsed?' collapsed':''}" id="weekly-product-${esc(group.key)}">
+    <button class="weekly-product-head" type="button" onclick="toggleWeeklyProduct(${jsArg(group.key)})">
+      <span>
+        <span class="weekly-group-title">${esc(group.name)}</span>
+        <span class="weekly-group-meta">${group.brand?esc(group.brand)+' · ':''}${esc(dates)} · ${done}/${group.items.length} filmed</span>
+      </span>
+      <span class="weekly-group-count">${group.items.length} take${group.items.length===1?'':'s'}</span>
+      <span class="weekly-group-toggle">⌄</span>
+    </button>
+    <div class="weekly-group-body">
+      ${group.items.map(item=>renderWeeklyItem(item)).join('')}
     </div>
   </div>`;
 }
@@ -796,6 +873,7 @@ function renderWeeklyItem(item){
       <button class="hbtn" onclick="moveWeeklyItemToDate('${esc(item.queueId)}','${esc(todayKey)}')">Today</button>
       <input class="weekly-date-input" type="date" value="${esc(item.date)}" onchange="moveWeeklyItemToDate('${esc(item.queueId)}',this.value)">
       <button class="hbtn" onclick="openWeeklyItemDay('${esc(item.date)}','${esc(item.prodId||'')}','${esc(item.name)}')">Open Day</button>
+      <button class="weekly-remove" title="Remove take" aria-label="Remove take" onclick="deleteWeeklyItem('${esc(item.queueId)}')">×</button>
     </div>
   </div>`;
 }
@@ -1132,6 +1210,24 @@ async function removeTake(cardId,takeId){
     TODO=TODO.filter(item=>item.id!==card.id);
     if(selectedProductId===card.id)selectedProductId=null;
   }
+  render();
+}
+async function deleteWeeklyItem(queueId){
+  const item=WEEK_ITEMS.find(row=>String(row.queueId)===String(queueId));
+  if(!item)return;
+  const previous=[...WEEK_ITEMS];
+  WEEK_ITEMS=WEEK_ITEMS.filter(row=>String(row.queueId)!==String(queueId));
+  render();
+  const {error}=await db.from('queue').delete().eq('id',queueId).eq('user_id',_user.id);
+  if(error){
+    WEEK_ITEMS=previous;
+    render();
+    showToast('Could not remove take: '+error.message,'error');
+    return;
+  }
+  sessionStorage.removeItem('ts-'+queueId);
+  showToast('Take removed');
+  await loadWeekQueue();
   render();
 }
 async function moveWeeklyItemToDate(queueId,nextDate){
