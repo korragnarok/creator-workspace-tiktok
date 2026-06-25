@@ -324,7 +324,10 @@ function normalizeImportPrice(value) {
   if(value == null) return '';
   if(typeof value === 'number') return value ? `$${value}` : '';
   if(typeof value === 'string') return value.trim();
-  return String(value.real_price || value.price || value.sale_price || value.original_price || value.min_price || '').trim();
+  const raw = String(value.real_price || value.price || value.sale_price || value.sale_price_format || value.sale_price_decimal || value.single_product_price_format || value.original_price || value.origin_price_format || value.min_price || '').trim();
+  if(!raw) return '';
+  const symbol = String(value.currency_symbol || '').trim();
+  return symbol && !raw.startsWith(symbol) ? `${symbol}${raw}` : raw;
 }
 function importImageUrlFrom(value) {
   if(!value) return '';
@@ -397,6 +400,28 @@ function importTextFrom(value, keys=[]) {
   }
   return '';
 }
+function deepImportTextFrom(value, keys=[], depth=5) {
+  if(value == null || depth < 0) return '';
+  if(typeof value === 'string' || typeof value === 'number') return String(value).trim();
+  if(Array.isArray(value)) {
+    for(const item of value) {
+      const found = deepImportTextFrom(item, keys, depth - 1);
+      if(found) return found;
+    }
+    return '';
+  }
+  if(typeof value === 'object') {
+    for(const key of keys) {
+      const found = importTextFrom(value[key], keys);
+      if(found) return found;
+    }
+    for(const item of Object.values(value)) {
+      const found = deepImportTextFrom(item, keys, depth - 1);
+      if(found) return found;
+    }
+  }
+  return '';
+}
 function normalizeImportShopName(product) {
   return importTextFrom(product, [
     'brand',
@@ -409,10 +434,10 @@ function normalizeImportShopName(product) {
     'storeName',
     'author_name',
     'creator_name'
-  ]) || importTextFrom(product.shop, ['name','shop_name','title']) || importTextFrom(product.seller, ['name','shop_name','seller_name','title']) || importTextFrom(product.store, ['name','store_name','title']);
+  ]) || importTextFrom(product.seller_info, ['shop_name','seller_name','name','title']) || importTextFrom(product.sellerInfo, ['shop_name','shopName','seller_name','sellerName','name','title']) || importTextFrom(product.shop, ['name','shop_name','shopName','title']) || importTextFrom(product.seller, ['name','shop_name','shopName','seller_name','sellerName','title']) || importTextFrom(product.store, ['name','store_name','storeName','title']) || deepImportTextFrom(product, ['shop_name','shopName','seller_name','sellerName','store_name','storeName']);
 }
 function normalizeImportLink(product) {
-  return importTextFrom(product, [
+  const directLink = importTextFrom(product, [
     'url',
     'product_url',
     'productUrl',
@@ -427,19 +452,55 @@ function normalizeImportLink(product) {
     'webUrl',
     'pdp_url',
     'pdpUrl'
-  ]) || importTextFrom(product.share_info, ['share_url','url','link']) || importTextFrom(product.product, ['url','product_url','share_url','detail_url','link']);
+  ]) || importTextFrom(product.seo_url, ['canonical_url','canonicalUrl','url','link']) || importTextFrom(product.seoUrl, ['canonical_url','canonicalUrl','url','link']) || importTextFrom(product.share_info, ['share_url','shareUrl','url','link']) || importTextFrom(product.shareInfo, ['share_url','shareUrl','url','link']) || importTextFrom(product.product, ['url','product_url','productUrl','share_url','shareUrl','detail_url','detailUrl','link']) || deepImportTextFrom(product, ['canonical_url','canonicalUrl','product_url','productUrl','pdp_url','pdpUrl','share_url','shareUrl']);
+  if(directLink) return directLink;
+  const slug = importTextFrom(product.seo_url, ['slug']) || importTextFrom(product.seoUrl, ['slug']) || deepImportTextFrom(product, ['slug']);
+  const productId = importTextFrom(product, ['product_id','productId','id']) || deepImportTextFrom(product, ['product_id','productId']);
+  const fallbackSlug = slug || String(product.title || product.name || product.product_name || product.product_title || '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return fallbackSlug && productId ? `https://www.tiktok.com/shop/pdp/${encodeURIComponent(fallbackSlug)}/${encodeURIComponent(productId)}` : '';
 }
 function normalizeImportProduct(product) {
-  const price = normalizeImportPrice(product.price || product.sale_price || product.original_price || product.price_info);
-  const sold = Number(product.sold_count || product.sales_count || product.total_sold || product.units_sold || 0) || 0;
+  const price = normalizeImportPrice(product.price || product.sale_price || product.original_price || product.price_info || product.product_price_info);
+  const sold = Number(product.sold_count || product.sales_count || product.total_sold || product.units_sold || product.sold_info?.sold_count || 0) || 0;
+  const productId = importTextFrom(product, ['product_id','productId','id']) || deepImportTextFrom(product, ['product_id','productId']);
   return {
     name: String(product.title || product.name || product.product_name || product.product_title || '').trim(),
     brand: normalizeImportShopName(product),
     price,
     sold,
     link: normalizeImportLink(product),
-    image_url: normalizeImportImage(product)
+    image_url: normalizeImportImage(product),
+    product_id: productId,
+    _raw: product
   };
+}
+async function enrichImportProduct(product, key) {
+  if(!key || !product?.link) return product;
+  try {
+    const detailUrl = `https://api.scrapecreators.com/v1/tiktok/product?url=${encodeURIComponent(product.link)}&region=US`;
+    const res = await fetch(detailUrl, { headers: { 'x-api-key': key } });
+    const text = await res.text();
+    let data = {};
+    try { data = text ? JSON.parse(text) : {}; } catch(parseErr) { return product; }
+    if(!res.ok) return product;
+    const detailRaw = data?.product || data?.data?.product || data?.data || data?.result || data;
+    const detail = normalizeImportProduct(detailRaw);
+    return {
+      ...product,
+      name: detail.name || product.name,
+      brand: detail.brand || product.brand,
+      price: detail.price || product.price,
+      sold: detail.sold || product.sold,
+      link: detail.link || product.link,
+      image_url: detail.image_url || product.image_url
+    };
+  } catch(err) {
+    return product;
+  }
 }
 function importNotesForProduct(product) {
   const lines = [];
@@ -517,9 +578,11 @@ function renderSearchResults(products) {
     <button class="si-import-btn" onclick="event.stopPropagation();importProduct(${i})">Import</button>
   </div>`).join('');
 }
-window.importProduct = function(index) {
-  const p = window._siProducts?.[index];
+window.importProduct = async function(index) {
+  let p = window._siProducts?.[index];
   if(!p) return;
+  const key = document.getElementById('siApiKey')?.value?.trim() || localStorage.getItem(PRODUCT_IMPORT_KEY) || '';
+  p = await enrichImportProduct(p, key);
   window.closeSearchImport();
   window._editId = null;
   window._editingProductOriginal = null;
