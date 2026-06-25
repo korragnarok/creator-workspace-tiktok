@@ -1181,9 +1181,23 @@ async function fetchTikTokVideosForHandle(handle,key){
     }
     return all;
   }
-  const handleResults=await fetchPages('handle');
-  const usernameResults=await fetchPages('username');
-  return usernameResults.length>handleResults.length?usernameResults:handleResults;
+  let handleError=null;
+  try{
+    const handleResults=await fetchPages('handle');
+    if(handleResults.length)return handleResults;
+  }catch(err){
+    handleError=err;
+  }
+  if(/^\d+$/.test(handle)){
+    try{
+      const userIdResults=await fetchPages('user_id');
+      if(userIdResults.length)return userIdResults;
+    }catch(err){
+      if(!handleError)handleError=err;
+    }
+  }
+  if(handleError)throw handleError;
+  return [];
 }
 async function searchTikTokVideos(){
   const handle=normalizeTikTokHandle(document.getElementById('importHandle').value);
