@@ -436,8 +436,15 @@ function normalizeImportShopName(product) {
     'creator_name'
   ]) || importTextFrom(product.seller_info, ['shop_name','seller_name','name','title']) || importTextFrom(product.sellerInfo, ['shop_name','shopName','seller_name','sellerName','name','title']) || importTextFrom(product.shop, ['name','shop_name','shopName','title']) || importTextFrom(product.seller, ['name','shop_name','shopName','seller_name','sellerName','title']) || importTextFrom(product.store, ['name','store_name','storeName','title']) || deepImportTextFrom(product, ['shop_name','shopName','seller_name','sellerName','store_name','storeName']);
 }
+function cleanImportUrl(value) {
+  const text = String(value || '').trim();
+  if(!text) return '';
+  if(/^https?:\/\//i.test(text)) return text;
+  if(/^www\./i.test(text)) return `https://${text}`;
+  return '';
+}
 function normalizeImportLink(product) {
-  const directLink = importTextFrom(product, [
+  const directLink = cleanImportUrl(importTextFrom(product, [
     'url',
     'product_url',
     'productUrl',
@@ -452,7 +459,7 @@ function normalizeImportLink(product) {
     'webUrl',
     'pdp_url',
     'pdpUrl'
-  ]) || importTextFrom(product.seo_url, ['canonical_url','canonicalUrl','url','link']) || importTextFrom(product.seoUrl, ['canonical_url','canonicalUrl','url','link']) || importTextFrom(product.share_info, ['share_url','shareUrl','url','link']) || importTextFrom(product.shareInfo, ['share_url','shareUrl','url','link']) || importTextFrom(product.product, ['url','product_url','productUrl','share_url','shareUrl','detail_url','detailUrl','link']) || deepImportTextFrom(product, ['canonical_url','canonicalUrl','product_url','productUrl','pdp_url','pdpUrl','share_url','shareUrl']);
+  ]) || importTextFrom(product.seo_url, ['canonical_url','canonicalUrl','url','link']) || importTextFrom(product.seoUrl, ['canonical_url','canonicalUrl','url','link']) || importTextFrom(product.share_info, ['share_url','shareUrl','url','link']) || importTextFrom(product.shareInfo, ['share_url','shareUrl','url','link']) || importTextFrom(product.product, ['url','product_url','productUrl','share_url','shareUrl','detail_url','detailUrl','link']) || deepImportTextFrom(product, ['canonical_url','canonicalUrl','product_url','productUrl','pdp_url','pdpUrl','share_url','shareUrl']));
   if(directLink) return directLink;
   const slug = importTextFrom(product.seo_url, ['slug']) || importTextFrom(product.seoUrl, ['slug']) || deepImportTextFrom(product, ['slug']);
   const productId = importTextFrom(product, ['product_id','productId','id']) || deepImportTextFrom(product, ['product_id','productId']);
