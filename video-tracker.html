@@ -860,7 +860,11 @@ function closeImportModal(){
 window.openImportModal=openImportModal;
 window.closeImportModal=closeImportModal;
 function cleanImportUrl(value){
-  const text=String(value||'').trim().replace(/\\u002F/g,'/').replace(/&amp;/g,'&');
+  let text=String(value||'').trim().replace(/\\u002F/g,'/').replace(/\\\//g,'/').replace(/&amp;/g,'&');
+  if(/^\/\//.test(text))text=`https:${text}`;
+  if(/^http:\/\//i.test(text)&&/(tiktokcdn|byteimg|muscdn|p\d+-|tos-)/i.test(text)){
+    text=text.replace(/^http:/i,'https:');
+  }
   return /^https?:\/\//i.test(text)?text:'';
 }
 function importImageUrlFrom(value){
@@ -907,28 +911,43 @@ function tikTokThumbnailFrom(raw){
   function firstUrl(obj){
     const list=obj?.url_list||obj?.urlList;
     if(!Array.isArray(list))return null;
-    return list.find(url=>url&&!/\.heic/i.test(url))||list[0]||null;
+    const urls=list.map(cleanImportUrl).filter(Boolean);
+    return urls.find(url=>!/\.heic/i.test(url))||urls[0]||null;
   }
   const vid=raw?.video||{};
+  const imagePost=raw?.image_post_info||raw?.imagePostInfo;
   const direct=[
     firstUrl(vid?.origin_cover||vid?.originCover),
     firstUrl(vid?.cover),
     firstUrl(vid?.dynamic_cover||vid?.dynamicCover),
     firstUrl(raw?.cover),
-    firstUrl(raw?.origin_cover)
+    firstUrl(raw?.origin_cover),
+    firstUrl(raw?.originCover),
+    firstUrl(raw?.thumbnail),
+    firstUrl(raw?.image)
   ].filter(Boolean);
   if(direct.length)return direct[0];
   return importImageUrlFrom([
     vid?.cover,
     vid?.origin_cover,
+    vid?.originCover,
     vid?.dynamic_cover,
+    vid?.dynamicCover,
+    vid?.animated_cover,
+    vid?.animatedCover,
     raw?.dynamic_cover,
     raw?.dynamicCover,
     raw?.cover,
     raw?.coverUrl,
     raw?.cover_url,
+    raw?.origin_cover,
+    raw?.originCover,
     raw?.thumbnail,
     raw?.thumbnailUrl,
+    raw?.thumbnail_url,
+    raw?.video_cover,
+    raw?.videoCover,
+    imagePost?.images,
     raw?.images,
     raw?.image,
     raw
@@ -1055,6 +1074,23 @@ function normalizeTikTokVideo(raw){
     raw
   };
 }
+const _tiktokOembedThumbCache=new Map();
+async function enrichTikTokThumbnail(video){
+  if(video.thumbnail||!video.url)return video;
+  if(_tiktokOembedThumbCache.has(video.url)){
+    return {...video,thumbnail:_tiktokOembedThumbCache.get(video.url)||''};
+  }
+  try{
+    const res=await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(video.url)}`);
+    const data=await res.json().catch(()=>({}));
+    const thumbnail=cleanImportUrl(data?.thumbnail_url||data?.thumbnailUrl);
+    _tiktokOembedThumbCache.set(video.url,thumbnail||'');
+    return thumbnail?{...video,thumbnail}:video;
+  }catch(err){
+    _tiktokOembedThumbCache.set(video.url,'');
+    return video;
+  }
+}
 function guessProductForImport(video){
   const haystack=normProductName(`${video.caption} ${video.url}`);
   if(!haystack)return null;
@@ -1129,7 +1165,8 @@ async function searchTikTokVideos(){
   try{
     await ensureProductOptions();
     const rawVideos=await fetchTikTokVideosForHandle(handle,key);
-    _importVideos=rawVideos.map(normalizeTikTokVideo).filter(video=>video.caption||video.url).slice(0,30);
+    const normalized=rawVideos.map(normalizeTikTokVideo).filter(video=>video.caption||video.url).slice(0,30);
+    _importVideos=await Promise.all(normalized.map(enrichTikTokThumbnail));
     if(!_importVideos.length){importSetState('empty');return;}
     importSetState('');
     renderImportResults();
