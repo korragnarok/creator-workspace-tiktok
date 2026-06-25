@@ -132,6 +132,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .sched-location-tag.kitchen{background:color-mix(in srgb,#6A334F 36%,transparent);border-color:color-mix(in srgb,#6A334F 58%,transparent);color:#E0A9C2;}
 .sched-location-tag.living-room{background:color-mix(in srgb,#4B3868 38%,transparent);border-color:color-mix(in srgb,#4B3868 60%,transparent);color:#C5B3E6;}
 .sched-location-tag.car{background:color-mix(in srgb,#5B4635 42%,transparent);border-color:color-mix(in srgb,#5B4635 62%,transparent);color:#D8BA93;}
+.sched-location-tag.studio{background:color-mix(in srgb,#4F6259 40%,transparent);border-color:color-mix(in srgb,#4F6259 62%,transparent);color:#B9CEC3;}
 .sched-location-tag.airport{background:color-mix(in srgb,#6A4A1F 42%,transparent);border-color:color-mix(in srgb,#6A4A1F 62%,transparent);color:#E1B977;}
 .sched-location-tag.other{background:color-mix(in srgb,#6A5A25 38%,transparent);border-color:color-mix(in srgb,#6A5A25 60%,transparent);color:#E2D083;}
 .sched-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0;justify-self:stretch;}
@@ -514,6 +515,7 @@ const SCHED_LOCATION_OPTIONS=[
   {value:'car',label:'Car'},
   {value:'kitchen',label:'Kitchen'},
   {value:'living-room',label:'Living Room'},
+  {value:'studio',label:'Studio'},
   {value:'airport',label:'Airport'},
   {value:'other',label:'Other'}
 ];
@@ -967,6 +969,7 @@ function parseSchedLocation(notes){
     car:'Car',
     kitchen:'Kitchen',
     'living-room':'Living Room',
+    studio:'Studio',
     airport:'Airport'
   };
   return {type:labels[type]?type:'other',label:labels[type]||raw};

@@ -142,6 +142,7 @@ a{text-decoration:none;color:inherit;}
 .location-pill.kitchen{background:color-mix(in srgb,var(--rose) 24%,transparent);border-color:color-mix(in srgb,var(--rose) 38%,transparent);color:var(--rose);}
 .location-pill.living-room{background:color-mix(in srgb,#9B7BC8 22%,transparent);border-color:color-mix(in srgb,#9B7BC8 36%,transparent);color:#C4A0F0;}
 .location-pill.car{background:color-mix(in srgb,var(--tan) 22%,transparent);border-color:color-mix(in srgb,var(--tan) 36%,transparent);color:var(--tan);}
+.location-pill.studio{background:color-mix(in srgb,#6F7F76 22%,transparent);border-color:color-mix(in srgb,#6F7F76 36%,transparent);color:#B9CEC3;}
 .location-pill.other{background:color-mix(in srgb,#E0C45C 24%,transparent);border-color:color-mix(in srgb,#E0C45C 38%,transparent);color:#E0C45C;}
 .location-pill.type-product-demo{background:color-mix(in srgb,var(--rust) 18%,transparent);border-color:color-mix(in srgb,var(--rust) 30%,transparent);color:var(--rust);}
 .location-pill.type-talking-head{background:color-mix(in srgb,var(--sage) 20%,transparent);border-color:color-mix(in srgb,var(--sage) 32%,transparent);color:var(--sage);}
@@ -204,6 +205,7 @@ a{text-decoration:none;color:inherit;}
 .weekly-duplicate:hover{border-color:var(--rust);color:var(--rust);background:color-mix(in srgb,var(--rust) 8%,transparent);}
 .weekly-date-input{border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-family:'Noto Sans Mono',monospace;font-size:12px;padding:7px 9px;outline:none;}
 .weekly-date-input:focus{border-color:var(--rust);}
+.weekly-location{max-width:150px;min-width:116px;border-radius:8px;padding:7px 10px;}
 .weekly-empty{background:var(--surface);border:1px dashed var(--border-mid);border-radius:14px;padding:36px;text-align:center;color:var(--text-muted);}
 /* undo toast */
 .undo-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:14px;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;box-shadow:0 6px 28px rgba(0,0,0,0.38);z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;white-space:nowrap;pointer-events:none;}
@@ -383,6 +385,7 @@ const LOCATION_OPTIONS=[
   {value:'car',label:'Car',cls:'car'},
   {value:'kitchen',label:'Kitchen',cls:'kitchen'},
   {value:'living-room',label:'Living Room',cls:'living-room'},
+  {value:'studio',label:'Studio',cls:'studio'},
   {value:'other',label:'Other',cls:'other'}
 ];
 const TYPE_OPTIONS=[
@@ -872,13 +875,21 @@ function renderWeeklyItem(item){
       <div class="weekly-hook">${esc(hook)}</div>
     </div>
     <div class="weekly-actions">
-      <button class="hbtn" onclick="moveWeeklyItemToDate('${esc(item.queueId)}','${esc(todayKey)}')">Today</button>
+      ${weeklyLocationSelectHtml(item)}
       <input class="weekly-date-input" type="date" value="${esc(item.date)}" onchange="moveWeeklyItemToDate('${esc(item.queueId)}',this.value)">
       <button class="hbtn" onclick="openWeeklyItemDay('${esc(item.date)}','${esc(item.prodId||'')}','${esc(item.name)}')">Open Day</button>
       <button class="weekly-duplicate" title="Duplicate take" aria-label="Duplicate take" onclick="duplicateWeeklyItem('${esc(item.queueId)}')">⧉</button>
       <button class="weekly-remove" title="Remove take" aria-label="Remove take" onclick="deleteWeeklyItem('${esc(item.queueId)}')">×</button>
     </div>
   </div>`;
+}
+
+function weeklyLocationSelectHtml(item){
+  const loc=getFilmingLocation(item.hookText);
+  const selectClass=['location-pill','weekly-location',locationClass(loc.type)].filter(Boolean).join(' ');
+  return `<select class="${selectClass}" title="Filming location" aria-label="Filming location" onchange="setWeeklyLocation('${esc(item.queueId)}',this.value)">
+    ${LOCATION_OPTIONS.map(option=>`<option value="${esc(option.value)}"${loc.type===option.value?' selected':''}>${esc(option.label)}</option>`).join('')}
+  </select>`;
 }
 
 function renderCards(){
@@ -1273,6 +1284,29 @@ async function moveWeeklyItemToDate(queueId,nextDate){
   showToast(cleanDate===todayKey?'Added to today':'Moved to '+weeklyDateLabel(cleanDate));
   await loadWeekQueue();
   render();
+}
+async function setWeeklyLocation(queueId,type){
+  const item=WEEK_ITEMS.find(row=>String(row.queueId)===String(queueId));
+  if(!item)return;
+  const previous=item.hookText||'';
+  let label='';
+  if(type==='other'){
+    label=window.prompt('Filming location?', getFilmingLocation(item.hookText).label || '') || '';
+    if(!label.trim()){
+      renderWeeklyView();
+      return;
+    }
+  }
+  item.hookText=setFilmingLocationLine(item.hookText,type,label);
+  renderWeeklyView();
+  const {error}=await db.from('queue').update({notes:item.hookText}).eq('id',queueId).eq('user_id',_user.id);
+  if(error){
+    item.hookText=previous;
+    renderWeeklyView();
+    showToast('Could not save location: '+error.message,'error');
+    return;
+  }
+  showToast('Location saved');
 }
 async function openWeeklyItemDay(date,prodId,name){
   currentDate=new Date(`${date}T12:00:00`);
