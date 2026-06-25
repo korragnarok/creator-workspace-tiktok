@@ -122,6 +122,27 @@ tbody td{padding:14px 16px;color:var(--text-mid);vertical-align:middle;}
 .inline-editor{width:100%;min-width:96px;border:1px solid var(--sage);border-radius:7px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:13px;padding:6px 8px;outline:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--sage) 18%,transparent);}
 td.num .inline-editor{max-width:96px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:800;}
 .features-cell .editable-cell{display:flex;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.search-import-modal{max-width:700px;}
+.search-import-help{font-size:13px;color:var(--text-muted);margin:-8px 0 18px;line-height:1.6;}
+.search-import-key-row,.search-import-row{display:flex;gap:8px;align-items:center;}
+.search-import-key-row .form-input,.search-import-row .form-input{flex:1;}
+.search-import-row{margin-bottom:18px;}
+.search-import-state{display:none;text-align:center;padding:28px 0;color:var(--text-muted);font-size:13px;}
+.search-import-error{display:none;padding:12px 14px;border-radius:var(--r);background:color-mix(in srgb,var(--rust) 12%,transparent);color:var(--rust);border:1px solid color-mix(in srgb,var(--rust) 24%,transparent);font-size:13px;margin-bottom:14px;}
+#siResults{display:none;}
+.search-import-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;}
+.search-import-results{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;padding-right:2px;}
+.si-result-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);cursor:pointer;transition:border-color 0.15s,background 0.15s;}
+.si-result-card:hover{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 7%,var(--surface) 93%);}
+.si-thumb{width:54px;height:54px;border-radius:9px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;background:var(--bg);}
+.si-info{flex:1;min-width:0;}
+.si-name{font-weight:800;color:var(--ink);font-size:14px;line-height:1.3;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.si-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;}
+.si-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.si-price{font-family:'Noto Sans Mono',monospace;font-weight:800;font-size:13px;color:var(--sage);}
+.si-sold{font-size:11px;color:var(--text-muted);}
+.si-import-btn{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--rust);flex-shrink:0;padding:6px 12px;border:1px solid color-mix(in srgb,var(--rust) 40%,transparent);border-radius:7px;background:transparent;cursor:pointer;transition:all 0.15s;}
+.si-import-btn:hover{background:var(--rust);color:#fff;}
 .prod-select{display:none;width:22px;height:22px;border:2px solid var(--border-mid);border-radius:7px;background:var(--bg-lift);align-items:center;justify-content:center;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;flex-shrink:0;}
 tr.select-mode .prod-select{display:inline-flex;}
 tr.selected .prod-select{background:var(--rust);border-color:var(--rust);}
@@ -141,6 +162,9 @@ tr.select-mode .tbl-action{display:none;}
   .product-bank th:nth-child(10),.product-bank td:nth-child(10){width:220px;}
   .editable-cell{cursor:pointer;}
   .editable-cell:hover{border-color:transparent;background:transparent;}
+  .search-import-key-row,.search-import-row{flex-direction:column;align-items:stretch;}
+  .si-result-card{align-items:flex-start;}
+  .si-name{white-space:normal;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -153,6 +177,7 @@ tr.select-mode .tbl-action{display:none;}
     <div><div class="page-eyebrow">Your Catalog</div><div class="page-title">Products <em>DB</em></div><p class="page-sub">Add products you promote with talking points, links, and status.</p></div>
     <div class="header-actions">
       <button class="btn btn-ghost" id="editProductsBtn" onclick="toggleEditMode()">Edit Products</button>
+      <button class="btn btn-ghost" onclick="openSearchImport()">Search &amp; Import</button>
       <button class="btn btn-primary" onclick="openModal()">+ Add Product</button>
     </div>
   </div>
@@ -221,6 +246,31 @@ tr.select-mode .tbl-action{display:none;}
     <div class="modal-actions"><button class="btn btn-primary" style="flex:1;" onclick="saveProduct()">Save Product</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-danger" id="deleteBtn" style="display:none;" onclick="deleteProduct()">Delete</button></div>
   </div>
 </div>
+<div class="modal-overlay" id="searchImportOverlay">
+  <div class="modal search-import-modal">
+    <button class="modal-close" onclick="closeSearchImport()">&#x2715;</button>
+    <div class="modal-title">Search &amp; Import Product</div>
+    <p class="search-import-help">Search TikTok Shop, pick a product, then review it before saving. Your API key stays in this browser only.</p>
+    <div class="form-row">
+      <label class="form-label">ScrapeCreators API Key</label>
+      <div class="search-import-key-row">
+        <input type="password" class="form-input" id="siApiKey" placeholder="Paste your API key here...">
+        <button type="button" class="btn btn-ghost" id="siDisconnectBtn" onclick="disconnectImportKey()">Disconnect</button>
+      </div>
+    </div>
+    <div class="search-import-row">
+      <input type="text" class="form-input" id="siQuery" placeholder="Search TikTok Shop products..." onkeydown="if(event.key==='Enter')doProductSearch()">
+      <button class="btn btn-primary" id="siSearchBtn" onclick="doProductSearch()">Search</button>
+    </div>
+    <div class="search-import-state" id="siLoading">Searching TikTok Shop...</div>
+    <div class="search-import-state" id="siEmpty">No results found. Try different keywords.</div>
+    <div class="search-import-error" id="siError"></div>
+    <div id="siResults">
+      <div class="search-import-label">Results</div>
+      <div class="search-import-results" id="siResultsList"></div>
+    </div>
+  </div>
+</div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
 <script src="layout.js?v=142"></script>
 <script>
@@ -243,6 +293,167 @@ function clearProductImg() {
   document.getElementById('fImgFile').value = '';
   document.getElementById('clearImgBtn').style.display = 'none';
 }
+function importEsc(value) {
+  return String(value || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function importEscAttr(value) {
+  return importEsc(value).replace(/`/g, '&#96;');
+}
+const PRODUCT_IMPORT_KEY = 'take24:scrapecreators_api_key';
+function setImportState(state, message='') {
+  ['siLoading','siEmpty','siError','siResults'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = 'none';
+  });
+  if(state === 'loading') document.getElementById('siLoading').style.display = 'block';
+  if(state === 'empty') document.getElementById('siEmpty').style.display = 'block';
+  if(state === 'error') {
+    const err = document.getElementById('siError');
+    err.textContent = message || 'Search failed.';
+    err.style.display = 'block';
+  }
+  if(state === 'results') document.getElementById('siResults').style.display = 'block';
+}
+function normalizeImportPrice(value) {
+  if(value == null) return '';
+  if(typeof value === 'number') return value ? `$${value}` : '';
+  if(typeof value === 'string') return value.trim();
+  return String(value.real_price || value.price || value.sale_price || value.original_price || value.min_price || '').trim();
+}
+function normalizeImportImage(product) {
+  const candidates = [
+    product.cover,
+    product.image,
+    product.thumbnail,
+    product.image_url,
+    product.product_image,
+    product.main_image,
+    product.images?.[0],
+    product.product_images?.[0]
+  ];
+  const found = candidates.find(Boolean);
+  return typeof found === 'string' ? found : (found?.url || found?.src || '');
+}
+function normalizeImportLink(product) {
+  return String(product.url || product.product_url || product.share_url || product.link || product.detail_url || '').trim();
+}
+function normalizeImportProduct(product) {
+  const price = normalizeImportPrice(product.price || product.sale_price || product.original_price || product.price_info);
+  const sold = Number(product.sold_count || product.sales_count || product.total_sold || product.units_sold || 0) || 0;
+  return {
+    name: String(product.title || product.name || product.product_name || product.product_title || '').trim(),
+    brand: String(product.brand || product.shop_name || product.seller?.name || product.store_name || '').trim(),
+    price,
+    sold,
+    link: normalizeImportLink(product),
+    image_url: normalizeImportImage(product)
+  };
+}
+function importNotesForProduct(product) {
+  const lines = [];
+  if(product.price) lines.push(`TikTok Shop price seen: ${product.price}`);
+  if(product.sold) lines.push(`TikTok Shop sold count seen: ${product.sold.toLocaleString()}`);
+  lines.push('Imported from TikTok Shop search.');
+  return lines.join('\n');
+}
+window.openSearchImport = function() {
+  document.getElementById('siApiKey').value = localStorage.getItem(PRODUCT_IMPORT_KEY) || '';
+  document.getElementById('siQuery').value = '';
+  document.getElementById('siResultsList').innerHTML = '';
+  window._siProducts = [];
+  setImportState('');
+  document.getElementById('searchImportOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('siQuery').focus(), 80);
+};
+window.closeSearchImport = function() {
+  document.getElementById('searchImportOverlay').classList.remove('open');
+};
+window.disconnectImportKey = function() {
+  localStorage.removeItem(PRODUCT_IMPORT_KEY);
+  document.getElementById('siApiKey').value = '';
+  showToast('Import API key disconnected');
+};
+window.doProductSearch = async function() {
+  const query = document.getElementById('siQuery').value.trim();
+  const key = document.getElementById('siApiKey').value.trim();
+  if(!query) { document.getElementById('siQuery').focus(); return; }
+  if(!key) {
+    setImportState('error', 'Paste your ScrapeCreators API key first.');
+    document.getElementById('siApiKey').focus();
+    return;
+  }
+  localStorage.setItem(PRODUCT_IMPORT_KEY, key);
+  const btn = document.getElementById('siSearchBtn');
+  btn.disabled = true;
+  btn.textContent = 'Searching...';
+  setImportState('loading');
+  try {
+    const url = `https://api.scrapecreators.com/v1/tiktok/shop/search?query=${encodeURIComponent(query)}&region=US`;
+    const res = await fetch(url, { headers: { 'x-api-key': key } });
+    const text = await res.text();
+    let data = {};
+    try { data = text ? JSON.parse(text) : {}; } catch(parseErr) { throw new Error('The search API did not return valid product data.'); }
+    if(!res.ok) throw new Error(data?.message || data?.error || `Search API error ${res.status}`);
+    const rawProducts = data?.products || data?.data?.products || data?.data || data?.results || data?.items || [];
+    const products = (Array.isArray(rawProducts) ? rawProducts : []).map(normalizeImportProduct).filter(p => p.name);
+    window._siProducts = products.slice(0, 20);
+    if(!window._siProducts.length) {
+      setImportState('empty');
+      return;
+    }
+    renderSearchResults(window._siProducts);
+    setImportState('results');
+  } catch(err) {
+    setImportState('error', 'Search failed: ' + (err.message || 'Unknown error'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Search';
+  }
+};
+function renderSearchResults(products) {
+  const list = document.getElementById('siResultsList');
+  list.innerHTML = products.map((p, i) => `<div class="si-result-card" onclick="importProduct(${i})">
+    <img class="si-thumb" src="${importEscAttr(p.image_url || 'icons/default-product.png')}" alt="" onerror="this.onerror=null;this.src='icons/default-product.png';">
+    <div class="si-info">
+      <div class="si-name">${importEsc(p.name || 'Unknown Product')}</div>
+      <div class="si-brand">${importEsc(p.brand || 'TikTok Shop')}</div>
+      <div class="si-meta">
+        ${p.price ? `<span class="si-price">${importEsc(p.price)}</span>` : ''}
+        ${p.sold ? `<span class="si-sold">${p.sold.toLocaleString()} sold</span>` : ''}
+      </div>
+    </div>
+    <button class="si-import-btn" onclick="event.stopPropagation();importProduct(${i})">Import</button>
+  </div>`).join('');
+}
+window.importProduct = function(index) {
+  const p = window._siProducts?.[index];
+  if(!p) return;
+  window.closeSearchImport();
+  window._editId = null;
+  window._editingProductOriginal = null;
+  document.getElementById('modalTitle').textContent = 'Add Product';
+  document.getElementById('fName').value = p.name || '';
+  document.getElementById('fBrand').value = p.brand || '';
+  document.getElementById('fTags').value = '';
+  document.getElementById('fLink').value = p.link || '';
+  document.getElementById('fUnitsSold').value = '';
+  document.getElementById('fStatus').value = 'active';
+  document.getElementById('fNotes').value = importNotesForProduct(p);
+  document.getElementById('deleteBtn').style.display = 'none';
+  window._existingImgUrl = p.image_url || '';
+  window._newImgFile = null;
+  document.getElementById('fImgPreview').src = p.image_url || 'icons/default-product.png';
+  document.getElementById('fImgFile').value = '';
+  document.getElementById('clearImgBtn').style.display = p.image_url ? '' : 'none';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('fNotes').focus(), 100);
+};
+document.getElementById('searchImportOverlay').addEventListener('click', function(e) {
+  if(e.target === this) window.closeSearchImport();
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') window.closeSearchImport();
+});
 let _editProductsMode = false;
 let _selectedProductIds = new Set();
 let _visibleProductIds = [];
