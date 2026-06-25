@@ -53,6 +53,11 @@ a{text-decoration:none;color:inherit;}
 .week-day.has-items .week-day-dot{opacity:1;}
 .week-day.active .week-day-dot{background:var(--bg);opacity:0.72;}
 
+.view-tabs{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;}
+.view-tab{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;border:1px solid var(--border-mid);border-radius:999px;background:var(--surface);color:var(--text-mid);padding:7px 16px;cursor:pointer;transition:all 0.12s;}
+.view-tab:hover{border-color:var(--rust);color:var(--rust);}
+.view-tab.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+
 .progress-summary{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
 .progress-text{font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:700;color:var(--ink);}
 .progress-text span{color:var(--rust);}
@@ -101,6 +106,12 @@ a{text-decoration:none;color:inherit;}
 .take-card{background:color-mix(in srgb,var(--bg) 55%,var(--surface) 45%);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:opacity 0.15s;}
 .take-card.done{opacity:0.5;}
 .take-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;cursor:pointer;}
+.take-row-side{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0;}
+.take-row-actions{display:flex;align-items:center;gap:5px;}
+.take-quick-btn{width:26px;height:26px;border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:900;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.12s;}
+.take-quick-btn:hover{border-color:var(--rust);color:var(--rust);}
+.take-quick-btn.duplicate{font-size:11px;}
+.take-quick-btn.remove:hover{background:rgba(180,50,40,0.12);border-color:rgba(180,50,40,0.35);color:#c83c32;}
 .take-row-hook{font-size:14px;color:var(--ink);font-weight:700;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .take-row-meta{font-size:11px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.06em;text-transform:uppercase;margin-top:3px;}
 .take-card.expanded{opacity:1;}
@@ -167,6 +178,18 @@ a{text-decoration:none;color:inherit;}
 .tbtn.del:hover{background:rgba(180,50,40,0.12);color:#c83c32;border-color:rgba(180,50,40,0.25);}
 .add-take-btn{width:100%;background:none;border:1px dashed var(--border-mid);border-radius:10px;padding:9px;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:'Stack Sans Notch',sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;}
 .add-take-btn:hover{border-color:var(--rust);color:var(--rust);}
+.weekly-wrap{display:flex;flex-direction:column;gap:10px;}
+.weekly-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:130px minmax(0,1fr) auto;gap:14px;align-items:center;}
+.weekly-date{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);}
+.weekly-date strong{display:block;font-family:'Noto Sans Mono',monospace;font-size:16px;color:var(--ink);letter-spacing:0;margin-top:2px;}
+.weekly-main{min-width:0;}
+.weekly-product{font-family:'IBM Plex Serif',serif;font-size:20px;font-weight:800;color:var(--ink);line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.weekly-meta{font-size:12px;color:var(--text-muted);margin-top:4px;}
+.weekly-hook{font-size:13px;color:var(--text-mid);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.weekly-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap;}
+.weekly-date-input{border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-family:'Noto Sans Mono',monospace;font-size:12px;padding:7px 9px;outline:none;}
+.weekly-date-input:focus{border-color:var(--rust);}
+.weekly-empty{background:var(--surface);border:1px dashed var(--border-mid);border-radius:14px;padding:36px;text-align:center;color:var(--text-muted);}
 /* undo toast */
 .undo-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:14px;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;box-shadow:0 6px 28px rgba(0,0,0,0.38);z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;white-space:nowrap;pointer-events:none;}
 .undo-toast.visible{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
@@ -214,7 +237,7 @@ a{text-decoration:none;color:inherit;}
 @media(max-width:980px){.todo-toolbar{grid-template-columns:auto minmax(0,1fr) auto;}.header-actions{grid-column:1/-1;justify-content:flex-start;}.week-strip{gap:8px;overflow-x:auto;grid-template-columns:repeat(7,minmax(118px,1fr));padding-bottom:4px;scrollbar-width:none;}.week-strip::-webkit-scrollbar{display:none;}}
 body{overflow-x:hidden;}
 @media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:50px;}.date-label{font-size:16px;white-space:normal;}.header-actions .btn{flex:1;justify-content:center;}.modal{max-height:calc(100dvh - 40px);}.modal-list{flex:1;}}
-@media(max-width:768px){.take-fields{grid-template-columns:1fr;}.product-card-row{grid-template-columns:minmax(0,1fr) auto;}.product-card-row .pcard-btns{grid-column:1/-1;justify-content:flex-start;}.product-card-name{font-size:21px;}}
+@media(max-width:768px){.take-fields{grid-template-columns:1fr;}.product-card-row{grid-template-columns:minmax(0,1fr) auto;}.product-card-row .pcard-btns{grid-column:1/-1;justify-content:flex-start;}.product-card-name{font-size:21px;}.weekly-card{grid-template-columns:1fr;}.weekly-actions{justify-content:flex-start;}.weekly-product{white-space:normal;}}
 </style>
 </head>
 <body>
@@ -250,6 +273,7 @@ body{overflow-x:hidden;}
       </div>
     </div>
     <div class="week-strip" id="weekStrip"></div>
+    <div class="view-tabs" id="viewTabs"></div>
   </div>
 
   <div id="progressArea"></div>
@@ -309,6 +333,8 @@ body{overflow-x:hidden;}
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
 let TODO = [];
+let WEEK_ITEMS = [];
+let viewMode = localStorage.getItem('take24:todoView') || 'day';
 let activeBrandFilter = 'All';
 let hideFilmed = localStorage.getItem('take24:hideFilmed') === '1';
 let selectedProductId = null;
@@ -329,6 +355,8 @@ function currentKey(){return dateKey(currentDate);}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function addDays(date, amount){const d=new Date(date);d.setDate(d.getDate()+amount);return d;}
+function weekStart(date){const d=new Date(date);d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay());return d;}
+function weekEnd(date){return addDays(weekStart(date),6);}
 
 function getLinkLabel(url){try{const u=new URL(url);return u.hostname.replace(/^www\./,'')+(u.pathname.length>1?u.pathname.slice(0,18):'');}catch(e){return url.replace(/^https?:\/\//,'').slice(0,28);}}
 function normalizeUrl(url){const t=(url||'').trim();if(!t)return '';return /^https?:\/\//i.test(t)?t:'https://'+t;}
@@ -492,9 +520,10 @@ function updateDateDisplay(){
   else{badge.style.display='inline-block';badge.textContent=key>todayKey?'Future':'Past';}
   renderWeekStrip();
 }
-function changeDay(dir){currentDate=new Date(currentDate);currentDate.setDate(currentDate.getDate()+dir);updateDateDisplay();loadQueue().then(render);}
-function goToToday(){if(currentKey()===todayKey)return;currentDate=new Date(today);updateDateDisplay();loadQueue().then(render);}
-function pickWeekDate(offset){currentDate=addDays(currentDate,offset);updateDateDisplay();loadQueue().then(render);}
+async function reloadCurrentView(){if(viewMode==='week')await loadWeekQueue();else await loadQueue();render();}
+function changeDay(dir){currentDate=new Date(currentDate);currentDate.setDate(currentDate.getDate()+dir);updateDateDisplay();reloadCurrentView();}
+function goToToday(){if(currentKey()===todayKey)return;currentDate=new Date(today);updateDateDisplay();reloadCurrentView();}
+function pickWeekDate(offset){currentDate=addDays(currentDate,offset);updateDateDisplay();reloadCurrentView();}
 function centerActiveWeekDay(){
   const strip=document.getElementById('weekStrip');
   const active=strip?.querySelector('.week-day.active');
@@ -510,7 +539,9 @@ function renderWeekStrip(){
   strip.innerHTML=offsets.map(offset=>{
     const d=addDays(currentDate,offset);
     const key=dateKey(d);
-    const hasItems=key===active&&TODO.length>0;
+    const hasItems=viewMode==='week'
+      ? WEEK_ITEMS.some(item=>item.date===key)
+      : key===active&&TODO.length>0;
     return `<button class="week-day${key===active?' active':''}${hasItems?' has-items':''}" type="button" onclick="pickWeekDate(${offset})">
       <span class="week-day-dow">${d.toLocaleDateString('en-US',{weekday:'short'})}</span>
       <span class="week-day-num">${d.getDate()}</span>
@@ -523,7 +554,7 @@ function restartDay(){goToToday();}
 async function refreshDay(btn){
   const original=btn?.textContent;
   if(btn){btn.disabled=true;btn.textContent='Refreshing';}
-  await loadQueue();
+  if(viewMode==='week')await loadWeekQueue();else await loadQueue();
   render();
   if(btn){btn.disabled=false;btn.textContent=original || 'Refresh';}
 }
@@ -543,6 +574,25 @@ async function loadQueue(){
     cardMap[key].takes.push({id:'t-'+row.id,queueId:row.id,hookText:row.notes||'',script:row.script||'',inspirationLinks:normalizeInspirationLinks(row.inspiration_links),done:row.done,sortOrder:row.sort_order,editingScript:false});
   });
   TODO=Object.values(cardMap);
+}
+async function loadWeekQueue(){
+  const start=dateKey(weekStart(currentDate));
+  const end=dateKey(weekEnd(currentDate));
+  const {data,error}=await db.from('queue').select('*').eq('user_id',_user.id).gte('date',start).lte('date',end).order('date',{ascending:true}).order('sort_order',{ascending:true});
+  if(error){console.warn('Could not load weekly queue',error);WEEK_ITEMS=[];return;}
+  WEEK_ITEMS=(data||[]).map(row=>({
+    id:'w-'+row.id,
+    queueId:row.id,
+    date:row.date,
+    prodId:row.prod_id,
+    name:row.name||'Untitled product',
+    brand:row.brand||'',
+    hookText:row.notes||'',
+    script:row.script||'',
+    inspirationLinks:normalizeInspirationLinks(row.inspiration_links),
+    done:!!row.done,
+    sortOrder:row.sort_order||0
+  }));
 }
 
 async function saveQueueRow(card,take){
@@ -646,19 +696,38 @@ window.addEventListener('popstate',()=>{
 
 function render(){
   renderWeekStrip();
+  renderViewTabs();
   renderProgress();
   renderFilterPills();
-  renderCards();
+  if(viewMode==='week')renderWeeklyView();
+  else renderCards();
+}
+
+function renderViewTabs(){
+  const tabs=document.getElementById('viewTabs');
+  if(!tabs)return;
+  tabs.innerHTML=`<button class="view-tab${viewMode==='day'?' active':''}" onclick="setTodoView('day')">Day</button>
+    <button class="view-tab${viewMode==='week'?' active':''}" onclick="setTodoView('week')">Week</button>`;
+}
+
+async function setTodoView(mode){
+  viewMode=mode==='week'?'week':'day';
+  localStorage.setItem('take24:todoView',viewMode);
+  selectedProductId=null;
+  expandedTakeId=null;
+  replaceProductUrl(null);
+  await reloadCurrentView();
 }
 
 function renderProgress(){
-  const allTakes=TODO.flatMap(c=>c.takes),done=allTakes.filter(t=>t.done).length,total=allTakes.length;
+  const allTakes=viewMode==='week'?WEEK_ITEMS:TODO.flatMap(c=>c.takes),done=allTakes.filter(t=>t.done).length,total=allTakes.length;
   const clearBtn=document.getElementById('clearDoneBtn');
-  if(clearBtn) clearBtn.disabled=done===0;
+  if(clearBtn) clearBtn.disabled=viewMode==='week'||done===0;
   const pArea=document.getElementById('progressArea');
   if(total>0){
+    const label=viewMode==='week'?'takes planned this week':'takes done today';
     pArea.innerHTML=`<div class="progress-summary">
-      <div class="progress-text"><span>${done}/${total}</span> takes done today</div>
+      <div class="progress-text"><span>${done}/${total}</span> ${label}</div>
       <div class="progress-pills"><span class="progress-pill pill-filmed">${done} Filmed</span><span class="progress-pill pill-remaining">${total-done} Remaining</span></div>
       <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${total?(done/total*100):0}%"></div></div>
     </div>`;
@@ -666,6 +735,11 @@ function renderProgress(){
 }
 
 function renderFilterPills(){
+  if(viewMode==='week'){
+    const fArea=document.getElementById('brandFilterArea');
+    if(fArea)fArea.innerHTML='';
+    return;
+  }
   const done=TODO.flatMap(c=>c.takes).filter(t=>t.done).length;
   const brands=[...new Set(TODO.map(c=>c.brand).filter(Boolean))].sort();
   const fArea=document.getElementById('brandFilterArea');
@@ -675,6 +749,55 @@ function renderFilterPills(){
       : '';
     fArea.innerHTML=`<div class="brand-filter">${brandButtons}<button class="brand-pill${hideFilmed?' toggle-active':''}" onclick="toggleHideFilmed()">${hideFilmed?'Show Filmed':'Hide Filmed'}</button></div>`;
   } else fArea.innerHTML='';
+}
+
+function weeklyDateLabel(key){
+  const d=new Date(`${key}T12:00:00`);
+  return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+}
+
+function renderWeeklyView(){
+  const main=document.getElementById('mainContent');
+  const start=weekStart(currentDate),end=weekEnd(currentDate);
+  const range=`${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} - ${end.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+  if(!WEEK_ITEMS.length){
+    main.innerHTML=`<div class="weekly-empty">
+      <div class="empty-title">Nothing planned this week</div>
+      <div class="empty-sub">Add products to any day, then use Week view to move them around.</div>
+      <button class="btn btn-primary" onclick="openPicker()">+ Product</button>
+    </div>`;
+    return;
+  }
+  const rows=[...WEEK_ITEMS].sort((a,b)=>String(a.date).localeCompare(String(b.date))||(a.sortOrder||0)-(b.sortOrder||0));
+  main.innerHTML=`<div class="takes-view">
+    <div class="takes-view-head">
+      <div>
+        <div class="takes-title">Weekly Plan</div>
+        <div class="takes-sub">${esc(range)} · ${rows.length} video${rows.length===1?'':'s'}</div>
+      </div>
+      <button class="btn btn-primary" onclick="openPicker()">+ Product</button>
+    </div>
+    <div class="weekly-wrap">
+      ${rows.map(item=>renderWeeklyItem(item)).join('')}
+    </div>
+  </div>`;
+}
+
+function renderWeeklyItem(item){
+  const hook=displayHookText(item.hookText)||firstScriptSentence(item.script)||'Choose hook';
+  return `<div class="weekly-card" id="${esc(item.id)}">
+    <div class="weekly-date">${esc(weeklyDateLabel(item.date))}<strong>${item.done?'Filmed':'Planned'}</strong></div>
+    <div class="weekly-main">
+      <div class="weekly-product">${esc(item.name)}</div>
+      <div class="weekly-meta">${item.brand?esc(item.brand)+' · ':''}${item.script?'Script saved':'No script yet'}</div>
+      <div class="weekly-hook">${esc(hook)}</div>
+    </div>
+    <div class="weekly-actions">
+      <button class="hbtn" onclick="moveWeeklyItemToDate('${esc(item.queueId)}','${esc(todayKey)}')">Today</button>
+      <input class="weekly-date-input" type="date" value="${esc(item.date)}" onchange="moveWeeklyItemToDate('${esc(item.queueId)}',this.value)">
+      <button class="hbtn" onclick="openWeeklyItemDay('${esc(item.date)}','${esc(item.prodId||'')}','${esc(item.name)}')">Open Day</button>
+    </div>
+  </div>`;
 }
 
 function renderCards(){
@@ -770,7 +893,13 @@ function renderTakeRow(card,take,index,totalTakes){
         <div class="take-row-hook">${esc(hook)}</div>
         <div class="take-row-meta">${take.script?'Script saved':'No script yet'}</div>
       </div>
-      <span class="take-status${take.done?' filmed':''}">${take.done?'✓ Done':'Not filmed yet'}</span>
+      <div class="take-row-side">
+        <span class="take-status${take.done?' filmed':''}">${take.done?'✓ Done':'Not filmed yet'}</span>
+        <div class="take-row-actions" onclick="event.stopPropagation()">
+          <button class="take-quick-btn duplicate" title="Duplicate take" aria-label="Duplicate take" onclick="duplicateTake('${esc(card.id)}','${esc(take.id)}')">⧉</button>
+          <button class="take-quick-btn remove" title="Remove take" aria-label="Remove take" onclick="removeTake('${esc(card.id)}','${esc(take.id)}')">×</button>
+        </div>
+      </div>
     </div>
     ${expanded?`<div class="take-expanded" onclick="handleTakeExpandedClick(event)">${renderTakeExpanded(card,take,totalTakes)}</div>`:''}
   </div>`;
@@ -966,9 +1095,75 @@ async function addTake(cardId){
   const take={id:'t-'+uid(),queueId:null,hookText:'',script:'',inspirationLinks:[],done:false,sortOrder:card.takes.length,editingScript:false};
   card.takes.push(take);render();await saveQueueRow(card,take);
 }
+async function duplicateTake(cardId,takeId){
+  const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
+  if(!card||!take)return;
+  const index=card.takes.findIndex(t=>t.id===takeId);
+  const clone={
+    id:'t-'+uid(),
+    queueId:null,
+    hookText:take.hookText||'',
+    script:take.script||'',
+    inspirationLinks:normalizeInspirationLinks(take.inspirationLinks),
+    done:false,
+    sortOrder:index+1,
+    editingScript:false
+  };
+  card.takes.splice(index+1,0,clone);
+  card.takes.forEach((item,i)=>{item.sortOrder=i;});
+  render();
+  try{
+    await saveQueueRow(card,clone);
+    await Promise.all(card.takes.filter(item=>item.queueId&&item.id!==clone.id).map(item=>saveQueueRow(card,item)));
+    showToast('Take duplicated');
+  }catch(err){
+    card.takes=card.takes.filter(item=>item.id!==clone.id);
+    render();
+    showToast(err.message||'Could not duplicate take','error');
+  }
+}
 async function removeTake(cardId,takeId){
   const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
-  if(!take)return;await deleteQueueRow(take);card.takes=card.takes.filter(t=>t.id!==takeId);render();
+  if(!take)return;
+  await deleteQueueRow(take);
+  card.takes=card.takes.filter(t=>t.id!==takeId);
+  card.takes.forEach((item,i)=>{item.sortOrder=i;});
+  if(!card.takes.length){
+    TODO=TODO.filter(item=>item.id!==card.id);
+    if(selectedProductId===card.id)selectedProductId=null;
+  }
+  render();
+}
+async function moveWeeklyItemToDate(queueId,nextDate){
+  const cleanDate=String(nextDate||'').trim();
+  if(!queueId||!cleanDate)return;
+  const item=WEEK_ITEMS.find(row=>String(row.queueId)===String(queueId));
+  const previousDate=item?.date;
+  if(item)item.date=cleanDate;
+  renderWeeklyView();
+  const {error}=await db.from('queue').update({date:cleanDate}).eq('id',queueId).eq('user_id',_user.id);
+  if(error){
+    if(item)item.date=previousDate;
+    renderWeeklyView();
+    showToast('Could not move video: '+error.message,'error');
+    return;
+  }
+  showToast(cleanDate===todayKey?'Added to today':'Moved to '+weeklyDateLabel(cleanDate));
+  await loadWeekQueue();
+  render();
+}
+async function openWeeklyItemDay(date,prodId,name){
+  currentDate=new Date(`${date}T12:00:00`);
+  viewMode='day';
+  localStorage.setItem('take24:todoView','day');
+  updateDateDisplay();
+  await loadQueue();
+  selectedProductId=null;
+  expandedTakeId=null;
+  const target=TODO.find(card=>(prodId&&card.prodId===prodId)||(!prodId&&card.name===name));
+  if(target)selectedProductId=target.id;
+  replaceProductUrl(selectedProductId);
+  render();
 }
 async function toggleDone(cardId,takeId){
   const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
@@ -1257,7 +1452,15 @@ document.body.addEventListener('keydown',e=>{
 });
 
 // ─── PRODUCT PICKER ───────────────────────────────────────
-function openPicker(){pickerSelected=new Set(TODO.map(c=>c.prodId).filter(Boolean));document.getElementById('pickerSearch').value='';filterPicker();document.getElementById('pickerModal').classList.add('open');setTimeout(()=>document.getElementById('pickerSearch').focus(),80);}
+function openPicker(){
+  pickerSelected=viewMode==='week'
+    ? new Set()
+    : new Set(TODO.map(c=>c.prodId).filter(Boolean));
+  document.getElementById('pickerSearch').value='';
+  filterPicker();
+  document.getElementById('pickerModal').classList.add('open');
+  setTimeout(()=>document.getElementById('pickerSearch').focus(),80);
+}
 function closePicker(){document.getElementById('pickerModal').classList.remove('open');}
 function filterPicker(){
   const q=document.getElementById('pickerSearch').value.toLowerCase();
@@ -1266,6 +1469,22 @@ function filterPicker(){
 }
 function togglePick(id){if(pickerSelected.has(id))pickerSelected.delete(id);else pickerSelected.add(id);filterPicker();}
 async function addSelectedProducts(){
+  if(viewMode==='week'){
+    const ids=[...pickerSelected];
+    const btn=document.getElementById('pickerConfirmBtn');btn.disabled=true;btn.textContent='Saving...';
+    let nextOrder=WEEK_ITEMS.length;
+    for(const id of ids){
+      const p=ALL_PRODUCTS.find(x=>x.id===id);if(!p)continue;
+      const card={id:'c-'+uid(),prodId:p.id,name:p.name,brand:p.brand||'',script:'',takes:[]};
+      const take={id:'t-'+uid(),queueId:null,hookText:'',script:'',inspirationLinks:[],done:false,sortOrder:nextOrder++,editingScript:false};
+      await saveQueueRow(card,take);
+    }
+    closePicker();btn.disabled=false;btn.textContent='Save';pickerSelected.clear();
+    await loadWeekQueue();
+    render();
+    showToast(ids.length?`Added ${ids.length} to this week`:'No changes');
+    return;
+  }
   const existing=new Set(TODO.map(c=>c.prodId).filter(Boolean));
   const toAdd=[...pickerSelected].filter(id=>!existing.has(id));
   const toRemove=TODO.filter(card=>card.prodId&&!pickerSelected.has(card.prodId));
@@ -1282,7 +1501,9 @@ async function addSelectedProducts(){
     card.takes.push(take);TODO.push(card);await saveQueueRow(card,take);
   }
   if(activeBrandFilter!=='All'&&!TODO.some(card=>(card.brand||'')===activeBrandFilter)) activeBrandFilter='All';
-  closePicker();btn.disabled=false;btn.textContent='Save';render();
+  closePicker();btn.disabled=false;btn.textContent='Save';
+  if(viewMode==='week')await loadWeekQueue();
+  render();
   const changes=toAdd.length+toRemove.length;
   showToast(changes?`Saved ${changes} change${changes>1?'s':''}`:'No changes');
 }
@@ -1370,6 +1591,7 @@ async function init(){
   initProfilePopover(_user.id);
   updateDateDisplay();
   await Promise.all([loadProducts(),loadHooks(),loadScripts(),loadQueue()]);
+  if(viewMode==='week')await loadWeekQueue();
   selectedProductId=selectedProductFromUrl();
   render();
 }
