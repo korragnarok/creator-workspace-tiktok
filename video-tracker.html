@@ -904,27 +904,31 @@ function importImageUrlFrom(value){
   return candidates[0]?.url||'';
 }
 function tikTokThumbnailFrom(raw){
+  function firstUrl(obj){
+    const list=obj?.url_list||obj?.urlList;
+    if(!Array.isArray(list))return null;
+    return list.find(url=>url&&!/\.heic/i.test(url))||list[0]||null;
+  }
+  const vid=raw?.video||{};
+  const direct=[
+    firstUrl(vid?.origin_cover||vid?.originCover),
+    firstUrl(vid?.cover),
+    firstUrl(vid?.dynamic_cover||vid?.dynamicCover),
+    firstUrl(raw?.cover),
+    firstUrl(raw?.origin_cover)
+  ].filter(Boolean);
+  if(direct.length)return direct[0];
   return importImageUrlFrom([
-    raw?.video?.dynamic_cover,
-    raw?.video?.dynamicCover,
-    raw?.video?.animated_cover,
-    raw?.video?.animatedCover,
-    raw?.video?.cover,
-    raw?.video?.coverUrl,
-    raw?.video?.origin_cover,
-    raw?.video?.originCover,
+    vid?.cover,
+    vid?.origin_cover,
+    vid?.dynamic_cover,
     raw?.dynamic_cover,
     raw?.dynamicCover,
-    raw?.animated_cover,
-    raw?.animatedCover,
     raw?.cover,
     raw?.coverUrl,
     raw?.cover_url,
-    raw?.origin_cover,
-    raw?.originCover,
     raw?.thumbnail,
     raw?.thumbnailUrl,
-    raw?.image_post_info?.images?.map(image=>image?.thumbnail||image?.display_image||image),
     raw?.images,
     raw?.image,
     raw
@@ -987,17 +991,23 @@ function normalizeTikTokHandle(value){
 }
 function extractTikTokVideos(payload){
   const candidates=[
+    payload?.aweme_list,
+    payload?.data?.aweme_list,
     payload?.videos,
     payload?.data?.videos,
     payload?.data?.items,
     payload?.items,
-    payload?.aweme_list,
-    payload?.data?.aweme_list,
     payload?.data,
     payload?.results
   ];
   const found=candidates.find(Array.isArray);
   return found||[];
+}
+function extractPaginationCursor(payload){
+  return payload?.max_cursor||payload?.cursor||payload?.min_cursor||null;
+}
+function extractHasMore(payload){
+  return payload?.has_more===1||payload?.has_more===true;
 }
 function normalizeTikTokDate(raw){
   const value=deepTextFrom(raw,['create_time','createTime','created_at','createdAt','timestamp','publish_time','publishTime','date']);
@@ -1079,22 +1089,33 @@ function renderImportResults(){
   });
 }
 async function fetchTikTokVideosForHandle(handle,key){
-  const urls=[
-    `https://api.scrapecreators.com/v3/tiktok/profile/videos?handle=${encodeURIComponent(handle)}`,
-    `https://api.scrapecreators.com/v3/tiktok/profile/videos?username=${encodeURIComponent(handle)}`
-  ];
-  let lastError=null;
-  for(const url of urls){
+  const base=`https://api.scrapecreators.com/v3/tiktok/profile/videos?handle=${encodeURIComponent(handle)}`;
+  let all=[];
+  let cursor=null;
+  let pages=0;
+  while(pages<4){
+    const url=cursor?`${base}&cursor=${encodeURIComponent(cursor)}`:base;
     const res=await fetch(url,{headers:{'x-api-key':key}});
     const text=await res.text();
     let data={};
-    try{data=text?JSON.parse(text):{};}catch(e){lastError=new Error('The TikTok videos API did not return readable data.');continue;}
-    if(!res.ok){lastError=new Error(data?.message||data?.error||`TikTok videos API error ${res.status}`);continue;}
+    try{data=text?JSON.parse(text):{};}catch(e){break;}
+    if(!res.ok)throw new Error(data?.message||data?.error||`TikTok videos API error ${res.status}`);
     const videos=extractTikTokVideos(data);
-    if(videos.length)return videos;
+    if(!videos.length)break;
+    all=all.concat(videos);
+    pages++;
+    if(!extractHasMore(data))break;
+    const nextCursor=extractPaginationCursor(data);
+    if(!nextCursor||nextCursor===cursor)break;
+    cursor=nextCursor;
   }
-  if(lastError)throw lastError;
-  return [];
+  if(!all.length){
+    const res=await fetch(`https://api.scrapecreators.com/v3/tiktok/profile/videos?username=${encodeURIComponent(handle)}`,{headers:{'x-api-key':key}});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data?.message||data?.error||`TikTok videos API error ${res.status}`);
+    all=extractTikTokVideos(data);
+  }
+  return all;
 }
 async function searchTikTokVideos(){
   const handle=normalizeTikTokHandle(document.getElementById('importHandle').value);
