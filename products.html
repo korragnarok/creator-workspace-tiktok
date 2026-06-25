@@ -256,14 +256,7 @@ tr.select-mode .tbl-action{display:none;}
   <div class="modal search-import-modal">
     <button class="modal-close" onclick="closeSearchImport()">&#x2715;</button>
     <div class="modal-title">Search &amp; Import Product</div>
-    <p class="search-import-help">Search TikTok Shop, pick a product, then review it before saving. Your API key stays in this browser only.</p>
-    <div class="form-row">
-      <label class="form-label">ScrapeCreators API Key</label>
-      <div class="search-import-key-row">
-        <input type="password" class="form-input" id="siApiKey" placeholder="Paste your API key here...">
-        <button type="button" class="btn btn-ghost" id="siDisconnectBtn" onclick="disconnectImportKey()">Disconnect</button>
-      </div>
-    </div>
+    <p class="search-import-help">Search TikTok Shop, pick a product, then review it before saving. Manage your import key in <a href="settings.html" style="color:var(--rust);text-decoration:underline;">Settings</a>.</p>
     <div class="search-import-row">
       <input type="text" class="form-input" id="siQuery" placeholder="Search TikTok Shop products..." onkeydown="if(event.key==='Enter')doProductSearch()">
       <button class="btn btn-primary" id="siSearchBtn" onclick="doProductSearch()">Search</button>
@@ -517,7 +510,6 @@ function importNotesForProduct(product) {
   return lines.join('\n');
 }
 window.openSearchImport = function() {
-  document.getElementById('siApiKey').value = localStorage.getItem(PRODUCT_IMPORT_KEY) || '';
   document.getElementById('siQuery').value = '';
   document.getElementById('siResultsList').innerHTML = '';
   window._siProducts = [];
@@ -528,21 +520,14 @@ window.openSearchImport = function() {
 window.closeSearchImport = function() {
   document.getElementById('searchImportOverlay').classList.remove('open');
 };
-window.disconnectImportKey = function() {
-  localStorage.removeItem(PRODUCT_IMPORT_KEY);
-  document.getElementById('siApiKey').value = '';
-  showToast('Import API key disconnected');
-};
 window.doProductSearch = async function() {
   const query = document.getElementById('siQuery').value.trim();
-  const key = document.getElementById('siApiKey').value.trim();
+  const key = (localStorage.getItem(PRODUCT_IMPORT_KEY) || '').trim();
   if(!query) { document.getElementById('siQuery').focus(); return; }
   if(!key) {
-    setImportState('error', 'Paste your ScrapeCreators API key first.');
-    document.getElementById('siApiKey').focus();
+    setImportState('error', 'Add your ScrapeCreators API key in Settings first.');
     return;
   }
-  localStorage.setItem(PRODUCT_IMPORT_KEY, key);
   const btn = document.getElementById('siSearchBtn');
   btn.disabled = true;
   btn.textContent = 'Searching...';
@@ -588,7 +573,7 @@ function renderSearchResults(products) {
 window.importProduct = async function(index) {
   let p = window._siProducts?.[index];
   if(!p) return;
-  const key = document.getElementById('siApiKey')?.value?.trim() || localStorage.getItem(PRODUCT_IMPORT_KEY) || '';
+  const key = (localStorage.getItem(PRODUCT_IMPORT_KEY) || '').trim();
   p = await enrichImportProduct(p, key);
   window.closeSearchImport();
   window._editId = null;
