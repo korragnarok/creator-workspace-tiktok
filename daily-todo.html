@@ -352,7 +352,7 @@ let activeBrandFilter = 'All';
 let hideFilmed = localStorage.getItem('take24:hideFilmed') === '1';
 let selectedProductId = null;
 let expandedTakeId = null;
-let collapsedWeeklyProducts = loadCollapsedWeeklyProducts();
+let expandedWeeklyProducts = loadExpandedWeeklyProducts();
 // Pre-filter by brand if coming from lineup strip
 const _urlBrand = new URLSearchParams(window.location.search).get('brand');
 if (_urlBrand) activeBrandFilter = _urlBrand;
@@ -769,9 +769,9 @@ function weeklyDateLabel(key){
   const d=new Date(`${key}T12:00:00`);
   return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
 }
-function loadCollapsedWeeklyProducts(){
+function loadExpandedWeeklyProducts(){
   try{
-    return new Set(JSON.parse(localStorage.getItem('take24:collapsedWeeklyProducts') || '[]'));
+    return new Set(JSON.parse(localStorage.getItem('take24:expandedWeeklyProducts') || '[]'));
   }catch(e){
     return new Set();
   }
@@ -779,15 +779,15 @@ function loadCollapsedWeeklyProducts(){
 function weeklyProductKey(item){
   return String(item?.prodId || item?.name || 'unlisted').trim() || 'unlisted';
 }
-function saveCollapsedWeeklyProducts(){
-  localStorage.setItem('take24:collapsedWeeklyProducts', JSON.stringify([...collapsedWeeklyProducts]));
+function saveExpandedWeeklyProducts(){
+  localStorage.setItem('take24:expandedWeeklyProducts', JSON.stringify([...expandedWeeklyProducts]));
 }
 function toggleWeeklyProduct(key){
   const clean=String(key||'');
   if(!clean)return;
-  if(collapsedWeeklyProducts.has(clean)) collapsedWeeklyProducts.delete(clean);
-  else collapsedWeeklyProducts.add(clean);
-  saveCollapsedWeeklyProducts();
+  if(expandedWeeklyProducts.has(clean)) expandedWeeklyProducts.delete(clean);
+  else expandedWeeklyProducts.add(clean);
+  saveExpandedWeeklyProducts();
   renderWeeklyView();
 }
 function groupWeeklyItems(items){
@@ -842,7 +842,7 @@ function renderWeeklyView(){
 }
 
 function renderWeeklyGroup(group){
-  const isCollapsed=collapsedWeeklyProducts.has(group.key);
+  const isCollapsed=!expandedWeeklyProducts.has(group.key);
   const done=group.items.filter(item=>item.done).length;
   const dates=[...new Set(group.items.map(item=>weeklyDateLabel(item.date)))].join(' · ');
   return `<div class="weekly-product-group${isCollapsed?' collapsed':''}" id="weekly-product-${esc(group.key)}">
@@ -873,6 +873,7 @@ function renderWeeklyItem(item){
       <button class="hbtn" onclick="moveWeeklyItemToDate('${esc(item.queueId)}','${esc(todayKey)}')">Today</button>
       <input class="weekly-date-input" type="date" value="${esc(item.date)}" onchange="moveWeeklyItemToDate('${esc(item.queueId)}',this.value)">
       <button class="hbtn" onclick="openWeeklyItemDay('${esc(item.date)}','${esc(item.prodId||'')}','${esc(item.name)}')">Open Day</button>
+      <button class="hbtn" onclick="duplicateWeeklyItem('${esc(item.queueId)}')">Duplicate</button>
       <button class="weekly-remove" title="Remove take" aria-label="Remove take" onclick="deleteWeeklyItem('${esc(item.queueId)}')">×</button>
     </div>
   </div>`;
@@ -1227,6 +1228,29 @@ async function deleteWeeklyItem(queueId){
   }
   sessionStorage.removeItem('ts-'+queueId);
   showToast('Take removed');
+  await loadWeekQueue();
+  render();
+}
+async function duplicateWeeklyItem(queueId){
+  const item=WEEK_ITEMS.find(row=>String(row.queueId)===String(queueId));
+  if(!item)return;
+  const {data:row,error:loadError}=await db.from('queue').select('*').eq('id',queueId).eq('user_id',_user.id).single();
+  if(loadError||!row){
+    showToast(loadError?.message||'Could not find that take','error');
+    return;
+  }
+  const clone={...row,done:false,sort_order:(Number(row.sort_order)||0)+1};
+  delete clone.id;
+  delete clone.created_at;
+  delete clone.updated_at;
+  const {error}=await db.from('queue').insert(clone);
+  if(error){
+    showToast('Could not duplicate take: '+error.message,'error');
+    return;
+  }
+  expandedWeeklyProducts.add(weeklyProductKey(item));
+  saveExpandedWeeklyProducts();
+  showToast('Take duplicated');
   await loadWeekQueue();
   render();
 }

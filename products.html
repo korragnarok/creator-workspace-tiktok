@@ -69,9 +69,9 @@ body{overflow-x:hidden;}
 .product-bank-scroll::-webkit-scrollbar{height:8px;}
 .product-bank-scroll::-webkit-scrollbar-track{background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
 .product-bank-scroll::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:999px;}
-.product-bank{display:inline-block;width:1320px;min-width:1320px;}
+.product-bank{display:inline-block;width:1420px;min-width:1420px;}
 @media(max-width:768px){
-  .product-bank{width:1320px;min-width:1320px;}
+  .product-bank{width:1420px;min-width:1420px;}
   .page{padding:80px 16px 24px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}}
 .brand-filter{display:flex;gap:8px;margin-bottom:22px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
 .brand-filter::-webkit-scrollbar{display:none;}
@@ -84,7 +84,7 @@ body{overflow-x:hidden;}
 .hero-pill.active{background:var(--rust);color:#fff;border-color:var(--rust);}
 .pill-count{font-family:'Noto Sans Mono',sans-serif;font-size:10px;margin-left:4px;opacity:0.75;}
 .product-bank{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);}
-table{width:1320px;min-width:100%;border-collapse:collapse;table-layout:fixed;}
+table{width:1420px;min-width:100%;border-collapse:collapse;table-layout:fixed;}
 thead th{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.16em;color:var(--text-muted);padding:13px 16px;text-align:left;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface) 80%,var(--bg) 20%);white-space:nowrap;}
 thead th.sortable{cursor:pointer;user-select:none;}
 thead th.sortable:hover,thead th.sortable.active{color:var(--ink);}
@@ -106,6 +106,10 @@ tbody td{padding:14px 16px;color:var(--text-mid);vertical-align:middle;}
 .product-cell{display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:800;line-height:1.25;}
 .core-badge{display:inline-flex;align-items:center;border-radius:100px;background:var(--tan);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;padding:2px 7px;text-transform:uppercase;}
 .stock-badge{display:inline-flex;align-items:center;border-radius:6px;padding:3px 8px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.02em;}
+.active-badge{display:inline-flex;align-items:center;border-radius:6px;padding:3px 8px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.02em;}
+.active-yes{background:color-mix(in srgb,var(--sage) 18%,transparent);color:var(--sage);}
+.active-no{background:color-mix(in srgb,var(--text-muted) 14%,transparent);color:var(--text-muted);}
+.active-promote{background:color-mix(in srgb,var(--tan) 18%,transparent);color:var(--tan);}
 .stock-in{background:color-mix(in srgb,var(--sage) 18%,transparent);color:var(--sage);}
 .stock-out{background:color-mix(in srgb,var(--rust) 14%,transparent);color:var(--rust);}
 .sold-value,.gmv-value{font-family:'Noto Sans Mono',sans-serif;font-weight:800;color:var(--ink);}
@@ -183,7 +187,8 @@ tr.select-mode .tbl-action{display:none;}
   </div>
   <div class="brand-filter" id="brandFilter"></div>
   <div class="filter-row">
-    <button class="stock-pill active" data-stock="all" onclick="setStockFilter(this,'all')">All Stock</button>
+    <button class="stock-pill active" data-stock="active" onclick="setStockFilter(this,'active')">Active</button>
+    <button class="stock-pill" data-stock="all" onclick="setStockFilter(this,'all')">All Stock</button>
     <button class="stock-pill" data-stock="in" onclick="setStockFilter(this,'in')">In Stock</button>
     <button class="stock-pill" data-stock="out" onclick="setStockFilter(this,'out')">Out of Stock</button>
     <button class="stock-pill" data-stock="sales" onclick="setStockFilter(this,'sales')">Got Sales</button>
@@ -204,6 +209,7 @@ tr.select-mode .tbl-action{display:none;}
           <th></th>
           <th class="sortable" data-sort="product" onclick="sortProducts('product')">Product</th>
           <th class="sortable" data-sort="brand" onclick="sortProducts('brand')">Brand</th>
+          <th class="sortable" data-sort="active" onclick="sortProducts('active')">Active</th>
           <th class="sortable" data-sort="stock" onclick="sortProducts('stock')">Stock</th>
           <th class="num sortable" data-sort="sold" onclick="sortProducts('sold')">Sold</th>
           <th class="num sortable" data-sort="videos" onclick="sortProducts('videos')">Videos Posted</th>
@@ -544,7 +550,7 @@ let _editProductsMode = false;
 let _selectedProductIds = new Set();
 let _visibleProductIds = [];
 let _brandFilter = 'all';
-let _stockFilter = 'all';
+let _stockFilter = 'active';
 let _allProducts = [];
 let _coreNames = [];
 let _sortField = 'product';
@@ -574,6 +580,8 @@ async function init() {
       if(_brandFilter === 'hero' && !isCoreProduct(p)) return false;
       if(_brandFilter !== 'all' && _brandFilter !== 'hero' && brandKey(p.brand) !== _brandFilter) return false;
       const inStock = productInStock(p);
+      const status = productStatus(p);
+      if(_stockFilter === 'active' && status !== 'active') return false;
       if(_stockFilter === 'in' && !inStock) return false;
       if(_stockFilter === 'out' && inStock) return false;
       if(_stockFilter === 'sales' && !((_videoUnitsByProduct.get(p.id) || 0) > 0)) return false;
@@ -582,10 +590,11 @@ async function init() {
     }).sort(compareProducts);
     _visibleProductIds = filtered.map(p => p.id);
     const body = document.getElementById('prodBody');
-    if(!filtered.length){ body.innerHTML='<tr><td colspan="10"><div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div></td></tr>'; updateSortHeaders(); updateEditToolbar(); return; }
+    if(!filtered.length){ body.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div></td></tr>'; updateSortHeaders(); updateEditToolbar(); return; }
     body.innerHTML = filtered.map(p => {
       const selected = _selectedProductIds.has(p.id);
       const inStock = productInStock(p);
+      const active = productActiveState(p);
       const gmv = productGmv(p);
       const hasCore = isCoreProduct(p);
       const link = String(p.link || '').trim();
@@ -594,6 +603,7 @@ async function init() {
         '<td class="product-thumb-cell">'+productThumbHtml(p)+'</td>'+
         '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'name\')">'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Hero</span>':'')+'</div></td>'+
         '<td><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'brand\')">'+esc(p.brand||'-')+'</span></td>'+
+        '<td><span class="active-badge '+active.className+'">'+active.label+'</span></td>'+
         '<td><span class="editable-cell stock-badge '+(inStock?'stock-in':'stock-out')+'" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'status\')">'+productStockLabel(p)+'</span></td>'+
         '<td class="num"><span class="sold-value">'+(_videoUnitsByProduct.get(p.id)||0).toLocaleString()+'</span></td>'+
         '<td class="num"><span class="sold-value">'+videoCount.toLocaleString()+'</span></td>'+
@@ -630,7 +640,7 @@ async function init() {
     const stock = params.get('stock');
     if(brand) _brandFilter = brandKey(brand);
     if(search) document.getElementById('searchBox').value = search;
-    if(['all','in','out','sales'].includes(stock)) {
+    if(['active','all','in','out','sales'].includes(stock)) {
       _stockFilter = stock;
       document.querySelectorAll('.stock-pill').forEach(p => p.classList.toggle('active', p.dataset.stock === stock));
     }
@@ -639,7 +649,7 @@ async function init() {
     const params = new URLSearchParams();
     const search = document.getElementById('searchBox').value.trim();
     if(_brandFilter !== 'all') params.set('brand', _brandFilter);
-    if(_stockFilter !== 'all') params.set('stock', _stockFilter);
+    if(_stockFilter !== 'active') params.set('stock', _stockFilter);
     if(search) params.set('search', search);
     const query = params.toString();
     window.history.replaceState({}, '', query ? `products.html?${query}` : 'products.html');
@@ -647,8 +657,17 @@ async function init() {
   function productInStock(p) {
     return String(p.status || 'active') !== 'paused';
   }
+  function productStatus(p) {
+    return String(p.status || 'active');
+  }
+  function productActiveState(p) {
+    const status = productStatus(p);
+    if(status === 'paused') return {label:'Paused',className:'active-no'};
+    if(status === 'promote') return {label:'Promote',className:'active-promote'};
+    return {label:'Active',className:'active-yes'};
+  }
   function productStockLabel(p) {
-    const status = String(p.status || 'active');
+    const status = productStatus(p);
     if(status === 'paused') return 'Out of Stock';
     if(status === 'promote') return 'Promote Now';
     return 'In Stock';
@@ -740,6 +759,7 @@ async function init() {
   function sortValue(p, field) {
     if(field === 'product') return String(p.name || '').toLowerCase();
     if(field === 'brand') return String(p.brand || '').toLowerCase();
+    if(field === 'active') return productStatus(p);
     if(field === 'stock') return productInStock(p) ? 0 : 1;
     if(field === 'sold') return _videoUnitsByProduct.get(p.id) || 0;
     if(field === 'videos') return productVideoCount(p);
