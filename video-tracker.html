@@ -151,6 +151,40 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .edit-toolbar.open{display:flex;}
 .edit-count{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);}
 .edit-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.view-toggle{display:inline-flex;border:1px solid var(--border-mid);border-radius:999px;padding:3px;background:var(--surface);gap:3px;}
+.view-btn{border:0;background:transparent;border-radius:999px;padding:6px 12px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;}
+.view-btn.active{background:var(--ink);color:var(--bg);}
+.video-grid-card{display:none;}
+.video-grid-card.open{display:block;background:transparent;border:0;box-shadow:none;overflow:visible;}
+.video-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;}
+.video-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;min-height:100%;}
+.video-card-thumb{position:relative;aspect-ratio:9/13;background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);overflow:hidden;}
+.video-card-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.video-card-thumb.placeholder img{object-fit:contain;padding:28px;opacity:0.7;}
+.video-card-date{position:absolute;left:10px;top:10px;border-radius:7px;background:color-mix(in srgb,var(--ink) 72%,transparent);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:4px 8px;}
+.video-card-body{padding:14px;display:flex;flex-direction:column;gap:10px;flex:1;}
+.video-card-title{font-size:17px;font-weight:800;color:var(--ink);line-height:1.15;}
+.video-card-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);}
+.video-card-hook{font-size:13px;color:var(--text-mid);line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.video-card-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:auto;}
+.video-card-stat{border:1px solid var(--border-mid);border-radius:8px;padding:7px 8px;background:color-mix(in srgb,var(--surface) 72%,var(--bg) 28%);}
+.video-card-stat strong{display:block;font-family:'Noto Sans Mono',sans-serif;font-size:13px;color:var(--ink);line-height:1.1;}
+.video-card-stat span{font-family:'Stack Sans Notch',sans-serif;font-size:8px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);}
+.video-card-actions{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 14px;}
+.video-card-actions .tbl-action{flex:1;text-align:center;justify-content:center;}
+.import-modal{max-width:920px;}
+.import-search-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-bottom:16px;}
+.import-state{display:none;text-align:center;padding:24px;color:var(--text-muted);font-size:13px;}
+.import-error{display:none;padding:12px 14px;border-radius:var(--r);background:color-mix(in srgb,var(--rust) 12%,transparent);color:var(--rust);border:1px solid color-mix(in srgb,var(--rust) 24%,transparent);font-size:13px;margin-bottom:14px;}
+.import-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-height:52vh;overflow-y:auto;padding-right:4px;}
+.import-video-card{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);padding:12px;display:grid;grid-template-columns:92px 1fr;gap:12px;position:relative;}
+.import-check{position:absolute;left:8px;top:8px;width:22px;height:22px;accent-color:var(--sage);}
+.import-thumb{width:92px;aspect-ratio:9/13;border-radius:10px;border:1px solid var(--border-mid);object-fit:cover;background:var(--bg);}
+.import-caption{font-weight:800;color:var(--ink);font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.import-meta{font-family:'Noto Sans Mono',sans-serif;font-size:11px;color:var(--text-muted);display:flex;gap:10px;flex-wrap:wrap;margin:6px 0;}
+.import-product-select{width:100%;padding:8px 10px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:12px;}
+@media(max-width:1180px){.video-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:768px){.view-toggle{width:100%;justify-content:space-between}.view-btn{flex:1}.video-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.video-card-title{font-size:15px}.import-search-row{grid-template-columns:1fr}.import-results{grid-template-columns:1fr;max-height:58vh}.import-video-card{grid-template-columns:78px 1fr}.import-thumb{width:78px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=141"></script>
@@ -162,6 +196,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div><div class="page-eyebrow">Content Tracker</div><div class="page-title">Videos <em>&amp;</em> Posts</div><p class="page-sub">Track posted content, views, and what's working.</p></div>
     <div class="header-actions">
       <button class="btn btn-ghost" id="editVideosBtn" onclick="toggleVideoEditMode()">Edit Videos</button>
+      <button class="btn btn-ghost" onclick="openImportModal()">Import TikToks</button>
       <button class="btn btn-primary" onclick="openModal()">+ Log Video</button>
     </div>
   </div>
@@ -175,6 +210,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <button class="pill active" data-f="all" onclick="setFilter(this,'all')">All</button>
     <button class="pill" data-f="sales" onclick="setFilter(this,'sales')">Sales</button>
     <button class="pill" data-f="nosales" onclick="setFilter(this,'nosales')">No Sales</button>
+    <div class="view-toggle" aria-label="Video view">
+      <button class="view-btn active" id="gridViewBtn" onclick="setTrackerView('grid')">Grid</button>
+      <button class="view-btn" id="tableViewBtn" onclick="setTrackerView('table')">Table</button>
+    </div>
     <input type="text" class="search-box" id="searchBox" placeholder="Search product, hook, or notes..." oninput="goPage(1)">
   </div>
   <div class="edit-toolbar" id="videoEditToolbar">
@@ -185,7 +224,10 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       <button class="btn-danger" id="deleteSelectedVideosBtn" onclick="deleteSelectedVideos()">Delete Selected</button>
     </div>
   </div>
-  <div class="table-card">
+  <div class="video-grid-card open" id="gridCard">
+    <div class="video-grid" id="videoGrid"></div>
+  </div>
+  <div class="table-card" id="tableCard" style="display:none;">
     <table>
       <thead><tr>
         <th onclick="sortBy('date')">Posted</th>
@@ -201,7 +243,26 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       </tr></thead>
       <tbody id="tbody"><tr><td colspan="10"><div class="empty">Loading...</div></td></tr></tbody>
     </table>
-    <div class="pagination"><span id="pageInfo"></span><div class="page-btns" id="pageBtns"></div></div>
+  </div>
+  <div class="pagination"><span id="pageInfo"></span><div class="page-btns" id="pageBtns"></div></div>
+</div>
+<div class="modal-overlay" id="importOverlay">
+  <div class="modal import-modal">
+    <button class="modal-close" onclick="closeImportModal()">&#x2715;</button>
+    <div class="modal-title">Import TikToks</div>
+    <p class="form-hint" style="margin:-10px 0 18px;">Paste your TikTok @handle or profile URL. Review the videos before saving them into Content Tracker.</p>
+    <div class="import-search-row">
+      <input type="text" class="form-input" id="importHandle" placeholder="@yourhandle or TikTok profile URL">
+      <button class="btn btn-primary" id="importSearchBtn" onclick="searchTikTokVideos()">Search</button>
+    </div>
+    <div class="import-error" id="importError"></div>
+    <div class="import-state" id="importLoading">Looking for posted videos...</div>
+    <div class="import-state" id="importEmpty">No videos found for that account.</div>
+    <div class="import-results" id="importResults"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1;" id="importSaveBtn" onclick="importSelectedTikToks()">Import Selected</button>
+      <button class="btn btn-ghost" onclick="closeImportModal()">Cancel</button>
+    </div>
   </div>
 </div>
 <div class="modal-overlay" id="modalOverlay">
@@ -237,10 +298,14 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <script src="layout.js?v=142"></script>
 <script>
 const PAGE_SIZE=25;
+const TRACKER_VIEW_KEY='take24:video_tracker_view';
+const PRODUCT_IMPORT_KEY='take24:scrapecreators_api_key';
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
 let _editVideosMode=false,_selectedVideoIds=new Set(),_visibleVideoIds=[];
 let PRODUCT_OPTIONS=[];
 let productFilterId=null,productFilterName='';
+let _trackerViewMode=localStorage.getItem(TRACKER_VIEW_KEY)||'grid';
+let _importVideos=[];
 
 async function init() {
   user = await requireAuth();
@@ -253,8 +318,9 @@ async function init() {
   window._user = user;
   await loadVideos();
   document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+  document.getElementById('importOverlay')?.addEventListener('click', function(e){ if(e.target===this) closeImportModal(); });
   document.getElementById('modalOverlay').addEventListener('keydown', e => enterSaves(e, saveVideo));
-  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') { closeModal(); closeImportModal(); } });
 }
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
@@ -285,6 +351,17 @@ function noteSection(notes,label){
   const labels='Product|Hook|Location|Type|On-screen text|SEO strategy|Caption|Hashtags|Script|Inspiration|TAKE_SNAPSHOT';
   const match=String(notes||'').match(new RegExp(`^${escaped}\\s*:\\s*([\\s\\S]*?)(?=\\n(?:${labels})\\s*:|$)`,'im'));
   return match?match[1].trim():'';
+}
+function noteLineValue(notes,label){
+  const escaped=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const match=String(notes||'').match(new RegExp(`^${escaped}\\s*:\\s*(.*)$`,'im'));
+  return match?match[1].trim():'';
+}
+function firstSentence(text){
+  const clean=String(text||'').replace(/\s+/g,' ').trim();
+  if(!clean)return '';
+  const match=clean.match(/^(.+?[.!?])(?:\s|$)/);
+  return (match?match[1]:clean).slice(0,180).trim();
 }
 function locationFromLabel(value){
   const text=String(value||'').trim();
@@ -552,13 +629,20 @@ function goPage(page){
   currentPage=page;
   renderTable();
 }
-function renderTable(){
-  const filtered=getFiltered();
-  _visibleVideoIds=filtered.map(v=>v.id);
+function setTrackerView(mode){
+  _trackerViewMode=mode==='table'?'table':'grid';
+  localStorage.setItem(TRACKER_VIEW_KEY,_trackerViewMode);
+  renderTable();
+}
+window.setTrackerView=setTrackerView;
+function applyTrackerViewButtons(){
+  document.getElementById('gridViewBtn')?.classList.toggle('active',_trackerViewMode==='grid');
+  document.getElementById('tableViewBtn')?.classList.toggle('active',_trackerViewMode==='table');
+}
+function renderPagination(filtered){
   const pages=Math.ceil(filtered.length/PAGE_SIZE)||1;
   if(currentPage>pages)currentPage=pages;
   const start=(currentPage-1)*PAGE_SIZE;
-  const rows=filtered.slice(start,start+PAGE_SIZE);
   document.getElementById('pageInfo').textContent=filtered.length?`Showing ${start+1}-${Math.min(start+PAGE_SIZE,filtered.length)} of ${filtered.length}`:'';
   const btns=document.getElementById('pageBtns');
   btns.innerHTML='';
@@ -569,6 +653,71 @@ function renderTable(){
     btn.onclick=()=>goPage(i);
     btns.appendChild(btn);
   }
+  return {start,pages};
+}
+function videoCoverUrl(v){
+  return String(v.thumbnail_url||v.cover_url||v.image_url||noteLineValue(v.notes,'TikTok thumbnail')||noteLineValue(v.notes,'Thumbnail')||v._productImage||'').trim();
+}
+function videoMetaNumber(v,label){
+  const raw=noteLineValue(v.notes,label);
+  return raw?Number(String(raw).replace(/[^0-9.-]/g,''))||0:0;
+}
+function renderGrid(){
+  const filtered=getFiltered();
+  _visibleVideoIds=filtered.map(v=>v.id);
+  const {start}=renderPagination(filtered);
+  const rows=filtered.slice(start,start+PAGE_SIZE);
+  document.getElementById('tableCard').style.display='none';
+  document.getElementById('gridCard').classList.add('open');
+  const grid=document.getElementById('videoGrid');
+  if(!rows.length){
+    grid.innerHTML='<div class="empty" style="grid-column:1/-1;">No videos found.</div>';
+    updateVideoEditToolbar();
+    return;
+  }
+  grid.innerHTML=rows.map(v=>{
+    const cover=videoCoverUrl(v)||'icons/default-product.png';
+    const placeholder=!videoCoverUrl(v);
+    const productBrand=String(v._productBrand||'').trim();
+    const caption=noteLineValue(v.notes,'Caption')||hookFromVideo(v)||v.title||'';
+    const likes=videoMetaNumber(v,'Likes');
+    const shares=videoMetaNumber(v,'Shares');
+    return `<article class="video-card">
+      <div class="video-card-thumb${placeholder?' placeholder':''}">
+        <img src="${esc(cover)}" alt="" onerror="this.onerror=null;this.src='icons/default-product.png';this.closest('.video-card-thumb')?.classList.add('placeholder');">
+        <span class="video-card-date">${esc(fmtDate(v.date).replace(/, \d{4}$/,''))}</span>
+      </div>
+      <div class="video-card-body">
+        <div>
+          <div class="video-card-title">${esc(v.brand||v.title||'Unlisted product')}</div>
+          <div class="video-card-brand">${esc(productBrand||v._dealLabel||'Content Tracker')}</div>
+        </div>
+        <div>${linkedDealTagsHtml(v)}</div>
+        <div class="video-card-hook">${esc(caption||'No caption saved yet.')}</div>
+        <div class="video-card-stats">
+          <div class="video-card-stat"><strong>${fmtNum(v.views)}</strong><span>Views</span></div>
+          <div class="video-card-stat"><strong>${likes?fmtNum(likes):'-'}</strong><span>Likes</span></div>
+          <div class="video-card-stat"><strong>${shares?fmtNum(shares):'-'}</strong><span>Shares</span></div>
+        </div>
+      </div>
+      <div class="video-card-actions">
+        ${v.link?`<a class="tbl-action" href="${esc(v.link)}" target="_blank" rel="noopener">Watch</a>`:''}
+        <button class="tbl-action primary" onclick="reuseVideo('${v.id}',this)">Reuse</button>
+        <button class="tbl-action" onclick="openModal('${v.id}')">Edit</button>
+      </div>
+    </article>`;
+  }).join('');
+  updateVideoEditToolbar();
+}
+function renderTable(){
+  applyTrackerViewButtons();
+  if(_trackerViewMode==='grid')return renderGrid();
+  document.getElementById('gridCard').classList.remove('open');
+  document.getElementById('tableCard').style.display='';
+  const filtered=getFiltered();
+  _visibleVideoIds=filtered.map(v=>v.id);
+  const {start}=renderPagination(filtered);
+  const rows=filtered.slice(start,start+PAGE_SIZE);
   const tbody=document.getElementById('tbody');
   if(!rows.length){
     tbody.innerHTML='<tr><td colspan="10" class="empty">No videos found.</td></tr>';
@@ -672,11 +821,283 @@ async function loadProductOptions(selectedProductId, selectedName) {
   document.getElementById('fProdId').value = selected?.id || '';
   if(selected && !selectedName) document.getElementById('fBrand').value = selected.name || '';
 }
+async function ensureProductOptions(){
+  if(PRODUCT_OPTIONS.length)return PRODUCT_OPTIONS;
+  const {data,error}=await db.from('products').select('id,name,brand').eq('user_id',user.id).order('name');
+  if(error){
+    console.warn('Could not load products for import mapping',error);
+    PRODUCT_OPTIONS=[];
+    return PRODUCT_OPTIONS;
+  }
+  PRODUCT_OPTIONS=data||[];
+  return PRODUCT_OPTIONS;
+}
 function syncSelectedProduct() {
   const selected = selectedProductFromInput();
   document.getElementById('fProdId').value = selected?.id || '';
 }
 window.syncSelectedProduct = syncSelectedProduct;
+
+function importSetState(state,message=''){
+  ['importLoading','importEmpty'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  const error=document.getElementById('importError');
+  if(error){error.style.display='none';error.textContent='';}
+  if(state==='loading')document.getElementById('importLoading').style.display='block';
+  if(state==='empty')document.getElementById('importEmpty').style.display='block';
+  if(state==='error'&&error){error.textContent=message||'Import search failed.';error.style.display='block';}
+}
+function openImportModal(){
+  document.getElementById('importHandle').value='';
+  document.getElementById('importResults').innerHTML='';
+  _importVideos=[];
+  importSetState('');
+  document.getElementById('importOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('importHandle').focus(),80);
+}
+function closeImportModal(){
+  document.getElementById('importOverlay')?.classList.remove('open');
+}
+window.openImportModal=openImportModal;
+window.closeImportModal=closeImportModal;
+function importImageUrlFrom(value){
+  if(!value)return '';
+  if(typeof value==='string')return /^https?:\/\//i.test(value.trim())?value.trim():'';
+  if(Array.isArray(value)){
+    for(const item of value){const found=importImageUrlFrom(item);if(found)return found;}
+    return '';
+  }
+  if(typeof value==='object'){
+    const directKeys=['url','src','uri','display_url','image_url','cover_url','thumbnail_url','thumb_url','large_url','medium_url','small_url','origin_url','original_url','play_addr','download_addr'];
+    for(const key of directKeys){const found=importImageUrlFrom(value[key]);if(found)return found;}
+    const nestedKeys=['url_list','urls','images','image_urls','cover','image','thumbnail','thumb','video','video_data','media'];
+    for(const key of nestedKeys){const found=importImageUrlFrom(value[key]);if(found)return found;}
+  }
+  return '';
+}
+function deepTextFrom(value,keys=[],depth=5){
+  if(value==null||depth<0)return '';
+  if(typeof value==='string'||typeof value==='number')return String(value).trim();
+  if(Array.isArray(value)){
+    for(const item of value){const found=deepTextFrom(item,keys,depth-1);if(found)return found;}
+    return '';
+  }
+  if(typeof value==='object'){
+    for(const key of keys){
+      const found=deepTextFrom(value[key],keys,depth-1);
+      if(found)return found;
+    }
+    for(const item of Object.values(value)){
+      const found=deepTextFrom(item,keys,depth-1);
+      if(found)return found;
+    }
+  }
+  return '';
+}
+function deepNumberFrom(value,keys=[],depth=5){
+  const raw=deepTextFrom(value,keys,depth);
+  return raw?Number(String(raw).replace(/[^0-9.-]/g,''))||0:0;
+}
+function normalizeTikTokHandle(value){
+  let text=String(value||'').trim();
+  const urlMatch=text.match(/tiktok\.com\/@([^/?#]+)/i);
+  if(urlMatch)return urlMatch[1].replace(/^@/,'');
+  return text.replace(/^@/,'').replace(/[/?#].*$/,'').trim();
+}
+function extractTikTokVideos(payload){
+  const candidates=[
+    payload?.videos,
+    payload?.data?.videos,
+    payload?.data?.items,
+    payload?.items,
+    payload?.aweme_list,
+    payload?.data?.aweme_list,
+    payload?.data,
+    payload?.results
+  ];
+  const found=candidates.find(Array.isArray);
+  return found||[];
+}
+function normalizeTikTokDate(raw){
+  const value=deepTextFrom(raw,['create_time','createTime','created_at','createdAt','timestamp','publish_time','publishTime','date']);
+  if(!value)return {date:todayKey(),time:null};
+  const numeric=Number(value);
+  const d=!Number.isNaN(numeric)&&numeric>100000
+    ? new Date(numeric>9999999999?numeric:numeric*1000)
+    : new Date(value);
+  if(Number.isNaN(d.getTime()))return {date:todayKey(),time:null};
+  return {
+    date:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
+    time:`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:00`
+  };
+}
+function normalizeTikTokUrl(raw){
+  const direct=deepTextFrom(raw,['share_url','shareUrl','url','web_url','webUrl','video_url','videoUrl','play_url','playUrl']);
+  if(/^https?:\/\//i.test(direct))return direct;
+  const id=deepTextFrom(raw,['id','aweme_id','video_id','videoId']);
+  const author=deepTextFrom(raw,['author_unique_id','authorUniqueId','unique_id','uniqueId','author','username']);
+  return id&&author?`https://www.tiktok.com/@${encodeURIComponent(String(author).replace(/^@/,''))}/video/${encodeURIComponent(id)}`:'';
+}
+function normalizeTikTokVideo(raw){
+  const caption=deepTextFrom(raw,['desc','description','caption','title','text']);
+  const stats=raw?.statistics||raw?.stats||raw?.video_stats||raw?.videoStats||raw;
+  const posted=normalizeTikTokDate(raw);
+  const hashtags=[];
+  const rawTags=raw?.text_extra||raw?.textExtra||raw?.hashtags||raw?.challenge_info||raw?.challenges||[];
+  (Array.isArray(rawTags)?rawTags:[]).forEach(tag=>{
+    const name=String(tag?.hashtag_name||tag?.hashtagName||tag?.name||tag?.title||tag||'').replace(/^#/,'').trim();
+    if(name)hashtags.push(`#${name}`);
+  });
+  return {
+    caption,
+    hook:firstSentence(caption),
+    url:normalizeTikTokUrl(raw),
+    thumbnail:importImageUrlFrom(raw?.cover||raw?.dynamic_cover||raw?.origin_cover||raw?.video?.cover||raw?.video?.dynamic_cover||raw?.video||raw),
+    views:deepNumberFrom(stats,['play_count','playCount','view_count','viewCount','views']),
+    likes:deepNumberFrom(stats,['digg_count','diggCount','like_count','likeCount','likes']),
+    shares:deepNumberFrom(stats,['share_count','shareCount','shares']),
+    comments:deepNumberFrom(stats,['comment_count','commentCount','comments']),
+    sound:deepTextFrom(raw,['music_title','musicTitle','sound','sound_name','music','title']),
+    hashtags:[...new Set(hashtags)],
+    date:posted.date,
+    time:posted.time,
+    raw
+  };
+}
+function guessProductForImport(video){
+  const haystack=normProductName(`${video.caption} ${video.url}`);
+  if(!haystack)return null;
+  return PRODUCT_OPTIONS.find(product=>{
+    const name=normProductName(product.name);
+    const brand=normProductName(product.brand);
+    return (name&&haystack.includes(name))||(brand&&haystack.includes(brand));
+  })||null;
+}
+function renderImportResults(){
+  const results=document.getElementById('importResults');
+  if(!_importVideos.length){results.innerHTML='';importSetState('empty');return;}
+  const options=PRODUCT_OPTIONS.map(product=>`<option value="${esc(product.id)}">${esc(product.name||'Untitled')}${product.brand?` — ${esc(product.brand)}`:''}</option>`).join('');
+  results.innerHTML=_importVideos.map((video,index)=>{
+    const guess=guessProductForImport(video);
+    return `<article class="import-video-card">
+      <input class="import-check" type="checkbox" id="impCheck${index}" checked>
+      <img class="import-thumb" src="${esc(video.thumbnail||'icons/default-product.png')}" alt="" onerror="this.onerror=null;this.src='icons/default-product.png';">
+      <div>
+        <div class="import-caption">${esc(video.caption||'Untitled TikTok')}</div>
+        <div class="import-meta"><span>${esc(fmtDate(video.date))}</span><span>${fmtNum(video.views)} views</span><span>${fmtNum(video.likes)} likes</span></div>
+        <select class="import-product-select" id="impProduct${index}">
+          <option value="">Unlisted product</option>
+          ${options}
+        </select>
+      </div>
+    </article>`;
+  }).join('');
+  _importVideos.forEach((video,index)=>{
+    const guess=guessProductForImport(video);
+    if(guess)document.getElementById(`impProduct${index}`).value=guess.id;
+  });
+}
+async function fetchTikTokVideosForHandle(handle,key){
+  const urls=[
+    `https://api.scrapecreators.com/v3/tiktok/profile/videos?handle=${encodeURIComponent(handle)}`,
+    `https://api.scrapecreators.com/v3/tiktok/profile/videos?username=${encodeURIComponent(handle)}`
+  ];
+  let lastError=null;
+  for(const url of urls){
+    const res=await fetch(url,{headers:{'x-api-key':key}});
+    const text=await res.text();
+    let data={};
+    try{data=text?JSON.parse(text):{};}catch(e){lastError=new Error('The TikTok videos API did not return readable data.');continue;}
+    if(!res.ok){lastError=new Error(data?.message||data?.error||`TikTok videos API error ${res.status}`);continue;}
+    const videos=extractTikTokVideos(data);
+    if(videos.length)return videos;
+  }
+  if(lastError)throw lastError;
+  return [];
+}
+async function searchTikTokVideos(){
+  const handle=normalizeTikTokHandle(document.getElementById('importHandle').value);
+  const key=(localStorage.getItem(PRODUCT_IMPORT_KEY)||'').trim();
+  if(!handle){document.getElementById('importHandle').focus();return;}
+  if(!key){importSetState('error','Add your ScrapeCreators API key in Settings first.');return;}
+  const btn=document.getElementById('importSearchBtn');
+  btn.disabled=true;btn.textContent='Searching...';
+  document.getElementById('importResults').innerHTML='';
+  importSetState('loading');
+  try{
+    await ensureProductOptions();
+    const rawVideos=await fetchTikTokVideosForHandle(handle,key);
+    _importVideos=rawVideos.map(normalizeTikTokVideo).filter(video=>video.caption||video.url).slice(0,30);
+    if(!_importVideos.length){importSetState('empty');return;}
+    importSetState('');
+    renderImportResults();
+  }catch(err){
+    importSetState('error','Search failed: '+(err.message||'Unknown error'));
+  }finally{
+    btn.disabled=false;btn.textContent='Search';
+  }
+}
+window.searchTikTokVideos=searchTikTokVideos;
+function importNotesForTikTok(video,product){
+  const lines=[
+    `Product: ${product?.name||'Unlisted product'}`,
+    `Hook: ${video.hook||firstSentence(video.caption)||product?.name||'Imported TikTok'}`,
+    video.thumbnail?`TikTok thumbnail: ${video.thumbnail}`:'',
+    video.url?`TikTok URL: ${video.url}`:'',
+    video.caption?`Caption: ${video.caption}`:'',
+    video.hashtags?.length?`Hashtags: ${video.hashtags.join(' ')}`:'',
+    video.likes?`Likes: ${video.likes}`:'',
+    video.shares?`Shares: ${video.shares}`:'',
+    video.comments?`Comments: ${video.comments}`:'',
+    video.sound?`Sound: ${video.sound}`:'',
+    'Imported from TikTok scraper.'
+  ].filter(Boolean);
+  return lines.join('\n');
+}
+async function importSelectedTikToks(){
+  if(!_importVideos.length)return;
+  const selected=_importVideos.map((video,index)=>({video,index})).filter(item=>document.getElementById(`impCheck${item.index}`)?.checked);
+  if(!selected.length){showToast('Choose at least one TikTok to import.','error');return;}
+  const btn=document.getElementById('importSaveBtn');
+  btn.disabled=true;btn.textContent='Importing...';
+  let imported=0;
+  try{
+    for(const {video,index} of selected){
+      const productId=document.getElementById(`impProduct${index}`)?.value||'';
+      const product=PRODUCT_OPTIONS.find(item=>item.id===productId)||null;
+      const row={
+        user_id:user.id,
+        title:video.hook||firstSentence(video.caption)||product?.name||'Imported TikTok',
+        brand:product?.name||'Unlisted product',
+        date:video.date||todayKey(),
+        posted_time:video.time||null,
+        status:'live',
+        views:Math.max(0,parseInt(video.views,10)||0),
+        units:0,
+        gmv:0,
+        notes:importNotesForTikTok(video,product),
+        link:video.url||'',
+        prod_id:product?.id||null
+      };
+      let result=await db.from('videos').insert(row);
+      if(result.error&&/(posted_time|prod_id)/i.test(result.error.message||'')){
+        const fallback={...row};
+        if(/posted_time/i.test(result.error.message||''))delete fallback.posted_time;
+        if(/prod_id/i.test(result.error.message||''))delete fallback.prod_id;
+        result=await db.from('videos').insert(fallback);
+      }
+      if(result.error)throw result.error;
+      imported++;
+    }
+    showToast(`Imported ${imported} TikTok${imported===1?'':'s'}`);
+    closeImportModal();
+    await loadVideos(1);
+  }catch(err){
+    showToast(err.message||'Import failed','error');
+  }finally{
+    btn.disabled=false;btn.textContent='Import Selected';
+  }
+}
+window.importSelectedTikToks=importSelectedTikToks;
 
 async function adjustProductUnits(productName, delta) {
   const amount = Number(delta) || 0;
