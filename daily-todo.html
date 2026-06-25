@@ -200,6 +200,8 @@ a{text-decoration:none;color:inherit;}
 .weekly-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap;}
 .weekly-remove{width:30px;height:30px;border:1px solid var(--border-mid);border-radius:8px;background:transparent;color:var(--text-muted);font-size:18px;font-weight:800;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all 0.12s;}
 .weekly-remove:hover{background:rgba(180,50,40,0.12);border-color:rgba(180,50,40,0.35);color:#c83c32;}
+.weekly-duplicate{width:30px;height:30px;border:1px solid var(--border-mid);border-radius:8px;background:transparent;color:var(--text-muted);font-size:15px;font-weight:800;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all 0.12s;}
+.weekly-duplicate:hover{border-color:var(--rust);color:var(--rust);background:color-mix(in srgb,var(--rust) 8%,transparent);}
 .weekly-date-input{border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-family:'Noto Sans Mono',monospace;font-size:12px;padding:7px 9px;outline:none;}
 .weekly-date-input:focus{border-color:var(--rust);}
 .weekly-empty{background:var(--surface);border:1px dashed var(--border-mid);border-radius:14px;padding:36px;text-align:center;color:var(--text-muted);}
@@ -873,7 +875,7 @@ function renderWeeklyItem(item){
       <button class="hbtn" onclick="moveWeeklyItemToDate('${esc(item.queueId)}','${esc(todayKey)}')">Today</button>
       <input class="weekly-date-input" type="date" value="${esc(item.date)}" onchange="moveWeeklyItemToDate('${esc(item.queueId)}',this.value)">
       <button class="hbtn" onclick="openWeeklyItemDay('${esc(item.date)}','${esc(item.prodId||'')}','${esc(item.name)}')">Open Day</button>
-      <button class="hbtn" onclick="duplicateWeeklyItem('${esc(item.queueId)}')">Duplicate</button>
+      <button class="weekly-duplicate" title="Duplicate take" aria-label="Duplicate take" onclick="duplicateWeeklyItem('${esc(item.queueId)}')">⧉</button>
       <button class="weekly-remove" title="Remove take" aria-label="Remove take" onclick="deleteWeeklyItem('${esc(item.queueId)}')">×</button>
     </div>
   </div>`;
