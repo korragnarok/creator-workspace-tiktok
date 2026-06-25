@@ -859,20 +859,49 @@ function closeImportModal(){
 }
 window.openImportModal=openImportModal;
 window.closeImportModal=closeImportModal;
+function cleanImportUrl(value){
+  const text=String(value||'').trim().replace(/\\u002F/g,'/').replace(/&amp;/g,'&');
+  return /^https?:\/\//i.test(text)?text:'';
+}
 function importImageUrlFrom(value){
-  if(!value)return '';
-  if(typeof value==='string')return /^https?:\/\//i.test(value.trim())?value.trim():'';
-  if(Array.isArray(value)){
-    for(const item of value){const found=importImageUrlFrom(item);if(found)return found;}
-    return '';
+  const candidates=[];
+  const seen=new Set();
+  const preferredKeys=['cover','thumbnail','thumb','poster','image','display','origin','dynamic','large','medium','small'];
+  const blockedKeys=['avatar','author','music','play','download','video_url','play_url','download_url'];
+  function scoreCandidate(url,path){
+    const lowerUrl=url.toLowerCase();
+    const lowerPath=path.toLowerCase();
+    let score=0;
+    preferredKeys.forEach(key=>{if(lowerPath.includes(key))score+=18;});
+    blockedKeys.forEach(key=>{if(lowerPath.includes(key))score-=35;});
+    if(/\.(jpe?g|png|webp)(\?|$)/i.test(url))score+=30;
+    if(/(tiktokcdn|byteimg|muscdn|p16-|p19-|p21-|tos-)/i.test(url))score+=14;
+    if(/(mp4|m3u8|video)/i.test(lowerUrl))score-=28;
+    if(/avatar/i.test(lowerUrl))score-=40;
+    if(/default-product|icons\//i.test(lowerUrl))score-=100;
+    return score;
   }
-  if(typeof value==='object'){
-    const directKeys=['url','src','uri','display_url','image_url','cover_url','thumbnail_url','thumb_url','large_url','medium_url','small_url','origin_url','original_url','play_addr','download_addr'];
-    for(const key of directKeys){const found=importImageUrlFrom(value[key]);if(found)return found;}
-    const nestedKeys=['url_list','urls','images','image_urls','cover','image','thumbnail','thumb','video','video_data','media'];
-    for(const key of nestedKeys){const found=importImageUrlFrom(value[key]);if(found)return found;}
+  function walk(item,path='',depth=0){
+    if(item==null||depth>7)return;
+    if(typeof item==='string'||typeof item==='number'){
+      const url=cleanImportUrl(item);
+      if(url&&!seen.has(url)){
+        seen.add(url);
+        candidates.push({url,path,score:scoreCandidate(url,path)});
+      }
+      return;
+    }
+    if(Array.isArray(item)){
+      item.forEach((child,index)=>walk(child,`${path}[${index}]`,depth+1));
+      return;
+    }
+    if(typeof item==='object'){
+      Object.entries(item).forEach(([key,child])=>walk(child,path?`${path}.${key}`:key,depth+1));
+    }
   }
-  return '';
+  walk(value);
+  candidates.sort((a,b)=>b.score-a.score);
+  return candidates[0]?.url||'';
 }
 function deepTextFrom(value,keys=[],depth=5){
   if(value==null||depth<0)return '';
@@ -951,7 +980,7 @@ function normalizeTikTokVideo(raw){
     caption,
     hook:firstSentence(caption),
     url:normalizeTikTokUrl(raw),
-    thumbnail:importImageUrlFrom(raw?.cover||raw?.dynamic_cover||raw?.origin_cover||raw?.video?.cover||raw?.video?.dynamic_cover||raw?.video||raw),
+    thumbnail:importImageUrlFrom(raw?.cover||raw?.coverUrl||raw?.cover_url||raw?.dynamicCover||raw?.dynamic_cover||raw?.originCover||raw?.origin_cover||raw?.thumbnail||raw?.thumbnailUrl||raw?.image||raw?.images||raw?.video?.cover||raw?.video?.coverUrl||raw?.video?.dynamicCover||raw?.video?.dynamic_cover||raw?.video?.originCover||raw?.video?.origin_cover||raw?.video||raw),
     views:deepNumberFrom(stats,['play_count','playCount','view_count','viewCount','views']),
     likes:deepNumberFrom(stats,['digg_count','diggCount','like_count','likeCount','likes']),
     shares:deepNumberFrom(stats,['share_count','shareCount','shares']),
