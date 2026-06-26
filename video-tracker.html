@@ -192,6 +192,14 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .import-caption{font-weight:800;color:var(--ink);font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .import-meta{font-family:'Noto Sans Mono',sans-serif;font-size:11px;color:var(--text-muted);display:flex;gap:10px;flex-wrap:wrap;margin:6px 0;}
 .import-product-select{width:100%;padding:8px 10px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:12px;}
+.imp-prod-wrap{position:relative;width:100%;}
+.import-product-search{width:100%;padding:8px 10px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:12px;outline:none;cursor:text;}
+.import-product-search:focus{border-color:var(--rose);}
+.imp-prod-list{position:absolute;bottom:calc(100% + 4px);left:0;right:0;background:var(--bg-lift);border:1px solid var(--border-mid);border-radius:10px;box-shadow:0 -8px 24px rgba(0,0,0,0.28);max-height:200px;overflow-y:auto;z-index:600;display:flex;flex-direction:column;gap:2px;padding:6px;}
+.imp-prod-item{padding:7px 9px;border-radius:7px;font-size:12px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;gap:1px;}
+.imp-prod-item:hover,.imp-prod-item.focused{background:color-mix(in srgb,var(--rust) 10%,var(--surface) 90%);color:var(--ink);}
+.imp-prod-item .ipi-brand{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);}
+.imp-prod-item.ipi-unlisted{color:var(--text-muted);font-style:italic;}
 @media(max-width:1180px){.video-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
 @media(max-width:768px){.view-toggle{width:100%;justify-content:space-between}.view-btn{flex:1}.video-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.video-card-title{font-size:15px}.import-search-row{grid-template-columns:1fr}.import-results{grid-template-columns:1fr;max-height:58vh}.import-video-card{grid-template-columns:78px 1fr}.import-thumb{width:78px}}
 </style>
@@ -861,19 +869,22 @@ function _prodPickerOutside(e){
 }
 async function beginProductInlineEdit(event, videoId, currentName){
   event.stopPropagation();
+  event.preventDefault();
   if(_editVideosMode)return;
   closeProdPicker();
   await ensureProductOptions();
   const cell = event.currentTarget;
   const rect = cell.getBoundingClientRect();
+  // Use fixed positioning — no scroll offset needed
+  const top = rect.bottom + 4;
+  const left = Math.min(rect.left, window.innerWidth - 300);
   const wrap = document.createElement('div');
   wrap.className = 'prod-picker-wrap';
-  wrap.style.top = (rect.bottom + window.scrollY + 4) + 'px';
-  wrap.style.left = Math.min(rect.left + window.scrollX, window.innerWidth - 296) + 'px';
+  wrap.style.cssText = 'position:fixed;top:' + top + 'px;left:' + left + 'px;';
   const input = document.createElement('input');
   input.className = 'prod-picker-search';
   input.placeholder = 'Search products...';
-  input.value = currentName === 'No product' ? '' : currentName;
+  input.value = (currentName === 'No product' || currentName === '') ? '' : currentName;
   const list = document.createElement('div');
   list.className = 'prod-picker-list';
   wrap.appendChild(input);
@@ -890,14 +901,14 @@ async function beginProductInlineEdit(event, videoId, currentName){
       const unlistedItem = document.createElement('div');
       unlistedItem.className = 'prod-picker-item pi-unlisted';
       unlistedItem.textContent = 'Use "' + q + '" as unlisted';
-      unlistedItem.onclick = () => saveProductPick(videoId, q, null);
+      unlistedItem.onclick = (e) => { e.stopPropagation(); saveProductPick(videoId, q, null); };
       list.appendChild(unlistedItem);
     }
     filtered.forEach(p => {
       const item = document.createElement('div');
       item.className = 'prod-picker-item';
       item.innerHTML = '<span>' + p.name + '</span>' + (p.brand ? '<span class="pi-brand">' + p.brand + '</span>' : '');
-      item.onclick = () => saveProductPick(videoId, p.name, p.id);
+      item.onclick = (e) => { e.stopPropagation(); saveProductPick(videoId, p.name, p.id); };
       list.appendChild(item);
     });
     if(!filtered.length && !q){
@@ -907,8 +918,14 @@ async function beginProductInlineEdit(event, videoId, currentName){
   renderList(input.value);
   input.oninput = () => renderList(input.value);
   input.onkeydown = e => { if(e.key==='Escape')closeProdPicker(); };
-  setTimeout(()=>{input.focus();input.select();},60);
-  setTimeout(()=>document.addEventListener('click',_prodPickerOutside,true),60);
+  // Use requestAnimationFrame to ensure element is in DOM before adding outside-click listener
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      input.focus();
+      if(input.value) input.select();
+      document.addEventListener('click', _prodPickerOutside, true);
+    });
+  });
 }
 async function saveProductPick(videoId, name, prodId){
   closeProdPicker();
@@ -926,6 +943,100 @@ async function saveProductPick(videoId, name, prodId){
   }
 }
 window.beginProductInlineEdit = beginProductInlineEdit;
+
+// Import searchable product picker
+let _impProdFocusIndex = -1;
+function openImpProd(index){
+  const listEl = document.getElementById('impProdList' + index);
+  const searchEl = document.getElementById('impProdSearch' + index);
+  if(!listEl || !searchEl) return;
+  _impProdFocusIndex = -1;
+  renderImpProdList(index, searchEl.value);
+  listEl.style.display = 'flex';
+  // Close other open lists
+  document.querySelectorAll('.imp-prod-list').forEach(el => {
+    if(el.id !== 'impProdList' + index) el.style.display = 'none';
+  });
+}
+function filterImpProd(index){
+  const searchEl = document.getElementById('impProdSearch' + index);
+  const listEl = document.getElementById('impProdList' + index);
+  if(!listEl) return;
+  // If cleared, clear hidden value too
+  if(!searchEl.value.trim()){
+    document.getElementById('impProduct' + index).value = '';
+  }
+  _impProdFocusIndex = -1;
+  renderImpProdList(index, searchEl.value);
+  listEl.style.display = 'flex';
+}
+function renderImpProdList(index, q){
+  const listEl = document.getElementById('impProdList' + index);
+  if(!listEl) return;
+  const lower = (q||'').toLowerCase();
+  const filtered = PRODUCT_OPTIONS.filter(p =>
+    !q || p.name.toLowerCase().includes(lower) || (p.brand||'').toLowerCase().includes(lower)
+  ).slice(0, 40);
+  listEl.innerHTML = '';
+  // Unlisted option always at top
+  const unlisted = document.createElement('div');
+  unlisted.className = 'imp-prod-item ipi-unlisted';
+  unlisted.textContent = q ? 'Use "' + q + '" as unlisted' : 'Unlisted product';
+  unlisted.onmousedown = (e) => { e.preventDefault(); selectImpProd(index, '', null); };
+  listEl.appendChild(unlisted);
+  filtered.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'imp-prod-item';
+    item.dataset.id = p.id;
+    item.dataset.name = p.name;
+    item.innerHTML = '<span>' + p.name + '</span>' + (p.brand ? '<span class="ipi-brand">' + p.brand + '</span>' : '');
+    item.onmousedown = (e) => { e.preventDefault(); selectImpProd(index, p.name + (p.brand ? ' — ' + p.brand : ''), p.id); };
+    listEl.appendChild(item);
+  });
+}
+function selectImpProd(index, displayName, productId){
+  const searchEl = document.getElementById('impProdSearch' + index);
+  const hiddenEl = document.getElementById('impProduct' + index);
+  const listEl = document.getElementById('impProdList' + index);
+  if(searchEl) searchEl.value = displayName || '';
+  if(hiddenEl) hiddenEl.value = productId || '';
+  if(listEl) listEl.style.display = 'none';
+  _impProdFocusIndex = -1;
+}
+function impProdKey(event, index){
+  const listEl = document.getElementById('impProdList' + index);
+  if(!listEl || listEl.style.display === 'none') return;
+  const items = listEl.querySelectorAll('.imp-prod-item');
+  if(event.key === 'ArrowDown'){
+    event.preventDefault();
+    _impProdFocusIndex = Math.min(_impProdFocusIndex + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('focused', i === _impProdFocusIndex));
+  } else if(event.key === 'ArrowUp'){
+    event.preventDefault();
+    _impProdFocusIndex = Math.max(_impProdFocusIndex - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('focused', i === _impProdFocusIndex));
+  } else if(event.key === 'Enter'){
+    event.preventDefault();
+    if(_impProdFocusIndex >= 0 && items[_impProdFocusIndex]){
+      items[_impProdFocusIndex].onmousedown(event);
+    } else {
+      listEl.style.display = 'none';
+    }
+  } else if(event.key === 'Escape'){
+    listEl.style.display = 'none';
+  }
+}
+// Close import pickers on outside click
+document.addEventListener('click', (e) => {
+  document.querySelectorAll('.imp-prod-list').forEach(listEl => {
+    const index = listEl.id.replace('impProdList','');
+    const wrap = document.getElementById('impProdWrap' + index);
+    if(wrap && !wrap.contains(e.target)) listEl.style.display = 'none';
+  });
+});
+window.openImpProd = openImpProd;
+window.filterImpProd = filterImpProd;
+window.impProdKey = impProdKey;
 
 function importSetState(state,message=''){
   ['importLoading','importEmpty'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
@@ -1394,16 +1505,21 @@ function renderImportResults(){
       <div>
         <div class="import-caption">${esc(video.caption||'Untitled TikTok')}</div>
         <div class="import-meta"><span>${esc(fmtDate(video.date))}</span><span>${fmtNum(video.views)} views</span><span>${fmtNum(video.likes)} likes</span></div>
-        <select class="import-product-select" id="impProduct${index}">
-          <option value="">Unlisted product</option>
-          ${options}
-        </select>
+        <div class="imp-prod-wrap" id="impProdWrap${index}">
+          <input class="import-product-search" id="impProdSearch${index}" placeholder="Search products..." autocomplete="off" oninput="filterImpProd(${index})" onfocus="openImpProd(${index})" onkeydown="impProdKey(event,${index})">
+          <input type="hidden" id="impProduct${index}">
+          <div class="imp-prod-list" id="impProdList${index}" style="display:none;"></div>
+        </div>
       </div>
     </article>`;
   }).join('');
   _importVideos.forEach((video,index)=>{
     const guess=guessProductForImport(video);
-    if(guess)document.getElementById(`impProduct${index}`).value=guess.id;
+    if(guess){
+      document.getElementById(`impProduct${index}`).value=guess.id;
+      const searchEl=document.getElementById(`impProdSearch${index}`);
+      if(searchEl)searchEl.value=guess.name+(guess.brand?' — '+guess.brand:'');
+    }
   });
 }
 function importThumbError(img){
