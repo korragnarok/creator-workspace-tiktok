@@ -772,7 +772,7 @@ function renderFilterPills(){
 
 function weeklyDateLabel(key){
   const d=new Date(`${key}T12:00:00`);
-  return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  return d.toLocaleDateString('en-US',{weekday:'long'});
 }
 function loadExpandedWeeklyProducts(){
   try{
@@ -927,9 +927,8 @@ function renderCards(){
             <div class="product-card-name">${esc(card.name)}</div>
             ${card.brand?`<div class="product-card-brand">${esc(card.brand)}</div>`:''}
           </div>
-          <span class="product-progress-count pcard-count">${doneTakes}/${allTakes.length} done</span>
           <div class="pcard-btns" onclick="event.stopPropagation();">
-            <a class="hbtn" href="${esc(scriptWorkshopUrl(card))}">Workshop</a>
+            <button class="hbtn${doneTakes===allTakes.length&&allTakes.length>0?' done-active':''}" onclick="toggleAllTakes(${jsArg(card.id)})">${doneTakes===allTakes.length&&allTakes.length>0?'Filmed':'Not Started'}</button>
             <button class="hbtn danger" onclick="removeCard(${jsArg(card.id)})">Remove</button>
           </div>
         </div>
@@ -1031,7 +1030,7 @@ function renderTakeExpanded(card,take,totalTakes){
     <span class="take-status${take.done?' filmed':''}">${take.done?'✓ Done':'Not filmed yet'}</span>
     <div class="take-footer-btns">
       ${take.done?`<button class="tbtn done-active" onclick="clearSingleTake('${esc(card.id)}','${esc(take.id)}',this)">Clear</button>`:''}
-      <button class="tbtn${take.done?' done-active':''}" onclick="toggleDone('${esc(card.id)}','${esc(take.id)}')">${take.done?'Undo':'Mark Done'}</button>
+      <button class="tbtn${take.done?' done-active':''}" onclick="toggleDone('${esc(card.id)}','${esc(take.id)}')">${take.done?'Undo':'Filmed'}</button>
       ${totalTakes>1?`<button class="tbtn del" onclick="removeTake('${esc(card.id)}','${esc(take.id)}')">Remove</button>`:''}
     </div>
   </div>`;
@@ -1060,7 +1059,7 @@ function updateTakeDoneDom(card,take){
   const footerBtns=takeEl.querySelector('.take-footer-btns');
   if(footerBtns){
     footerBtns.innerHTML=`${take.done?`<button class="tbtn done-active" onclick="clearSingleTake('${esc(card.id)}','${esc(take.id)}',this)">Clear</button>`:''}
-      <button class="tbtn${take.done?' done-active':''}" onclick="toggleDone('${esc(card.id)}','${esc(take.id)}')">${take.done?'Undo':'Mark Done'}</button>
+      <button class="tbtn${take.done?' done-active':''}" onclick="toggleDone('${esc(card.id)}','${esc(take.id)}')">${take.done?'Undo':'Filmed'}</button>
       ${(card.takes||[]).length>1?`<button class="tbtn del" onclick="removeTake('${esc(card.id)}','${esc(take.id)}')">Remove</button>`:''}`;
   }
   updateCardDoneCount(card);
@@ -1332,6 +1331,22 @@ async function toggleDone(cardId,takeId){
   }
   refreshProgressAndFilters();
   if(take.queueId)await db.from('queue').update({done:take.done}).eq('id',take.queueId);
+}
+async function toggleAllTakes(cardId){
+  const card=TODO.find(c=>c.id===cardId);
+  if(!card)return;
+  const allTakes=card._allTakes||card.takes||[];
+  const allDone=allTakes.every(t=>t.done);
+  // If all filmed → undo all; otherwise → mark all filmed
+  const newDone=!allDone;
+  const updates=[];
+  allTakes.forEach(take=>{
+    take.done=newDone;
+    if(take.queueId)updates.push(db.from('queue').update({done:newDone}).eq('id',take.queueId));
+  });
+  await Promise.all(updates);
+  refreshProgressAndFilters();
+  renderCards();
 }
 async function setFilmingLocation(cardId,takeId,type){
   const card=TODO.find(c=>c.id===cardId),take=card?.takes.find(t=>t.id===takeId);
