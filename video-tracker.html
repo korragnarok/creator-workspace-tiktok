@@ -893,6 +893,17 @@ function cleanImportUrl(value){
   }
   return /^https?:\/\//i.test(text)?text:'';
 }
+function isVideoLikeImportUrl(value){
+  const url=String(value||'').toLowerCase();
+  return /(\.mp4|\.m3u8)(\?|$)/i.test(url)
+    || /[?&]mime_type=video/i.test(url)
+    || /\/video\//i.test(url)
+    || /(play_addr|download_addr|playwm|video_mp4|video\/tos)/i.test(url);
+}
+function isLikelyImportImageUrl(value){
+  const url=cleanImportUrl(value);
+  return !!url&&!isVideoLikeImportUrl(url)&&!/default-product|icons\//i.test(url);
+}
 function importImageUrlFrom(value){
   const candidates=[];
   const seen=new Set();
@@ -901,6 +912,7 @@ function importImageUrlFrom(value){
   function scoreCandidate(url,path){
     const lowerUrl=url.toLowerCase();
     const lowerPath=path.toLowerCase();
+    if(isVideoLikeImportUrl(url))return -999;
     let score=0;
     preferredKeys.forEach(key=>{if(lowerPath.includes(key))score+=18;});
     blockedKeys.forEach(key=>{if(lowerPath.includes(key))score-=35;});
@@ -915,7 +927,7 @@ function importImageUrlFrom(value){
     if(item==null||depth>7)return;
     if(typeof item==='string'||typeof item==='number'){
       const url=cleanImportUrl(item);
-      if(url&&!seen.has(url)){
+      if(url&&isLikelyImportImageUrl(url)&&!seen.has(url)){
         seen.add(url);
         candidates.push({url,path,score:scoreCandidate(url,path)});
       }
@@ -931,13 +943,14 @@ function importImageUrlFrom(value){
   }
   walk(value);
   candidates.sort((a,b)=>b.score-a.score);
-  return candidates[0]?.url||'';
+  return candidates.find(candidate=>candidate.score>-100)?.url||'';
 }
 function tikTokThumbnailFrom(raw){
   function firstUrl(obj){
+    if(typeof obj==='string')return isLikelyImportImageUrl(obj)?cleanImportUrl(obj):null;
     const list=obj?.url_list||obj?.urlList;
     if(!Array.isArray(list))return null;
-    const urls=list.map(cleanImportUrl).filter(Boolean);
+    const urls=list.map(cleanImportUrl).filter(isLikelyImportImageUrl);
     return urls.find(url=>!/\.heic/i.test(url))||urls[0]||null;
   }
   const vid=raw?.video||{};
@@ -1109,7 +1122,7 @@ function normalizeTikTokVideo(raw){
 }
 const _tiktokOembedThumbCache=new Map();
 async function enrichTikTokThumbnail(video){
-  if(video.thumbnail||!video.url)return video;
+  if(isLikelyImportImageUrl(video.thumbnail)||!video.url)return video;
   if(_tiktokOembedThumbCache.has(video.url)){
     return {...video,thumbnail:_tiktokOembedThumbCache.get(video.url)||''};
   }
