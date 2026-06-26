@@ -545,6 +545,10 @@ let inspo=[];
 let workshopModalResolve=null;
 let aiModalResolve=null;
 let workshopReturnContext=null;
+function clearWorkshopReturnContext(){
+  workshopReturnContext=null;
+  if(window.location.search)history.replaceState({},'',window.location.pathname);
+}
 let activeDetailTab='onscreen';
 let detailDraft={onscreen:'',caption:'',seo:''};
 const DETAIL_TABS={
@@ -1184,6 +1188,7 @@ async function newScript(){
   if(!user){showToast('Still loading...','error');return;}
   mobFlushToDesk();
   if(fullScript()&&!(await openWorkshopConfirm('Start New Script?','This will clear the current workshop draft on this page.','Start New')))return;
+  clearWorkshopReturnContext();
   document.getElementById('scriptTitle').value='';
   selectProduct('','desktop');
   setDetailDraft({});
@@ -1231,6 +1236,7 @@ async function saveBackToTodo(script){
     update=await db.from('queue').update(fallbackPayload).eq('id',queueId);
   }
   if(update.error){throw new Error(update.error.message||'Could not update the To Do item.');}
+  clearWorkshopReturnContext();
   return true;
 }
 async function saveDraft(){
