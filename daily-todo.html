@@ -1362,100 +1362,26 @@ async function saveTakeField(cardId,takeId,field){
   take.hookText=setTakeFieldLine(take.hookText,field,input.value);
   if(take.queueId)await saveQueueRow(card,take);
 }
-function videoRowFromTake(card,take){
-  const notes=[];
-  const loc=getFilmingLocation(take.hookText);
-  const type=getFilmingType(take.hookText);
-  const onScreen=getTakeField(take.hookText,'onscreen');
-  const seo=getTakeField(take.hookText,'seo');
-  const caption=getTakeField(take.hookText,'caption');
-  const hashtags=getTakeField(take.hookText,'hashtags');
-  const hook=displayHookText(take.hookText) || firstScriptSentence(take.script);
-  const snapshot={
-    product:card.name||'',
-    brand:card.brand||'',
-    prodId:card.prodId||null,
-    hook,
-    location:loc.type?loc:null,
-    type:type.type?type:null,
-    onScreen,
-    seo,
-    caption,
-    hashtags,
-    script:take.script||'',
-    inspirationLinks:normalizeInspirationLinks(take.inspirationLinks)
-  };
-  notes.push('Product: '+card.name);
-  notes.push('TAKE_SNAPSHOT:'+encodeTakeSnapshot(snapshot));
-  if(hook)notes.push('Hook: '+hook);
-  if(loc.type)notes.push('Location: '+(loc.type==='other'?(loc.label||'Other'):loc.label));
-  if(type.type)notes.push('Type: '+type.label);
-  if(onScreen)notes.push('On-screen text: '+onScreen);
-  if(seo)notes.push('SEO strategy: '+seo);
-  if(caption)notes.push('Caption: '+caption);
-  if(hashtags)notes.push('Hashtags: '+hashtags);
-  if(take.script)notes.push('Script: '+take.script);
-  if(take.inspirationLinks?.length)notes.push('Inspiration: '+take.inspirationLinks.join(', '));
-	  return {
-	    user_id:_user.id,
-	    title:displayHookText(take.hookText)||card.name,
-	    brand:card.name,
-	    prod_id:card.prodId||null,
-	    date:currentKey(),
-	    posted_time:currentTimeValue(),
-	    status:'live',
-	    notes:notes.join('\n')
-	  };
-	}
 function currentTimeValue(){const d=new Date();return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;}
-async function insertVideoRows(rows){
-  let {error}=await db.from('videos').insert(rows);
-  if(error&&/(posted_time|prod_id)/i.test(error.message||'')){
-    const fallbackRows=rows.map(row=>{
-      const next={...row};
-      if(/posted_time/i.test(error.message||''))delete next.posted_time;
-      if(/prod_id/i.test(error.message||''))delete next.prod_id;
-      return next;
-    });
-    const retry=await db.from('videos').insert(fallbackRows);
-    error=retry.error;
-  }
-  return {error};
-}
 async function clearDoneToday(btn){
   const donePairs=[];
   TODO.forEach(card=>(card.takes||[]).forEach(take=>{if(take.done)donePairs.push({card,take});}));
   if(!donePairs.length){showToast('No done tasks yet');return;}
   const original=btn?.textContent||'Clear Done';
   if(btn){btn.disabled=true;btn.textContent='Clearing...';}
-  const rows=donePairs.map(({card,take})=>videoRowFromTake(card,take));
-  const {error}=await insertVideoRows(rows);
-  if(error){
-    if(btn){btn.disabled=false;btn.textContent=original;}
-    showToast('Could not save to Content Tracker: '+error.message,'error');
-    return;
-  }
   const ids=donePairs.map(({take})=>take.queueId).filter(Boolean);
   if(ids.length)await db.from('queue').delete().in('id',ids).eq('user_id',_user.id);
   donePairs.forEach(({card,take})=>{if(take.queueId)sessionStorage.removeItem('ts-'+take.queueId);card.takes=card.takes.filter(item=>item.id!==take.id);});
   TODO=TODO.filter(card=>(card.takes||[]).length>0);
-  if(btn)btn.textContent=original;
+  if(btn){btn.disabled=false;btn.textContent=original;}
   render();
-  showToast(`Saved ${rows.length} to Content Tracker`);
+  showToast(`Cleared ${donePairs.length} done task${donePairs.length===1?'':'s'}`);
 }
 async function clearSingleTake(cardId,takeId,btn){
   const card=TODO.find(c=>c.id===cardId);
   const take=card?.takes.find(t=>t.id===takeId);
   if(!card||!take)return;
-  const original=btn?.textContent||'Clear';
   if(btn){btn.disabled=true;btn.textContent='Clearing...';}
-  const row=videoRowFromTake(card,take);
-  const {error}=await insertVideoRows([row]);
-  if(error){
-    if(btn){btn.disabled=false;btn.textContent=original;}
-    showToast('Could not save to Content Tracker: '+error.message,'error');
-    return;
-  }
   if(take.queueId){
     await db.from('queue').delete().eq('id',take.queueId).eq('user_id',_user.id);
     sessionStorage.removeItem('ts-'+take.queueId);
@@ -1463,7 +1389,7 @@ async function clearSingleTake(cardId,takeId,btn){
   card.takes=card.takes.filter(item=>item.id!==take.id);
   TODO=TODO.filter(item=>(item.takes||[]).length>0);
   render();
-  showToast('Saved to Content Tracker');
+  showToast('Done — task cleared');
 }
 function copyAllScripts(btn){
   const all=[];TODO.forEach(card=>card.takes.forEach((take,i)=>{if(take.script)all.push(`${card.name.toUpperCase()}${card.takes.length>1?' — Take '+(i+1):''}\n${take.script}`);}));
