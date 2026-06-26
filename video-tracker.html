@@ -302,6 +302,8 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 const PAGE_SIZE=25;
 const TRACKER_VIEW_KEY='take24:video_tracker_view';
 const PRODUCT_IMPORT_KEY='take24:scrapecreators_api_key';
+const TIKTOK_IMPORT_BATCH_SIZE=60;
+const TIKTOK_IMPORT_MAX_PAGES=15;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
 let _editVideosMode=false,_selectedVideoIds=new Set(),_visibleVideoIds=[];
 let PRODUCT_OPTIONS=[];
@@ -1117,6 +1119,58 @@ function uniqueTikTokVideos(videos){
     return true;
   });
 }
+function tikTokVideoIdFromUrl(url){
+  const text=String(url||'');
+  const match=text.match(/\/video\/(\d+)/i)||text.match(/[?&](?:aweme_id|item_id|video_id)=(\d+)/i);
+  return match?match[1]:'';
+}
+function tikTokImportIdentityFromVideo(video){
+  const rawKey=video?.raw?tikTokRawIdentity(video.raw):'';
+  const rawId=rawKey.startsWith('id:')?rawKey.slice(3):'';
+  const urlId=tikTokVideoIdFromUrl(video?.url);
+  if(rawId)return `id:${rawId}`;
+  if(urlId)return `id:${urlId}`;
+  if(video?.url)return `url:${String(video.url).trim()}`;
+  return tikTokVideoIdentity(video);
+}
+function collectTikTokIdentitiesFromText(text){
+  const identities=new Set();
+  const body=String(text||'');
+  const urls=body.match(/https?:\/\/[^\s)]+/g)||[];
+  urls.forEach(url=>{
+    const clean=url.trim();
+    const id=tikTokVideoIdFromUrl(clean);
+    if(id)identities.add(`id:${id}`);
+    identities.add(`url:${clean}`);
+  });
+  const ids=body.matchAll(/\b(?:aweme_id|item_id|video_id)\s*[:=]\s*(\d{8,})\b/gi);
+  for(const match of ids)identities.add(`id:${match[1]}`);
+  return identities;
+}
+async function loadImportedTikTokIdentities(){
+  const identities=new Set();
+  const {data,error}=await db.from('videos').select('link,notes').eq('user_id',user.id);
+  if(error)return identities;
+  (data||[]).forEach(row=>{
+    [row.link,row.notes].forEach(value=>{
+      collectTikTokIdentitiesFromText(value).forEach(identity=>identities.add(identity));
+      const id=tikTokVideoIdFromUrl(value);
+      if(id)identities.add(`id:${id}`);
+      if(/^https?:\/\//i.test(String(value||'')))identities.add(`url:${String(value).trim()}`);
+    });
+  });
+  return identities;
+}
+function isAlreadyImportedTikTok(video,importedIdentities){
+  const identities=new Set([tikTokImportIdentityFromVideo(video),tikTokVideoIdentity(video)].filter(Boolean));
+  const urlId=tikTokVideoIdFromUrl(video?.url);
+  if(urlId)identities.add(`id:${urlId}`);
+  if(video?.url)identities.add(`url:${String(video.url).trim()}`);
+  for(const identity of identities){
+    if(importedIdentities.has(identity))return true;
+  }
+  return false;
+}
 function normalizeTikTokDate(raw){
   const value=deepTextFrom(raw,['create_time','createTime','created_at','createdAt','timestamp','publish_time','publishTime','date']);
   if(!value)return {date:todayKey(),time:null};
@@ -1244,7 +1298,7 @@ async function fetchTikTokVideosForHandle(handle,key){
     let pages=0;
     const seenVideos=new Set();
     const seenCursors=new Set();
-    while(pages<6){
+    while(pages<TIKTOK_IMPORT_MAX_PAGES){
       const url=cursor?`${base}&cursor=${encodeURIComponent(cursor)}&max_cursor=${encodeURIComponent(cursor)}`:base;
       const res=await fetch(url,{headers:{'x-api-key':key}});
       const text=await res.text();
@@ -1300,7 +1354,11 @@ async function searchTikTokVideos(){
   try{
     await ensureProductOptions();
     const rawVideos=await fetchTikTokVideosForHandle(handle,key);
-    const normalized=uniqueTikTokVideos(rawVideos.map(normalizeTikTokVideo).filter(video=>video.caption||video.url)).slice(0,60);
+    const importedIdentities=await loadImportedTikTokIdentities();
+    const allNormalized=uniqueTikTokVideos(rawVideos.map(normalizeTikTokVideo).filter(video=>video.caption||video.url));
+    const normalized=allNormalized
+      .filter(video=>!isAlreadyImportedTikTok(video,importedIdentities))
+      .slice(0,TIKTOK_IMPORT_BATCH_SIZE);
     _importVideos=await Promise.all(normalized.map(enrichTikTokThumbnail));
     if(!_importVideos.length){importSetState('empty');return;}
     importSetState('');
