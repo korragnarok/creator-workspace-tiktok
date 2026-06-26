@@ -214,6 +214,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="header-actions">
       <button class="btn btn-ghost" id="editVideosBtn" onclick="toggleVideoEditMode()">Edit Videos</button>
       <button class="btn btn-ghost" onclick="openImportModal()">Import TikToks</button>
+      <button class="btn btn-primary" id="importNewBtn" onclick="importNew()">↓ Import New</button>
       <button class="btn btn-primary" onclick="openModal()">+ Log Video</button>
     </div>
   </div>
@@ -318,6 +319,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 const PAGE_SIZE=25;
 const TRACKER_VIEW_KEY='take24:video_tracker_view';
 const PRODUCT_IMPORT_KEY='take24:scrapecreators_api_key';
+const TIKTOK_HANDLE_KEY='take24:tiktok_handle';
 const TIKTOK_IMPORT_BATCH_SIZE=60;
 const TIKTOK_IMPORT_MAX_PAGES=15;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
@@ -1075,12 +1077,38 @@ function importDebugSummary(rawVideos=[],videos=[]){
   console.info('TikTok import debug',_lastImportDebug,sample);
 }
 function openImportModal(){
-  document.getElementById('importHandle').value='';
+  const savedHandle=(localStorage.getItem(TIKTOK_HANDLE_KEY)||'').trim();
+  document.getElementById('importHandle').value=savedHandle?'@'+savedHandle:'';
   document.getElementById('importResults').innerHTML='';
   _importVideos=[];
   importSetState('');
   document.getElementById('importOverlay').classList.add('open');
-  setTimeout(()=>document.getElementById('importHandle').focus(),80);
+  setTimeout(()=>{
+    const el=document.getElementById('importHandle');
+    if(savedHandle){el.select();}else{el.focus();}
+  },80);
+}
+async function importNew(){
+  const savedHandle=(localStorage.getItem(TIKTOK_HANDLE_KEY)||'').trim();
+  const key=(localStorage.getItem(PRODUCT_IMPORT_KEY)||'').trim();
+  if(!savedHandle){
+    showToast('Add your TikTok handle in Settings first','error');
+    return;
+  }
+  if(!key){
+    showToast('Add your ScrapeCreators key in Settings first','error');
+    return;
+  }
+  const btn=document.getElementById('importNewBtn');
+  if(btn){btn.disabled=true;btn.textContent='Fetching...';}
+  // Open modal pre-filled and auto-search
+  document.getElementById('importHandle').value='@'+savedHandle;
+  document.getElementById('importResults').innerHTML='';
+  _importVideos=[];
+  importSetState('');
+  document.getElementById('importOverlay').classList.add('open');
+  await searchTikTokVideos();
+  if(btn){btn.disabled=false;btn.textContent='↓ Import New';}
 }
 function closeImportModal(){
   document.getElementById('importOverlay')?.classList.remove('open');
@@ -1619,6 +1647,7 @@ async function searchTikTokVideos(){
   }
 }
 window.searchTikTokVideos=searchTikTokVideos;
+window.importNew=importNew;
 function importNotesForTikTok(video,product){
   const lines=[
     `Product: ${product?.name||'Unlisted product'}`,
