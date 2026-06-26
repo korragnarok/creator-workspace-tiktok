@@ -341,9 +341,9 @@ async function init() {
   window._user = user;
   await loadVideos();
   document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
-  document.getElementById('importOverlay')?.addEventListener('click', function(e){ if(e.target===this) closeImportModal(); });
+  // Import overlay click does NOT close modal (user may have long import in progress)
   document.getElementById('modalOverlay').addEventListener('keydown', e => enterSaves(e, saveVideo));
-  document.addEventListener('keydown', e => { if(e.key === 'Escape') { closeModal(); closeImportModal(); } });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') { closeModal(); } });
 }
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
