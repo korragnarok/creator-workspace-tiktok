@@ -864,7 +864,7 @@ window.syncSelectedProduct = syncSelectedProduct;
 let _prodPickerWrap = null;
 function closeProdPicker(){
   if(_prodPickerWrap){_prodPickerWrap.remove();_prodPickerWrap=null;}
-  document.removeEventListener('click',_prodPickerOutside,true);
+  document.removeEventListener('mousedown',_prodPickerOutside,true);
 }
 function _prodPickerOutside(e){
   if(_prodPickerWrap&&!_prodPickerWrap.contains(e.target))closeProdPicker();
@@ -874,18 +874,18 @@ async function beginProductInlineEdit(event, videoId){
   event.preventDefault();
   if(_editVideosMode)return;
   if(!inlineEditingEnabled())return;
-  // Get current name from DATA to avoid attribute injection issues
   const currentName = DATA.find(v=>v.id===videoId)?.brand||'';
   closeProdPicker();
   await ensureProductOptions();
   const cell = event.currentTarget;
   const rect = cell.getBoundingClientRect();
-  // Use fixed positioning — no scroll offset needed
   const top = rect.bottom + 4;
   const left = Math.min(rect.left, window.innerWidth - 300);
   const wrap = document.createElement('div');
   wrap.className = 'prod-picker-wrap';
-  wrap.style.cssText = 'position:fixed;top:' + top + 'px;left:' + left + 'px;';
+  // position:fixed already in CSS class; just set coordinates
+  wrap.style.top = top + 'px';
+  wrap.style.left = left + 'px';
   const input = document.createElement('input');
   input.className = 'prod-picker-search';
   input.placeholder = 'Search products...';
@@ -896,6 +896,7 @@ async function beginProductInlineEdit(event, videoId){
   wrap.appendChild(list);
   document.body.appendChild(wrap);
   _prodPickerWrap = wrap;
+
   function renderList(q){
     const lower = q.toLowerCase();
     const filtered = PRODUCT_OPTIONS.filter(p =>
@@ -906,14 +907,16 @@ async function beginProductInlineEdit(event, videoId){
       const unlistedItem = document.createElement('div');
       unlistedItem.className = 'prod-picker-item pi-unlisted';
       unlistedItem.textContent = 'Use "' + q + '" as unlisted';
-      unlistedItem.onclick = (e) => { e.stopPropagation(); saveProductPick(videoId, q, null); };
+      // Use mousedown so it fires before the outside-click listener removes the element
+      unlistedItem.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); saveProductPick(videoId, q, null); });
       list.appendChild(unlistedItem);
     }
     filtered.forEach(p => {
       const item = document.createElement('div');
       item.className = 'prod-picker-item';
       item.innerHTML = '<span>' + p.name + '</span>' + (p.brand ? '<span class="pi-brand">' + p.brand + '</span>' : '');
-      item.onclick = (e) => { e.stopPropagation(); saveProductPick(videoId, p.name, p.id); };
+      // Use mousedown so it fires before the outside-click listener removes the element
+      item.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); saveProductPick(videoId, p.name, p.id); });
       list.appendChild(item);
     });
     if(!filtered.length && !q){
@@ -921,15 +924,15 @@ async function beginProductInlineEdit(event, videoId){
     }
   }
   renderList(input.value);
-  input.oninput = () => renderList(input.value);
-  input.onkeydown = e => { if(e.key==='Escape')closeProdPicker(); };
-  // Use requestAnimationFrame to ensure element is in DOM before adding outside-click listener
+  input.addEventListener('input', () => renderList(input.value));
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){ e.stopPropagation(); closeProdPicker(); }
+  });
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      input.focus();
-      if(input.value) input.select();
-      document.addEventListener('click', _prodPickerOutside, true);
-    });
+    input.focus();
+    if(input.value) input.select();
+    // Use mousedown (not click) for outside detection — consistent with item selection
+    document.addEventListener('mousedown', _prodPickerOutside, true);
   });
 }
 async function saveProductPick(videoId, name, prodId){
