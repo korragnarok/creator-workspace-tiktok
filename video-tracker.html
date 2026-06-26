@@ -855,13 +855,15 @@ function importDebugSummary(rawVideos=[],videos=[]){
   const rawCount=rawVideos.length;
   const shownCount=videos.length;
   const urlCount=videos.filter(video=>video.url).length;
-  const thumbCount=videos.filter(video=>video.thumbnail).length;
+  const thumbCount=videos.filter(video=>video.thumbnail||video.thumbnailCandidates?.length).length;
   const sample=rawVideos[0]||{};
   _lastImportDebug={
     rawCount,
     shownCount,
     urlCount,
     thumbCount,
+    firstThumbnail:videos[0]?.thumbnail||'',
+    firstThumbnailCandidates:videos[0]?.thumbnailCandidates?.slice(0,4)||[],
     sampleKeys:Object.keys(sample||{}),
     sampleVideoKeys:Object.keys(sample?.video||{})
   };
@@ -893,18 +895,27 @@ function cleanImportUrl(value){
   }
   return /^https?:\/\//i.test(text)?text:'';
 }
-function isVideoLikeImportUrl(value){
+function isVideoLikeImportUrl(value,path=''){
   const url=String(value||'').toLowerCase();
+  const lowerPath=String(path||'').toLowerCase();
+  if(/(cover|thumb|poster|origin_cover|dynamic_cover|animated_cover|image_infos|imageinfos|thumbnail)/i.test(lowerPath))return false;
+  // TikTok cover URLs can include /video/tos/ even when they are still image covers.
+  const isTikTokCdnCover=/(tiktokcdn|byteimg|muscdn|p16-|p19-|p21-|tos-)/i.test(url)
+    && /(cover|thumb|poster|origin|dynamic|animated|image)/i.test(url);
+  if(isTikTokCdnCover)return false;
   return /(\.mp4|\.m3u8)(\?|$)/i.test(url)
     || /[?&]mime_type=video/i.test(url)
     || /\/video\//i.test(url)
-    || /(play_addr|download_addr|playwm|video_mp4|video\/tos)/i.test(url);
+    || /(play_addr|download_addr|playwm|video_mp4)/i.test(url);
 }
-function isLikelyImportImageUrl(value){
+function isLikelyImportImageUrl(value,path=''){
   const url=cleanImportUrl(value);
-  return !!url&&!isVideoLikeImportUrl(url)&&!/default-product|icons\//i.test(url);
+  return !!url&&!isVideoLikeImportUrl(url,path)&&!/default-product|icons\//i.test(url);
 }
 function importImageUrlFrom(value){
+  return importImageUrlsFrom(value)[0]||'';
+}
+function importImageUrlsFrom(value){
   const candidates=[];
   const seen=new Set();
   const preferredKeys=['cover','thumbnail','thumb','poster','image','display','origin','dynamic','large','medium','small'];
@@ -912,7 +923,7 @@ function importImageUrlFrom(value){
   function scoreCandidate(url,path){
     const lowerUrl=url.toLowerCase();
     const lowerPath=path.toLowerCase();
-    if(isVideoLikeImportUrl(url))return -999;
+    if(isVideoLikeImportUrl(url,path))return -999;
     let score=0;
     preferredKeys.forEach(key=>{if(lowerPath.includes(key))score+=18;});
     blockedKeys.forEach(key=>{if(lowerPath.includes(key))score-=35;});
@@ -927,7 +938,7 @@ function importImageUrlFrom(value){
     if(item==null||depth>7)return;
     if(typeof item==='string'||typeof item==='number'){
       const url=cleanImportUrl(item);
-      if(url&&isLikelyImportImageUrl(url)&&!seen.has(url)){
+      if(url&&isLikelyImportImageUrl(url,path)&&!seen.has(url)){
         seen.add(url);
         candidates.push({url,path,score:scoreCandidate(url,path)});
       }
@@ -943,30 +954,31 @@ function importImageUrlFrom(value){
   }
   walk(value);
   candidates.sort((a,b)=>b.score-a.score);
-  return candidates.find(candidate=>candidate.score>-100)?.url||'';
+  return candidates.filter(candidate=>candidate.score>-100).map(candidate=>candidate.url);
 }
-function tikTokThumbnailFrom(raw){
-  function firstUrl(obj){
-    if(typeof obj==='string')return isLikelyImportImageUrl(obj)?cleanImportUrl(obj):null;
+function tikTokThumbnailCandidates(raw){
+  function firstUrl(obj,path=''){
+    if(typeof obj==='string')return isLikelyImportImageUrl(obj,path)?cleanImportUrl(obj):null;
     const list=obj?.url_list||obj?.urlList;
     if(!Array.isArray(list))return null;
-    const urls=list.map(cleanImportUrl).filter(isLikelyImportImageUrl);
+    const urls=list.map(cleanImportUrl).filter(url=>isLikelyImportImageUrl(url,path));
     return urls.find(url=>!/\.heic/i.test(url))||urls[0]||null;
   }
   const vid=raw?.video||{};
   const imagePost=raw?.image_post_info||raw?.imagePostInfo;
   const direct=[
-    firstUrl(vid?.origin_cover||vid?.originCover),
-    firstUrl(vid?.cover),
-    firstUrl(vid?.dynamic_cover||vid?.dynamicCover),
-    firstUrl(raw?.cover),
-    firstUrl(raw?.origin_cover),
-    firstUrl(raw?.originCover),
-    firstUrl(raw?.thumbnail),
-    firstUrl(raw?.image)
+    firstUrl(vid?.origin_cover||vid?.originCover,'video.origin_cover'),
+    firstUrl(vid?.cover,'video.cover'),
+    firstUrl(vid?.dynamic_cover||vid?.dynamicCover,'video.dynamic_cover'),
+    firstUrl(raw?.cover,'cover'),
+    firstUrl(raw?.origin_cover,'origin_cover'),
+    firstUrl(raw?.originCover,'originCover'),
+    firstUrl(raw?.thumbnail,'thumbnail'),
+    firstUrl(raw?.image,'image'),
+    firstUrl(raw?.image_infos,'image_infos'),
+    firstUrl(raw?.imageInfos,'imageInfos')
   ].filter(Boolean);
-  if(direct.length)return direct[0];
-  return importImageUrlFrom([
+  const found=importImageUrlsFrom([
     vid?.cover,
     vid?.origin_cover,
     vid?.originCover,
@@ -986,11 +998,17 @@ function tikTokThumbnailFrom(raw){
     raw?.thumbnail_url,
     raw?.video_cover,
     raw?.videoCover,
+    raw?.image_infos,
+    raw?.imageInfos,
     imagePost?.images,
     raw?.images,
     raw?.image,
     raw
   ]);
+  return [...new Set([...direct,...found])];
+}
+function tikTokThumbnailFrom(raw){
+  return tikTokThumbnailCandidates(raw)[0]||'';
 }
 function deepTextFrom(value,keys=[],depth=5){
   if(value==null||depth<0)return '';
@@ -1109,6 +1127,7 @@ function normalizeTikTokVideo(raw){
     hook:firstSentence(caption),
     url:normalizeTikTokUrl(raw),
     thumbnail:tikTokThumbnailFrom(raw),
+    thumbnailCandidates:tikTokThumbnailCandidates(raw),
     views:deepNumberFrom(stats,['play_count','playCount','view_count','viewCount','views']),
     likes:deepNumberFrom(stats,['digg_count','diggCount','like_count','likeCount','likes']),
     shares:deepNumberFrom(stats,['share_count','shareCount','shares']),
@@ -1122,19 +1141,25 @@ function normalizeTikTokVideo(raw){
 }
 const _tiktokOembedThumbCache=new Map();
 async function enrichTikTokThumbnail(video){
-  if(isLikelyImportImageUrl(video.thumbnail)||!video.url)return video;
+  const existing=[...new Set([video.thumbnail,...(video.thumbnailCandidates||[])]
+    .map(cleanImportUrl)
+    .filter(url=>url&&!/default-product|icons\//i.test(url)))];
+  if(!video.url)return {...video,thumbnail:existing[0]||'',thumbnailCandidates:existing};
   if(_tiktokOembedThumbCache.has(video.url)){
-    return {...video,thumbnail:_tiktokOembedThumbCache.get(video.url)||''};
+    const cached=_tiktokOembedThumbCache.get(video.url)||'';
+    const candidates=[...new Set([cached,...existing].filter(url=>url&&!/default-product|icons\//i.test(url)))];
+    return {...video,thumbnail:candidates[0]||'',thumbnailCandidates:candidates};
   }
   try{
     const res=await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(video.url)}`);
     const data=await res.json().catch(()=>({}));
     const thumbnail=cleanImportUrl(data?.thumbnail_url||data?.thumbnailUrl);
     _tiktokOembedThumbCache.set(video.url,thumbnail||'');
-    return thumbnail?{...video,thumbnail}:video;
+    const candidates=[...new Set([thumbnail,...existing].filter(url=>url&&!/default-product|icons\//i.test(url)))];
+    return {...video,thumbnail:candidates[0]||'',thumbnailCandidates:candidates};
   }catch(err){
     _tiktokOembedThumbCache.set(video.url,'');
-    return video;
+    return {...video,thumbnail:existing[0]||'',thumbnailCandidates:existing};
   }
 }
 function guessProductForImport(video){
@@ -1152,9 +1177,12 @@ function renderImportResults(){
   const options=PRODUCT_OPTIONS.map(product=>`<option value="${esc(product.id)}">${esc(product.name||'Untitled')}${product.brand?` — ${esc(product.brand)}`:''}</option>`).join('');
   results.innerHTML=_importVideos.map((video,index)=>{
     const guess=guessProductForImport(video);
+    const thumbs=[...new Set([video.thumbnail,...(video.thumbnailCandidates||[])]
+      .map(cleanImportUrl)
+      .filter(url=>url&&!/default-product|icons\//i.test(url)))];
     return `<article class="import-video-card">
       <input class="import-check" type="checkbox" id="impCheck${index}" checked>
-      <img class="import-thumb" src="${esc(video.thumbnail||'icons/default-product.png')}" alt="" onerror="this.onerror=null;this.src='icons/default-product.png';">
+      <img class="import-thumb" src="${esc(thumbs[0]||'icons/default-product.png')}" data-thumb-index="0" data-thumbs='${esc(JSON.stringify(thumbs))}' referrerpolicy="no-referrer" alt="" onerror="importThumbError(this);">
       <div>
         <div class="import-caption">${esc(video.caption||'Untitled TikTok')}</div>
         <div class="import-meta"><span>${esc(fmtDate(video.date))}</span><span>${fmtNum(video.views)} views</span><span>${fmtNum(video.likes)} likes</span></div>
@@ -1170,6 +1198,19 @@ function renderImportResults(){
     if(guess)document.getElementById(`impProduct${index}`).value=guess.id;
   });
 }
+function importThumbError(img){
+  let thumbs=[];
+  try{thumbs=JSON.parse(img.dataset.thumbs||'[]');}catch(err){thumbs=[];}
+  const next=(Number(img.dataset.thumbIndex)||0)+1;
+  if(thumbs[next]){
+    img.dataset.thumbIndex=String(next);
+    img.src=thumbs[next];
+    return;
+  }
+  img.onerror=null;
+  img.src='icons/default-product.png';
+}
+window.importThumbError=importThumbError;
 async function fetchTikTokVideosForHandle(handle,key){
   async function fetchPages(param){
     const base=`https://api.scrapecreators.com/v3/tiktok/profile/videos?${param}=${encodeURIComponent(handle)}`;
