@@ -173,6 +173,14 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .video-card-actions{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 14px;}
 .video-card-actions .tbl-action{flex:1;text-align:center;justify-content:center;}
 .import-modal{max-width:920px;}
+.prod-picker-wrap{position:fixed;z-index:600;background:var(--bg-lift);border:1px solid var(--border-mid);border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,0.32);width:280px;padding:8px;display:flex;flex-direction:column;gap:6px;}
+.prod-picker-search{width:100%;padding:8px 10px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:13px;outline:none;}
+.prod-picker-search:focus{border-color:var(--rose);}
+.prod-picker-list{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
+.prod-picker-item{padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;gap:1px;}
+.prod-picker-item:hover{background:color-mix(in srgb,var(--rust) 10%,var(--surface) 90%);color:var(--ink);}
+.prod-picker-item .pi-brand{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);}
+.prod-picker-item.pi-unlisted{color:var(--text-muted);font-style:italic;}
 .import-search-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-bottom:16px;}
 .import-state{display:none;text-align:center;padding:24px;color:var(--text-muted);font-size:13px;}
 .import-error{display:none;padding:12px 14px;border-radius:var(--r);background:color-mix(in srgb,var(--rust) 12%,transparent);color:var(--rust);border:1px solid color-mix(in srgb,var(--rust) 24%,transparent);font-size:13px;margin-bottom:14px;}
@@ -257,7 +265,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       <button class="btn btn-primary" id="importSearchBtn" onclick="searchTikTokVideos()">Search</button>
     </div>
     <div class="import-error" id="importError"></div>
-    <div class="import-state" id="importLoading">Looking for posted videos...</div>
+    <div class="import-state" id="importLoading">Looking for posted videos — this may take a minute...</div>
     <div class="import-state" id="importEmpty">No videos found for that account.</div>
     <div class="import-debug" id="importDebug"></div>
     <div class="import-results" id="importResults"></div>
@@ -737,7 +745,7 @@ function renderTable(){
     return `<tr class="${_editVideosMode?'select-mode ':''}${selected?'selected':''}" onclick="handleVideoRowClick('${v.id}')">
       <td class="muted"><span class="tbl-posted"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','date')">${fmtDate(v.date)}</span><span class="editable-cell tbl-time" onclick="beginVideoInlineEdit(event,'${v.id}','posted_time')">${fmtTime(v.posted_time)||'Add time'}</span></span></td>
       <td class="product-thumb-cell">${productThumbHtml(v)}</td>
-      <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span>${esc(v.brand||'No product')}</span>${linkedDealTagsHtml(v)}</div>${productBrand?`<div class="tbl-hook">${esc(productBrand)}</div>`:''}</td>
+      <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span class="editable-cell product-name-cell" title="Click to change product" onclick="beginProductInlineEdit(event,'${v.id}','${esc(v.brand||'')}')">${esc(v.brand||'No product')}</span>${linkedDealTagsHtml(v)}</div>${productBrand?`<div class="tbl-hook">${esc(productBrand)}</div>`:''}</td>
       <td><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','hook')">${esc(hook||'-')}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','views')">${fmtNum(v.views)}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','ctr')">${fmtPct(v.ctr)}</span></td>
@@ -842,6 +850,82 @@ function syncSelectedProduct() {
   document.getElementById('fProdId').value = selected?.id || '';
 }
 window.syncSelectedProduct = syncSelectedProduct;
+
+let _prodPickerWrap = null;
+function closeProdPicker(){
+  if(_prodPickerWrap){_prodPickerWrap.remove();_prodPickerWrap=null;}
+  document.removeEventListener('click',_prodPickerOutside,true);
+}
+function _prodPickerOutside(e){
+  if(_prodPickerWrap&&!_prodPickerWrap.contains(e.target))closeProdPicker();
+}
+async function beginProductInlineEdit(event, videoId, currentName){
+  event.stopPropagation();
+  if(_editVideosMode)return;
+  closeProdPicker();
+  await ensureProductOptions();
+  const cell = event.currentTarget;
+  const rect = cell.getBoundingClientRect();
+  const wrap = document.createElement('div');
+  wrap.className = 'prod-picker-wrap';
+  wrap.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  wrap.style.left = Math.min(rect.left + window.scrollX, window.innerWidth - 296) + 'px';
+  const input = document.createElement('input');
+  input.className = 'prod-picker-search';
+  input.placeholder = 'Search products...';
+  input.value = currentName === 'No product' ? '' : currentName;
+  const list = document.createElement('div');
+  list.className = 'prod-picker-list';
+  wrap.appendChild(input);
+  wrap.appendChild(list);
+  document.body.appendChild(wrap);
+  _prodPickerWrap = wrap;
+  function renderList(q){
+    const lower = q.toLowerCase();
+    const filtered = PRODUCT_OPTIONS.filter(p =>
+      !q || p.name.toLowerCase().includes(lower) || (p.brand||'').toLowerCase().includes(lower)
+    ).slice(0,30);
+    list.innerHTML = '';
+    if(q){
+      const unlistedItem = document.createElement('div');
+      unlistedItem.className = 'prod-picker-item pi-unlisted';
+      unlistedItem.textContent = 'Use "' + q + '" as unlisted';
+      unlistedItem.onclick = () => saveProductPick(videoId, q, null);
+      list.appendChild(unlistedItem);
+    }
+    filtered.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'prod-picker-item';
+      item.innerHTML = '<span>' + p.name + '</span>' + (p.brand ? '<span class="pi-brand">' + p.brand + '</span>' : '');
+      item.onclick = () => saveProductPick(videoId, p.name, p.id);
+      list.appendChild(item);
+    });
+    if(!filtered.length && !q){
+      list.innerHTML = '<div class="prod-picker-item pi-unlisted">No products in your DB yet.</div>';
+    }
+  }
+  renderList(input.value);
+  input.oninput = () => renderList(input.value);
+  input.onkeydown = e => { if(e.key==='Escape')closeProdPicker(); };
+  setTimeout(()=>{input.focus();input.select();},60);
+  setTimeout(()=>document.addEventListener('click',_prodPickerOutside,true),60);
+}
+async function saveProductPick(videoId, name, prodId){
+  closeProdPicker();
+  const patch = {brand: name, prod_id: prodId||null};
+  const {error} = await db.from('videos').update(patch).eq('id',videoId).eq('user_id',user.id);
+  if(!error){
+    updateVideoLocal(videoId, patch);
+    if(prodId){
+      const p = PRODUCT_OPTIONS.find(x=>x.id===prodId);
+      if(p){ const v=DATA.find(v=>v.id===videoId); if(v) v._productBrand=p.brand||''; }
+    } else {
+      const v=DATA.find(v=>v.id===videoId); if(v) v._productBrand='';
+    }
+    renderTable();
+  }
+}
+window.beginProductInlineEdit = beginProductInlineEdit;
 
 function importSetState(state,message=''){
   ['importLoading','importEmpty'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
