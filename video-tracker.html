@@ -931,7 +931,12 @@ async function beginProductInlineEdit(event, videoId){
 async function saveProductPick(videoId, name, prodId){
   closeProdPicker();
   const patch = {brand: name, prod_id: prodId||null};
-  const {error} = await db.from('videos').update(patch).eq('id',videoId).eq('user_id',user.id);
+  let {error} = await db.from('videos').update(patch).eq('id',videoId).eq('user_id',user.id);
+  if(error && /prod_id/i.test(error.message||'')){
+    const {brand} = patch;
+    const retry = await db.from('videos').update({brand}).eq('id',videoId).eq('user_id',user.id);
+    error = retry.error;
+  }
   if(!error){
     updateVideoLocal(videoId, patch);
     if(prodId){
@@ -941,6 +946,8 @@ async function saveProductPick(videoId, name, prodId){
       const v=DATA.find(v=>v.id===videoId); if(v) v._productBrand='';
     }
     renderTable();
+  } else {
+    showToast('Could not save: '+error.message, 'error');
   }
 }
 window.beginProductInlineEdit = beginProductInlineEdit;
