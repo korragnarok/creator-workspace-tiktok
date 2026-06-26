@@ -315,7 +315,7 @@ const TRACKER_VIEW_KEY='take24:video_tracker_view';
 const PRODUCT_IMPORT_KEY='take24:scrapecreators_api_key';
 const TIKTOK_HANDLE_KEY='take24:tiktok_handle';
 const TIKTOK_IMPORT_BATCH_SIZE=60;
-const TIKTOK_IMPORT_MAX_PAGES=15;
+const TIKTOK_IMPORT_MAX_PAGES=40;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
 let _editVideosMode=false,_selectedVideoIds=new Set(),_visibleVideoIds=[];
 let PRODUCT_OPTIONS=[];
@@ -1053,17 +1053,27 @@ function importSetState(state,message=''){
   const debug=document.getElementById('importDebug');
   if(debug){debug.style.display='none';debug.textContent='';}
   if(state==='loading')document.getElementById('importLoading').style.display='block';
-  if(state==='empty')document.getElementById('importEmpty').style.display='block';
+  if(state==='empty'){
+    const empty=document.getElementById('importEmpty');
+    if(empty){
+      empty.textContent=message||'No videos found for that account.';
+      empty.style.display='block';
+    }
+  }
   if(state==='error'&&error){error.textContent=message||'Import search failed.';error.style.display='block';}
 }
-function importDebugSummary(rawVideos=[],videos=[]){
+function importDebugSummary(rawVideos=[],videos=[],meta={}){
   const rawCount=rawVideos.length;
+  const uniqueCount=meta.uniqueCount??rawCount;
+  const alreadyImportedCount=meta.alreadyImportedCount??0;
   const shownCount=videos.length;
   const urlCount=videos.filter(video=>video.url).length;
   const thumbCount=videos.filter(video=>video.thumbnail||video.thumbnailCandidates?.length).length;
   const sample=rawVideos[0]||{};
   _lastImportDebug={
     rawCount,
+    uniqueCount,
+    alreadyImportedCount,
     shownCount,
     urlCount,
     thumbCount,
@@ -1074,7 +1084,7 @@ function importDebugSummary(rawVideos=[],videos=[]){
   };
   const el=document.getElementById('importDebug');
   if(el){
-    el.textContent=`Debug: ${rawCount} raw videos, ${shownCount} shown, ${thumbCount} thumbnails, ${urlCount} TikTok URLs.`;
+    el.textContent=`Debug: ${rawCount} raw videos, ${uniqueCount} unique, ${alreadyImportedCount} already imported, ${shownCount} shown, ${thumbCount} thumbnails, ${urlCount} TikTok URLs.`;
     el.style.display='block';
   }
   console.info('TikTok import debug',_lastImportDebug,sample);
@@ -1568,10 +1578,11 @@ async function fetchTikTokVideosForHandle(handle,key){
     let all=[];
     let cursor=null;
     let pages=0;
+    let duplicatePages=0;
     const seenVideos=new Set();
     const seenCursors=new Set();
     while(pages<TIKTOK_IMPORT_MAX_PAGES){
-      const url=cursor?`${base}&cursor=${encodeURIComponent(cursor)}&max_cursor=${encodeURIComponent(cursor)}`:base;
+      const url=cursor?`${base}&max_cursor=${encodeURIComponent(cursor)}`:base;
       const res=await fetch(url,{headers:{'x-api-key':key}});
       const text=await res.text();
       let data={};
@@ -1579,18 +1590,23 @@ async function fetchTikTokVideosForHandle(handle,key){
       if(!res.ok)throw new Error(data?.message||data?.error||`TikTok videos API error ${res.status}`);
       const videos=extractTikTokVideos(data);
       if(!videos.length)break;
+      pages++;
       const freshVideos=videos.filter(video=>{
         const key=tikTokRawIdentity(video);
         if(seenVideos.has(key))return false;
         seenVideos.add(key);
         return true;
       });
-      if(!freshVideos.length)break;
+      if(!freshVideos.length){
+        duplicatePages++;
+      }else{
+        duplicatePages=0;
+      }
       all=all.concat(freshVideos);
-      pages++;
       if(!extractHasMore(data))break;
       const nextCursor=extractPaginationCursor(data);
       if(!nextCursor||nextCursor===cursor||seenCursors.has(String(nextCursor)))break;
+      if(duplicatePages>=3)break;
       seenCursors.add(String(nextCursor));
       cursor=nextCursor;
     }
@@ -1626,13 +1642,20 @@ async function searchTikTokVideos(){
     const rawVideos=await fetchTikTokVideosForHandle(handle,key);
     const importedIdentities=await loadImportedTikTokIdentities();
     const allNormalized=uniqueTikTokVideos(rawVideos.map(normalizeTikTokVideo).filter(video=>video.caption||video.url));
-    const normalized=allNormalized
-      .filter(video=>!isAlreadyImportedTikTok(video,importedIdentities))
-      .slice(0,TIKTOK_IMPORT_BATCH_SIZE);
+    const remainingNormalized=allNormalized.filter(video=>!isAlreadyImportedTikTok(video,importedIdentities));
+    const alreadyImportedCount=allNormalized.length-remainingNormalized.length;
+    const normalized=remainingNormalized.slice(0,TIKTOK_IMPORT_BATCH_SIZE);
     _importVideos=await Promise.all(normalized.map(enrichTikTokThumbnail));
-    if(!_importVideos.length){importSetState('empty');return;}
+    if(!_importVideos.length){
+      const message=allNormalized.length
+        ? `No new videos found in the pages TikTok returned. Checked ${allNormalized.length} unique videos; ${alreadyImportedCount} were already imported.`
+        : 'No videos found for that account.';
+      importSetState('empty',message);
+      importDebugSummary(rawVideos,[],{uniqueCount:allNormalized.length,alreadyImportedCount});
+      return;
+    }
     importSetState('');
-    importDebugSummary(rawVideos,_importVideos);
+    importDebugSummary(rawVideos,_importVideos,{uniqueCount:allNormalized.length,alreadyImportedCount});
     renderImportResults();
   }catch(err){
     importSetState('error','Search failed: '+(err.message||'Unknown error'));
