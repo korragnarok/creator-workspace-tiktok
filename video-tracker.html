@@ -213,7 +213,6 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div><div class="page-eyebrow">Content Tracker</div><div class="page-title">Videos <em>&amp;</em> Posts</div><p class="page-sub">Track posted content, views, and what's working.</p></div>
     <div class="header-actions">
       <button class="btn btn-ghost" id="editVideosBtn" onclick="toggleVideoEditMode()">Edit Videos</button>
-      <button class="btn btn-ghost" onclick="openImportModal()">Import TikToks</button>
       <button class="btn btn-primary" id="importNewBtn" onclick="importNew()">↓ Import New</button>
       <button class="btn btn-primary" onclick="openModal()">+ Log Video</button>
     </div>
@@ -267,12 +266,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <div class="modal-overlay" id="importOverlay">
   <div class="modal import-modal">
     <button class="modal-close" onclick="closeImportModal()">&#x2715;</button>
-    <div class="modal-title">Import TikToks</div>
-    <p class="form-hint" style="margin:-10px 0 18px;">Paste your TikTok @handle or profile URL. Review the videos before saving them into Content Tracker.</p>
-    <div class="import-search-row">
-      <input type="text" class="form-input" id="importHandle" placeholder="@yourhandle or TikTok profile URL">
-      <button class="btn btn-primary" id="importSearchBtn" onclick="searchTikTokVideos()">Search</button>
-    </div>
+    <div class="modal-title">Import New Videos</div>
     <div class="import-error" id="importError"></div>
     <div class="import-state" id="importLoading">Looking for posted videos — this may take a minute...</div>
     <div class="import-state" id="importEmpty">No videos found for that account.</div>
@@ -712,7 +706,7 @@ function renderGrid(){
       </div>
       <div class="video-card-body">
         <div>
-          <div class="video-card-title">${esc(v.brand||v.title||'Unlisted product')}</div>
+          <div class="video-card-title product-name-cell" title="Click to change product" style="cursor:pointer;" onclick="beginProductInlineEdit(event,'${v.id}')">${esc(v.brand||v.title||'Unlisted product')}</div>
           <div class="video-card-brand">${esc(productBrand||v._dealLabel||'Content Tracker')}</div>
         </div>
         <div>${linkedDealTagsHtml(v)}</div>
@@ -873,7 +867,6 @@ async function beginProductInlineEdit(event, videoId){
   event.stopPropagation();
   event.preventDefault();
   if(_editVideosMode)return;
-  if(!inlineEditingEnabled())return;
   const currentName = DATA.find(v=>v.id===videoId)?.brand||'';
   closeProdPicker();
   await ensureProductOptions();
@@ -1080,16 +1073,10 @@ function importDebugSummary(rawVideos=[],videos=[]){
   console.info('TikTok import debug',_lastImportDebug,sample);
 }
 function openImportModal(){
-  const savedHandle=(localStorage.getItem(TIKTOK_HANDLE_KEY)||'').trim();
-  document.getElementById('importHandle').value=savedHandle?'@'+savedHandle:'';
   document.getElementById('importResults').innerHTML='';
   _importVideos=[];
   importSetState('');
   document.getElementById('importOverlay').classList.add('open');
-  setTimeout(()=>{
-    const el=document.getElementById('importHandle');
-    if(savedHandle){el.select();}else{el.focus();}
-  },80);
 }
 async function importNew(){
   const savedHandle=(localStorage.getItem(TIKTOK_HANDLE_KEY)||'').trim();
@@ -1105,7 +1092,6 @@ async function importNew(){
   const btn=document.getElementById('importNewBtn');
   if(btn){btn.disabled=true;btn.textContent='Fetching...';}
   // Open modal pre-filled and auto-search
-  document.getElementById('importHandle').value='@'+savedHandle;
   document.getElementById('importResults').innerHTML='';
   _importVideos=[];
   importSetState('');
@@ -1622,12 +1608,10 @@ async function fetchTikTokVideosForHandle(handle,key){
   return [];
 }
 async function searchTikTokVideos(){
-  const handle=normalizeTikTokHandle(document.getElementById('importHandle').value);
+  const handle=normalizeTikTokHandle((localStorage.getItem(TIKTOK_HANDLE_KEY)||'').trim());
   const key=(localStorage.getItem(PRODUCT_IMPORT_KEY)||'').trim();
-  if(!handle){document.getElementById('importHandle').focus();return;}
+  if(!handle){importSetState('error','Add your TikTok handle in Settings first.');return;}
   if(!key){importSetState('error','Add your ScrapeCreators API key in Settings first.');return;}
-  const btn=document.getElementById('importSearchBtn');
-  btn.disabled=true;btn.textContent='Searching...';
   document.getElementById('importResults').innerHTML='';
   importSetState('loading');
   try{
@@ -1646,7 +1630,7 @@ async function searchTikTokVideos(){
   }catch(err){
     importSetState('error','Search failed: '+(err.message||'Unknown error'));
   }finally{
-    btn.disabled=false;btn.textContent='Search';
+    // nothing to re-enable
   }
 }
 window.searchTikTokVideos=searchTikTokVideos;
