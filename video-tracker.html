@@ -753,7 +753,7 @@ function renderTable(){
     return `<tr class="${_editVideosMode?'select-mode ':''}${selected?'selected':''}" onclick="handleVideoRowClick('${v.id}')">
       <td class="muted"><span class="tbl-posted"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','date')">${fmtDate(v.date)}</span><span class="editable-cell tbl-time" onclick="beginVideoInlineEdit(event,'${v.id}','posted_time')">${fmtTime(v.posted_time)||'Add time'}</span></span></td>
       <td class="product-thumb-cell">${productThumbHtml(v)}</td>
-      <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span class="editable-cell product-name-cell" title="Click to change product" onclick="beginProductInlineEdit(event,'${v.id}','${esc(v.brand||'')}')">${esc(v.brand||'No product')}</span>${linkedDealTagsHtml(v)}</div>${productBrand?`<div class="tbl-hook">${esc(productBrand)}</div>`:''}</td>
+      <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span class="editable-cell product-name-cell" title="Click to change product" onclick="beginProductInlineEdit(event,'${v.id}')">${esc(v.brand||'No product')}</span>${linkedDealTagsHtml(v)}</div>${productBrand?`<div class="tbl-hook">${esc(productBrand)}</div>`:''}</td>
       <td><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','hook')">${esc(hook||'-')}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','views')">${fmtNum(v.views)}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','ctr')">${fmtPct(v.ctr)}</span></td>
@@ -867,10 +867,13 @@ function closeProdPicker(){
 function _prodPickerOutside(e){
   if(_prodPickerWrap&&!_prodPickerWrap.contains(e.target))closeProdPicker();
 }
-async function beginProductInlineEdit(event, videoId, currentName){
+async function beginProductInlineEdit(event, videoId){
   event.stopPropagation();
   event.preventDefault();
   if(_editVideosMode)return;
+  if(!inlineEditingEnabled())return;
+  // Get current name from DATA to avoid attribute injection issues
+  const currentName = DATA.find(v=>v.id===videoId)?.brand||'';
   closeProdPicker();
   await ensureProductOptions();
   const cell = event.currentTarget;
@@ -884,7 +887,7 @@ async function beginProductInlineEdit(event, videoId, currentName){
   const input = document.createElement('input');
   input.className = 'prod-picker-search';
   input.placeholder = 'Search products...';
-  input.value = (currentName === 'No product' || currentName === '') ? '' : currentName;
+  input.value = currentName;
   const list = document.createElement('div');
   list.className = 'prod-picker-list';
   wrap.appendChild(input);
