@@ -210,25 +210,25 @@ const THEMES = {
   },
   grove: {
     label: 'Grove',
-    swatch: ['#013328','#0a4535','#CC8B65'],
+    swatch: ['#E3DCD2','#F0EBE3','#013328'],
     vars: {
-      '--bg':          '#013328',
-      '--bg-lift':     '#0a4535',
-      '--surface':     '#0d4f3c',
-      '--surface-2':   '#145a45',
-      '--border':      'rgba(245,240,232,0.08)',
-      '--border-mid':  'rgba(245,240,232,0.14)',
-      '--text':        '#E3DCD2',
-      '--text-mid':    '#C8BFB0',
-      '--text-muted':  '#9B8A78',
-      '--ink':         '#F5F0E8',
+      '--bg':          '#E3DCD2',
+      '--bg-lift':     '#F5F0E8',
+      '--surface':     '#F0EBE3',
+      '--surface-2':   '#C8BFB0',
+      '--border':      'rgba(1,51,40,0.1)',
+      '--border-mid':  'rgba(1,51,40,0.16)',
+      '--text':        '#2A2420',
+      '--text-mid':    '#5A4A3A',
+      '--text-muted':  '#7A6B54',
+      '--ink':         '#1A1410',
       '--sage':        '#CC8B65',
       '--rose':        '#CC8B65',
-      '--rust':        '#CC8B65',
-      '--tan':         '#E3DCD2',
-      '--sand':        '#0a4535',
-      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.32)',
-      '--shadow-md':   '0 4px 20px rgba(0,0,0,0.42)',
+      '--rust':        '#013328',
+      '--tan':         '#CC8B65',
+      '--sand':        '#013328',
+      '--shadow-sm':   '0 1px 4px rgba(1,51,40,0.08)',
+      '--shadow-md':   '0 4px 20px rgba(1,51,40,0.12)',
     }
   },
   haus: {
@@ -311,7 +311,54 @@ function _injectGroveStyle() {
   const style = document.createElement('style');
   style.id = GROVE_STYLE_ID;
   style.textContent = `
-    /* Buttons in Grove — tan/orange accent on dark green bg */
+    /* Sidebar strip — dark green only */
+    [data-theme="grove"] .desktop-sidebar.sidebar {
+      background: #013328 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-link {
+      color: rgba(245,240,232,0.65) !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-link:hover {
+      background: rgba(245,240,232,0.07) !important;
+      color: #F5F0E8 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-link.active {
+      background: rgba(204,139,101,0.18) !important;
+      color: #CC8B65 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .nav-icon {
+      background: rgba(245,240,232,0.07) !important;
+      border-color: rgba(245,240,232,0.1) !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar {
+      background: rgba(245,240,232,0.05) !important;
+      border-color: rgba(245,240,232,0.1) !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head {
+      color: #CC8B65 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-pill {
+      background: rgba(245,240,232,0.07) !important;
+      border-color: rgba(245,240,232,0.14) !important;
+      color: #F5F0E8 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-pill-text {
+      color: #F5F0E8 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-pill-empty .core-pill-text {
+      color: rgba(245,240,232,0.35) !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-profile {
+      background: rgba(245,240,232,0.05) !important;
+      border-color: rgba(245,240,232,0.1) !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .profile-name {
+      color: #F5F0E8 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .profile-role {
+      color: rgba(245,240,232,0.45) !important;
+    }
+    /* Buttons on the page — dark green */
     [data-theme="grove"] .btn-primary,
     [data-theme="grove"] button.btn-primary,
     [data-theme="grove"] a.btn-primary,
@@ -321,48 +368,19 @@ function _injectGroveStyle() {
     [data-theme="grove"] #viewAllProductsBtn,
     [data-theme="grove"] .chart-period-btn.active,
     [data-theme="grove"] .chart-pill.active {
-      background: #CC8B65 !important;
-      border-color: #CC8B65 !important;
-      color: #1A1410 !important;
+      background: #013328 !important;
+      border-color: #013328 !important;
+      color: #F5F0E8 !important;
     }
     [data-theme="grove"] .btn-primary:hover,
     [data-theme="grove"] button.btn-primary:hover,
     [data-theme="grove"] a.btn-primary:hover {
-      background: #b87a56 !important;
-      border-color: #b87a56 !important;
+      background: #024a3a !important;
+      border-color: #024a3a !important;
     }
-    /* Accents and active states — tan in Grove */
-    [data-theme="grove"] .page-eyebrow,
-    [data-theme="grove"] .section-title,
-    [data-theme="grove"] .nav-link.active,
-    [data-theme="grove"] .tab-item.active,
-    [data-theme="grove"] .side-link.active,
-    [data-theme="grove"] .side-link.active .side-link-label {
-      color: #CC8B65 !important;
-    }
-    /* Hero Brands heading and pills — light and readable */
-    [data-theme="grove"] .core-sidebar-head {
-      color: #CC8B65 !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar {
-      padding: 12px 14px !important;
-      gap: 10px !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .core-mini-list {
-      gap: 8px !important;
-    }
-    [data-theme="grove"] .core-pill {
-      padding: 9px 12px !important;
-      color: #F5F0E8 !important;
-      border-color: rgba(245,240,232,0.2) !important;
-    }
-    [data-theme="grove"] .core-pill-text {
-      color: #F5F0E8 !important;
-    }
-    [data-theme="grove"] .core-pill-empty .core-pill-text {
-      color: rgba(245,240,232,0.38) !important;
-    }
-    /* Location tags — readable on light beige background */
+    /* Hero Brands pill text — light on sidebar */
+    [data-theme="grove"] .core-pill { color: #F5F0E8 !important; }
+    /* Location tags */
     [data-theme="grove"] .sched-location-tag.bedroom { background: rgba(107,70,128,0.15) !important; border-color: rgba(107,70,128,0.3) !important; color: #5a3a6e !important; }
     [data-theme="grove"] .sched-location-tag.outside { background: rgba(30,80,100,0.12) !important; border-color: rgba(30,80,100,0.28) !important; color: #1e5064 !important; }
     [data-theme="grove"] .sched-location-tag.kitchen { background: rgba(180,60,80,0.12) !important; border-color: rgba(180,60,80,0.28) !important; color: #b43c50 !important; }
@@ -370,11 +388,6 @@ function _injectGroveStyle() {
     [data-theme="grove"] .sched-location-tag.studio { background: rgba(20,100,80,0.12) !important; border-color: rgba(20,100,80,0.28) !important; color: #146450 !important; }
     [data-theme="grove"] .sched-location-tag.office { background: rgba(140,80,20,0.12) !important; border-color: rgba(140,80,20,0.28) !important; color: #8c5014 !important; }
     [data-theme="grove"] select.sched-location-tag { color: #2A2420 !important; }
-    /* Sidebar profile box */
-    [data-theme="grove"] .desktop-sidebar.sidebar .side-profile {
-      background: rgba(1,51,40,0.06) !important;
-      border-color: rgba(1,51,40,0.15) !important;
-    }
     /* Level ladder */
     [data-theme="grove"] .level-feature {
       background: linear-gradient(135deg, color-mix(in srgb, #CC8B65 18%, #F5F0E8 82%), #F0EBE3) !important;
