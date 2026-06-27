@@ -64,8 +64,8 @@ button,input{font:inherit;}
 .tier-line{display:grid;grid-template-columns:repeat(8,1fr);align-items:start;position:relative;gap:0;padding-top:18px;}
 .tier-line::before{content:'';position:absolute;top:26px;left:5%;right:5%;height:2px;background:color-mix(in srgb,var(--ink) 34%,transparent);}
 .tier{position:relative;text-align:center;color:var(--text);cursor:pointer;appearance:none;border:0;background:none;padding:0;font:inherit;width:100%;display:block;}
-.tier-icon{width:28px!important;height:28px!important;max-width:28px!important;max-height:28px!important;object-fit:contain;border-radius:50%;background:color-mix(in srgb,var(--surface) 62%,var(--bg) 38%);border:1px solid color-mix(in srgb,var(--ink) 26%,transparent);padding:2px;margin:0 auto 10px;position:relative;z-index:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--bg) 72%,transparent);}
-.tier.current .tier-icon{width:38px!important;height:38px!important;max-width:38px!important;max-height:38px!important;margin-top:-5px;margin-bottom:5px;border-color:var(--rust);background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);box-shadow:0 0 0 5px color-mix(in srgb,var(--rust) 22%,transparent);}
+.tier-icon{width:36px!important;height:36px!important;max-width:36px!important;max-height:36px!important;object-fit:contain;border-radius:50%;background:color-mix(in srgb,var(--surface) 62%,var(--bg) 38%);border:1px solid color-mix(in srgb,var(--ink) 26%,transparent);padding:2px;margin:0 auto 10px;position:relative;z-index:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--bg) 72%,transparent);}
+.tier.current .tier-icon{width:48px!important;height:48px!important;max-width:48px!important;max-height:48px!important;margin-top:-5px;margin-bottom:5px;border-color:var(--rust);background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);box-shadow:0 0 0 5px color-mix(in srgb,var(--rust) 22%,transparent);}
 .tier-name{font-family:'Stack Sans Text',sans-serif;font-weight:800;font-size:10px;color:var(--ink);}
 .tier.current .tier-name{color:var(--rust);}
 .tier-range{display:none;}
@@ -448,6 +448,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                   <option value="bedroom">Bedroom</option>
                   <option value="bathroom">Bathroom</option>
                   <option value="outside">Outside</option>
+                  <option value="studio">Studio</option>
                   <option value="office">Office</option>
                   <option value="other">Other</option>
                 </select>
@@ -703,7 +704,46 @@ function renderSalesChart(labels, commData, gmvData){
     ctx.textAlign='right';
     ctx.fillText(labels[labels.length-1],width-pad.right,height-pad.bottom+8);
   }
-  window._salesChartData={labels,commData,gmvData};
+  window._salesChartData={labels,commData,gmvData,commPoints,gmvPoints,pad,max,plotH};
+  // Add mousemove tooltip to canvas
+  if(!canvas._tooltipBound){
+    canvas._tooltipBound=true;
+    let _tt=document.getElementById('chart-data-tooltip');
+    if(!_tt){
+      _tt=document.createElement('div');
+      _tt.id='chart-data-tooltip';
+      _tt.style.cssText='position:fixed;z-index:800;background:var(--bg-lift);border:1px solid var(--border-mid);border-radius:10px;padding:8px 12px;box-shadow:0 6px 24px rgba(0,0,0,0.28);pointer-events:none;opacity:0;transition:opacity 0.1s;font-size:12px;white-space:nowrap;min-width:100px;';
+      document.body.appendChild(_tt);
+    }
+    canvas.addEventListener('mousemove',function(e){
+      const d=window._salesChartData;
+      if(!d||!d.commPoints||!d.commPoints.length)return;
+      const rect=canvas.getBoundingClientRect();
+      const mx=(e.clientX-rect.left)*(canvas.width/rect.width)/window.devicePixelRatio;
+      const my=(e.clientY-rect.top)*(canvas.height/rect.height)/window.devicePixelRatio;
+      // Find nearest x index
+      const n=d.commPoints.length;
+      let best=-1,bestDist=999;
+      d.commPoints.forEach((p,i)=>{const dx=Math.abs(p.x-mx);if(dx<bestDist){bestDist=dx;best=i;}});
+      if(best<0||bestDist>40){_tt.style.opacity='0';return;}
+      const comm=Number(d.commData[best]||0);
+      const gmv=Number(d.gmvData[best]||0);
+      const label=d.labels[best]||'';
+      const colors=chartThemeOptions();
+      _tt.innerHTML=`<div style="font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">${label}</div>`+
+        `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="width:8px;height:8px;border-radius:50%;background:${colors.commColor};flex-shrink:0;display:inline-block;"></span><span style="color:var(--text-mid);font-size:11px;">Commission</span><span style="margin-left:auto;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--ink);">$${comm.toFixed(2)}</span></div>`+
+        `<div style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:${colors.gmvColor};flex-shrink:0;display:inline-block;"></span><span style="color:var(--text-mid);font-size:11px;">GMV</span><span style="margin-left:auto;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--ink);">$${gmv.toFixed(2)}</span></div>`;
+      _tt.style.opacity='1';
+      const ttW=120;
+      const left=Math.min(e.clientX+14,window.innerWidth-ttW-16);
+      _tt.style.left=left+'px';
+      _tt.style.top=(e.clientY-50)+'px';
+    });
+    canvas.addEventListener('mouseleave',function(){
+      const _tt=document.getElementById('chart-data-tooltip');
+      if(_tt)_tt.style.opacity='0';
+    });
+  }
 }
 window.addEventListener('creator-theme-change',()=>{if(window._allSalesRows)setChartRange(window._chartRange||'30d');});
 window.addEventListener('resize',()=>{
