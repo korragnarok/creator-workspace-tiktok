@@ -221,7 +221,7 @@ const THEMES = {
       '--text-mid':    '#5A4A3A',
       '--text-muted':  '#7A6B54',
       '--ink':         '#1A1410',
-      '--sage':        '#013328',
+      '--sage':        '#CC8B65',
       '--rose':        '#CC8B65',
       '--rust':        '#013328',
       '--tan':         '#CC8B65',
