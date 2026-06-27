@@ -334,9 +334,11 @@ function _injectGroveStyle() {
     [data-theme="grove"] .desktop-sidebar.sidebar {
       width: 220px !important;
     }
-    body[data-theme="grove"]:not(.has-app-shell),
-    [data-theme="grove"] body:not(.has-app-shell) {
+    body:not(.has-app-shell) {
       padding-left: 220px !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core5-edit-btn {
+      color: rgba(227,220,210,0.7) !important;
     }
     [data-theme="grove"] .desktop-sidebar.sidebar .side-link,
     [data-theme="grove"] .desktop-sidebar.sidebar .side-link-label,
@@ -368,6 +370,18 @@ function _injectGroveStyle() {
       background: rgba(255,255,255,0.06) !important;
       border-color: rgba(255,255,255,0.1) !important;
     }
+    [data-theme="grove"] .level-feature {
+      background: linear-gradient(135deg, color-mix(in srgb, #CC8B65 18%, #F5F0E8 82%), #F0EBE3) !important;
+      border-color: rgba(204,139,101,0.3) !important;
+    }
+    [data-theme="grove"] .sched-location-tag.bedroom { background: rgba(107,70,128,0.15) !important; border-color: rgba(107,70,128,0.3) !important; color: #5a3a6e !important; }
+    [data-theme="grove"] .sched-location-tag.outside { background: rgba(30,80,100,0.12) !important; border-color: rgba(30,80,100,0.28) !important; color: #1e5064 !important; }
+    [data-theme="grove"] .sched-location-tag.kitchen { background: rgba(180,60,80,0.12) !important; border-color: rgba(180,60,80,0.28) !important; color: #b43c50 !important; }
+    [data-theme="grove"] .sched-location-tag.living-room { background: rgba(80,50,140,0.12) !important; border-color: rgba(80,50,140,0.28) !important; color: #50328c !important; }
+    [data-theme="grove"] .sched-location-tag.bathroom { background: rgba(20,100,80,0.12) !important; border-color: rgba(20,100,80,0.28) !important; color: #146450 !important; }
+    [data-theme="grove"] .sched-location-tag.office { background: rgba(140,80,20,0.12) !important; border-color: rgba(140,80,20,0.28) !important; color: #8c5014 !important; }
+    [data-theme="grove"] .sched-location-tag.other { background: rgba(100,80,20,0.12) !important; border-color: rgba(100,80,20,0.28) !important; color: #645014 !important; }
+    [data-theme="grove"] select.sched-location-tag { color: #2A2420 !important; }
     [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar {
       background: rgba(255,255,255,0.06) !important;
       border-color: rgba(255,255,255,0.12) !important;
@@ -375,6 +389,12 @@ function _injectGroveStyle() {
     }
     [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head {
       color: #CC8B65 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head a,
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head button,
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head span:last-child {
+      color: #E3DCD2 !important;
+      opacity: 0.7;
     }
     [data-theme="grove"] .desktop-sidebar.sidebar .core-pill {
       background: rgba(255,255,255,0.08) !important;
