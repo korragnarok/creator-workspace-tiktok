@@ -75,6 +75,7 @@ async function carryForwardUnfinishedQueue(userId, targetDate = localDateKey()) 
   const { data: overdue, error } = await db.from('queue')
     .select('id,prod_id,name,brand,notes,sort_order,done')
     .eq('user_id', userId)
+    .eq('done', false)
     .lt('date', targetDate);
   if (error || !overdue?.length) return 0;
 
@@ -206,75 +207,6 @@ const THEMES = {
       '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.26)',
       '--shadow-md':   '0 4px 20px rgba(0,0,0,0.36)',
     }
-  },
-  grove: {
-    label: 'Grove',
-    swatch: ['#E3DCD2','#013328','#CC8B65'],
-    vars: {
-      '--bg':          '#E3DCD2',
-      '--bg-lift':     '#F5F0E8',
-      '--surface':     '#F0EBE3',
-      '--surface-2':   '#C8BFB0',
-      '--border':      'rgba(1,51,40,0.1)',
-      '--border-mid':  'rgba(1,51,40,0.16)',
-      '--text':        '#2A2420',
-      '--text-mid':    '#5A4A3A',
-      '--text-muted':  '#7A6B54',
-      '--ink':         '#1A1410',
-      '--sage':        '#CC8B65',
-      '--rose':        '#CC8B65',
-      '--rust':        '#013328',
-      '--tan':         '#CC8B65',
-      '--sand':        '#013328',
-      '--shadow-sm':   '0 1px 4px rgba(1,51,40,0.08)',
-      '--shadow-md':   '0 4px 20px rgba(1,51,40,0.12)',
-    }
-  },
-  haus: {
-    label: 'Haus',
-    swatch: ['#2F4454','#DA7B93','#376E6F'],
-    vars: {
-      '--bg':          '#2F4454',
-      '--bg-lift':     '#263C4A',
-      '--surface':     '#2E151B',
-      '--surface-2':   '#3A1E24',
-      '--border':      'rgba(218,123,147,0.1)',
-      '--border-mid':  'rgba(218,123,147,0.18)',
-      '--text':        '#E8D8DC',
-      '--text-mid':    '#DA7B93',
-      '--text-muted':  '#7A8F9A',
-      '--ink':         '#F5EEF0',
-      '--sage':        '#376E6F',
-      '--rose':        '#DA7B93',
-      '--rust':        '#DA7B93',
-      '--tan':         '#7A8F9A',
-      '--sand':        '#2E151B',
-      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.36)',
-      '--shadow-md':   '0 4px 20px rgba(0,0,0,0.48)',
-    }
-  },
-  fiesta: {
-    label: 'Fiesta',
-    swatch: ['#F9FAF4','#4A6163','#F9A66C'],
-    vars: {
-      '--bg':          '#F9FAF4',
-      '--bg-lift':     '#FFFFFF',
-      '--surface':     '#F0F1EA',
-      '--surface-2':   '#E6E7DF',
-      '--border':      'rgba(74,97,99,0.1)',
-      '--border-mid':  'rgba(74,97,99,0.16)',
-      '--text':        '#2A2E2E',
-      '--text-mid':    '#4A6163',
-      '--text-muted':  '#7A8A8B',
-      '--ink':         '#1A2020',
-      '--sage':        '#4A6163',
-      '--rose':        '#F17A7E',
-      '--rust':        '#F9A66C',
-      '--tan':         '#FFC94B',
-      '--sand':        '#E6E7DF',
-      '--shadow-sm':   '0 1px 4px rgba(74,97,99,0.08)',
-      '--shadow-md':   '0 4px 20px rgba(74,97,99,0.12)',
-    }
   }
 };
 
@@ -306,8 +238,6 @@ function applyTheme(themeKey) {
   Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v));
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.vars['--bg']);
   applyThemeIcons(resolvedKey);
-  _injectGroveStyle();
-  requestAnimationFrame(() => requestAnimationFrame(_applyGrovePadding));
   // Mark active on any theme switcher dots present
   document.querySelectorAll('[data-theme]').forEach(el => {
     el.classList.toggle('active', el.dataset.theme === resolvedKey);
@@ -318,139 +248,6 @@ function applyTheme(themeKey) {
 }
 
 // Call immediately on load using localStorage cache (no flash)
-function _applyGrovePadding() {
-  const isGrove = (localStorage.getItem('creatorHub:theme') || 'dusk') === 'grove';
-  const body = document.body;
-  if (!body) return;
-  const isMobile = window.matchMedia('(max-width: 768px)').matches;
-  const hasAppShell = body.classList.contains('has-app-shell');
-  if (isGrove && !isMobile && !hasAppShell) {
-    body.style.paddingLeft = '200px';
-  } else if (!isGrove && body.style.paddingLeft === '200px') {
-    body.style.paddingLeft = '';
-  }
-}
-function _injectGroveStyle() {
-  let el = document.getElementById('grove-sidebar-style');
-  if (!el) {
-    el = document.createElement('style');
-    el.id = 'grove-sidebar-style';
-    document.head.appendChild(el);
-  }
-  const isGrove = (localStorage.getItem('creatorHub:theme') || 'dusk') === 'grove';
-  el.textContent = isGrove ? `
-    [data-theme="grove"] .desktop-sidebar.sidebar,
-    [data-theme="grove"] .tab-bar,
-    [data-theme="grove"] body > nav {
-      background: #013328 !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar {
-      width: 200px !important;
-    }
-
-    [data-theme="grove"] .desktop-sidebar.sidebar .core5-edit-btn {
-      color: rgba(227,220,210,0.7) !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .side-link,
-    [data-theme="grove"] .desktop-sidebar.sidebar .side-link-label,
-    [data-theme="grove"] .desktop-sidebar.sidebar .nav-brand,
-    [data-theme="grove"] .desktop-sidebar.sidebar .profile-name,
-    [data-theme="grove"] .desktop-sidebar.sidebar .profile-role,
-    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head,
-    [data-theme="grove"] .tab-item {
-      color: #E3DCD2 !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .side-link.active,
-    [data-theme="grove"] .desktop-sidebar.sidebar .side-link:hover {
-      background: rgba(204,139,101,0.18) !important;
-      color: #CC8B65 !important;
-    }
-    [data-theme="grove"] .tab-item.active {
-      color: #CC8B65 !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .nav-icon,
-    [data-theme="grove"] .desktop-sidebar.sidebar .side-submenu-icon {
-      background: rgba(255,255,255,0.08) !important;
-      border-color: rgba(255,255,255,0.12) !important;
-      width: 36px !important;
-      height: 36px !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .nav-icon img {
-      width: 26px !important;
-      height: 26px !important;
-    }
-    [data-theme="grove"] .tab-icon-img {
-      width: 30px !important;
-      height: 30px !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .core-pill {
-      background: rgba(255,255,255,0.08) !important;
-      color: #E3DCD2 !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .side-profile {
-      background: rgba(255,255,255,0.06) !important;
-      border-color: rgba(255,255,255,0.1) !important;
-    }
-    [data-theme="grove"] .add-bar,
-    [data-theme="grove"] .mini-action,
-    [data-theme="grove"] .sched-open-link,
-    [data-theme="grove"] .chart-pill.active,
-    [data-theme="grove"] #viewAllProductsBtn,
-    [data-theme="grove"] button.btn-primary,
-    [data-theme="grove"] a.btn-primary {
-      background: #013328 !important;
-      border-color: #013328 !important;
-      color: #E3DCD2 !important;
-    }
-    [data-theme="grove"] .chart-pill:not(.active) {
-      color: #5A4A3A !important;
-      border-color: rgba(1,51,40,0.2) !important;
-    }
-    [data-theme="grove"] .level-feature {
-      background: linear-gradient(135deg, color-mix(in srgb, #CC8B65 18%, #F5F0E8 82%), #F0EBE3) !important;
-      border-color: rgba(204,139,101,0.3) !important;
-    }
-    [data-theme="grove"] .sched-location-tag.bedroom { background: rgba(107,70,128,0.15) !important; border-color: rgba(107,70,128,0.3) !important; color: #5a3a6e !important; }
-    [data-theme="grove"] .sched-location-tag.outside { background: rgba(30,80,100,0.12) !important; border-color: rgba(30,80,100,0.28) !important; color: #1e5064 !important; }
-    [data-theme="grove"] .sched-location-tag.kitchen { background: rgba(180,60,80,0.12) !important; border-color: rgba(180,60,80,0.28) !important; color: #b43c50 !important; }
-    [data-theme="grove"] .sched-location-tag.living-room { background: rgba(80,50,140,0.12) !important; border-color: rgba(80,50,140,0.28) !important; color: #50328c !important; }
-    [data-theme="grove"] .sched-location-tag.bathroom { background: rgba(20,100,80,0.12) !important; border-color: rgba(20,100,80,0.28) !important; color: #146450 !important; }
-    [data-theme="grove"] .sched-location-tag.office { background: rgba(140,80,20,0.12) !important; border-color: rgba(140,80,20,0.28) !important; color: #8c5014 !important; }
-    [data-theme="grove"] .sched-location-tag.other { background: rgba(100,80,20,0.12) !important; border-color: rgba(100,80,20,0.28) !important; color: #645014 !important; }
-    [data-theme="grove"] select.sched-location-tag { color: #2A2420 !important; }
-    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar {
-      background: rgba(255,255,255,0.06) !important;
-      border-color: rgba(255,255,255,0.12) !important;
-      margin: 0 8px !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head {
-      color: #CC8B65 !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head a,
-    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head button,
-    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head span:last-child {
-      color: #E3DCD2 !important;
-      opacity: 0.7;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .core-pill {
-      background: rgba(255,255,255,0.08) !important;
-      border-color: rgba(255,255,255,0.1) !important;
-      color: #E3DCD2 !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .core-pill-empty .core-pill-text {
-      color: rgba(227,220,210,0.45) !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar {
-      padding: 18px 8px !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .side-nav {
-      padding: 0 4px !important;
-    }
-    [data-theme="grove"] .desktop-sidebar.sidebar .side-brand {
-      padding: 0 4px !important;
-    }
-  ` : '';
-}
 function applyThemeImmediate() {
   let saved = DEFAULT_THEME;
   saved = _cachedTheme() || DEFAULT_THEME;
@@ -459,7 +256,7 @@ function applyThemeImmediate() {
 applyThemeImmediate();
 
 function _themeIconNameFromSrc(src) {
-  const match = String(src || '').match(/(?:^|\/)icons\/(?:(dusk|warm|noir|forest|grove|haus|fiesta)\/)?([^/?#]+)\.png(?:[?#].*)?$/i);
+  const match = String(src || '').match(/(?:^|\/)icons\/(?:(dusk|warm|noir|forest)\/)?([^/?#]+)\.png(?:[?#].*)?$/i);
   if (!match) return '';
   const raw = match[2].toLowerCase();
   if (raw === 'videos') return 'video';
@@ -469,11 +266,9 @@ function _themeIconNameFromSrc(src) {
 
 function _themeIconSrc(themeKey, iconName) {
   const normalized = iconName === 'videos' ? 'video' : iconName;
-  // New themes share the dusk icon set
-  const iconTheme = ['fiesta'].includes(themeKey) ? 'warm' : ['haus'].includes(themeKey) ? 'dusk' : themeKey;
-  const aliases = THEME_ICON_FILES[iconTheme] || {};
+  const aliases = THEME_ICON_FILES[themeKey] || {};
   const file = aliases[normalized] || `${normalized}.png`;
-  return `icons/${iconTheme}/${file}`;
+  return `icons/${themeKey}/${file}`;
 }
 
 function applyThemeIcons(themeKey) {
@@ -488,12 +283,7 @@ function applyThemeIcons(themeKey) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  applyThemeIcons(_cachedTheme() || DEFAULT_THEME);
-  // Delay so layout.js has time to insert sidebar and set has-app-shell
-  requestAnimationFrame(() => requestAnimationFrame(_applyGrovePadding));
-});
-window.addEventListener('resize', _applyGrovePadding);
+document.addEventListener('DOMContentLoaded', () => applyThemeIcons(_cachedTheme() || DEFAULT_THEME));
 
 // ─── User Prefs ───────────────────────────────────────────────────────────────
 
