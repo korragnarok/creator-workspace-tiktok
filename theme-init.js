@@ -29,10 +29,10 @@
       '--shadow-sm':'0 1px 4px rgba(0,0,0,0.26)','--shadow-md':'0 4px 20px rgba(0,0,0,0.36)'
     },
     grove: {
-      '--bg':'#E3DCD2','--bg-lift':'#F5F0E8','--surface':'#013328','--surface-2':'#01402F',
-      '--border':'rgba(1,51,40,0.12)','--border-mid':'rgba(1,51,40,0.18)',
+      '--bg':'#E3DCD2','--bg-lift':'#F5F0E8','--surface':'#F0EBE3','--surface-2':'#C8BFB0',
+      '--border':'rgba(1,51,40,0.1)','--border-mid':'rgba(1,51,40,0.16)',
       '--text':'#2A2420','--text-mid':'#5A4A3A','--text-muted':'#7A6B54','--ink':'#1A1410',
-      '--sage':'#CC8B65','--rose':'#CC8B65','--rust':'#CC8B65','--tan':'#B8A98A','--sand':'#01402F',
+      '--sage':'#013328','--rose':'#CC8B65','--rust':'#013328','--tan':'#CC8B65','--sand':'#013328',
       '--shadow-sm':'0 1px 4px rgba(1,51,40,0.08)','--shadow-md':'0 4px 20px rgba(1,51,40,0.12)'
     },
     haus: {

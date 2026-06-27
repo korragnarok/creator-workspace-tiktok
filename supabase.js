@@ -213,19 +213,19 @@ const THEMES = {
     vars: {
       '--bg':          '#E3DCD2',
       '--bg-lift':     '#F5F0E8',
-      '--surface':     '#013328',
-      '--surface-2':   '#01402F',
-      '--border':      'rgba(1,51,40,0.12)',
-      '--border-mid':  'rgba(1,51,40,0.18)',
+      '--surface':     '#F0EBE3',
+      '--surface-2':   '#C8BFB0',
+      '--border':      'rgba(1,51,40,0.1)',
+      '--border-mid':  'rgba(1,51,40,0.16)',
       '--text':        '#2A2420',
       '--text-mid':    '#5A4A3A',
       '--text-muted':  '#7A6B54',
       '--ink':         '#1A1410',
-      '--sage':        '#CC8B65',
+      '--sage':        '#013328',
       '--rose':        '#CC8B65',
-      '--rust':        '#CC8B65',
-      '--tan':         '#B8A98A',
-      '--sand':        '#01402F',
+      '--rust':        '#013328',
+      '--tan':         '#CC8B65',
+      '--sand':        '#013328',
       '--shadow-sm':   '0 1px 4px rgba(1,51,40,0.08)',
       '--shadow-md':   '0 4px 20px rgba(1,51,40,0.12)',
     }
@@ -306,6 +306,7 @@ function applyTheme(themeKey) {
   Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v));
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.vars['--bg']);
   applyThemeIcons(resolvedKey);
+  _injectGroveStyle();
   // Mark active on any theme switcher dots present
   document.querySelectorAll('[data-theme]').forEach(el => {
     el.classList.toggle('active', el.dataset.theme === resolvedKey);
@@ -316,6 +317,52 @@ function applyTheme(themeKey) {
 }
 
 // Call immediately on load using localStorage cache (no flash)
+function _injectGroveStyle() {
+  let el = document.getElementById('grove-sidebar-style');
+  if (!el) {
+    el = document.createElement('style');
+    el.id = 'grove-sidebar-style';
+    document.head.appendChild(el);
+  }
+  const isGrove = (localStorage.getItem('creatorHub:theme') || 'dusk') === 'grove';
+  el.textContent = isGrove ? `
+    [data-theme="grove"] .desktop-sidebar.sidebar,
+    [data-theme="grove"] .tab-bar,
+    [data-theme="grove"] body > nav {
+      background: #013328 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-link,
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-link-label,
+    [data-theme="grove"] .desktop-sidebar.sidebar .nav-brand,
+    [data-theme="grove"] .desktop-sidebar.sidebar .profile-name,
+    [data-theme="grove"] .desktop-sidebar.sidebar .profile-role,
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head,
+    [data-theme="grove"] .tab-item {
+      color: #E3DCD2 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-link.active,
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-link:hover {
+      background: rgba(204,139,101,0.18) !important;
+      color: #CC8B65 !important;
+    }
+    [data-theme="grove"] .tab-item.active {
+      color: #CC8B65 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .nav-icon,
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-submenu-icon {
+      background: rgba(255,255,255,0.08) !important;
+      border-color: rgba(255,255,255,0.12) !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-pill {
+      background: rgba(255,255,255,0.08) !important;
+      color: #E3DCD2 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-profile {
+      background: rgba(255,255,255,0.06) !important;
+      border-color: rgba(255,255,255,0.1) !important;
+    }
+  ` : '';
+}
 function applyThemeImmediate() {
   let saved = DEFAULT_THEME;
   saved = _cachedTheme() || DEFAULT_THEME;
