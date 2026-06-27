@@ -378,8 +378,10 @@ function _injectGroveStyle() {
       background: #024a3a !important;
       border-color: #024a3a !important;
     }
-    /* Hero Brands pill text — light on sidebar */
+    /* Hero Brands pill text and Edit button — light on sidebar */
     [data-theme="grove"] .core-pill { color: #F5F0E8 !important; }
+    [data-theme="grove"] .core5-edit-btn { color: #CC8B65 !important; }
+    [data-theme="grove"] .core-sidebar-head { color: #CC8B65 !important; }
     /* Location tags */
     [data-theme="grove"] .sched-location-tag.bedroom { background: rgba(107,70,128,0.15) !important; border-color: rgba(107,70,128,0.3) !important; color: #5a3a6e !important; }
     [data-theme="grove"] .sched-location-tag.outside { background: rgba(30,80,100,0.12) !important; border-color: rgba(30,80,100,0.28) !important; color: #1e5064 !important; }
