@@ -334,8 +334,10 @@ function _injectGroveStyle() {
     [data-theme="grove"] .desktop-sidebar.sidebar {
       width: 220px !important;
     }
-    body:not(.has-app-shell) {
-      padding-left: 220px !important;
+    @media (min-width: 769px) {
+      html[data-theme="grove"] body:not(.has-app-shell) {
+        padding-left: 220px !important;
+      }
     }
     [data-theme="grove"] .desktop-sidebar.sidebar .core5-edit-btn {
       color: rgba(227,220,210,0.7) !important;
