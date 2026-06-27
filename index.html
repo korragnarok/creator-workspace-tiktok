@@ -143,7 +143,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .sched-status{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:99px;white-space:nowrap;cursor:pointer;border:none;transition:all 0.15s;line-height:1;}
 .sched-row>.sched-status{justify-self:start;}
 .sched-status.not-started{background:color-mix(in srgb,var(--border-mid) 50%,var(--surface) 50%);color:var(--text-mid);}
-.sched-status.in-progress{background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);color:var(--rust);}
+/* in-progress removed */
 .sched-status.filmed{background:color-mix(in srgb,var(--sage) 22%,var(--surface) 78%);color:var(--sage);}
 .sched-status:hover{filter:brightness(1.15);}
 .sched-progress-wrap{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);}
@@ -435,7 +435,23 @@ select.sched-location-tag:focus{border-color:var(--rust);}
               </div>
               <div style="display:flex;gap:6px;margin-top:10px;">
                 <a class="add-bar" href="daily-todo.html" style="flex:1;margin-top:0;">+ Add Script</a>
-                <button class="add-bar" type="button" onclick="clearDoneToday()" style="flex:1;margin-top:0;background:var(--surface);color:var(--text-mid);border:1px solid var(--border-mid);">Clear Filmed</button>
+                <button class="add-bar" type="button" id="bulkEditBtn" onclick="toggleBulkEdit()" style="flex:1;margin-top:0;background:var(--surface);color:var(--text-mid);border:1px solid var(--border-mid);">Bulk Edit</button>
+              </div>
+              <div id="bulkEditBar" style="display:none;margin-top:8px;padding:10px 12px;border:1px solid var(--border-mid);border-radius:10px;background:var(--surface);display:none;gap:8px;flex-wrap:wrap;align-items:center;">
+                <span id="bulkSelCount" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.08em;color:var(--text-muted);flex:1;">0 selected</span>
+                <button class="mini-action" onclick="bulkSetStatus('filmed')">Mark Filmed</button>
+                <button class="mini-action" onclick="bulkSetStatus('not-started')">Mark Not Started</button>
+                <select id="bulkLocationSelect" onchange="bulkSetLocation(this.value)" style="padding:5px 8px;border:1px solid var(--border-mid);border-radius:7px;background:var(--bg);color:var(--text);font-size:12px;">
+                  <option value="">Set Location...</option>
+                  <option value="living-room">Living Room</option>
+                  <option value="kitchen">Kitchen</option>
+                  <option value="bedroom">Bedroom</option>
+                  <option value="bathroom">Bathroom</option>
+                  <option value="outside">Outside</option>
+                  <option value="office">Office</option>
+                  <option value="other">Other</option>
+                </select>
+                <button class="mini-action" style="color:var(--rust);" onclick="toggleBulkEdit()">Done</button>
               </div>
             </div>
           </div>
@@ -1067,14 +1083,14 @@ function renderTodayContent(){
     const locationTag=schedLocationSelectHtml(q,location);
     const productImg=productImageForQueueItem(q);
     const dailyLink=dailyTodoLinkForQueueItem(q);
-    const storedSt=String(q.notes||'').match(/STATUS:(in-progress|filmed)/i)?.[1]?.toLowerCase()||'';
-    const statusClass=q.done?'filmed':storedSt==='in-progress'?'in-progress':'not-started';
-    const statusLabel=q.done?'Filmed':storedSt==='in-progress'?'In Progress':'Not Started';
+    const statusClass=q.done?'filmed':'not-started';
+    const statusLabel=q.done?'Filmed':'Not Started';
     const nameKey=(q.name||'').trim().toLowerCase();
     const isDupe=nameCounts[nameKey]>1;
     nameCounters[nameKey]=(nameCounters[nameKey]||0)+1;
     const scriptLabel=isDupe?`<span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);margin-left:6px;">Script ${nameCounters[nameKey]}</span>`:'';
-    return`<div class="sched-row${q.done?' done':''}">
+    return`<div class="sched-row${q.done?' done':''}" id="srow-${q.id}">
+      <input type="checkbox" class="sched-bulk-cb" id="cb-${q.id}" data-id="${q.id}" onchange="updateBulkCount()" style="display:none;margin-right:4px;accent-color:var(--rust);width:16px;height:16px;cursor:pointer;flex-shrink:0;">
       <div class="sched-time-cell">
         <span class="sched-time${rawTime?'':' no-time'}" onclick="openTimePopover('${q.id}',this)" title="Set time">${esc(timeLabel)}</span>
         <span class="sched-format">${esc(formatLabel)}</span>
@@ -1171,11 +1187,9 @@ function copyDashboardScript(){
 async function cycleSchedStatus(id){
   const item=_todayQueue.find(q=>q.id===id);
   if(!item||!_dashboardUser)return;
-  const storedStatus=String(item.notes||'').match(/STATUS:(in-progress|filmed)/i)?.[1]?.toLowerCase()||'';
-  const cur=item.done?'filmed':storedStatus==='in-progress'?'in-progress':'not-started';
-  const next=cur==='not-started'?'in-progress':cur==='in-progress'?'filmed':'not-started';
+  const cur=item.done?'filmed':'not-started';
+  const next=cur==='not-started'?'filmed':'not-started';
   let notes=String(item.notes||'').replace(/\nSTATUS:[^\n]*/g,'').replace(/^STATUS:[^\n]*\n?/,'');
-  if(next!=='not-started')notes=(notes.trim()+'\nSTATUS:'+next).trim();
   item.notes=notes;
   item.done=next==='filmed';
   await db.from('queue').update({done:item.done,notes:item.notes}).eq('id',id);
@@ -1183,6 +1197,61 @@ async function cycleSchedStatus(id){
   else if(cur==='filmed')_doneToday=Math.max(0,_doneToday-1);
   renderTodayContent();
   renderLineup(_dashboardUser?.id);
+}
+// ── Bulk Edit ───────────────────────────────────────────────────────────────
+let _bulkMode=false;
+function toggleBulkEdit(){
+  _bulkMode=!_bulkMode;
+  const btn=document.getElementById('bulkEditBtn');
+  const bar=document.getElementById('bulkEditBar');
+  if(btn)btn.textContent=_bulkMode?'Cancel':'Bulk Edit';
+  if(bar)bar.style.display=_bulkMode?'flex':'none';
+  document.querySelectorAll('.sched-bulk-cb').forEach(cb=>{
+    cb.style.display=_bulkMode?'inline-block':'none';
+    cb.checked=false;
+  });
+  updateBulkCount();
+}
+function updateBulkCount(){
+  const selected=document.querySelectorAll('.sched-bulk-cb:checked').length;
+  const el=document.getElementById('bulkSelCount');
+  if(el)el.textContent=selected+' selected';
+}
+function getSelectedIds(){
+  return [...document.querySelectorAll('.sched-bulk-cb:checked')].map(cb=>cb.dataset.id);
+}
+async function bulkSetStatus(status){
+  const ids=getSelectedIds();
+  if(!ids.length){showToast('Select at least one item first','error');return;}
+  const done=status==='filmed';
+  await Promise.all(ids.map(id=>{
+    const item=_todayQueue.find(q=>q.id===id);
+    if(!item)return;
+    item.done=done;
+    let notes=String(item.notes||'').replace(/\nSTATUS:[^\n]*/g,'').replace(/^STATUS:[^\n]*\n?/,'');
+    item.notes=notes;
+    return db.from('queue').update({done,notes}).eq('id',id);
+  }));
+  _doneToday=_todayQueue.filter(q=>q.done).length;
+  renderTodayContent();
+  renderLineup(_dashboardUser?.id);
+  showToast(`${ids.length} item${ids.length===1?'':'s'} updated`);
+}
+async function bulkSetLocation(location){
+  if(!location)return;
+  const ids=getSelectedIds();
+  if(!ids.length){document.getElementById('bulkLocationSelect').value='';showToast('Select at least one item first','error');return;}
+  await Promise.all(ids.map(id=>{
+    const item=_todayQueue.find(q=>q.id===id);
+    if(!item)return;
+    let notes=String(item.notes||'').replace(/\nLOCATION:[^\n]*/g,'').replace(/^LOCATION:[^\n]*\n?/,'');
+    notes=(notes.trim()+'\nLOCATION:'+location).trim();
+    item.notes=notes;
+    return db.from('queue').update({notes}).eq('id',id);
+  }));
+  document.getElementById('bulkLocationSelect').value='';
+  renderTodayContent();
+  showToast(`Location set for ${ids.length} item${ids.length===1?'':'s'}`);
 }
 // ── Remove with Undo ────────────────────────────────────────────────────────
 let _undoTimer=null, _undoItem=null;

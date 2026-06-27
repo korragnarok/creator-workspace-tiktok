@@ -637,9 +637,11 @@ async function deleteQueueRow(take){if(take.queueId){await db.from('queue').dele
 function getFilteredCards(){
   const brandFiltered=activeBrandFilter==='All'?TODO:TODO.filter(c=>(c.brand||'')=== activeBrandFilter);
   if(!hideFilmed)return brandFiltered;
+  // When hideFilmed is on, filter out done takes but keep the card if it has unfilmed takes
   return brandFiltered
     .map(card=>({...card,_allTakes:card.takes||[],takes:(card.takes||[]).filter(take=>!take.done)}))
     .filter(card=>(card.takes||[]).length>0);
+  // When hideFilmed is off (default), show everything including filmed takes
 }
 function productBankUrl(card){
   const brand=String(card?.brand||'').trim();
@@ -1029,7 +1031,7 @@ function renderTakeExpanded(card,take,totalTakes){
   <div class="take-footer">
     <span class="take-status${take.done?' filmed':''}">${take.done?'✓ Done':'Not filmed yet'}</span>
     <div class="take-footer-btns">
-      ${take.done?`<button class="tbtn done-active" onclick="clearSingleTake('${esc(card.id)}','${esc(take.id)}',this)">Clear</button>`:''}
+      
       <button class="tbtn${take.done?' done-active':''}" onclick="toggleDone('${esc(card.id)}','${esc(take.id)}')">${take.done?'Undo':'Filmed'}</button>
       ${totalTakes>1?`<button class="tbtn del" onclick="removeTake('${esc(card.id)}','${esc(take.id)}')">Remove</button>`:''}
     </div>
@@ -1058,7 +1060,7 @@ function updateTakeDoneDom(card,take){
   });
   const footerBtns=takeEl.querySelector('.take-footer-btns');
   if(footerBtns){
-    footerBtns.innerHTML=`${take.done?`<button class="tbtn done-active" onclick="clearSingleTake('${esc(card.id)}','${esc(take.id)}',this)">Clear</button>`:''}
+    footerBtns.innerHTML=`
       <button class="tbtn${take.done?' done-active':''}" onclick="toggleDone('${esc(card.id)}','${esc(take.id)}')">${take.done?'Undo':'Filmed'}</button>
       ${(card.takes||[]).length>1?`<button class="tbtn del" onclick="removeTake('${esc(card.id)}','${esc(take.id)}')">Remove</button>`:''}`;
   }
