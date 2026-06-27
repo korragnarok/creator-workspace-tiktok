@@ -307,6 +307,7 @@ function applyTheme(themeKey) {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.vars['--bg']);
   applyThemeIcons(resolvedKey);
   _injectGroveStyle();
+  _applyGrovePadding();
   // Mark active on any theme switcher dots present
   document.querySelectorAll('[data-theme]').forEach(el => {
     el.classList.toggle('active', el.dataset.theme === resolvedKey);
@@ -317,6 +318,18 @@ function applyTheme(themeKey) {
 }
 
 // Call immediately on load using localStorage cache (no flash)
+function _applyGrovePadding() {
+  const isGrove = (localStorage.getItem('creatorHub:theme') || 'dusk') === 'grove';
+  const body = document.body;
+  if (!body) return;
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  const hasAppShell = body.classList.contains('has-app-shell');
+  if (isGrove && !isMobile && !hasAppShell) {
+    body.style.paddingLeft = '220px';
+  } else if (!isGrove && body.style.paddingLeft === '220px') {
+    body.style.paddingLeft = '';
+  }
+}
 function _injectGroveStyle() {
   let el = document.getElementById('grove-sidebar-style');
   if (!el) {
@@ -334,11 +347,7 @@ function _injectGroveStyle() {
     [data-theme="grove"] .desktop-sidebar.sidebar {
       width: 220px !important;
     }
-    @media (min-width: 769px) {
-      html[data-theme="grove"] body:not(.has-app-shell) {
-        padding-left: 220px !important;
-      }
-    }
+
     [data-theme="grove"] .desktop-sidebar.sidebar .core5-edit-btn {
       color: rgba(227,220,210,0.7) !important;
     }
@@ -454,7 +463,11 @@ function applyThemeIcons(themeKey) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => applyThemeIcons(_cachedTheme() || DEFAULT_THEME));
+document.addEventListener('DOMContentLoaded', () => {
+  applyThemeIcons(_cachedTheme() || DEFAULT_THEME);
+  _applyGrovePadding();
+});
+window.addEventListener('resize', _applyGrovePadding);
 
 // ─── User Prefs ───────────────────────────────────────────────────────────────
 
