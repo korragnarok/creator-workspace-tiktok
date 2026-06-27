@@ -999,7 +999,7 @@ async function applyProductHandoff(){
   history.replaceState({},'',window.location.pathname);
   return true;
 }
-function applySpyHandoff(){
+async function applySpyHandoff(){
   const params=new URLSearchParams(window.location.search);
   if(!params.get('fromSpy'))return false;
   const script=sessionStorage.getItem('take24:spyScript')||'';
@@ -1007,15 +1007,49 @@ function applySpyHandoff(){
   sessionStorage.removeItem('take24:spyScript');
   sessionStorage.removeItem('take24:spyMeta');
   if(!script)return false;
-  const canvas=document.getElementById('scriptCanvas');
-  if(canvas){canvas.value=script;}
-  const titleEl=document.getElementById('scriptTitle');
-  if(titleEl&&!titleEl.value.trim()){
-    titleEl.value=meta.creator?`@${meta.creator} — Spy Script`:'Spy Script';
+
+  // Check if there's existing content — if so, ask first
+  const hasDraft=Boolean(fullScript()||detailSummaryText()||inspo.length
+    ||document.getElementById('scriptTitle')?.value.trim()
+    ||(document.getElementById('productSelect')?.value));
+  if(hasDraft){
+    const confirmed=await openWorkshopConfirm(
+      'Start a new script?',
+      'This will clear your current title, product, script, and all detail fields. Are you sure?',
+      'Yes, start fresh',
+      'Keep current'
+    );
+    if(!confirmed){
+      history.replaceState({},'',window.location.pathname);
+      return false;
+    }
   }
+
+  // Full reset
+  document.getElementById('scriptTitle').value='';
+  const mTitle=document.getElementById('mScriptTitle');if(mTitle)mTitle.value='';
+  document.getElementById('productSelect').value='';
+  const mProd=document.getElementById('mProductSelect');if(mProd)mProd.value='';
+  syncProductSearchFromSelect('desktop');
+  syncProductSearchFromSelect('mobile');
+  setDetailDraft({onscreen:'',caption:'',seo:''});
+  inspo=[];
+  renderInspo?.();
+  sections=makeFrameworkSections(currentFramework);
+  renderSections?.();
+
+  // Set title and script
+  const titleEl=document.getElementById('scriptTitle');
+  if(titleEl)titleEl.value=meta.creator?`@${meta.creator} — Spy Script`:'Spy Script';
+  const mTitleEl=document.getElementById('mScriptTitle');
+  if(mTitleEl)mTitleEl.value=titleEl?.value||'';
+  const canvas=document.getElementById('scriptCanvas');
+  if(canvas)canvas.value=script;
+  const mCanvas=document.getElementById('mScriptCanvas');
+  if(mCanvas)mCanvas.value=script;
+
   saveLocalDraft();
   history.replaceState({},'',window.location.pathname);
-  // Show a brief toast if available
   if(typeof showToast==='function')showToast('Spy script loaded — make it yours!');
   return true;
 }
