@@ -325,8 +325,8 @@ function _applyGrovePadding() {
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
   const hasAppShell = body.classList.contains('has-app-shell');
   if (isGrove && !isMobile && !hasAppShell) {
-    body.style.paddingLeft = '220px';
-  } else if (!isGrove && body.style.paddingLeft === '220px') {
+    body.style.paddingLeft = '200px';
+  } else if (!isGrove && body.style.paddingLeft === '200px') {
     body.style.paddingLeft = '';
   }
 }
@@ -345,7 +345,7 @@ function _injectGroveStyle() {
       background: #013328 !important;
     }
     [data-theme="grove"] .desktop-sidebar.sidebar {
-      width: 220px !important;
+      width: 200px !important;
     }
 
     [data-theme="grove"] .desktop-sidebar.sidebar .core5-edit-btn {
@@ -372,6 +372,16 @@ function _injectGroveStyle() {
     [data-theme="grove"] .desktop-sidebar.sidebar .side-submenu-icon {
       background: rgba(255,255,255,0.08) !important;
       border-color: rgba(255,255,255,0.12) !important;
+      width: 36px !important;
+      height: 36px !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .nav-icon img {
+      width: 26px !important;
+      height: 26px !important;
+    }
+    [data-theme="grove"] .tab-icon-img {
+      width: 30px !important;
+      height: 30px !important;
     }
     [data-theme="grove"] .desktop-sidebar.sidebar .core-pill {
       background: rgba(255,255,255,0.08) !important;
