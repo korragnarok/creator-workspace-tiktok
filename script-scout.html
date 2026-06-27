@@ -162,8 +162,21 @@ let _spyResults = [];
 db.auth.getSession().then(({data:{session}}) => {
   if (!session) window.location.href = 'auth.html';
   checkKeys();
+  restoreCache();
 });
 
+function restoreCache() {
+  try {
+    const raw = localStorage.getItem('take24:scoutCache');
+    if (!raw) return;
+    const cache = JSON.parse(raw);
+    if (!cache || Date.now() - cache.ts > 30 * 60 * 1000) return; // expired
+    if (!cache.videos?.length) return;
+    document.getElementById('spyQuery').value = cache.query || '';
+    _spyResults = cache.videos;
+    renderSpyResults(cache.videos, cache.query, { title: cache.productName });
+  } catch(e) {}
+}
 function checkKeys() {
   const key = (localStorage.getItem(SCRAPE_KEY_STORAGE) || '').trim();
   document.getElementById('keyNotice').style.display = key ? 'none' : 'flex';
@@ -197,6 +210,7 @@ async function doSpySearch() {
   const btn = document.getElementById('spySearchBtn');
   btn.disabled = true; btn.textContent = 'Searching...';
   showError('');
+  try { localStorage.removeItem('take24:scoutCache'); } catch(e) {}
 
   document.getElementById('spyEmpty').style.display = 'none';
   document.getElementById('spyResults').style.display = 'none';
@@ -286,6 +300,13 @@ async function doSpySearch() {
 
     _spyResults = videos;
     renderSpyResults(videos, query, topProduct);
+  // Cache results for 30 minutes so navigating away and back restores them
+  try {
+    localStorage.setItem('take24:scoutCache', JSON.stringify({
+      query, videos, productName: topProduct?.title || topProduct?.name || query,
+      ts: Date.now()
+    }));
+  } catch(e) {}
 
   } catch(err) {
     showError('Search failed: ' + (err.message || 'Unknown error'));

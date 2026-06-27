@@ -1040,7 +1040,7 @@ async function applySpyHandoff(){
 
   // Set title and script
   const titleEl=document.getElementById('scriptTitle');
-  if(titleEl)titleEl.value=meta.creator?`@${meta.creator} — Spy Script`:'Spy Script';
+  // title left blank intentionally — user sets it
   const mTitleEl=document.getElementById('mScriptTitle');
   if(mTitleEl)mTitleEl.value=titleEl?.value||'';
   const canvas=document.getElementById('scriptCanvas');
