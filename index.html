@@ -254,7 +254,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .sched-progress-wrap{flex:0 0 auto;margin-top:10px;padding-top:9px;}
   .lower-grid>.stack:nth-child(2){display:grid;grid-template-rows:320px minmax(0,1fr);overflow:hidden;}
   .lower-grid>.stack:nth-child(2)>.card{height:auto;min-height:0;flex:initial;}
-  .chart-card{height:320px;min-height:320px;padding-bottom:14px;}
+  .chart-card{height:auto;min-height:0;padding-bottom:14px;}
   .chart-top,.chart-metrics{flex:0 0 auto;}
   .chart-metrics{margin:8px 0 4px;}
   .chart-wrap{height:110px;min-height:100px;max-height:110px;flex:0 0 110px;}
@@ -655,10 +655,10 @@ function renderSalesChart(labels, commData, gmvData){
   const box=wrap?.getBoundingClientRect();
   const width=Math.max(260,Math.floor(box?.width||wrap?.clientWidth||canvas.clientWidth||520));
   const fixedDashboard=window.matchMedia('(min-width:1281px) and (min-height:760px)').matches;
-  const measuredHeight=Math.floor(box?.height||wrap?.clientHeight||194);
+  const measuredHeight=Math.floor(box?.height||wrap?.clientHeight||80);
   const height=fixedDashboard
-    ? 188
-    : Math.max(150,measuredHeight);
+    ? 80
+    : Math.max(75,measuredHeight);
   canvas.width=Math.round(width*dpr);
   canvas.height=Math.round(height*dpr);
   canvas.style.width=width+'px';
