@@ -419,26 +419,7 @@ async function transcribeVideo(index) {
 }
 
 async function transcribeWithGemini(v, videoUrl) {
-  const caption = v?.desc || v?.description || v?.caption || '';
-  const creator = v?.author?.nickname || '';
-  const prompt = `You are analyzing a TikTok Shop affiliate video.
-
-Video URL: ${videoUrl}
-Creator: @${creator}
-Caption: ${caption}
-
-Based on the caption and context of this TikTok Shop video, write what the script likely sounds like. Format it as:
-
-HOOK: [Opening line that grabs attention]
-
-BODY: [Main selling points and product benefits]
-
-CTA: [Call to action at the end]
-
-Keep it concise and in the style of a TikTok Shop affiliate creator. Base it on the caption clues available.`;
-
-  const text = await CreatorGemini.generateText(prompt, { model: 'gemini-2.5-flash' });
-  showTranscript(text);
+  showTranscriptError('No transcript found for this video — it might be faceless b-roll or ASMR content.');
 }
 
 // ── Transcript modal ───────────────────────────────────────────────────────
