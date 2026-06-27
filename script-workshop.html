@@ -731,6 +731,7 @@ async function init(){
   renderProducts();
   if(pendingDraftProductId)selectProduct(pendingDraftProductId,'desktop');
   await applyProductHandoff();
+  applySpyHandoff();
   updateSimilarityDisplay(document.getElementById('similaritySlider')?.value||'50');
   renderLibrary();
   renderInspo();
@@ -996,6 +997,26 @@ async function applyProductHandoff(){
   if(!title.value.trim())title.value=`${product.name} Script`;
   saveLocalDraft();
   history.replaceState({},'',window.location.pathname);
+  return true;
+}
+function applySpyHandoff(){
+  const params=new URLSearchParams(window.location.search);
+  if(!params.get('fromSpy'))return false;
+  const script=sessionStorage.getItem('take24:spyScript')||'';
+  const meta=JSON.parse(sessionStorage.getItem('take24:spyMeta')||'{}');
+  sessionStorage.removeItem('take24:spyScript');
+  sessionStorage.removeItem('take24:spyMeta');
+  if(!script)return false;
+  const canvas=document.getElementById('scriptCanvas');
+  if(canvas){canvas.value=script;}
+  const titleEl=document.getElementById('scriptTitle');
+  if(titleEl&&!titleEl.value.trim()){
+    titleEl.value=meta.creator?`@${meta.creator} — Spy Script`:'Spy Script';
+  }
+  saveLocalDraft();
+  history.replaceState({},'',window.location.pathname);
+  // Show a brief toast if available
+  if(typeof showToast==='function')showToast('Spy script loaded — make it yours!');
   return true;
 }
 function sectionIcon(label){return String(label||'?').trim().slice(0,1).toUpperCase();}

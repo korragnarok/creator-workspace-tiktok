@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F8F5F1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/pwa/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
+<title>Spy Research — Take24</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script src="theme-init.js?v=143"></script>
+<link rel="stylesheet" href="layout.css?v=143">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+button,input,textarea,select{font:inherit;}
+.page{max-width:1280px;margin:0 auto;padding:32px 28px 80px;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:28px;flex-wrap:wrap;}
+.page-title{font-family:'IBM Plex Serif',serif;font-size:38px;font-weight:800;line-height:1;color:var(--ink);}
+.page-sub{font-size:13px;color:var(--text-muted);margin-top:6px;}
+
+/* Search bar */
+.search-bar{display:flex;gap:10px;margin-bottom:28px;}
+.search-input{flex:1;padding:13px 16px;border:1px solid var(--border-mid);border-radius:12px;background:var(--bg);color:var(--ink);font-family:'IBM Plex Serif',serif;font-size:15px;outline:none;transition:border-color 0.15s;}
+.search-input:focus{border-color:var(--rust);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:9px;border:1px solid var(--border-mid);background:transparent;color:var(--ink);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;padding:9px 16px;cursor:pointer;transition:background 0.15s,border-color 0.15s,opacity 0.15s;}
+.btn:hover{background:color-mix(in srgb,var(--surface) 70%,var(--rust) 14%);}
+.btn-primary{background:var(--rust);border-color:var(--rust);color:#fff;}
+.btn-primary:hover{opacity:0.88;background:var(--rust);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-ghost{background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
+
+/* States */
+.state-msg{text-align:center;padding:60px 20px;color:var(--text-muted);font-size:14px;}
+.state-msg strong{display:block;font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.error-msg{background:color-mix(in srgb,var(--rust) 12%,transparent);border:1px solid color-mix(in srgb,var(--rust) 24%,transparent);color:var(--rust);border-radius:12px;padding:14px 18px;font-size:13px;margin-bottom:20px;display:none;}
+
+/* Results grid */
+.results-meta{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+
+/* Video card */
+.spy-card{border:1px solid var(--border-mid);border-radius:16px;background:var(--surface);overflow:hidden;display:flex;flex-direction:column;transition:border-color 0.15s;}
+.spy-card:hover{border-color:color-mix(in srgb,var(--rust) 40%,var(--border-mid));}
+.spy-thumb{position:relative;width:100%;aspect-ratio:9/16;max-height:220px;background:var(--bg);overflow:hidden;flex-shrink:0;}
+.spy-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.spy-thumb-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--surface) 80%,var(--bg) 20%);color:var(--text-muted);font-size:32px;}
+.spy-stats{position:absolute;bottom:8px;left:8px;display:flex;gap:6px;}
+.spy-stat-pill{background:rgba(0,0,0,0.62);backdrop-filter:blur(4px);border-radius:999px;padding:3px 8px;font-family:'Noto Sans Mono',monospace;font-size:11px;font-weight:700;color:#fff;}
+.spy-body{padding:14px;flex:1;display:flex;flex-direction:column;gap:10px;}
+.spy-creator{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--rust);}
+.spy-caption{font-size:13px;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.spy-actions{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap;}
+.spy-btn{flex:1;min-width:0;padding:8px 10px;border-radius:8px;border:1px solid var(--border-mid);background:color-mix(in srgb,var(--surface) 60%,var(--bg) 40%);color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;text-align:center;}
+.spy-btn:hover{border-color:var(--rust);color:var(--ink);}
+.spy-btn.loading{opacity:0.6;cursor:not-allowed;}
+.spy-btn.done{border-color:var(--sage);color:var(--sage);}
+
+/* Transcript modal */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;background:rgba(0,0,0,0.52);backdrop-filter:blur(6px);padding:24px;}
+.modal-overlay.open{display:flex;}
+.modal{width:min(720px,100%);max-height:85vh;border:1px solid var(--border-mid);border-radius:20px;background:var(--bg-lift);box-shadow:0 24px 60px rgba(0,0,0,0.44);display:flex;flex-direction:column;overflow:hidden;}
+.modal-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.modal-title{font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.modal-sub{font-size:12px;color:var(--text-muted);}
+.modal-body{flex:1;overflow-y:auto;padding:20px 24px;}
+.transcript-text{font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;background:color-mix(in srgb,var(--surface) 60%,var(--bg) 40%);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;flex-wrap:wrap;}
+.modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border:1px solid var(--border-mid);border-radius:50%;background:var(--surface);color:var(--text-mid);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;}
+.modal-close:hover{color:var(--ink);}
+
+/* Loading spinner */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid color-mix(in srgb,var(--rust) 30%,transparent);border-top-color:var(--rust);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Key missing notice */
+.key-notice{background:color-mix(in srgb,var(--sage) 12%,transparent);border:1px solid color-mix(in srgb,var(--sage) 28%,transparent);border-radius:12px;padding:14px 18px;font-size:13px;margin-bottom:20px;display:flex;align-items:center;gap:12px;}
+.key-notice a{color:var(--rust);text-decoration:underline;}
+
+@media(max-width:768px){
+  .page{padding:88px 16px 40px;}
+  .page-title{font-size:28px;}
+  .results-grid{grid-template-columns:1fr;}
+  .modal{max-height:92vh;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="page-title">Spy Research</div>
+      <div class="page-sub">Search a product → see how other creators are promoting it → steal their script structure.</div>
+    </div>
+  </div>
+
+  <div id="keyNotice" class="key-notice" style="display:none;">
+    ⚠️ Add your ScrapeCreators API key in <a href="settings.html">Settings</a> to search products.
+  </div>
+  <div id="errorMsg" class="error-msg"></div>
+
+  <div class="search-bar">
+    <input type="text" class="search-input" id="spyQuery" placeholder="Search a product — e.g. dog probiotic chews, vacuum sealer, gua sha..." onkeydown="if(event.key==='Enter')doSpySearch()">
+    <button class="btn btn-primary" id="spySearchBtn" onclick="doSpySearch()">Search</button>
+  </div>
+
+  <div id="spyEmpty" class="state-msg">
+    <strong>Find Videos to Steal From</strong>
+    Search any TikTok Shop product above and see how top creators are selling it. Transcribe any video and send the script straight to your workshop.
+  </div>
+
+  <div id="spyLoading" class="state-msg" style="display:none;">
+    <div class="spinner" style="width:28px;height:28px;margin:0 auto 14px;display:block;"></div>
+    Searching TikTok Shop for videos...
+  </div>
+
+  <div id="spyResultsMeta" class="results-meta" style="display:none;"></div>
+  <div id="spyResults" class="results-grid" style="display:none;"></div>
+</div>
+
+<!-- Transcript Modal -->
+<div class="modal-overlay" id="transcriptOverlay">
+  <div class="modal" style="position:relative;">
+    <button class="modal-close" onclick="closeTranscript()">✕</button>
+    <div class="modal-head">
+      <div class="modal-title" id="transcriptTitle">Video Transcript</div>
+      <div class="modal-sub" id="transcriptSub"></div>
+    </div>
+    <div class="modal-body">
+      <div id="transcriptLoading" class="state-msg" style="display:none;padding:30px 0;">
+        <div class="spinner" style="width:24px;height:24px;margin:0 auto 12px;display:block;"></div>
+        Transcribing video — this takes 10–30 seconds...
+      </div>
+      <div id="transcriptError" class="error-msg" style="display:block;"></div>
+      <div class="transcript-text" id="transcriptText" style="display:none;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeTranscript()">Close</button>
+      <button class="btn btn-primary" id="workshopBtn" onclick="sendToWorkshop()" style="display:none;">✦ Workshop This Script</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=143"></script>
+<script src="theme-init.js?v=143"></script>
+<script src="gemini-ai.js?v=143"></script>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const SCRAPE_KEY_STORAGE = 'take24:scrapecreators_api_key';
+let _currentTranscript = '';
+let _currentVideoData = null;
+let _spyResults = [];
+
+// ── Auth guard ─────────────────────────────────────────────────────────────
+db.auth.getSession().then(({data:{session}}) => {
+  if (!session) window.location.href = 'auth.html';
+  checkKeys();
+});
+
+function checkKeys() {
+  const key = (localStorage.getItem(SCRAPE_KEY_STORAGE) || '').trim();
+  document.getElementById('keyNotice').style.display = key ? 'none' : 'flex';
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function fmtNum(n) {
+  if (!n) return '0';
+  n = Number(n);
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return String(n);
+}
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+// ── Search ─────────────────────────────────────────────────────────────────
+async function doSpySearch() {
+  const query = document.getElementById('spyQuery').value.trim();
+  if (!query) { document.getElementById('spyQuery').focus(); return; }
+
+  const key = (localStorage.getItem(SCRAPE_KEY_STORAGE) || '').trim();
+  if (!key) { showError('Add your ScrapeCreators API key in Settings first.'); return; }
+
+  const btn = document.getElementById('spySearchBtn');
+  btn.disabled = true; btn.textContent = 'Searching...';
+  showError('');
+
+  document.getElementById('spyEmpty').style.display = 'none';
+  document.getElementById('spyResults').style.display = 'none';
+  document.getElementById('spyResultsMeta').style.display = 'none';
+  document.getElementById('spyLoading').style.display = 'block';
+
+  try {
+    // Step 1: Search for the product to get product IDs
+    const searchRes = await fetch(
+      `https://api.scrapecreators.com/v1/tiktok/shop/search?query=${encodeURIComponent(query)}&region=US`,
+      { headers: { 'x-api-key': key } }
+    );
+    const searchData = await searchRes.json();
+    if (!searchRes.ok) throw new Error(searchData?.message || `Search failed (${searchRes.status})`);
+
+    const products = searchData?.products || searchData?.data || searchData?.results || [];
+    if (!products.length) {
+      document.getElementById('spyLoading').style.display = 'none';
+      document.getElementById('spyEmpty').style.display = 'block';
+      document.getElementById('spyEmpty').innerHTML = '<strong>No products found</strong>Try different keywords.';
+      btn.disabled = false; btn.textContent = 'Search';
+      return;
+    }
+
+    // Step 2: Get videos for the top product
+    const topProduct = products[0];
+    const productId = topProduct?.product_id || topProduct?.id || topProduct?.productId || '';
+    const productUrl = topProduct?.url || topProduct?.product_url ||
+      (productId ? `https://www.tiktok.com/shop/pdp/${productId}` : '');
+
+    let videos = [];
+
+    // Try product details endpoint to get related videos
+    if (productUrl) {
+      try {
+        const detailRes = await fetch(
+          `https://api.scrapecreators.com/v1/tiktok/shop/product?url=${encodeURIComponent(productUrl)}`,
+          { headers: { 'x-api-key': key } }
+        );
+        const detailData = await detailRes.json();
+        const relatedVideos = detailData?.related_videos || detailData?.product_base?.related_videos || detailData?.videos || [];
+        if (Array.isArray(relatedVideos) && relatedVideos.length) {
+          videos = relatedVideos;
+        }
+      } catch(e) { /* fall through to keyword search */ }
+    }
+
+    // Fallback: search for videos by keyword
+    if (!videos.length) {
+      const vidRes = await fetch(
+        `https://api.scrapecreators.com/v1/tiktok/search?query=${encodeURIComponent(query)}&type=video`,
+        { headers: { 'x-api-key': key } }
+      );
+      const vidData = await vidRes.json();
+      videos = vidData?.videos || vidData?.data || vidData?.results || [];
+    }
+
+    // Also include videos from additional products
+    if (products.length > 1 && videos.length < 6) {
+      for (let i = 1; i < Math.min(4, products.length); i++) {
+        const pid = products[i]?.product_id || products[i]?.id;
+        const purl = products[i]?.url || (pid ? `https://www.tiktok.com/shop/pdp/${pid}` : '');
+        if (!purl) continue;
+        try {
+          const r = await fetch(
+            `https://api.scrapecreators.com/v1/tiktok/shop/product?url=${encodeURIComponent(purl)}`,
+            { headers: { 'x-api-key': key } }
+          );
+          const d = await r.json();
+          const rv = d?.related_videos || d?.product_base?.related_videos || [];
+          if (Array.isArray(rv)) videos = videos.concat(rv);
+          if (videos.length >= 20) break;
+        } catch(e) { /* skip */ }
+      }
+    }
+
+    _spyResults = videos;
+    renderSpyResults(videos, query, topProduct);
+
+  } catch(err) {
+    showError('Search failed: ' + (err.message || 'Unknown error'));
+    document.getElementById('spyEmpty').style.display = 'block';
+  } finally {
+    document.getElementById('spyLoading').style.display = 'none';
+    btn.disabled = false; btn.textContent = 'Search';
+  }
+}
+
+// ── Render results ─────────────────────────────────────────────────────────
+function renderSpyResults(videos, query, topProduct) {
+  if (!videos.length) {
+    document.getElementById('spyEmpty').style.display = 'block';
+    document.getElementById('spyEmpty').innerHTML = '<strong>No videos found</strong>Try a different product keyword.';
+    return;
+  }
+
+  const productName = topProduct?.title || topProduct?.name || query;
+  document.getElementById('spyResultsMeta').textContent =
+    `${videos.length} video${videos.length === 1 ? '' : 's'} found for "${productName}"`;
+  document.getElementById('spyResultsMeta').style.display = 'block';
+
+  const grid = document.getElementById('spyResults');
+  grid.innerHTML = videos.slice(0, 24).map((v, i) => {
+    const thumb = extractThumb(v);
+    const views = v?.play_count || v?.playCount || v?.views || v?.statistics?.play_count || 0;
+    const likes = v?.digg_count || v?.diggCount || v?.likes || v?.statistics?.digg_count || 0;
+    const creator = v?.author?.nickname || v?.author?.unique_id || v?.username || v?.handle || '';
+    const caption = v?.desc || v?.description || v?.caption || v?.title || '';
+    const videoUrl = v?.share_url || v?.url || v?.video_url ||
+      (v?.aweme_id ? `https://www.tiktok.com/@${creator}/video/${v.aweme_id}` : '');
+
+    return `<div class="spy-card">
+      <div class="spy-thumb">
+        ${thumb
+          ? `<img src="${esc(thumb)}" alt="" onerror="this.parentNode.innerHTML='<div class=spy-thumb-placeholder>🎵</div>'">`
+          : '<div class="spy-thumb-placeholder">🎵</div>'}
+        <div class="spy-stats">
+          ${views ? `<span class="spy-stat-pill">▶ ${fmtNum(views)}</span>` : ''}
+          ${likes ? `<span class="spy-stat-pill">♥ ${fmtNum(likes)}</span>` : ''}
+        </div>
+      </div>
+      <div class="spy-body">
+        ${creator ? `<div class="spy-creator">@${esc(creator)}</div>` : ''}
+        ${caption ? `<div class="spy-caption">${esc(caption)}</div>` : ''}
+        <div class="spy-actions">
+          ${videoUrl ? `<a class="spy-btn" href="${esc(videoUrl)}" target="_blank" rel="noopener">Watch</a>` : ''}
+          <button class="spy-btn" id="transcribeBtn${i}" onclick="transcribeVideo(${i})">Transcribe</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.style.display = 'grid';
+}
+
+function extractThumb(v) {
+  function firstUrl(obj) {
+    const list = obj?.url_list || obj?.urlList;
+    if (!Array.isArray(list)) return null;
+    return list.find(u => u && !/\.heic/i.test(u)) || list[0] || null;
+  }
+  const vid = v?.video || {};
+  const candidates = [
+    firstUrl(vid?.origin_cover || vid?.originCover),
+    firstUrl(vid?.cover),
+    firstUrl(vid?.dynamic_cover),
+    v?.cover || v?.thumbnail || v?.image,
+    firstUrl(v?.cover),
+  ].filter(Boolean);
+  return candidates[0] || '';
+}
+
+// ── Transcribe ─────────────────────────────────────────────────────────────
+async function transcribeVideo(index) {
+  const v = _spyResults[index];
+  if (!v) return;
+
+  const key = (localStorage.getItem(SCRAPE_KEY_STORAGE) || '').trim();
+  if (!key) { showError('Add your ScrapeCreators API key in Settings first.'); return; }
+
+  const btn = document.getElementById(`transcribeBtn${index}`);
+  if (btn) { btn.classList.add('loading'); btn.textContent = 'Transcribing...'; }
+
+  _currentVideoData = v;
+  openTranscriptModal(v);
+
+  const videoUrl = v?.share_url || v?.url || v?.video_url ||
+    (() => {
+      const creator = v?.author?.nickname || v?.author?.unique_id || '';
+      const id = v?.aweme_id || v?.id || '';
+      return creator && id ? `https://www.tiktok.com/@${creator}/video/${id}` : '';
+    })();
+
+  if (!videoUrl) {
+    showTranscriptError('Could not find video URL to transcribe.');
+    if (btn) { btn.classList.remove('loading'); btn.textContent = 'Transcribe'; }
+    return;
+  }
+
+  try {
+    // Use ScrapeCreators transcript endpoint
+    const res = await fetch(
+      `https://api.scrapecreators.com/v1/tiktok/video/transcript?url=${encodeURIComponent(videoUrl)}`,
+      { headers: { 'x-api-key': key } }
+    );
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data?.message || `Transcript failed (${res.status})`);
+
+    const transcript = data?.transcript || data?.text || data?.captions || data?.content || '';
+
+    if (!transcript) {
+      // Fallback: try Gemini transcription with video description
+      await transcribeWithGemini(v, videoUrl);
+    } else {
+      showTranscript(transcript);
+    }
+
+  } catch(err) {
+    // Fallback to Gemini
+    try {
+      await transcribeWithGemini(v, videoUrl);
+    } catch(e2) {
+      showTranscriptError('Transcription failed: ' + (err.message || 'Unknown error') + '. Make sure you have a Gemini key in Settings.');
+    }
+  } finally {
+    if (btn) { btn.classList.remove('loading'); btn.classList.add('done'); btn.textContent = '✓ Done'; }
+  }
+}
+
+async function transcribeWithGemini(v, videoUrl) {
+  const caption = v?.desc || v?.description || v?.caption || '';
+  const creator = v?.author?.nickname || '';
+  const prompt = `You are analyzing a TikTok Shop affiliate video.
+
+Video URL: ${videoUrl}
+Creator: @${creator}
+Caption: ${caption}
+
+Based on the caption and context of this TikTok Shop video, write what the script likely sounds like. Format it as:
+
+HOOK: [Opening line that grabs attention]
+
+BODY: [Main selling points and product benefits]
+
+CTA: [Call to action at the end]
+
+Keep it concise and in the style of a TikTok Shop affiliate creator. Base it on the caption clues available.`;
+
+  const text = await CreatorGemini.generateText(prompt, { model: 'gemini-2.5-flash' });
+  showTranscript(text);
+}
+
+// ── Transcript modal ───────────────────────────────────────────────────────
+function openTranscriptModal(v) {
+  const creator = v?.author?.nickname || v?.author?.unique_id || '';
+  const caption = v?.desc || v?.description || v?.caption || '';
+  document.getElementById('transcriptTitle').textContent = creator ? `@${creator}` : 'Video Transcript';
+  document.getElementById('transcriptSub').textContent = caption ? caption.slice(0, 80) + (caption.length > 80 ? '...' : '') : '';
+  document.getElementById('transcriptLoading').style.display = 'block';
+  document.getElementById('transcriptText').style.display = 'none';
+  document.getElementById('transcriptError').style.display = 'none';
+  document.getElementById('workshopBtn').style.display = 'none';
+  document.getElementById('transcriptError').textContent = '';
+  _currentTranscript = '';
+  document.getElementById('transcriptOverlay').classList.add('open');
+}
+
+function showTranscript(text) {
+  _currentTranscript = text;
+  document.getElementById('transcriptLoading').style.display = 'none';
+  document.getElementById('transcriptText').textContent = text;
+  document.getElementById('transcriptText').style.display = 'block';
+  document.getElementById('workshopBtn').style.display = 'inline-flex';
+}
+
+function showTranscriptError(msg) {
+  document.getElementById('transcriptLoading').style.display = 'none';
+  const el = document.getElementById('transcriptError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function closeTranscript() {
+  document.getElementById('transcriptOverlay').classList.remove('open');
+  _currentTranscript = '';
+  _currentVideoData = null;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeTranscript();
+});
+
+// ── Send to Workshop ───────────────────────────────────────────────────────
+function sendToWorkshop() {
+  if (!_currentTranscript) return;
+  // Store in sessionStorage so script-workshop can pick it up
+  sessionStorage.setItem('take24:spyScript', _currentTranscript);
+  const v = _currentVideoData;
+  const creator = v?.author?.nickname || v?.author?.unique_id || '';
+  const caption = (v?.desc || v?.description || v?.caption || '').slice(0, 60);
+  sessionStorage.setItem('take24:spyMeta', JSON.stringify({ creator, caption }));
+  window.location.href = 'script-workshop.html?fromSpy=1';
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+CreatorGemini.init();
+</script>
+
+<script src="layout.js?v=143"></script>
+</body>
+</html>
