@@ -174,7 +174,8 @@ function restoreCache() {
     if (!cache.videos?.length) return;
     document.getElementById('spyQuery').value = cache.query || '';
     _spyResults = cache.videos;
-    renderSpyResults(cache.videos, cache.query, { title: cache.productName });
+    document.getElementById('spyEmpty').style.display = 'none';
+  renderSpyResults(cache.videos, cache.query, { title: cache.productName });
   } catch(e) {}
 }
 function checkKeys() {
@@ -319,6 +320,7 @@ async function doSpySearch() {
 
 // ── Render results ─────────────────────────────────────────────────────────
 function renderSpyResults(videos, query, topProduct) {
+  document.getElementById('spyEmpty').style.display = 'none';
   if (!videos.length) {
     document.getElementById('spyEmpty').style.display = 'block';
     document.getElementById('spyEmpty').innerHTML = '<strong>No videos found</strong>Try a different product keyword.';
