@@ -33,12 +33,12 @@
       '--shadow-sm':'0 1px 4px rgba(0,0,0,0.26)','--shadow-md':'0 4px 20px rgba(0,0,0,0.36)'
     },
     grove: {
-      label: 'Grove', swatch: ['#013328','#0a4535','#CC8B65'],
-      '--bg':'#013328','--bg-lift':'#0a4535','--surface':'#0d4f3c','--surface-2':'#145a45',
-      '--border':'rgba(245,240,232,0.08)','--border-mid':'rgba(245,240,232,0.14)',
-      '--text':'#E3DCD2','--text-mid':'#C8BFB0','--text-muted':'#9B8A78','--ink':'#F5F0E8',
-      '--sage':'#CC8B65','--rose':'#CC8B65','--rust':'#CC8B65','--tan':'#E3DCD2','--sand':'#0a4535',
-      '--shadow-sm':'0 1px 4px rgba(0,0,0,0.32)','--shadow-md':'0 4px 20px rgba(0,0,0,0.42)'
+      label: 'Grove', swatch: ['#E3DCD2','#F0EBE3','#013328'],
+      '--bg':'#E3DCD2','--bg-lift':'#F5F0E8','--surface':'#F0EBE3','--surface-2':'#C8BFB0',
+      '--border':'rgba(1,51,40,0.1)','--border-mid':'rgba(1,51,40,0.16)',
+      '--text':'#2A2420','--text-mid':'#5A4A3A','--text-muted':'#7A6B54','--ink':'#1A1410',
+      '--sage':'#CC8B65','--rose':'#CC8B65','--rust':'#013328','--tan':'#CC8B65','--sand':'#013328',
+      '--shadow-sm':'0 1px 4px rgba(1,51,40,0.08)','--shadow-md':'0 4px 20px rgba(1,51,40,0.12)'
     },
     haus: {
       label: 'Haus', swatch: ['#2F4454','#2E151B','#DA7B93','#E8D8DC'],
