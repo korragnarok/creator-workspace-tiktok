@@ -207,6 +207,75 @@ const THEMES = {
       '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.26)',
       '--shadow-md':   '0 4px 20px rgba(0,0,0,0.36)',
     }
+  },
+  grove: {
+    label: 'Grove',
+    swatch: ['#E3DCD2','#F0EBE3','#013328'],
+    vars: {
+      '--bg':          '#E3DCD2',
+      '--bg-lift':     '#F5F0E8',
+      '--surface':     '#F0EBE3',
+      '--surface-2':   '#C8BFB0',
+      '--border':      'rgba(1,51,40,0.1)',
+      '--border-mid':  'rgba(1,51,40,0.16)',
+      '--text':        '#2A2420',
+      '--text-mid':    '#5A4A3A',
+      '--text-muted':  '#7A6B54',
+      '--ink':         '#1A1410',
+      '--sage':        '#CC8B65',
+      '--rose':        '#CC8B65',
+      '--rust':        '#013328',
+      '--tan':         '#CC8B65',
+      '--sand':        '#013328',
+      '--shadow-sm':   '0 1px 4px rgba(1,51,40,0.08)',
+      '--shadow-md':   '0 4px 20px rgba(1,51,40,0.12)',
+    }
+  },
+  haus: {
+    label: 'Haus',
+    swatch: ['#2F4454','#2E151B','#DA7B93'],
+    vars: {
+      '--bg':          '#2F4454',
+      '--bg-lift':     '#263C4A',
+      '--surface':     '#2E151B',
+      '--surface-2':   '#3A1E24',
+      '--border':      'rgba(218,123,147,0.1)',
+      '--border-mid':  'rgba(218,123,147,0.18)',
+      '--text':        '#E8D8DC',
+      '--text-mid':    '#DA7B93',
+      '--text-muted':  '#7A8F9A',
+      '--ink':         '#F5EEF0',
+      '--sage':        '#376E6F',
+      '--rose':        '#DA7B93',
+      '--rust':        '#DA7B93',
+      '--tan':         '#7A8F9A',
+      '--sand':        '#2E151B',
+      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.36)',
+      '--shadow-md':   '0 4px 20px rgba(0,0,0,0.48)',
+    }
+  },
+  fiesta: {
+    label: 'Fiesta',
+    swatch: ['#F9FAF4','#F0F1EA','#F9A66C'],
+    vars: {
+      '--bg':          '#F9FAF4',
+      '--bg-lift':     '#FFFFFF',
+      '--surface':     '#F0F1EA',
+      '--surface-2':   '#E6E7DF',
+      '--border':      'rgba(74,97,99,0.1)',
+      '--border-mid':  'rgba(74,97,99,0.16)',
+      '--text':        '#2A2E2E',
+      '--text-mid':    '#4A6163',
+      '--text-muted':  '#7A8A8B',
+      '--ink':         '#1A2020',
+      '--sage':        '#4A6163',
+      '--rose':        '#F17A7E',
+      '--rust':        '#F9A66C',
+      '--tan':         '#FFC94B',
+      '--sand':        '#E6E7DF',
+      '--shadow-sm':   '0 1px 4px rgba(74,97,99,0.08)',
+      '--shadow-md':   '0 4px 20px rgba(74,97,99,0.12)',
+    }
   }
 };
 
@@ -217,7 +286,10 @@ const THEME_ICON_FILES = {
   dusk: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
   warm: { video:'videos.png', videos:'videos.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
   noir: { video:'video.png', videos:'video.png', commissions:'comissions.png', comission:'comissions.png', comissions:'comissions.png', commissins:'comissions.png' },
-  forest: { video:'video.png', videos:'video.png', commissions:'commissins.png', comission:'commissins.png', comissions:'commissins.png', commissins:'commissins.png' }
+  forest: { video:'video.png', videos:'video.png', commissions:'commissins.png', comission:'commissins.png', comissions:'commissins.png', commissins:'commissins.png' },
+  grove: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
+  haus: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
+  fiesta: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' }
 };
 const PROFILE_ICONS = [
   { key: 'avatar', label: 'Default', src: 'icons/users/avatar.png' }
