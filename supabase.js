@@ -307,7 +307,7 @@ function applyTheme(themeKey) {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.vars['--bg']);
   applyThemeIcons(resolvedKey);
   _injectGroveStyle();
-  _applyGrovePadding();
+  requestAnimationFrame(() => requestAnimationFrame(_applyGrovePadding));
   // Mark active on any theme switcher dots present
   document.querySelectorAll('[data-theme]').forEach(el => {
     el.classList.toggle('active', el.dataset.theme === resolvedKey);
@@ -380,6 +380,21 @@ function _injectGroveStyle() {
     [data-theme="grove"] .desktop-sidebar.sidebar .side-profile {
       background: rgba(255,255,255,0.06) !important;
       border-color: rgba(255,255,255,0.1) !important;
+    }
+    [data-theme="grove"] .add-bar,
+    [data-theme="grove"] .mini-action,
+    [data-theme="grove"] .sched-open-link,
+    [data-theme="grove"] .chart-pill.active,
+    [data-theme="grove"] #viewAllProductsBtn,
+    [data-theme="grove"] button.btn-primary,
+    [data-theme="grove"] a.btn-primary {
+      background: #013328 !important;
+      border-color: #013328 !important;
+      color: #E3DCD2 !important;
+    }
+    [data-theme="grove"] .chart-pill:not(.active) {
+      color: #5A4A3A !important;
+      border-color: rgba(1,51,40,0.2) !important;
     }
     [data-theme="grove"] .level-feature {
       background: linear-gradient(135deg, color-mix(in srgb, #CC8B65 18%, #F5F0E8 82%), #F0EBE3) !important;
@@ -465,7 +480,8 @@ function applyThemeIcons(themeKey) {
 
 document.addEventListener('DOMContentLoaded', () => {
   applyThemeIcons(_cachedTheme() || DEFAULT_THEME);
-  _applyGrovePadding();
+  // Delay so layout.js has time to insert sidebar and set has-app-shell
+  requestAnimationFrame(() => requestAnimationFrame(_applyGrovePadding));
 });
 window.addEventListener('resize', _applyGrovePadding);
 
