@@ -324,7 +324,7 @@ function applyThemeImmediate() {
 applyThemeImmediate();
 
 function _themeIconNameFromSrc(src) {
-  const match = String(src || '').match(/(?:^|\/)icons\/(?:(dusk|warm|noir|forest)\/)?([^/?#]+)\.png(?:[?#].*)?$/i);
+  const match = String(src || '').match(/(?:^|\/)icons\/(?:(dusk|warm|noir|forest|grove|haus|fiesta)\/)?([^/?#]+)\.png(?:[?#].*)?$/i);
   if (!match) return '';
   const raw = match[2].toLowerCase();
   if (raw === 'videos') return 'video';
@@ -334,9 +334,11 @@ function _themeIconNameFromSrc(src) {
 
 function _themeIconSrc(themeKey, iconName) {
   const normalized = iconName === 'videos' ? 'video' : iconName;
-  const aliases = THEME_ICON_FILES[themeKey] || {};
+  // New themes share the dusk icon set
+  const iconTheme = ['grove','haus','fiesta'].includes(themeKey) ? 'dusk' : themeKey;
+  const aliases = THEME_ICON_FILES[iconTheme] || {};
   const file = aliases[normalized] || `${normalized}.png`;
-  return `icons/${themeKey}/${file}`;
+  return `icons/${iconTheme}/${file}`;
 }
 
 function applyThemeIcons(themeKey) {
