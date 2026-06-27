@@ -302,6 +302,70 @@ function _cachedTheme() {
   } catch(e) { return ''; }
 }
 
+
+// ── Grove theme CSS overrides ─────────────────────────────────────────────────
+const GROVE_STYLE_ID = 'grove-theme-overrides';
+
+function _injectGroveStyle() {
+  if (document.getElementById(GROVE_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = GROVE_STYLE_ID;
+  style.textContent = `
+    /* Buttons that should be dark green in Grove */
+    [data-theme="grove"] .btn-primary,
+    [data-theme="grove"] button.btn-primary,
+    [data-theme="grove"] a.btn-primary,
+    [data-theme="grove"] .add-bar,
+    [data-theme="grove"] .sched-open-link,
+    [data-theme="grove"] .mini-action,
+    [data-theme="grove"] #viewAllProductsBtn,
+    [data-theme="grove"] .chart-period-btn.active,
+    [data-theme="grove"] .chart-pill.active {
+      background: #013328 !important;
+      border-color: #013328 !important;
+      color: #F5F0E8 !important;
+    }
+    [data-theme="grove"] .btn-primary:hover,
+    [data-theme="grove"] button.btn-primary:hover,
+    [data-theme="grove"] a.btn-primary:hover {
+      background: #024a3a !important;
+      border-color: #024a3a !important;
+    }
+    /* Rust-colored accents (labels, active states, eyebrows) stay dark green */
+    [data-theme="grove"] .page-eyebrow,
+    [data-theme="grove"] .section-title,
+    [data-theme="grove"] .nav-link.active,
+    [data-theme="grove"] .tab-item.active,
+    [data-theme="grove"] .side-link.active,
+    [data-theme="grove"] .side-link.active .side-link-label {
+      color: #013328 !important;
+    }
+    /* Location tags — readable on light beige background */
+    [data-theme="grove"] .sched-location-tag.bedroom { background: rgba(107,70,128,0.15) !important; border-color: rgba(107,70,128,0.3) !important; color: #5a3a6e !important; }
+    [data-theme="grove"] .sched-location-tag.outside { background: rgba(30,80,100,0.12) !important; border-color: rgba(30,80,100,0.28) !important; color: #1e5064 !important; }
+    [data-theme="grove"] .sched-location-tag.kitchen { background: rgba(180,60,80,0.12) !important; border-color: rgba(180,60,80,0.28) !important; color: #b43c50 !important; }
+    [data-theme="grove"] .sched-location-tag.living-room { background: rgba(80,50,140,0.12) !important; border-color: rgba(80,50,140,0.28) !important; color: #50328c !important; }
+    [data-theme="grove"] .sched-location-tag.studio { background: rgba(20,100,80,0.12) !important; border-color: rgba(20,100,80,0.28) !important; color: #146450 !important; }
+    [data-theme="grove"] .sched-location-tag.office { background: rgba(140,80,20,0.12) !important; border-color: rgba(140,80,20,0.28) !important; color: #8c5014 !important; }
+    [data-theme="grove"] select.sched-location-tag { color: #2A2420 !important; }
+    /* Sidebar profile box */
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-profile {
+      background: rgba(1,51,40,0.06) !important;
+      border-color: rgba(1,51,40,0.15) !important;
+    }
+    /* Level ladder */
+    [data-theme="grove"] .level-feature {
+      background: linear-gradient(135deg, color-mix(in srgb, #CC8B65 18%, #F5F0E8 82%), #F0EBE3) !important;
+      border-color: rgba(204,139,101,0.3) !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function _removeGroveStyle() {
+  document.getElementById(GROVE_STYLE_ID)?.remove();
+}
+
 function applyTheme(themeKey) {
   const resolvedKey = THEMES[themeKey] ? themeKey : DEFAULT_THEME;
   const theme = THEMES[resolvedKey];
@@ -309,6 +373,7 @@ function applyTheme(themeKey) {
   root.dataset.theme = resolvedKey;
   Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v));
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.vars['--bg']);
+  if (resolvedKey === 'grove') _injectGroveStyle(); else _removeGroveStyle();
   applyThemeIcons(resolvedKey);
   // Mark active on any theme switcher dots present
   document.querySelectorAll('[data-theme]').forEach(el => {
@@ -355,7 +420,11 @@ function applyThemeIcons(themeKey) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => applyThemeIcons(_cachedTheme() || DEFAULT_THEME));
+document.addEventListener('DOMContentLoaded', () => {
+  const t = _cachedTheme() || DEFAULT_THEME;
+  applyThemeIcons(t);
+  if (t === 'grove') _injectGroveStyle();
+});
 
 // ─── User Prefs ───────────────────────────────────────────────────────────────
 
