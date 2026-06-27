@@ -331,6 +331,13 @@ function _injectGroveStyle() {
     [data-theme="grove"] body > nav {
       background: #013328 !important;
     }
+    [data-theme="grove"] .desktop-sidebar.sidebar {
+      width: 220px !important;
+    }
+    body[data-theme="grove"]:not(.has-app-shell),
+    [data-theme="grove"] body:not(.has-app-shell) {
+      padding-left: 220px !important;
+    }
     [data-theme="grove"] .desktop-sidebar.sidebar .side-link,
     [data-theme="grove"] .desktop-sidebar.sidebar .side-link-label,
     [data-theme="grove"] .desktop-sidebar.sidebar .nav-brand,
