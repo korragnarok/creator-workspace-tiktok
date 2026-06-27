@@ -65,7 +65,7 @@ body > nav .nav-link.active {
 }
 
 .tab-item {
-  flex: 0 0 72px;
+  flex: 0 0 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -73,7 +73,7 @@ body > nav .nav-link.active {
   gap: 4px;
   color: var(--text-muted);
   font-family: 'Stack Sans Notch', sans-serif;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -90,15 +90,15 @@ body > nav .nav-link.active {
 }
 
 .tab-icon-img {
-  width: 36px;
-  height: 36px;
+  width: 31px;
+  height: 31px;
   object-fit: contain;
   display: block;
 }
 
 .tab-profile-avatar {
-  width: 36px;
-  height: 36px;
+  width: 31px;
+  height: 31px;
   border-radius: 50%;
   overflow: hidden;
   background: var(--sage);
@@ -114,8 +114,8 @@ body > nav .nav-link.active {
 }
 
 .tab-more-icon {
-  width: 36px;
-  height: 36px;
+  width: 31px;
+  height: 31px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -127,6 +127,51 @@ body > nav .nav-link.active {
   color: currentColor;
   background: color-mix(in srgb, var(--surface) 72%, var(--bg) 28%);
   border: 1px solid var(--border-mid);
+}
+
+[data-theme="grove"] body > nav,
+[data-theme="grove"] .tab-bar {
+  background: #013328;
+  border-color: rgba(245,240,232,0.12);
+}
+
+[data-theme="grove"] .tab-item {
+  color: rgba(245,240,232,0.62);
+}
+
+[data-theme="grove"] .tab-item.active {
+  color: #CC8B65;
+}
+
+[data-theme="grove"] .tab-more-icon {
+  background: rgba(245,240,232,0.07);
+  border-color: rgba(245,240,232,0.13);
+}
+
+[data-theme="grove"] .mobile-more-sheet {
+  background: #013328;
+  border-color: rgba(245,240,232,0.12);
+}
+
+[data-theme="grove"] .mobile-more-title {
+  color: rgba(245,240,232,0.56);
+}
+
+[data-theme="grove"] .mobile-more-link {
+  background: rgba(245,240,232,0.06);
+  border-color: rgba(245,240,232,0.12);
+  color: rgba(245,240,232,0.72);
+}
+
+[data-theme="grove"] .mobile-more-link.active {
+  background: rgba(204,139,101,0.16);
+  border-color: rgba(204,139,101,0.38);
+  color: #CC8B65;
+}
+
+[data-theme="grove"] .mobile-more-icon {
+  background: rgba(245,240,232,0.07);
+  border-color: rgba(245,240,232,0.13);
 }
 
 .mobile-more-overlay,

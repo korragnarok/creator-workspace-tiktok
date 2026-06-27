@@ -33,14 +33,18 @@
     { href: 'index.html', label: 'Home', icon: 'home', aliases: [''] },
     { href: 'daily-todo.html', label: 'To Do', icon: 'todo' },
     { href: 'products.html', label: 'Products', icon: 'products' },
-    { href: 'scripts.html', label: 'Scripts', icon: 'scripts', activePages: ['script-workshop.html', 'script-scout.html', 'hooks.html', 'ctas.html'] }
+    { href: 'script-scout.html', label: 'Scout', icon: 'video' },
+    { href: 'scripts.html', label: 'Scripts', icon: 'scripts', activePages: ['script-workshop.html', 'hooks.html', 'ctas.html'] },
+    { href: 'sales-calendar.html', label: 'Sales', icon: 'sales' },
+    { href: 'video-tracker.html', label: 'Content', icon: 'video' }
   ];
 
   const MORE_ITEMS = [
-    { href: 'video-tracker.html', label: 'Content Tracker', icon: 'video' },
+    { href: 'script-workshop.html', label: 'Script Workshop', icon: 'workshop' },
+    { href: 'hooks.html', label: 'Hooks', icon: 'hooks' },
+    { href: 'ctas.html', label: 'CTAs', icon: 'scripts' },
     { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products' },
     { href: 'notes.html', label: 'Notes', icon: 'scripts' },
-    { href: 'sales-calendar.html', label: 'Sales Log', icon: 'sales' },
     { href: 'settings.html', label: 'Settings', icon: 'scripts' }
   ];
 
@@ -180,7 +184,7 @@
     if (document.querySelector('link[data-shared-layout-styles], link[href*="layout.css"]')) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'layout.css?v=142';
+    link.href = 'layout.css?v=144';
     link.dataset.sharedLayoutStyles = 'true';
     document.head.appendChild(link);
   }
