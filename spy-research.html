@@ -313,11 +313,12 @@ function renderSpyResults(videos, query, topProduct) {
   grid.innerHTML = videos.slice(0, 24).map((v, i) => {
     const thumb = extractThumb(v);
     const views = v?.play_count || v?.playCount || v?.views || v?.statistics?.play_count || 0;
-    const likes = v?.digg_count || v?.diggCount || v?.likes || v?.statistics?.digg_count || 0;
-    const creator = v?.author?.nickname || v?.author?.unique_id || v?.username || v?.handle || '';
-    const caption = v?.desc || v?.description || v?.caption || v?.title || '';
-    const videoUrl = v?.share_url || v?.url || v?.video_url ||
-      (v?.aweme_id ? `https://www.tiktok.com/@${creator}/video/${v.aweme_id}` : '');
+    const likes = v?.digg_count || v?.diggCount || v?.like_count || v?.likes || v?.statistics?.digg_count || 0;
+    const creator = v?.author_name || v?.author?.nickname || v?.author?.unique_id || v?.username || v?.handle || '';
+    const caption = v?.title || v?.desc || v?.description || v?.caption || '';
+    const videoUrl = v?.url || v?.share_url || v?.video_url ||
+      (v?.aweme_id ? `https://www.tiktok.com/@${creator}/video/${v.aweme_id}` : '') ||
+      (v?.item_id ? `https://www.tiktok.com/@${v?.author_id}/video/${v.item_id}` : '');
 
     return `<div class="spy-card">
       <div class="spy-thumb">
@@ -351,12 +352,16 @@ function extractThumb(v) {
   }
   const vid = v?.video || {};
   const candidates = [
+    v?.cover_image_url,           // ScrapeCreators product related_videos format
+    v?.coverImageUrl,
+    v?.thumbnail_url,
+    v?.thumbnailUrl,
     firstUrl(vid?.origin_cover || vid?.originCover),
     firstUrl(vid?.cover),
     firstUrl(vid?.dynamic_cover),
     v?.cover || v?.thumbnail || v?.image,
     firstUrl(v?.cover),
-  ].filter(Boolean);
+  ].filter(u => u && !/\.heic/i.test(u));
   return candidates[0] || '';
 }
 
@@ -374,11 +379,11 @@ async function transcribeVideo(index) {
   _currentVideoData = v;
   openTranscriptModal(v);
 
-  const videoUrl = v?.share_url || v?.url || v?.video_url ||
+  const videoUrl = v?.url || v?.share_url || v?.video_url ||
     (() => {
-      const creator = v?.author?.nickname || v?.author?.unique_id || '';
-      const id = v?.aweme_id || v?.id || '';
-      return creator && id ? `https://www.tiktok.com/@${creator}/video/${id}` : '';
+      const creator = v?.author_name || v?.author?.nickname || v?.author?.unique_id || '';
+      const id = v?.item_id || v?.aweme_id || v?.id || '';
+      return id ? `https://www.tiktok.com/@${creator}/video/${id}` : '';
     })();
 
   if (!videoUrl) {
