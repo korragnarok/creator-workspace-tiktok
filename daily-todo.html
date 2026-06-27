@@ -136,7 +136,7 @@ a{text-decoration:none;color:inherit;}
 .location-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 10px;}
 .location-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);}
 .location-pill{border:1px solid var(--border-mid);border-radius:999px;background:var(--surface);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.05em;text-transform:uppercase;padding:6px 10px;color:var(--text-mid);outline:none;cursor:pointer;}
-.status-pill{display:inline-block;margin-top:4px;border:1px solid var(--border-mid);border-radius:999px;background:color-mix(in srgb,var(--tan) 18%,transparent);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:5px 10px;color:#c4956a;outline:none;cursor:pointer;transition:all 0.15s;border-color:color-mix(in srgb,var(--tan) 32%,transparent);}
+.status-pill{display:block;margin-top:5px;border:1px solid var(--border-mid);border-radius:999px;background:color-mix(in srgb,var(--tan) 18%,transparent);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:5px 10px;color:#c4956a;outline:none;cursor:pointer;transition:all 0.15s;border-color:color-mix(in srgb,var(--tan) 32%,transparent);width:fit-content;}
 .status-pill:hover{border-color:var(--rust);color:var(--rust);}
 .status-pill.filmed{background:color-mix(in srgb,var(--sage) 18%,transparent);border-color:color-mix(in srgb,var(--sage) 32%,transparent);color:#7a9e8a;}
 .status-pill.filmed:hover{border-color:var(--sage);color:var(--sage);}
@@ -1330,7 +1330,6 @@ async function toggleWeeklyDone(queueId){
   const item=WEEK_ITEMS.find(r=>String(r.queueId)===String(queueId));
   if(!item)return;
   item.done=!item.done;
-  // Update DOM pill directly
   const card=document.getElementById(item.id);
   if(card){
     const pill=card.querySelector('.status-pill');
