@@ -368,6 +368,31 @@ function _injectGroveStyle() {
       background: rgba(255,255,255,0.06) !important;
       border-color: rgba(255,255,255,0.1) !important;
     }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar {
+      background: rgba(255,255,255,0.06) !important;
+      border-color: rgba(255,255,255,0.12) !important;
+      margin: 0 8px !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-sidebar-head {
+      color: #CC8B65 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-pill {
+      background: rgba(255,255,255,0.08) !important;
+      border-color: rgba(255,255,255,0.1) !important;
+      color: #E3DCD2 !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .core-pill-empty .core-pill-text {
+      color: rgba(227,220,210,0.45) !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar {
+      padding: 18px 8px !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-nav {
+      padding: 0 4px !important;
+    }
+    [data-theme="grove"] .desktop-sidebar.sidebar .side-brand {
+      padding: 0 4px !important;
+    }
   ` : '';
 }
 function applyThemeImmediate() {
