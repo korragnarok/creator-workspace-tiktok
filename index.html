@@ -89,7 +89,7 @@ button,input{font:inherit;}
 .tier-tooltip-range{font-family:'Noto Sans Mono',sans-serif;font-size:12px;font-weight:700;color:var(--ink);}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:16px;display:flex;flex-direction:column;}
 .lower-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,0.65fr);gap:14px;align-items:stretch;min-width:0;max-width:100%;margin-bottom:16px;}
-.stack{display:flex;flex-direction:column;gap:14px;min-width:0;max-width:100%;height:100%;}
+.stack{display:flex;flex-direction:column;gap:14px;min-width:0;max-width:100%;height:100%;}.stack:last-child{height:auto;}
 .lower-grid>.stack:first-child>.card{flex:1;}
 .stack>.card{height:100%;}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
@@ -178,7 +178,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .add-bar{display:block;width:100%;text-align:center;border:none;border-radius:8px;background:var(--sage);color:#fff;font-weight:800;padding:11px 14px;margin-top:12px;cursor:pointer;}
 .add-bar:hover{background:#697160;}
 .mini-action{border:none;border-radius:8px;background:var(--sage);color:#fff;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;padding:7px 10px;}
-.chart-card{background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);border-color:color-mix(in srgb,var(--rust) 24%,var(--border) 76%);overflow:hidden;min-width:0;}
+.chart-card{background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);border-color:color-mix(in srgb,var(--rust) 24%,var(--border) 76%);overflow:hidden;min-width:0;height:auto!important;flex:0 0 auto!important;}
 .chart-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
 .chart-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
 .chart-range-pills{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
@@ -655,10 +655,10 @@ function renderSalesChart(labels, commData, gmvData){
   const box=wrap?.getBoundingClientRect();
   const width=Math.max(260,Math.floor(box?.width||wrap?.clientWidth||canvas.clientWidth||520));
   const fixedDashboard=window.matchMedia('(min-width:1281px) and (min-height:760px)').matches;
-  const measuredHeight=Math.floor(box?.height||wrap?.clientHeight||80);
+  const measuredHeight=Math.floor(box?.height||wrap?.clientHeight||194);
   const height=fixedDashboard
-    ? 80
-    : Math.max(75,measuredHeight);
+    ? 188
+    : Math.max(150,measuredHeight);
   canvas.width=Math.round(width*dpr);
   canvas.height=Math.round(height*dpr);
   canvas.style.width=width+'px';
