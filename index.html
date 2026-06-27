@@ -64,8 +64,8 @@ button,input{font:inherit;}
 .tier-line{display:grid;grid-template-columns:repeat(8,1fr);align-items:start;position:relative;gap:0;padding-top:18px;}
 .tier-line::before{content:'';position:absolute;top:26px;left:5%;right:5%;height:2px;background:color-mix(in srgb,var(--ink) 34%,transparent);}
 .tier{position:relative;text-align:center;color:var(--text);cursor:pointer;appearance:none;border:0;background:none;padding:0;font:inherit;width:100%;display:block;}
-.tier-icon{width:18px!important;height:18px!important;max-width:18px!important;max-height:18px!important;object-fit:contain;border-radius:50%;background:color-mix(in srgb,var(--surface) 62%,var(--bg) 38%);border:1px solid color-mix(in srgb,var(--ink) 26%,transparent);padding:2px;margin:0 auto 10px;position:relative;z-index:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--bg) 72%,transparent);}
-.tier.current .tier-icon{width:28px!important;height:28px!important;max-width:28px!important;max-height:28px!important;margin-top:-5px;margin-bottom:5px;border-color:var(--rust);background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);box-shadow:0 0 0 5px color-mix(in srgb,var(--rust) 22%,transparent);}
+.tier-icon{width:28px!important;height:28px!important;max-width:28px!important;max-height:28px!important;object-fit:contain;border-radius:50%;background:color-mix(in srgb,var(--surface) 62%,var(--bg) 38%);border:1px solid color-mix(in srgb,var(--ink) 26%,transparent);padding:2px;margin:0 auto 10px;position:relative;z-index:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--bg) 72%,transparent);}
+.tier.current .tier-icon{width:38px!important;height:38px!important;max-width:38px!important;max-height:38px!important;margin-top:-5px;margin-bottom:5px;border-color:var(--rust);background:color-mix(in srgb,var(--rust) 18%,var(--surface) 82%);box-shadow:0 0 0 5px color-mix(in srgb,var(--rust) 22%,transparent);}
 .tier-name{font-family:'Stack Sans Text',sans-serif;font-weight:800;font-size:10px;color:var(--ink);}
 .tier.current .tier-name{color:var(--rust);}
 .tier-range{display:none;}
@@ -243,8 +243,8 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .level-icon-lg{width:38px;height:38px;}
   .tier-line{padding-top:14px;}
   .tier-line::before{top:22px;}
-  .tier-icon{width:16px!important;height:16px!important;max-width:16px!important;max-height:16px!important;margin-bottom:8px;}
-  .tier.current .tier-icon{width:24px!important;height:24px!important;max-width:24px!important;max-height:24px!important;}
+  .tier-icon{width:24px!important;height:24px!important;max-width:24px!important;max-height:24px!important;margin-bottom:8px;}
+  .tier.current .tier-icon{width:32px!important;height:32px!important;max-width:32px!important;max-height:32px!important;}
   .lower-grid{flex:1;min-height:0;margin-bottom:0;grid-template-columns:minmax(0,1.7fr) minmax(280px,0.62fr);}
   .lower-grid>.stack,.lower-grid>.stack:first-child,.lower-grid>.stack:first-child>.card{min-height:0;height:100%;}
   .card{min-height:0;}
