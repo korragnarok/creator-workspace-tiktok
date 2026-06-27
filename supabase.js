@@ -445,7 +445,7 @@ function _themeIconNameFromSrc(src) {
 function _themeIconSrc(themeKey, iconName) {
   const normalized = iconName === 'videos' ? 'video' : iconName;
   // New themes share the dusk icon set
-  const iconTheme = ['grove','fiesta'].includes(themeKey) ? 'warm' : ['haus'].includes(themeKey) ? 'dusk' : themeKey;
+  const iconTheme = ['fiesta'].includes(themeKey) ? 'warm' : ['haus'].includes(themeKey) ? 'dusk' : themeKey;
   const aliases = THEME_ICON_FILES[iconTheme] || {};
   const file = aliases[normalized] || `${normalized}.png`;
   return `icons/${iconTheme}/${file}`;
