@@ -456,10 +456,31 @@ function openTranscriptModal(v) {
   document.getElementById('transcriptOverlay').classList.add('open');
 }
 
+function cleanTranscript(raw) {
+  // Strip WEBVTT header and timestamp lines, keep only spoken text
+  return raw
+    .split('\n')
+    .filter(line => {
+      const t = line.trim();
+      if (!t) return false;
+      if (t === 'WEBVTT') return false;
+      if (/^\d+$/.test(t)) return false; // cue numbers
+      if (/^\d{2}:\d{2}:\d{2}[.,]\d{3}\s*-->/.test(t)) return false; // timestamps
+      if (/^NOTE/.test(t)) return false;
+      if (/^STYLE/.test(t)) return false;
+      if (/^REGION/.test(t)) return false;
+      return true;
+    })
+    .join(' ')
+    .replace(/<[^>]+>/g, '') // strip inline tags like <c>
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 function showTranscript(text) {
-  _currentTranscript = text;
+  const cleaned = cleanTranscript(text);
+  _currentTranscript = cleaned;
   document.getElementById('transcriptLoading').style.display = 'none';
-  document.getElementById('transcriptText').textContent = text;
+  document.getElementById('transcriptText').textContent = cleaned;
   document.getElementById('transcriptText').style.display = 'block';
   document.getElementById('workshopBtn').style.display = 'inline-flex';
 }
