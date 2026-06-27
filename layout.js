@@ -16,11 +16,11 @@
       href: 'scripts.html',
       label: 'Scripts',
       icon: 'scripts',
-      activePages: ['script-workshop.html', 'spy-research.html', 'hooks.html', 'ctas.html'],
+      activePages: ['script-workshop.html', 'script-scout.html', 'hooks.html', 'ctas.html'],
       children: [
         { href: 'scripts.html', label: 'Script Vault', icon: 'scripts' },
         { href: 'script-workshop.html', label: 'Script Workshop', icon: 'workshop' },
-        { href: 'spy-research.html', label: 'Spy Research', icon: 'video' },
+        { href: 'script-scout.html', label: 'Script Scout', icon: 'video' },
         { href: 'hooks.html', label: 'Hooks', icon: 'hooks' },
         { href: 'ctas.html', label: 'CTAs', icon: 'scripts' }
       ]
@@ -33,7 +33,7 @@
     { href: 'index.html', label: 'Home', icon: 'home', aliases: [''] },
     { href: 'daily-todo.html', label: 'To Do', icon: 'todo' },
     { href: 'products.html', label: 'Products', icon: 'products' },
-    { href: 'scripts.html', label: 'Scripts', icon: 'scripts', activePages: ['script-workshop.html', 'spy-research.html', 'hooks.html', 'ctas.html'] }
+    { href: 'scripts.html', label: 'Scripts', icon: 'scripts', activePages: ['script-workshop.html', 'script-scout.html', 'hooks.html', 'ctas.html'] }
   ];
 
   const MORE_ITEMS = [
