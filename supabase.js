@@ -210,25 +210,25 @@ const THEMES = {
   },
   grove: {
     label: 'Grove',
-    swatch: ['#E3DCD2','#F0EBE3','#013328'],
+    swatch: ['#013328','#0a4535','#CC8B65'],
     vars: {
-      '--bg':          '#E3DCD2',
-      '--bg-lift':     '#F5F0E8',
-      '--surface':     '#F0EBE3',
-      '--surface-2':   '#C8BFB0',
-      '--border':      'rgba(1,51,40,0.1)',
-      '--border-mid':  'rgba(1,51,40,0.16)',
-      '--text':        '#2A2420',
-      '--text-mid':    '#5A4A3A',
-      '--text-muted':  '#7A6B54',
-      '--ink':         '#1A1410',
+      '--bg':          '#013328',
+      '--bg-lift':     '#0a4535',
+      '--surface':     '#0d4f3c',
+      '--surface-2':   '#145a45',
+      '--border':      'rgba(245,240,232,0.08)',
+      '--border-mid':  'rgba(245,240,232,0.14)',
+      '--text':        '#E3DCD2',
+      '--text-mid':    '#C8BFB0',
+      '--text-muted':  '#9B8A78',
+      '--ink':         '#F5F0E8',
       '--sage':        '#CC8B65',
       '--rose':        '#CC8B65',
-      '--rust':        '#013328',
-      '--tan':         '#CC8B65',
-      '--sand':        '#013328',
-      '--shadow-sm':   '0 1px 4px rgba(1,51,40,0.08)',
-      '--shadow-md':   '0 4px 20px rgba(1,51,40,0.12)',
+      '--rust':        '#CC8B65',
+      '--tan':         '#E3DCD2',
+      '--sand':        '#0a4535',
+      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.32)',
+      '--shadow-md':   '0 4px 20px rgba(0,0,0,0.42)',
     }
   },
   haus: {
@@ -311,7 +311,7 @@ function _injectGroveStyle() {
   const style = document.createElement('style');
   style.id = GROVE_STYLE_ID;
   style.textContent = `
-    /* Buttons that should be dark green in Grove */
+    /* Buttons in Grove — tan/orange accent on dark green bg */
     [data-theme="grove"] .btn-primary,
     [data-theme="grove"] button.btn-primary,
     [data-theme="grove"] a.btn-primary,
@@ -321,24 +321,28 @@ function _injectGroveStyle() {
     [data-theme="grove"] #viewAllProductsBtn,
     [data-theme="grove"] .chart-period-btn.active,
     [data-theme="grove"] .chart-pill.active {
-      background: #013328 !important;
-      border-color: #013328 !important;
-      color: #F5F0E8 !important;
+      background: #CC8B65 !important;
+      border-color: #CC8B65 !important;
+      color: #1A1410 !important;
     }
     [data-theme="grove"] .btn-primary:hover,
     [data-theme="grove"] button.btn-primary:hover,
     [data-theme="grove"] a.btn-primary:hover {
-      background: #024a3a !important;
-      border-color: #024a3a !important;
+      background: #b87a56 !important;
+      border-color: #b87a56 !important;
     }
-    /* Rust-colored accents (labels, active states, eyebrows) stay dark green */
+    /* Accents and active states — tan in Grove */
     [data-theme="grove"] .page-eyebrow,
     [data-theme="grove"] .section-title,
     [data-theme="grove"] .nav-link.active,
     [data-theme="grove"] .tab-item.active,
     [data-theme="grove"] .side-link.active,
     [data-theme="grove"] .side-link.active .side-link-label {
-      color: #013328 !important;
+      color: #CC8B65 !important;
+    }
+    /* Hero Brands heading — brighter so it's visible on dark green */
+    [data-theme="grove"] .core-sidebar-head {
+      color: #E3DCD2 !important;
     }
     /* Location tags — readable on light beige background */
     [data-theme="grove"] .sched-location-tag.bedroom { background: rgba(107,70,128,0.15) !important; border-color: rgba(107,70,128,0.3) !important; color: #5a3a6e !important; }
