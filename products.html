@@ -676,7 +676,7 @@ async function init() {
         '<td class="num"><span class="gmv-value">'+(gmv?fmtMoney(gmv):'-')+'</span></td>'+
         '<td><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
         '<td>'+(link?'<a class="shop-link" href="'+escAttr(link)+'" target="_blank" rel="noopener">Shop ↗</a>':'-')+'</td>'+
-        '<td><div class="tbl-actions"><button class="tbl-action" onclick="event.stopPropagation();viewProductVideos(\''+p.id+'\')">View Videos</button><button class="tbl-action" onclick="event.stopPropagation();makeContent(\''+p.id+'\')">Make Content</button><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button></div></td>'+
+        '<td><div class="tbl-actions"><button class="tbl-action" onclick="event.stopPropagation();viewProductVideos(\''+p.id+'\')">View Videos</button><button class="tbl-action" onclick="event.stopPropagation();makeContent(\''+p.id+'\')">Make Content</button><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button><button class="tbl-action" style="color:var(--sage)" onclick="event.stopPropagation();window.location.href='script-scout.html?q='+encodeURIComponent(p.name||'')" >Scout</button></div></td>'+
       '</tr>';
     }).join('');
     updateSortHeaders();
