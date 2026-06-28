@@ -133,9 +133,7 @@ a{text-decoration:none;color:inherit;}
       <h1 class="title">Product Scout</h1>
       <p class="sub">Find blue ocean products — high brand spend, low affiliate competition.</p>
     </div>
-    <div style="display:flex;gap:10px;align-items:center;">
-      <button class="btn" onclick="openKeyModal()" id="keyBtn">⚙ API Key</button>
-    </div>
+
   </header>
 
   <!-- Auth gate -->
@@ -205,61 +203,33 @@ a{text-decoration:none;color:inherit;}
   </div>
 </main>
 
-<!-- API Key Modal -->
-<div class="modal-overlay" id="keyModal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeKeyModal()">×</button>
-    <div class="modal-title">ScrapeCreators API Key</div>
-    <div class="modal-sub">Your key is stored locally on this device only. Get one free at <a href="https://app.scrapecreators.com" target="_blank">app.scrapecreators.com</a> — 1,000 free credits included.</div>
-    <label class="form-label">API Key</label>
-    <input class="form-input" id="apiKeyInput" type="password" placeholder="sc_xxxxxxxxxxxxxxxx">
-    <div class="modal-actions">
-      <button class="btn" onclick="closeKeyModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveApiKey()">Save Key</button>
-    </div>
-  </div>
-</div>
-
 <script src="layout.js?v=144"></script>
 <script>
-const STORE_KEY = 'creatorHub:scrapeApiKey';
+const WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
 let _results = [];
 let _sortMode = 'ocean';
 
+function workerFetch(endpoint, params = {}) {
+  const url = new URL(WORKER_URL);
+  url.searchParams.set('endpoint', endpoint);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  return fetch(url.toString());
+}
+
 // ── Quick brand buttons ──────────────────────────────────────────────────────
-function setQuickBrand(btn, url) {
+function setQuickBrand(btn, storeUrl) {
   document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  if (url !== 'custom') {
-    document.getElementById('storeUrl').value = url;
+  if (storeUrl !== 'custom') {
+    document.getElementById('storeUrl').value = storeUrl;
   } else {
     document.getElementById('storeUrl').value = '';
     document.getElementById('storeUrl').focus();
   }
 }
 
-// ── API Key modal ────────────────────────────────────────────────────────────
-function openKeyModal() {
-  const saved = localStorage.getItem(STORE_KEY) || '';
-  document.getElementById('apiKeyInput').value = saved;
-  document.getElementById('keyModal').classList.add('open');
-}
-function closeKeyModal() {
-  document.getElementById('keyModal').classList.remove('open');
-}
-function saveApiKey() {
-  const val = document.getElementById('apiKeyInput').value.trim();
-  if (!val) { showToast('Enter a valid API key', 'error'); return; }
-  localStorage.setItem(STORE_KEY, val);
-  closeKeyModal();
-  showToast('API key saved');
-}
-
 // ── Scout ────────────────────────────────────────────────────────────────────
 async function runScout() {
-  const apiKey = localStorage.getItem(STORE_KEY);
-  if (!apiKey) { openKeyModal(); showToast('Add your ScrapeCreators API key first', 'error'); return; }
-
   const storeUrl = document.getElementById('storeUrl').value.trim();
   if (!storeUrl) { showToast('Enter a store URL', 'error'); return; }
 
@@ -277,12 +247,8 @@ async function runScout() {
   // ── Step 1: get catalog ──
   let products = [];
   try {
-    const res = await fetch(
-      `https://api.scrapecreators.com/v1/tiktok-shop/profile?url=${encodeURIComponent(storeUrl)}&amount=${maxProducts}`,
-      { headers: { 'x-api-key': apiKey } }
-    );
+    const res = await workerFetch('tiktok-shop/profile', { url: storeUrl, amount: maxProducts });
     const data = await res.json();
-    // Products may be under data.products, data.items, or data itself
     products = data?.products || data?.items || data?.data?.products || [];
     if (!Array.isArray(products) || products.length === 0) {
       showToast('No products found. Check the store URL.', 'error');
@@ -290,7 +256,7 @@ async function runScout() {
       return;
     }
   } catch(e) {
-    showToast('Failed to fetch catalog. Check your API key.', 'error');
+    showToast('Failed to fetch catalog: ' + e.message, 'error');
     resetScout();
     return;
   }
@@ -311,10 +277,9 @@ async function runScout() {
 
     if (productUrl || productId) {
       try {
-        const detailRes = await fetch(
-          `https://api.scrapecreators.com/v1/tiktok/product?url=${encodeURIComponent(productUrl || `https://www.tiktok.com/product/${productId}`)}`,
-          { headers: { 'x-api-key': apiKey } }
-        );
+        const detailRes = await workerFetch('tiktok/product', {
+          url: productUrl || `https://www.tiktok.com/product/${productId}`
+        });
         const detail = await detailRes.json();
         const pd = detail?.product_info || detail?.data || detail;
         videoCount = pd?.related_video_count ?? pd?.video_count ?? null;
@@ -479,12 +444,6 @@ function escHtml(s) {
   if (!user) return;
   document.getElementById('authGate').style.display = 'none';
   document.getElementById('scoutUI').style.display = 'block';
-
-  // Show key hint if not set
-  const hasKey = !!localStorage.getItem(STORE_KEY);
-  if (!hasKey) {
-    setTimeout(() => showToast('Add your ScrapeCreators API key to get started'), 600);
-  }
 })();
 </script>
 </body>
