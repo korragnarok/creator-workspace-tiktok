@@ -40,17 +40,7 @@ a{text-decoration:none;color:inherit;}
 .btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}
 .btn-ghost:hover{background:var(--surface-2);color:var(--ink);}
 
-/* Theme picker */
-.theme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
-.theme-card{border:2px solid var(--border-mid);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:12px;}
-.theme-card:hover{border-color:var(--rust);}
-.theme-card.active{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 12%,var(--surface) 88%);}
-.theme-swatches{display:flex;gap:3px;flex-shrink:0;}
-.theme-swatch{width:14px;height:28px;border-radius:4px;}
-.theme-name{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);}
-.theme-check{margin-left:auto;width:18px;height:18px;border-radius:50%;border:2px solid var(--border-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
-.theme-card.active .theme-check{background:var(--rust);border-color:var(--rust);}
-.theme-card.active .theme-check::after{content:'✓';color:#fff;font-size:10px;font-weight:800;font-family:'Stack Sans Notch',sans-serif;}
+
 
 /* Profile icon picker */
 .avatar-upload-wrap{display:flex;align-items:center;gap:20px;}
@@ -67,7 +57,7 @@ a{text-decoration:none;color:inherit;}
 
 
 body{overflow-x:hidden;}
-@media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:36px;}.theme-grid{grid-template-columns:1fr;}}
+@media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:36px;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=143"></script>
@@ -148,12 +138,6 @@ body{overflow-x:hidden;}
       <div class="form-hint">Auto-fills when importing videos — no need to type it every time.</div>
     </div>
     <button class="btn btn-primary" id="saveTikTokHandleBtn" onclick="saveTikTokHandleSetting()">Save Handle</button>
-  </div>
-
-  <!-- Theme -->
-  <div class="settings-section">
-    <div class="section-title">Color Theme</div>
-    <div class="theme-grid" id="themeGrid"></div>
   </div>
 
   <!-- Profile Photo -->
@@ -253,18 +237,6 @@ let _user = null, _prefs = null;
 const PRODUCT_IMPORT_KEY = 'take24:scrapecreators_api_key';
 const TIKTOK_HANDLE_KEY = 'take24:tiktok_handle';
 
-function buildThemeGrid(activeKey) {
-  const grid = document.getElementById('themeGrid');
-  grid.innerHTML = Object.entries(THEMES).map(([key, theme]) => `
-    <div class="theme-card${activeKey === key ? ' active' : ''}" data-theme="${key}" onclick="selectTheme('${key}')">
-      <div class="theme-swatches">
-        ${theme.swatch.map(c => `<div class="theme-swatch" style="background:${c}"></div>`).join('')}
-      </div>
-      <div class="theme-name">${theme.label}</div>
-      <div class="theme-check"></div>
-    </div>
-  `).join('');
-}
 
 function buildProfileIconGrid() {
   // Show current avatar in preview
@@ -312,15 +284,6 @@ async function saveAvatarFallback(file) {
   return { error: error && metaError ? error : null };
 }
 
-async function selectTheme(key) {
-  applyTheme(key);
-  buildThemeGrid(key);
-  const { error } = await saveUserPrefs(_user.id, { theme: key });
-  const { error: metaError } = await db.auth.updateUser({ data: { theme: key } });
-  if (!metaError) _user = { ..._user, user_metadata: { ...(_user.user_metadata || {}), theme: key } };
-  _prefs = { ...(_prefs || {}), theme: key };
-  showToast(error && metaError ? 'Theme saved on this browser only' : 'Theme saved', error && metaError ? 'error' : 'success');
-}
 
 async function handleAvatarUpload(input) {
   const file = input.files[0];
@@ -459,8 +422,6 @@ async function init() {
   const tiktokHandleInput = document.getElementById('tiktokHandleInput');
   if (tiktokHandleInput) tiktokHandleInput.value = localStorage.getItem(TIKTOK_HANDLE_KEY) || '';
 
-  const activeTheme = document.documentElement.dataset.theme || _prefs.theme || DEFAULT_THEME;
-  buildThemeGrid(activeTheme);
   buildProfileIconGrid();
 }
 

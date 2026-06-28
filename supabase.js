@@ -116,101 +116,9 @@ async function carryForwardUnfinishedQueue(userId, targetDate = localDateKey()) 
 // ─── Themes ──────────────────────────────────────────────────────────────────
 
 const THEMES = {
-  dusk: {
-    label: 'Dusk',
-    swatch: ['#2A1822','#5A2E42','#E17788'],
-    vars: {
-      '--bg':          '#2A1822',
-      '--bg-lift':     '#341D2A',
-      '--surface':     '#3C2431',
-      '--surface-2':   '#4A2B3B',
-      '--border':      'rgba(255,210,220,0.08)',
-      '--border-mid':  'rgba(255,210,220,0.14)',
-      '--text':        '#F3C7D0',
-      '--text-mid':    '#B98A9A',
-      '--text-muted':  '#8B6674',
-      '--ink':         '#FFF0F3',
-      '--sage':        '#A78C93',
-      '--rose':        '#F0A8B6',
-      '--rust':        '#E17788',
-      '--tan':         '#C79CA7',
-      '--sand':        '#4A2B3B',
-      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.32)',
-      '--shadow-md':   '0 4px 20px rgba(0,0,0,0.42)',
-    }
-  },
-  warm: {
-    label: 'Warm',
-    swatch: ['#F8F5F1','#7A816C','#AE6965'],
-    vars: {
-      '--bg':          '#F8F5F1',
-      '--bg-lift':     '#FCFAF8',
-      '--surface':     '#FCFAF8',
-      '--surface-2':   '#EDE8E1',
-      '--border':      'rgba(42,39,37,0.1)',
-      '--border-mid':  'rgba(42,39,37,0.15)',
-      '--text':        '#2A2725',
-      '--text-mid':    '#7A816C',
-      '--text-muted':  '#A58B71',
-      '--ink':         '#2A2725',
-      '--sage':        '#7A816C',
-      '--rose':        '#D1A9A5',
-      '--rust':        '#AE6965',
-      '--tan':         '#A58B71',
-      '--sand':        '#E5DFD6',
-      '--shadow-sm':   '0 1px 4px rgba(42,39,37,0.07)',
-      '--shadow-md':   '0 4px 20px rgba(42,39,37,0.09)',
-    }
-  },
-  noir: {
-    label: 'Noir',
-    swatch: ['#1A1A1A','#607070','#D63C2A'],
-    vars: {
-      '--bg':          '#1A1A1A',
-      '--bg-lift':     '#222222',
-      '--surface':     '#2A2A2A',
-      '--surface-2':   '#333333',
-      '--border':      'rgba(255,255,255,0.07)',
-      '--border-mid':  'rgba(255,255,255,0.12)',
-      '--text':        '#E8E0D8',
-      '--text-mid':    '#9A9490',
-      '--text-muted':  '#6A6460',
-      '--ink':         '#F0EBE5',
-      '--sage':        '#607070',
-      '--rose':        '#C0A898',
-      '--rust':        '#D63C2A',
-      '--tan':         '#9A9490',
-      '--sand':        '#333333',
-      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.4)',
-      '--shadow-md':   '0 4px 20px rgba(0,0,0,0.5)',
-    }
-  },
-  forest: {
-    label: 'Forest',
-    swatch: ['#2B1F18','#F5F0E8','#6F8F6B'],
-    vars: {
-      '--bg':          '#2B1F18',
-      '--bg-lift':     '#34261D',
-      '--surface':     '#3C2C22',
-      '--surface-2':   '#493529',
-      '--border':      'rgba(245,240,232,0.09)',
-      '--border-mid':  'rgba(245,240,232,0.15)',
-      '--text':        '#F5F0E8',
-      '--text-mid':    '#CBBDAA',
-      '--text-muted':  '#9B8A78',
-      '--ink':         '#FFF7EC',
-      '--sage':        '#6F8F6B',
-      '--rose':        '#C8A878',
-      '--rust':        '#E9D7BE',
-      '--tan':         '#F5F0E8',
-      '--sand':        '#493529',
-      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.26)',
-      '--shadow-md':   '0 4px 20px rgba(0,0,0,0.36)',
-    }
-  },
   grove: {
     label: 'Grove',
-    swatch: ['#E3DCD2','#F0EBE3','#013328'],
+    swatch: ['#E3DCD2','#F0EBE3','#3D2314'],
     vars: {
       '--bg':          '#E3DCD2',
       '--bg-lift':     '#F5F0E8',
@@ -230,66 +138,14 @@ const THEMES = {
       '--shadow-sm':   '0 1px 4px rgba(1,51,40,0.08)',
       '--shadow-md':   '0 4px 20px rgba(1,51,40,0.12)',
     }
-  },
-  haus: {
-    label: 'Haus',
-    swatch: ['#2F4454','#2E151B','#DA7B93'],
-    vars: {
-      '--bg':          '#2F4454',
-      '--bg-lift':     '#263C4A',
-      '--surface':     '#2E151B',
-      '--surface-2':   '#3A1E24',
-      '--border':      'rgba(218,123,147,0.1)',
-      '--border-mid':  'rgba(218,123,147,0.18)',
-      '--text':        '#E8D8DC',
-      '--text-mid':    '#DA7B93',
-      '--text-muted':  '#7A8F9A',
-      '--ink':         '#F5EEF0',
-      '--sage':        '#376E6F',
-      '--rose':        '#DA7B93',
-      '--rust':        '#DA7B93',
-      '--tan':         '#7A8F9A',
-      '--sand':        '#2E151B',
-      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.36)',
-      '--shadow-md':   '0 4px 20px rgba(0,0,0,0.48)',
-    }
-  },
-  fiesta: {
-    label: 'Fiesta',
-    swatch: ['#F9FAF4','#F0F1EA','#F9A66C'],
-    vars: {
-      '--bg':          '#F9FAF4',
-      '--bg-lift':     '#FFFFFF',
-      '--surface':     '#F0F1EA',
-      '--surface-2':   '#E6E7DF',
-      '--border':      'rgba(74,97,99,0.1)',
-      '--border-mid':  'rgba(74,97,99,0.16)',
-      '--text':        '#2A2E2E',
-      '--text-mid':    '#4A6163',
-      '--text-muted':  '#7A8A8B',
-      '--ink':         '#1A2020',
-      '--sage':        '#4A6163',
-      '--rose':        '#F17A7E',
-      '--rust':        '#F9A66C',
-      '--tan':         '#FFC94B',
-      '--sand':        '#E6E7DF',
-      '--shadow-sm':   '0 1px 4px rgba(74,97,99,0.08)',
-      '--shadow-md':   '0 4px 20px rgba(74,97,99,0.12)',
-    }
   }
 };
 
-const DEFAULT_THEME = 'dusk';
+const DEFAULT_THEME = 'grove';
 const DEFAULT_PROFILE_ICON = 'avatar';
 const THEME_ICON_NAMES = new Set(['home','todo','video','videos','hooks','products','scripts','sales','gmv','commissions','comission','comissions','commissins','move-up','move-down','duplicate','delete','workshop']);
 const THEME_ICON_FILES = {
-  dusk: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
-  warm: { video:'videos.png', videos:'videos.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
-  noir: { video:'video.png', videos:'video.png', commissions:'comissions.png', comission:'comissions.png', comissions:'comissions.png', commissins:'comissions.png' },
-  forest: { video:'video.png', videos:'video.png', commissions:'commissins.png', comission:'commissins.png', comissions:'commissins.png', commissins:'commissins.png' },
-  grove: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
-  haus: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' },
-  fiesta: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' }
+  grove: { video:'video.png', videos:'video.png', commissions:'commissions.png', comission:'commissions.png', comissions:'commissions.png', commissins:'commissions.png' }
 };
 const PROFILE_ICONS = [
   { key: 'avatar', label: 'Default', src: 'icons/users/avatar.png' }
@@ -313,7 +169,7 @@ function _injectGroveStyle() {
   style.textContent = `
     /* Sidebar strip — dark green only */
     [data-theme="grove"] .desktop-sidebar.sidebar {
-      background: #013328 !important;
+      background: #3D2314 !important;
     }
     [data-theme="grove"] .desktop-sidebar.sidebar .side-link {
       color: rgba(245,240,232,0.65) !important;
@@ -368,15 +224,15 @@ function _injectGroveStyle() {
     [data-theme="grove"] #viewAllProductsBtn,
     [data-theme="grove"] .chart-period-btn.active,
     [data-theme="grove"] .chart-pill.active {
-      background: #013328 !important;
-      border-color: #013328 !important;
+      background: #3D2314 !important;
+      border-color: #3D2314 !important;
       color: #F5F0E8 !important;
     }
     [data-theme="grove"] .btn-primary:hover,
     [data-theme="grove"] button.btn-primary:hover,
     [data-theme="grove"] a.btn-primary:hover {
-      background: #024a3a !important;
-      border-color: #024a3a !important;
+      background: #4e2e1a !important;
+      border-color: #4e2e1a !important;
     }
     /* Hero Brands pill text and Edit button — light on sidebar */
     [data-theme="grove"] .core-pill { color: #F5F0E8 !important; }

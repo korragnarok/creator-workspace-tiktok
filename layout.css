@@ -131,7 +131,7 @@ body > nav .nav-link.active {
 
 [data-theme="grove"] body > nav,
 [data-theme="grove"] .tab-bar {
-  background: #013328;
+  background: #3D2314;
   border-color: rgba(245,240,232,0.12);
 }
 
@@ -149,7 +149,7 @@ body > nav .nav-link.active {
 }
 
 [data-theme="grove"] .mobile-more-sheet {
-  background: #013328;
+  background: #3D2314;
   border-color: rgba(245,240,232,0.12);
 }
 
