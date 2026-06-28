@@ -64,7 +64,7 @@ a{text-decoration:none;color:inherit;}
 .card-info{flex:1;min-width:0;}
 .card-name{font-family:'Stack Sans Text',sans-serif;font-weight:800;font-size:14px;color:var(--ink);line-height:1.2;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .card-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);}
-.card-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.card-metrics{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;}
 .metric{background:color-mix(in srgb,var(--bg) 60%,var(--surface) 40%);border-radius:8px;padding:10px;text-align:center;}
 .metric-val{font-family:'Noto Sans Mono',monospace;font-size:16px;font-weight:900;color:var(--ink);line-height:1;}
 .metric-val.good{color:var(--sage);}
@@ -220,14 +220,21 @@ async function runScout() {
 
     let videoCount = null;
     let stockCount = null;
+    let firstSeen = null;
 
     if (productUrl) {
       try {
         const detailRes = await workerFetch('tiktok/product', { url: productUrl });
         const detail = await detailRes.json();
+        // Video count = length of related_videos array
+        const relatedVideos = detail?.related_videos || [];
+        videoCount = relatedVideos.length > 0 ? relatedVideos.length : 0;
+        // Earliest upload_time across related videos = first affiliate activity
+        const uploadTimes = relatedVideos.map(v => parseInt(v.upload_time)).filter(t => !isNaN(t));
+        firstSeen = uploadTimes.length ? Math.min(...uploadTimes) : null;
+        // Stock from skus array
         const pd = detail?.product_info || detail?.data || detail;
-        videoCount = pd?.related_video_count ?? pd?.video_count ?? null;
-        stockCount = pd?.stock_count ?? pd?.inventory ?? null;
+        stockCount = pd?.skus?.[0]?.stock ?? pd?.product_base?.stock_count ?? null;
       } catch(e) { /* silently skip */ }
     }
 
@@ -240,6 +247,7 @@ async function runScout() {
       sold,
       videos: videoCount,
       stock: stockCount,
+      firstSeen,
       url: productUrl,
       oceanScore: oceanScore(videoCount)
     });
@@ -254,6 +262,17 @@ async function runScout() {
   document.getElementById('progressWrap').style.display = 'none';
   document.getElementById('runBtn').disabled = false;
   renderResults();
+}
+
+function formatFirstSeen(ts) {
+  const now = Date.now() / 1000;
+  const diff = now - ts;
+  const days = Math.floor(diff / 86400);
+  if (days < 1) return 'Today';
+  if (days < 7) return days + 'd ago';
+  if (days < 30) return Math.floor(days/7) + 'w ago';
+  if (days < 365) return Math.floor(days/30) + 'mo ago';
+  return Math.floor(days/365) + 'y ago';
 }
 
 function oceanScore(videos) {
@@ -313,6 +332,7 @@ function productCard(p) {
   const videoClass = p.videos === null ? '' : p.videos <= 5 ? 'good' : p.videos <= 25 ? 'warn' : 'hot';
   const soldVal = p.sold === null ? '—' : p.sold >= 1000 ? (p.sold/1000).toFixed(1)+'k' : p.sold;
   const stockVal = p.stock === null ? '—' : p.stock >= 1000 ? (p.stock/1000).toFixed(1)+'k' : p.stock;
+  const firstSeenVal = p.firstSeen ? formatFirstSeen(p.firstSeen) : '—';
   const imgHtml = p.image ? `<img class="card-img" src="${p.image}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'">` : '';
   const placeholder = `<div class="card-img-placeholder" ${p.image ? 'style="display:none"' : ''}>🛍</div>`;
 
@@ -330,6 +350,7 @@ function productCard(p) {
         <div class="metric"><div class="metric-val ${videoClass}">${videoVal}</div><div class="metric-label">Videos</div></div>
         <div class="metric"><div class="metric-val">${soldVal}</div><div class="metric-label">Sold</div></div>
         <div class="metric"><div class="metric-val">${stockVal}</div><div class="metric-label">In Stock</div></div>
+        <div class="metric"><div class="metric-val" style="font-size:12px;">${firstSeenVal}</div><div class="metric-label">First Video</div></div>
       </div>
       <div class="card-actions">
         ${p.url ? `<button class="card-btn" onclick="window.open('${p.url}','_blank')">View</button>` : ''}
