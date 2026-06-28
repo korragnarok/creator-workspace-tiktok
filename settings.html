@@ -85,7 +85,22 @@ body{overflow-x:hidden;}
   </div>
 
   <!-- Display Name -->
+  <!-- Profile Photo -->
   <div class="settings-section">
+    <div class="section-title">Profile Photo</div>
+    <div class="avatar-upload-wrap">
+      <div class="avatar-preview"><img id="settingsAvatarPreview" src="icons/users/avatar.png" alt="Avatar"></div>
+      <div>
+        <label class="avatar-upload-label">
+          Upload Photo
+          <input type="file" accept="image/png,image/jpeg,image/webp" id="avatarFileInput" style="display:none;" onchange="handleAvatarUpload(this)">
+        </label>
+        <div class="form-hint" style="margin-top:8px;">JPG, PNG or WebP. Max 5MB.<br>Shows in your sidebar and profile.</div>
+      </div>
+    </div>
+  </div>
+
+    <div class="settings-section">
     <div class="section-title">Display Name</div>
     <div style="margin-bottom:14px;padding:12px 16px;background:color-mix(in srgb,var(--rust) 10%,var(--surface) 90%);border:1px solid color-mix(in srgb,var(--rust) 20%,transparent);border-radius:10px;font-family:'Stack Sans Notch',sans-serif;font-size:12px;color:var(--text-mid);">
       Currently set to: <span id="currentDisplayName" style="font-weight:800;color:var(--ink);">—</span>
@@ -131,22 +146,7 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="saveTikTokHandleBtn" onclick="saveTikTokHandleSetting()">Save Handle</button>
   </div>
 
-  <!-- Profile Photo -->
-  <div class="settings-section">
-    <div class="section-title">Profile Photo</div>
-    <div class="avatar-upload-wrap">
-      <div class="avatar-preview"><img id="settingsAvatarPreview" src="icons/users/avatar.png" alt="Avatar"></div>
-      <div>
-        <label class="avatar-upload-label">
-          Upload Photo
-          <input type="file" accept="image/png,image/jpeg,image/webp" id="avatarFileInput" style="display:none;" onchange="handleAvatarUpload(this)">
-        </label>
-        <div class="form-hint" style="margin-top:8px;">JPG, PNG or WebP. Max 5MB.<br>Shows in your sidebar and profile.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Password -->
+<!-- Password -->
   <div class="settings-section">
     <div class="section-title">Change Password</div>
     <div class="form-group">
@@ -160,59 +160,6 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="savePassBtn" onclick="savePassword()">Update Password</button>
   </div>
 
-  <!-- Notion CSV Import -->
-  <div class="settings-section">
-    <div class="section-title">Import from Notion</div>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6;">Export your Notion databases as CSV (··· → Export → CSV), then import them here. Existing data won't be duplicated — imports skip rows that already exist.</p>
-
-    <!-- Products -->
-    <div style="margin-bottom:24px;">
-      <div class="form-label" style="margin-bottom:8px;">Product Database</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Maps: Product → name, Brand → brand, TikTok Shop Link → link, Status → status, Sold → units_sold, Live Talking Points → notes</div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <label class="btn btn-ghost" style="cursor:pointer;">
-          Choose File <input type="file" accept=".csv" id="productCsvInput" style="display:none;" onchange="previewImport('products')">
-        </label>
-        <span id="productFileName" style="font-size:12px;color:var(--text-muted);">No file chosen</span>
-      </div>
-      <div id="productPreview" style="display:none;margin-top:12px;">
-        <div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;" id="productPreviewCount"></div>
-        <button class="btn btn-primary" id="productImportBtn" onclick="runImport('products')">Import Products</button>
-      </div>
-    </div>
-
-    <!-- Sales -->
-    <div style="margin-bottom:24px;">
-      <div class="form-label" style="margin-bottom:8px;">Daily Sales Log</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Maps: Date → date, GMV → gmv, Commission → comm, Top Seller → note</div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <label class="btn btn-ghost" style="cursor:pointer;">
-          Choose File <input type="file" accept=".csv" id="salesCsvInput" style="display:none;" onchange="previewImport('sales')">
-        </label>
-        <span id="salesFileName" style="font-size:12px;color:var(--text-muted);">No file chosen</span>
-      </div>
-      <div id="salesPreview" style="display:none;margin-top:12px;">
-        <div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;" id="salesPreviewCount"></div>
-        <button class="btn btn-primary" id="salesImportBtn" onclick="runImport('sales')">Import Sales</button>
-      </div>
-    </div>
-
-    <!-- Videos -->
-    <div>
-      <div class="form-label" style="margin-bottom:8px;">Video Tracker</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Maps: Video Title / Hook (copy) → title, Product → brand, Date Posted → date, Views (24hr) → views, Sales → units, Video Type + Hook Rating → notes</div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <label class="btn btn-ghost" style="cursor:pointer;">
-          Choose File <input type="file" accept=".csv" id="videoCsvInput" style="display:none;" onchange="previewImport('videos')">
-        </label>
-        <span id="videoFileName" style="font-size:12px;color:var(--text-muted);">No file chosen</span>
-      </div>
-      <div id="videoPreview" style="display:none;margin-top:12px;">
-        <div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;" id="videoPreviewCount"></div>
-        <button class="btn btn-primary" id="videoImportBtn" onclick="runImport('videos')">Import Videos</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Danger zone -->
   <div class="settings-section danger-zone">
