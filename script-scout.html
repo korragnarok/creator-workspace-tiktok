@@ -155,6 +155,14 @@ button,input,textarea,select{font:inherit;}
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────
 const SCRAPE_KEY_STORAGE = 'take24:scrapecreators_api_key';
+const SCOUT_WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
+function workerFetch(endpoint, params = {}) {
+  const url = new URL(SCOUT_WORKER_URL);
+  url.searchParams.set('endpoint', endpoint);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  return fetch(url.toString());
+}
+
 let _currentTranscript = '';
 let _currentVideoData = null;
 let _spyResults = [];
@@ -221,9 +229,6 @@ async function doSpySearch() {
   const query = document.getElementById('spyQuery').value.trim();
   if (!query) { document.getElementById('spyQuery').focus(); return; }
 
-  const key = (localStorage.getItem(SCRAPE_KEY_STORAGE) || '').trim();
-  if (!key) { showError('Add your ScrapeCreators API key in Settings first.'); return; }
-
   const btn = document.getElementById('spySearchBtn');
   btn.disabled = true; btn.textContent = 'Searching...';
   showError('');
@@ -265,10 +270,7 @@ async function doSpySearch() {
 
   try {
     // Step 1: Search for the product to get product IDs
-    const searchRes = await fetch(
-      `https://api.scrapecreators.com/v1/tiktok/shop/search?query=${encodeURIComponent(query)}&amount=30&region=US`,
-      { headers: { 'x-api-key': key } }
-    );
+    const searchRes = await workerFetch('tiktok/shop/search', { query, amount: 30, region: 'US' });
     const searchData = await searchRes.json();
     if (!searchRes.ok) throw new Error(searchData?.message || `Search failed (${searchRes.status})`);
 
@@ -281,65 +283,56 @@ async function doSpySearch() {
       return;
     }
 
-    // Step 2: Get videos for the top product
+    // Step 2: Run keyword video search AND product video lookup in parallel
     const topProduct = products[0];
     const productId = topProduct?.product_id || topProduct?.id || topProduct?.productId || '';
-    const productUrl = topProduct?.url || topProduct?.product_url ||
+    const productUrl = topProduct?.url || topProduct?.seo_url?.canonical_url ||
       (productId ? `https://www.tiktok.com/shop/pdp/${productId}` : '');
 
+    // Always run keyword search — this is the most reliable signal
+    const keywordPromise = workerFetch('tiktok/search/keyword', { query })
+      .then(r => r.json())
+      .then(d => d?.videos || d?.aweme_list || d?.data || d?.results || [])
+      .catch(() => []);
+
+    // Also try product-related videos for top result
+    const productPromise = productUrl
+      ? workerFetch('tiktok/product', { url: productUrl })
+          .then(r => r.json())
+          .then(d => d?.related_videos || d?.product_base?.related_videos || d?.videos || [])
+          .catch(() => [])
+      : Promise.resolve([]);
+
+    const [keywordVideos, productVideos] = await Promise.all([keywordPromise, productPromise]);
+
+    // Merge: keyword videos first (more relevant to query), then product videos
+    // Deduplicate by video ID
+    const seen = new Set();
     let videos = [];
-
-    // Try product details endpoint to get related videos
-    if (productUrl) {
-      try {
-        // Correct endpoint: /v1/tiktok/product (not /v1/tiktok/shop/product)
-        const detailRes = await fetch(
-          `https://api.scrapecreators.com/v1/tiktok/product?url=${encodeURIComponent(productUrl)}`,
-          { headers: { 'x-api-key': key } }
-        );
-        if (detailRes.ok) {
-          const detailData = await detailRes.json();
-          const relatedVideos = detailData?.related_videos
-            || detailData?.product_base?.related_videos
-            || detailData?.videos
-            || [];
-          if (Array.isArray(relatedVideos) && relatedVideos.length) {
-            videos = relatedVideos;
-          }
-        }
-      } catch(e) { /* fall through to keyword search */ }
+    for (const v of [...keywordVideos, ...productVideos]) {
+      const id = v?.aweme_id || v?.item_id || v?.id;
+      if (id && seen.has(String(id))) continue;
+      if (id) seen.add(String(id));
+      videos.push(v);
+      if (videos.length >= 24) break;
     }
 
-    // Fallback: search TikTok for videos by keyword
-    if (!videos.length) {
-      try {
-        const vidRes = await fetch(
-          `https://api.scrapecreators.com/v1/tiktok/search/keyword?query=${encodeURIComponent(query)}`,
-          { headers: { 'x-api-key': key } }
-        );
-        if (vidRes.ok) {
-          const vidData = await vidRes.json();
-          videos = vidData?.videos || vidData?.aweme_list || vidData?.data || vidData?.results || [];
-        }
-      } catch(e) { /* skip */ }
-    }
-
-    // Also pull videos from a few more products
-    if (products.length > 1 && videos.length < 8) {
-      for (let i = 1; i < Math.min(5, products.length); i++) {
+    // If still thin, pull from a couple more products
+    if (videos.length < 8 && products.length > 1) {
+      for (let i = 1; i < Math.min(4, products.length); i++) {
         const pid = products[i]?.product_id || products[i]?.id;
-        const purl = products[i]?.url || (pid ? `https://www.tiktok.com/shop/pdp/${pid}` : '');
+        const purl = products[i]?.seo_url?.canonical_url || products[i]?.url || (pid ? `https://www.tiktok.com/shop/pdp/${pid}` : '');
         if (!purl) continue;
         try {
-          const r = await fetch(
-            `https://api.scrapecreators.com/v1/tiktok/product?url=${encodeURIComponent(purl)}`,
-            { headers: { 'x-api-key': key } }
-          );
-          if (!r.ok) continue;
-          const d = await r.json();
+          const d = await workerFetch('tiktok/product', { url: purl }).then(r => r.json());
           const rv = d?.related_videos || d?.product_base?.related_videos || [];
-          if (Array.isArray(rv)) videos = videos.concat(rv);
-          if (videos.length >= 20) break;
+          for (const v of rv) {
+            const id = v?.aweme_id || v?.item_id || v?.id;
+            if (id && seen.has(String(id))) continue;
+            if (id) seen.add(String(id));
+            videos.push(v);
+          }
+          if (videos.length >= 24) break;
         } catch(e) { /* skip */ }
       }
     }
