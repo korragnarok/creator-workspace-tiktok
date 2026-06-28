@@ -766,7 +766,6 @@ async function setTodoView(mode){
 
 function renderProgress(){
   const allTakes=viewMode==='week'?WEEK_ITEMS:TODO.flatMap(c=>c.takes),done=allTakes.filter(t=>t.done).length,total=allTakes.length;
-  if(clearBtn) clearBtn.disabled=viewMode==='week'||done===0;
   const pArea=document.getElementById('progressArea');
   if(total>0){
     const label=viewMode==='week'?'takes planned this week':'takes done today';
