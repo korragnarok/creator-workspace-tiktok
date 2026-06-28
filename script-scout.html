@@ -234,6 +234,27 @@ async function doSpySearch() {
   document.getElementById('spyResultsMeta').style.display = 'none';
   document.getElementById('spyLoading').style.display = 'block';
 
+  // ── Direct URL mode: paste a TikTok link, get that video immediately ──
+  if (/tiktok\.com\/.+\/video\/\d+/i.test(query)) {
+    try {
+      const res = await fetch(
+        `https://api.scrapecreators.com/v2/tiktok/video?url=${encodeURIComponent(query)}`,
+        { headers: { 'x-api-key': key } }
+      );
+      const data = await res.json();
+      const v = data?.video || data?.data || data;
+      if (v && (v.aweme_id || v.item_id || v.id)) {
+        _spyResults = [v];
+        document.getElementById('spyLoading').style.display = 'none';
+        document.getElementById('spyResultsMeta').textContent = '1 video found';
+        document.getElementById('spyResultsMeta').style.display = 'block';
+        renderSpyResults([v], query, {});
+        btn.disabled = false; btn.textContent = 'Search';
+        return;
+      }
+    } catch(e) { /* fall through to normal search */ }
+  }
+
   try {
     // Step 1: Search for the product to get product IDs
     const searchRes = await fetch(
