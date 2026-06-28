@@ -603,7 +603,7 @@ async function refreshDay(btn){
 }
 
 // ─── DATA ─────────────────────────────────────────────────
-async function loadProducts(){const{data}=await db.from('products').select('id,name,brand,link,notes').eq('user_id',_user.id).order('name');ALL_PRODUCTS=data||[];}
+async function loadProducts(){const{data}=await db.from('products').select('id,name,brand,link,notes').eq('user_id',_user.id).eq('active',true).order('name');ALL_PRODUCTS=data||[];}
 async function loadHooks(){const{data}=await db.from('hooks').select('id,text,cat').eq('user_id',_user.id).order('cat');ALL_HOOKS=data||[];}
 async function loadScripts(){const{data}=await db.from('scripts').select('id,title,brand,script,notes').eq('user_id',_user.id).order('title');ALL_SCRIPTS=data||[];}
 
