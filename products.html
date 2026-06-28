@@ -34,7 +34,7 @@ a{text-decoration:none;color:inherit;}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(42,39,37,0.4);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;}
 .modal-overlay.open{display:flex;}
 .modal{background:var(--bg-lift);border-radius:16px;padding:32px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(42,39,37,0.15);position:relative;}
-.modal-title{font-family:'IBM Plex Serif',serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:16px;}
+.modal-title{font-family:'IBM Plex Serif',serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:20px;}
 .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);}
 .form-row{margin-bottom:16px;}
 .form-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-mid);margin-bottom:6px;}
@@ -50,7 +50,7 @@ a{text-decoration:none;color:inherit;}
 .modal-actions{display:flex;gap:10px;margin-top:20px;}
 .btn-danger{background:none;border:1px solid rgba(174,105,101,0.3);color:var(--rust);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;transition:all 0.15s;text-transform:uppercase;}
 .btn-danger:hover{background:var(--rust);color:#fff;}
-.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filter-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
 .pill{background:var(--surface);border:1px solid var(--border-mid);border-radius:100px;padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text-mid);transition:all 0.12px;font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;}
 .pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
 .pill:hover:not(.active){background:var(--sand);}
@@ -75,7 +75,7 @@ body{overflow-x:hidden;}
   .page{padding:80px 16px 24px;}.page-title{font-size:40px;}.form-row-half{grid-template-columns:1fr;}}
 .brand-filter{display:flex;gap:8px;margin-bottom:22px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
 .brand-filter::-webkit-scrollbar{display:none;}
-.filter-row{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.filter-row{display:flex;gap:8px;margin-bottom:20px;align-items:center;flex-wrap:wrap;}
 .filter-row .search-box{max-width:none;}
 .brand-pill,.stock-pill{border:1px solid var(--border-mid);border-radius:100px;background:var(--surface);color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.02em;padding:7px 16px;white-space:nowrap;cursor:pointer;transition:all 0.15s;}
 .brand-pill.active,.stock-pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
@@ -104,7 +104,7 @@ tbody td{padding:7px 12px;color:var(--text-mid);vertical-align:middle;}
 .product-thumb.placeholder{opacity:0.45;}
 .product-thumb.placeholder img{padding:8px;object-fit:contain;}
 .product-cell{display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:800;line-height:1.25;min-width:0;}
-.core-badge{display:inline-flex;align-items:center;border-radius:100px;background:var(--tan);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;padding:2px 7px;text-transform:uppercase;}
+.core-badge{margin-left:6px;display:inline-flex;align-items:center;border-radius:100px;background:var(--tan);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;padding:2px 7px;text-transform:uppercase;}
 .stock-badge{display:inline-flex;align-items:center;border-radius:6px;padding:3px 8px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.02em;}
 .active-badge{display:inline-flex;align-items:center;border-radius:6px;padding:3px 8px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.02em;}
 .active-yes{background:color-mix(in srgb,var(--sage) 18%,transparent);color:var(--sage);}
@@ -117,10 +117,10 @@ tbody td{padding:7px 12px;color:var(--text-mid);vertical-align:middle;}
 .features-cell{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .shop-link{font-family:'Stack Sans Notch',sans-serif;font-weight:800;color:var(--tan);}
 .shop-link:hover{color:var(--rust);}
-.tbl-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
-.tbl-action{border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;white-space:nowrap;}
+.tbl-actions{display:flex;gap:4px;align-items:center;justify-content:flex-end;flex-wrap:nowrap;}
+.tbl-action{border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer;white-space:nowrap;}
 .tbl-action:hover{border-color:var(--rust);color:var(--rust);}
-.editable-cell{display:inline-flex;align-items:center;min-height:26px;max-width:200px;border:1px solid transparent;border-radius:7px;padding:3px 7px;margin:-3px -7px;cursor:text;transition:border-color 0.12s,background 0.12s;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.editable-cell{display:inline-flex;align-items:center;min-height:26px;max-width:180px;border:1px solid transparent;border-radius:7px;padding:3px 7px;margin:-3px -7px;cursor:text;transition:border-color 0.12s,background 0.12s;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .editable-cell:hover{border-color:var(--border-mid);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);}
 .editable-cell.stock-badge,.editable-cell.active-badge{cursor:pointer;margin:0;}
 .inline-editor{width:100%;min-width:96px;border:1px solid var(--sage);border-radius:7px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:13px;padding:6px 8px;outline:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--sage) 18%,transparent);}
@@ -674,7 +674,7 @@ async function init() {
         '<td class="num"><span class="sold-value">'+(_videoUnitsByProduct.get(p.id)||0).toLocaleString()+'</span></td>'+
         '<td class="num"><span class="sold-value">'+videoCount.toLocaleString()+'</span></td>'+
         '<td class="num"><span class="gmv-value">'+(gmv?fmtMoney(gmv):'-')+'</span></td>'+
-        '<td><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
+        '<td style="display:none"><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
         '<td>'+(link?'<a class="shop-link" href="'+escAttr(link)+'" target="_blank" rel="noopener">Shop ↗</a>':'-')+'</td>'+
         '<td><div class="tbl-actions"><button class="tbl-action" onclick="event.stopPropagation();viewProductVideos(\''+p.id+'\')">View Videos</button><button class="tbl-action" onclick="event.stopPropagation();makeContent(\''+p.id+'\')">Make Content</button><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button><button class="tbl-action" style="color:var(--sage)" onclick="event.stopPropagation();scoutProduct(\''+p.name+'\',\''+p.brand+'\')">Scout</button></div></td>'+
       '</tr>';
