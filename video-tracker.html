@@ -701,7 +701,7 @@ function renderGrid(){
     const shares=videoMetaNumber(v,'Shares');
     return `<article class="video-card">
       <div class="video-card-thumb${placeholder?' placeholder':''}">
-        <img src="${esc(cover)}" alt="" onerror="this.onerror=null;this.src='icons/default-product.png';this.closest('.video-card-thumb')?.classList.add('placeholder');">
+        <img src="${esc(cover)}" alt="" onerror="refreshThumb(this,'${v.id}')">
         <span class="video-card-date">${esc(fmtDate(v.date).replace(/, \d{4}$/,''))}</span>
       </div>
       <div class="video-card-body">
@@ -1962,6 +1962,46 @@ async function loadCampaignOptions(selectedIds){
   });
 }
 init();
+
+// ── oEmbed thumbnail refresh ──────────────────────────────────────────────────
+// Called from img onerror when a TikTok CDN URL expires.
+// Looks up the video's TikTok link, hits the free oEmbed API, gets a fresh thumb.
+const _oembedCache = {};
+async function refreshThumb(imgEl, videoId) {
+  // Avoid hammering if already tried
+  if (_oembedCache[videoId] === false) {
+    imgEl.src = 'icons/default-product.png';
+    imgEl.closest('.video-card-thumb')?.classList.add('placeholder');
+    return;
+  }
+  // Find the video record to get its TikTok link
+  const video = (typeof DATA !== 'undefined' ? DATA : []).find(v => String(v.id) === String(videoId));
+  const link = video?.link || '';
+  if (!link || !/tiktok\.com/i.test(link)) {
+    _oembedCache[videoId] = false;
+    imgEl.src = 'icons/default-product.png';
+    imgEl.closest('.video-card-thumb')?.classList.add('placeholder');
+    return;
+  }
+  try {
+    const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(link)}`);
+    const data = await res.json();
+    const freshUrl = data?.thumbnail_url;
+    if (freshUrl) {
+      _oembedCache[videoId] = freshUrl;
+      imgEl.onerror = null;
+      imgEl.src = freshUrl;
+      imgEl.closest('.video-card-thumb')?.classList.remove('placeholder');
+    } else {
+      throw new Error('no thumbnail');
+    }
+  } catch(e) {
+    _oembedCache[videoId] = false;
+    imgEl.src = 'icons/default-product.png';
+    imgEl.closest('.video-card-thumb')?.classList.add('placeholder');
+  }
+}
+
 </script>
 </body>
 </html>
