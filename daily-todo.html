@@ -571,16 +571,28 @@ function renderWeekStrip(){
   requestAnimationFrame(centerActiveWeekDay);
 }
 async function restartDay(){
-  if(!confirm('Reset all filmed statuses for today back to not filmed?'))return;
-  // Reset in memory
-  (TODO||[]).forEach(card=>(card.takes||[]).forEach(take=>{take.done=false;}));
-  // Reset in DB — update all queue rows for today
-  const todayIds=(TODO||[]).flatMap(card=>(card.takes||[]).map(t=>t.queueId).filter(Boolean));
-  if(todayIds.length){
-    await db.from('queue').update({done:false}).in('id',todayIds);
+  const isWeek = viewMode === 'week';
+  const msg = isWeek
+    ? 'Reset all filmed statuses for the entire week back to not filmed?'
+    : 'Reset all filmed statuses for today back to not filmed?';
+  if(!confirm(msg)) return;
+
+  if(isWeek){
+    // Reset week items in memory
+    (WEEK_ITEMS||[]).forEach(item=>{ item.done = false; });
+    // Reset in DB
+    const weekIds = (WEEK_ITEMS||[]).map(item=>item.queueId).filter(Boolean);
+    if(weekIds.length) await db.from('queue').update({done:false}).in('id', weekIds);
+    showToast('Week restarted — all takes marked as not filmed');
+  } else {
+    // Reset today in memory
+    (TODO||[]).forEach(card=>(card.takes||[]).forEach(take=>{ take.done = false; }));
+    // Reset in DB
+    const todayIds = (TODO||[]).flatMap(card=>(card.takes||[]).map(t=>t.queueId).filter(Boolean));
+    if(todayIds.length) await db.from('queue').update({done:false}).in('id', todayIds);
+    showToast('Day restarted — all takes marked as not filmed');
   }
   render();
-  showToast('Day restarted — all takes marked as not filmed');
 }
 async function refreshDay(btn){
   const original=btn?.textContent;
