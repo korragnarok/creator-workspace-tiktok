@@ -286,10 +286,7 @@ body{overflow-x:hidden;}
       </div>
       <button class="date-arrow" onclick="changeDay(1)" aria-label="Next day">›</button>
       <div class="header-actions">
-        <button class="btn btn-ghost" onclick="copyAllScripts(this)">Copy All</button>
-        <button class="btn btn-ghost" id="clearDoneBtn" onclick="clearDoneToday(this)">Clear Done</button>
         <button class="btn btn-ghost" onclick="restartDay()">Restart</button>
-        <button class="btn btn-ghost" onclick="refreshDay(this)">Refresh</button>
         <button class="btn btn-primary" onclick="openPicker()">+ Product</button>
       </div>
     </div>
@@ -573,7 +570,18 @@ function renderWeekStrip(){
   }).join('');
   requestAnimationFrame(centerActiveWeekDay);
 }
-function restartDay(){goToToday();}
+async function restartDay(){
+  if(!confirm('Reset all filmed statuses for today back to not filmed?'))return;
+  // Reset in memory
+  (TODO||[]).forEach(card=>(card.takes||[]).forEach(take=>{take.done=false;}));
+  // Reset in DB — update all queue rows for today
+  const todayIds=(TODO||[]).flatMap(card=>(card.takes||[]).map(t=>t.queueId).filter(Boolean));
+  if(todayIds.length){
+    await db.from('queue').update({done:false}).in('id',todayIds);
+  }
+  render();
+  showToast('Day restarted — all takes marked as not filmed');
+}
 async function refreshDay(btn){
   const original=btn?.textContent;
   if(btn){btn.disabled=true;btn.textContent='Refreshing';}
@@ -746,7 +754,6 @@ async function setTodoView(mode){
 
 function renderProgress(){
   const allTakes=viewMode==='week'?WEEK_ITEMS:TODO.flatMap(c=>c.takes),done=allTakes.filter(t=>t.done).length,total=allTakes.length;
-  const clearBtn=document.getElementById('clearDoneBtn');
   if(clearBtn) clearBtn.disabled=viewMode==='week'||done===0;
   const pArea=document.getElementById('progressArea');
   if(total>0){
