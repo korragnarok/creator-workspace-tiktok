@@ -354,6 +354,7 @@ function productCard(p) {
       </div>
       <div class="card-actions">
         ${p.url ? `<button class="card-btn" onclick="window.open('${p.url}','_blank')">View</button>` : ''}
+        <button class="card-btn" onclick="window.location.href='script-scout.html?q='+encodeURIComponent('${esc(p.name).replace(/'/g,"\\'").replace(/`/g,'\\`')}')">Scout</button>
         <button class="card-btn primary" onclick="navigator.clipboard?.writeText('${esc(p.name).replace(/'/g,"\\'")}').then(()=>showToast('Copied!'))">Copy Name</button>
       </div>
     </div>`;

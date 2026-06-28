@@ -171,7 +171,14 @@ db.auth.getSession().then(async ({data:{session}}) => {
     initProfilePopover(user.id);
   }
   checkKeys();
-  restoreCache();
+  // Auto-search if launched from Product Scout with ?q= param
+  const _autoQ = new URLSearchParams(window.location.search).get('q');
+  if (_autoQ) {
+    document.getElementById('spyQuery').value = _autoQ;
+    doSpySearch();
+  } else {
+    restoreCache();
+  }
 });
 
 function restoreCache() {
