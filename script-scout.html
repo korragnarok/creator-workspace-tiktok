@@ -245,8 +245,8 @@ async function doSpySearch() {
       workerUrl.searchParams.set('url', _cleanUrl);
       const res = await fetch(workerUrl.toString());
       const data = await res.json();
-      const v = data?.video || data?.data || data;
-      if (v && (v.aweme_id || v.item_id || v.id || v.desc || v.author)) {
+      const v = data?.aweme_detail || data?.video || data?.data || data;
+      if (v && (v.aweme_id || v.item_id || v.id || v.desc || v.author || v.author_user_id)) {
         _spyResults = [v];
         document.getElementById('spyLoading').style.display = 'none';
         document.getElementById('spyResultsMeta').textContent = '1 video found';
