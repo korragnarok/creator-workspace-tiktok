@@ -18,70 +18,52 @@
 body{background:radial-gradient(circle at 68% 6%,color-mix(in srgb,var(--rust) 8%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
 button,input,select{font:inherit;}
 a{text-decoration:none;color:inherit;}
-
 .page{width:100%;max-width:none;padding:34px clamp(24px,3vw,56px) 92px;}
 .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:22px;margin-bottom:28px;}
 .eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.18em;text-transform:uppercase;color:var(--rust);margin-bottom:8px;}
 .title{font-family:'Stack Sans Text',sans-serif;font-size:48px;font-weight:800;line-height:0.95;color:var(--ink);letter-spacing:-0.02em;}
 .sub{font-size:14px;color:var(--text-mid);margin-top:10px;max-width:500px;}
-
-/* ── Auth gate ── */
 #authGate{display:flex;align-items:center;justify-content:center;min-height:60vh;}
 .auth-card{border:1px solid var(--border-mid);border-radius:16px;background:var(--surface);padding:40px 32px;text-align:center;max-width:360px;width:100%;}
 .auth-card h2{font-family:'IBM Plex Serif',serif;font-size:24px;font-weight:700;color:var(--ink);margin-bottom:8px;}
-.auth-card p{font-size:13px;color:var(--text-mid);margin-bottom:0;}
 .auth-card a{color:var(--rust);font-weight:700;}
-
-/* ── Scout UI ── */
 #scoutUI{display:none;}
-
+.quick-brands{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.quick-btn{border:1px solid var(--border-mid);border-radius:999px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:8px 16px;cursor:pointer;transition:all 0.14s;}
+.quick-btn:hover{background:var(--surface-2);color:var(--ink);}
+.quick-btn.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
 .setup-bar{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:20px 22px;margin-bottom:22px;display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;}
 .setup-field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:200px;}
 .setup-field label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-mid);}
 .setup-input{border:1px solid var(--border-mid);border-radius:10px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);color:var(--ink);padding:11px 14px;outline:none;width:100%;font-size:13px;}
 .setup-input:focus{border-color:var(--rust);}
 .setup-input::placeholder{color:var(--text-muted);}
-
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;border:1px solid var(--border-mid);background:transparent;color:var(--ink);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:900;letter-spacing:0.05em;text-transform:uppercase;padding:11px 18px;cursor:pointer;transition:background 0.14s,border-color 0.14s,opacity 0.14s;white-space:nowrap;}
 .btn:hover{background:color-mix(in srgb,var(--surface) 70%,var(--rust) 12%);}
 .btn-primary{background:var(--rust);border-color:var(--rust);color:#fff;}
 .btn-primary:hover{opacity:0.88;background:var(--rust);}
 .btn:disabled{opacity:0.45;cursor:not-allowed;}
-
-/* ── Quick brands ── */
-.quick-brands{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
-.quick-btn{border:1px solid var(--border-mid);border-radius:999px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:8px 16px;cursor:pointer;transition:all 0.14s;}
-.quick-btn:hover{background:var(--surface-2);color:var(--ink);}
-.quick-btn.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
-
-/* ── Progress / status ── */
 .progress-bar-wrap{display:none;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:20px 22px;margin-bottom:18px;}
 .progress-label{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mid);margin-bottom:10px;}
 .progress-track{height:6px;border-radius:999px;background:color-mix(in srgb,var(--bg) 70%,var(--surface) 30%);overflow:hidden;margin-bottom:8px;}
 .progress-fill{height:100%;border-radius:999px;background:var(--rust);width:0%;transition:width 0.3s ease;}
 .progress-status{font-size:12px;color:var(--text-muted);}
-
-/* ── Results ── */
 .results-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
 .results-title{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-mid);}
 .sort-pills{display:flex;gap:6px;}
 .sort-pill{border:1px solid var(--border-mid);border-radius:999px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;cursor:pointer;transition:all 0.14s;}
 .sort-pill.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
-
 .results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
-
 .product-card{border:1px solid var(--border);border-radius:13px;background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);padding:18px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:12px;transition:border-color 0.14s;}
 .product-card:hover{border-color:var(--border-mid);}
 .product-card.blue-ocean{border-color:color-mix(in srgb,var(--sage) 50%,transparent);}
 .product-card.mid{border-color:color-mix(in srgb,var(--tan) 40%,transparent);}
-
 .card-top{display:flex;gap:12px;align-items:flex-start;}
 .card-img{width:64px;height:64px;border-radius:9px;border:1px solid var(--border-mid);background:var(--bg);object-fit:cover;flex-shrink:0;}
 .card-img-placeholder{width:64px;height:64px;border-radius:9px;border:1px solid var(--border-mid);background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:22px;flex-shrink:0;}
 .card-info{flex:1;min-width:0;}
 .card-name{font-family:'Stack Sans Text',sans-serif;font-weight:800;font-size:14px;color:var(--ink);line-height:1.2;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .card-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);}
-
 .card-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
 .metric{background:color-mix(in srgb,var(--bg) 60%,var(--surface) 40%);border-radius:8px;padding:10px;text-align:center;}
 .metric-val{font-family:'Noto Sans Mono',monospace;font-size:16px;font-weight:900;color:var(--ink);line-height:1;}
@@ -89,37 +71,19 @@ a{text-decoration:none;color:inherit;}
 .metric-val.warn{color:var(--tan);}
 .metric-val.hot{color:var(--rust);}
 .metric-label{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-top:4px;}
-
 .ocean-badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 12px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;}
 .ocean-badge.blue{background:color-mix(in srgb,var(--sage) 18%,transparent);color:var(--sage);border:1px solid color-mix(in srgb,var(--sage) 30%,transparent);}
 .ocean-badge.mid{background:color-mix(in srgb,var(--tan) 15%,transparent);color:var(--tan);border:1px solid color-mix(in srgb,var(--tan) 25%,transparent);}
 .ocean-badge.red{background:color-mix(in srgb,var(--rust) 14%,transparent);color:var(--rust);border:1px solid color-mix(in srgb,var(--rust) 22%,transparent);}
-
 .card-actions{display:flex;gap:8px;}
 .card-btn{flex:1;padding:9px;border-radius:8px;border:1px solid var(--border-mid);background:transparent;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.14s;}
 .card-btn:hover{background:var(--surface-2);color:var(--ink);}
 .card-btn.primary{background:var(--rust);border-color:var(--rust);color:#fff;}
 .card-btn.primary:hover{opacity:0.88;}
-
 .empty-state{padding:64px 24px;text-align:center;color:var(--text-muted);}
 .empty-icon{font-size:42px;margin-bottom:14px;}
 .empty-title{font-family:'Stack Sans Text',sans-serif;font-size:20px;font-weight:800;color:var(--ink);margin-bottom:8px;}
-.empty-sub{font-size:13px;color:var(--text-muted);max-width:320px;margin:0 auto;}
-
-/* ── API key modal ── */
-.modal-overlay{display:none;position:fixed;inset:0;z-index:700;align-items:center;justify-content:center;background:rgba(0,0,0,0.48);backdrop-filter:blur(5px);padding:20px;}
-.modal-overlay.open{display:flex;}
-.modal{width:min(480px,100%);border:1px solid var(--border-mid);border-radius:16px;background:var(--bg-lift);box-shadow:var(--shadow-md);padding:28px;position:relative;}
-.modal-title{font-family:'IBM Plex Serif',serif;font-size:26px;font-weight:800;color:var(--ink);margin-bottom:6px;}
-.modal-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;}
-.modal-sub a{color:var(--rust);}
-.modal-close{position:absolute;top:16px;right:16px;border:0;background:none;color:var(--text-muted);font-size:24px;cursor:pointer;line-height:1;}
-.form-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-mid);margin-bottom:6px;}
-.form-input{width:100%;border:1px solid var(--border-mid);border-radius:10px;background:var(--surface);color:var(--ink);padding:11px 13px;outline:none;font-size:13px;}
-.form-input:focus{border-color:var(--rust);}
-.modal-actions{display:flex;gap:10px;margin-top:16px;}
-.modal-actions .btn-primary{flex:1;}
-
+.empty-sub{font-size:13px;color:var(--text-muted);max-width:360px;margin:0 auto;}
 @media(max-width:980px){.page{padding:90px 18px 90px;}.title{font-size:36px;}.setup-bar{flex-direction:column;}.results-grid{grid-template-columns:1fr;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -131,12 +95,10 @@ a{text-decoration:none;color:inherit;}
     <div>
       <div class="eyebrow">Research</div>
       <h1 class="title">Product Scout</h1>
-      <p class="sub">Find blue ocean products — high brand spend, low affiliate competition.</p>
+      <p class="sub">Find blue ocean products — search by brand or keyword, score by affiliate competition.</p>
     </div>
-
   </header>
 
-  <!-- Auth gate -->
   <div id="authGate">
     <div class="auth-card">
       <h2>Sign in to access Product Scout</h2>
@@ -144,44 +106,36 @@ a{text-decoration:none;color:inherit;}
     </div>
   </div>
 
-  <!-- Scout UI (shown after auth) -->
   <div id="scoutUI">
-
-    <!-- Quick brand shortcuts -->
     <div class="quick-brands">
-      <button class="quick-btn active" onclick="setQuickBrand(this,'https://www.tiktok.com/shop/store/qvc/7380455938222596134')">QVC</button>
-      <button class="quick-btn" onclick="setQuickBrand(this,'https://www.tiktok.com/shop/store/hsn/7380447474826641451')">HSN</button>
-      <button class="quick-btn" onclick="setQuickBrand(this,'custom')">Custom URL</button>
+      <button class="quick-btn active" onclick="setQuick(this,'QVC')">QVC</button>
+      <button class="quick-btn" onclick="setQuick(this,'HSN')">HSN</button>
+      <button class="quick-btn" onclick="setQuick(this,'PetLab Co')">PetLab Co</button>
+      <button class="quick-btn" onclick="setQuick(this,'')">Custom</button>
     </div>
 
-    <!-- Setup bar -->
     <div class="setup-bar">
       <div class="setup-field" style="flex:2;">
-        <label>TikTok Shop Store URL</label>
-        <input class="setup-input" id="storeUrl" type="url" placeholder="https://www.tiktok.com/shop/store/qvc/..." value="https://www.tiktok.com/shop/store/qvc/7380455938222596134">
+        <label>Search keyword or brand name</label>
+        <input class="setup-input" id="searchQuery" type="text" placeholder="e.g. QVC kitchen, HSN bedding, PetLab" value="QVC">
       </div>
       <div class="setup-field" style="max-width:140px;">
         <label>Max Products</label>
         <select class="setup-input" id="maxProducts">
-          <option value="20">20</option>
-          <option value="40" selected>40</option>
-          <option value="60">60</option>
-          <option value="100">100</option>
+          <option value="20">20 products</option>
+          <option value="40" selected>40 products</option>
+          <option value="60">60 products</option>
         </select>
       </div>
-      <button class="btn btn-primary" id="runBtn" onclick="runScout()">
-        <span>Run Scout</span>
-      </button>
+      <button class="btn btn-primary" id="runBtn" onclick="runScout()">Run Scout</button>
     </div>
 
-    <!-- Progress -->
     <div class="progress-bar-wrap" id="progressWrap">
-      <div class="progress-label" id="progressLabel">Fetching catalog…</div>
+      <div class="progress-label" id="progressLabel">Searching…</div>
       <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
       <div class="progress-status" id="progressStatus">Starting…</div>
     </div>
 
-    <!-- Results -->
     <div id="resultsSection" style="display:none;">
       <div class="results-head">
         <div class="results-title" id="resultsTitle">0 products analyzed</div>
@@ -197,9 +151,8 @@ a{text-decoration:none;color:inherit;}
     <div class="empty-state" id="emptyState">
       <div class="empty-icon">🔭</div>
       <div class="empty-title">Ready to scout</div>
-      <div class="empty-sub">Pick a brand or paste a store URL and hit Run Scout. We'll pull their catalog and score each product for affiliate competition.</div>
+      <div class="empty-sub">Pick a brand shortcut or type any keyword, then hit Run Scout. We'll pull products and score each one for affiliate competition.</div>
     </div>
-
   </div>
 </main>
 
@@ -216,121 +169,97 @@ function workerFetch(endpoint, params = {}) {
   return fetch(url.toString());
 }
 
-// ── Quick brand buttons ──────────────────────────────────────────────────────
-function setQuickBrand(btn, storeUrl) {
+function setQuick(btn, query) {
   document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  if (storeUrl !== 'custom') {
-    document.getElementById('storeUrl').value = storeUrl;
-  } else {
-    document.getElementById('storeUrl').value = '';
-    document.getElementById('storeUrl').focus();
-  }
+  document.getElementById('searchQuery').value = query;
+  if (!query) document.getElementById('searchQuery').focus();
 }
 
-// ── Scout ────────────────────────────────────────────────────────────────────
 async function runScout() {
-  const storeUrl = document.getElementById('storeUrl').value.trim();
-  if (!storeUrl) { showToast('Enter a store URL', 'error'); return; }
-
+  const query = document.getElementById('searchQuery').value.trim();
+  if (!query) { showToast('Enter a search term', 'error'); return; }
   const maxProducts = parseInt(document.getElementById('maxProducts').value);
 
-  // UI reset
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('resultsSection').style.display = 'none';
   document.getElementById('progressWrap').style.display = 'block';
   document.getElementById('runBtn').disabled = true;
   _results = [];
 
-  setProgress(0, 'Fetching store catalog…');
+  setProgress(0, `Searching TikTok Shop for "${query}"…`);
 
-  // ── Step 1: get catalog ──
+  // Step 1: search for products
   let products = [];
   try {
-    const res = await workerFetch('tiktok-shop/profile', { url: storeUrl, amount: maxProducts });
+    const res = await workerFetch('tiktok/shop/search', { query, page: 1 });
     const data = await res.json();
-    products = data?.products || data?.items || data?.data?.products || [];
-    if (!Array.isArray(products) || products.length === 0) {
-      showToast('No products found. Check the store URL.', 'error');
-      resetScout();
-      return;
+    products = data?.products || [];
+    if (!products.length) {
+      showToast('No products found for that search.', 'error');
+      resetScout(); return;
     }
   } catch(e) {
-    showToast('Failed to fetch catalog: ' + e.message, 'error');
-    resetScout();
-    return;
+    showToast('Search failed: ' + e.message, 'error');
+    resetScout(); return;
   }
 
+  const total = Math.min(products.length, maxProducts);
   setProgress(10, `Found ${products.length} products. Checking affiliate competition…`);
 
-  // ── Step 2: for each product, get video count ──
-  const total = Math.min(products.length, maxProducts);
+  // Step 2: for each product, get detail (video count + stock)
   for (let i = 0; i < total; i++) {
     const p = products[i];
-    const productId = p.id || p.product_id || p.item_id;
-    const productUrl = p.url || p.product_url || (productId ? `https://www.tiktok.com/product/${productId}` : null);
+    const productId = p.product_id;
+    const productUrl = p.seo_url?.canonical_url || (productId ? `https://www.tiktok.com/product/${productId}` : null);
+    const image = p.image?.url_list?.[0] || null;
+    const price = p.product_price_info?.sale_price_decimal ? '$' + p.product_price_info.sale_price_decimal : null;
+    const sold = p.sold_info?.sold_count ?? null;
+    const shop = p.seller_info?.shop_name || null;
 
     let videoCount = null;
     let stockCount = null;
-    let soldCount = p.sold_count ?? p.units_sold ?? null;
-    let price = p.price || p.min_price || null;
 
-    if (productUrl || productId) {
+    if (productUrl) {
       try {
-        const detailRes = await workerFetch('tiktok/product', {
-          url: productUrl || `https://www.tiktok.com/product/${productId}`
-        });
+        const detailRes = await workerFetch('tiktok/product', { url: productUrl });
         const detail = await detailRes.json();
         const pd = detail?.product_info || detail?.data || detail;
         videoCount = pd?.related_video_count ?? pd?.video_count ?? null;
         stockCount = pd?.stock_count ?? pd?.inventory ?? null;
-        if (soldCount === null) soldCount = pd?.sold_count ?? null;
-        if (!price) price = pd?.price || pd?.min_price || null;
-      } catch(e) {
-        // silently skip
-      }
+      } catch(e) { /* silently skip */ }
     }
 
     _results.push({
       id: productId,
-      name: p.name || p.title || p.product_name || 'Unknown Product',
-      image: p.image || p.cover || p.main_image || p.images?.[0] || null,
-      price: formatPrice(price),
-      sold: soldCount,
+      name: p.title || 'Unknown Product',
+      shop,
+      image,
+      price,
+      sold,
       videos: videoCount,
       stock: stockCount,
       url: productUrl,
-      oceanScore: calcOceanScore(videoCount, soldCount)
+      oceanScore: oceanScore(videoCount)
     });
 
-    const pct = 10 + Math.round(((i + 1) / total) * 85);
+    const pct = 10 + Math.round(((i + 1) / total) * 86);
     setProgress(pct, `Analyzed ${i + 1} of ${total} products…`);
-
-    // Small delay to be nice to the API
-    if (i < total - 1) await sleep(120);
+    if (i < total - 1) await sleep(150);
   }
 
   setProgress(100, 'Done!');
-  await sleep(400);
-
+  await sleep(300);
   document.getElementById('progressWrap').style.display = 'none';
   document.getElementById('runBtn').disabled = false;
   renderResults();
 }
 
-function calcOceanScore(videos, sold) {
-  // Lower video count = better. Returns 'blue', 'mid', 'red'
+function oceanScore(videos) {
   if (videos === null) return 'unknown';
   if (videos <= 5) return 'blue';
-  if (videos <= 20) return 'mid';
+  if (videos <= 25) return 'mid';
   return 'red';
-}
-
-function formatPrice(p) {
-  if (!p) return null;
-  const num = parseFloat(String(p).replace(/[^0-9.]/g,''));
-  if (isNaN(num)) return null;
-  return '$' + num.toFixed(2);
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -338,9 +267,8 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function setProgress(pct, status) {
   document.getElementById('progressFill').style.width = pct + '%';
   document.getElementById('progressStatus').textContent = status;
-  if (pct < 10) document.getElementById('progressLabel').textContent = 'Fetching catalog…';
-  else if (pct < 95) document.getElementById('progressLabel').textContent = 'Scoring affiliate competition…';
-  else document.getElementById('progressLabel').textContent = 'Wrapping up…';
+  document.getElementById('progressLabel').textContent =
+    pct < 10 ? 'Searching TikTok Shop…' : pct < 95 ? 'Scoring affiliate competition…' : 'Wrapping up…';
 }
 
 function resetScout() {
@@ -349,7 +277,6 @@ function resetScout() {
   document.getElementById('emptyState').style.display = 'block';
 }
 
-// ── Sort & Render ────────────────────────────────────────────────────────────
 function sortResults(mode, btn) {
   _sortMode = mode;
   document.querySelectorAll('.sort-pill').forEach(b => b.classList.remove('active'));
@@ -360,43 +287,32 @@ function sortResults(mode, btn) {
 function renderResults() {
   const sorted = [..._results].sort((a, b) => {
     if (_sortMode === 'ocean') {
-      const order = { blue: 0, mid: 1, unknown: 2, red: 3 };
-      return (order[a.oceanScore] ?? 2) - (order[b.oceanScore] ?? 2);
+      const o = { blue: 0, mid: 1, unknown: 2, red: 3 };
+      return (o[a.oceanScore] ?? 2) - (o[b.oceanScore] ?? 2);
     }
-    if (_sortMode === 'videos') {
-      const av = a.videos ?? 9999;
-      const bv = b.videos ?? 9999;
-      return av - bv;
-    }
-    if (_sortMode === 'sold') {
-      return (b.sold ?? 0) - (a.sold ?? 0);
-    }
+    if (_sortMode === 'videos') return (a.videos ?? 9999) - (b.videos ?? 9999);
+    if (_sortMode === 'sold') return (b.sold ?? 0) - (a.sold ?? 0);
     return 0;
   });
 
   const blueCount = _results.filter(r => r.oceanScore === 'blue').length;
   document.getElementById('resultsTitle').textContent =
     `${_results.length} products · ${blueCount} blue ocean`;
-
-  document.getElementById('resultsGrid').innerHTML = sorted.map(p => productCard(p)).join('');
+  document.getElementById('resultsGrid').innerHTML = sorted.map(productCard).join('');
   document.getElementById('resultsSection').style.display = 'block';
   document.getElementById('emptyState').style.display = 'none';
 }
 
 function productCard(p) {
-  const badgeClass = p.oceanScore === 'blue' ? 'blue' : p.oceanScore === 'mid' ? 'mid' : 'red';
-  const badgeLabel = p.oceanScore === 'blue' ? '🌊 Blue Ocean' : p.oceanScore === 'mid' ? '〰 Mid' : p.oceanScore === 'red' ? '🔴 Saturated' : '— Unknown';
-  const cardClass = p.oceanScore === 'blue' ? 'blue-ocean' : p.oceanScore === 'mid' ? 'mid' : '';
-
+  const score = p.oceanScore;
+  const badgeClass = score === 'blue' ? 'blue' : score === 'mid' ? 'mid' : 'red';
+  const badgeLabel = score === 'blue' ? '🌊 Blue Ocean' : score === 'mid' ? '〰 Mid' : score === 'red' ? '🔴 Saturated' : '— Unknown';
+  const cardClass = score === 'blue' ? 'blue-ocean' : score === 'mid' ? 'mid' : '';
   const videoVal = p.videos === null ? '—' : p.videos;
-  const videoClass = p.videos === null ? '' : p.videos <= 5 ? 'good' : p.videos <= 20 ? 'warn' : 'hot';
-
+  const videoClass = p.videos === null ? '' : p.videos <= 5 ? 'good' : p.videos <= 25 ? 'warn' : 'hot';
   const soldVal = p.sold === null ? '—' : p.sold >= 1000 ? (p.sold/1000).toFixed(1)+'k' : p.sold;
   const stockVal = p.stock === null ? '—' : p.stock >= 1000 ? (p.stock/1000).toFixed(1)+'k' : p.stock;
-
-  const imgHtml = p.image
-    ? `<img class="card-img" src="${p.image}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
-    : '';
+  const imgHtml = p.image ? `<img class="card-img" src="${p.image}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'">` : '';
   const placeholder = `<div class="card-img-placeholder" ${p.image ? 'style="display:none"' : ''}>🛍</div>`;
 
   return `
@@ -404,41 +320,27 @@ function productCard(p) {
       <div class="card-top">
         ${imgHtml}${placeholder}
         <div class="card-info">
-          <div class="card-name">${escHtml(p.name)}</div>
-          <div class="card-brand" style="margin-bottom:6px;">${p.price || ''}</div>
+          <div class="card-name">${esc(p.name)}</div>
+          <div class="card-brand" style="margin-bottom:6px;">${p.shop ? esc(p.shop) + (p.price ? ' · ' + p.price : '') : (p.price || '')}</div>
           <span class="ocean-badge ${badgeClass}">${badgeLabel}</span>
         </div>
       </div>
       <div class="card-metrics">
-        <div class="metric">
-          <div class="metric-val ${videoClass}">${videoVal}</div>
-          <div class="metric-label">Videos</div>
-        </div>
-        <div class="metric">
-          <div class="metric-val">${soldVal}</div>
-          <div class="metric-label">Sold</div>
-        </div>
-        <div class="metric">
-          <div class="metric-val">${stockVal}</div>
-          <div class="metric-label">In Stock</div>
-        </div>
+        <div class="metric"><div class="metric-val ${videoClass}">${videoVal}</div><div class="metric-label">Videos</div></div>
+        <div class="metric"><div class="metric-val">${soldVal}</div><div class="metric-label">Sold</div></div>
+        <div class="metric"><div class="metric-val">${stockVal}</div><div class="metric-label">In Stock</div></div>
       </div>
       <div class="card-actions">
-        ${p.url ? `<button class="card-btn" onclick="window.open('${p.url}','_blank')">View Product</button>` : ''}
-        <button class="card-btn primary" onclick="copyProductName('${escHtml(p.name).replace(/'/g,"\\'")}')">Copy Name</button>
+        ${p.url ? `<button class="card-btn" onclick="window.open('${p.url}','_blank')">View</button>` : ''}
+        <button class="card-btn primary" onclick="navigator.clipboard?.writeText('${esc(p.name).replace(/'/g,"\\'")}').then(()=>showToast('Copied!'))">Copy Name</button>
       </div>
     </div>`;
 }
 
-function copyProductName(name) {
-  navigator.clipboard?.writeText(name).then(() => showToast('Copied!'));
-}
-
-function escHtml(s) {
+function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Auth gate ────────────────────────────────────────────────────────────────
 (async function init() {
   const user = await requireAuth();
   if (!user) return;
