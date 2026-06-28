@@ -206,10 +206,6 @@ button,input,textarea,select{font:inherit;}
       <span class="mob-tab-icon">✦</span>
       <span class="mob-tab-label">AI</span>
     </button>
-    <button class="mob-tab" id="mGeminiBtn" onclick="toggleGeminiKey()">
-      <span class="mob-tab-icon">⚷</span>
-      <span class="mob-tab-label">Gemini Key</span>
-    </button>
     <button class="mob-tab" onclick="newScript()">
       <span class="mob-tab-icon">＋</span>
       <span class="mob-tab-label">New Script</span>
@@ -298,7 +294,6 @@ button,input,textarea,select{font:inherit;}
     </div>
     <div class="actions">
       <button class="btn btn-primary" id="aiDraftBtn" type="button">Generate with AI</button>
-      <button class="btn btn-soft" id="geminiKeyToggleBtn" onclick="toggleGeminiKey()">Connect Gemini</button>
       <button class="btn btn-soft" onclick="newScript()">+ New Script</button>
       <button class="btn btn-primary" onclick="saveDraft()">Save Draft</button>
       <button class="btn" onclick="copyFullScript()">Copy Script</button>
@@ -724,8 +719,6 @@ async function init(){
   await initTheme(user.id,userPrefs);
   initProfilePopover(user.id);
   CreatorGemini.init({autoPrompt:false});
-  updateGeminiKeyButton();
-  window.addEventListener('creator-gemini-key-change', updateGeminiKeyButton);
   await Promise.all([loadProducts(),loadLibraries()]);
   restoreLocalDraft();
   renderProducts();
@@ -1314,15 +1307,6 @@ async function saveDraft(){
     saveLocalDraft();await loadLibraries();renderLibrary();showToast('Draft saved, but To Do sync failed','error');
   }
 }
-function updateGeminiKeyButton(){
-  const btn=document.getElementById('geminiKeyToggleBtn');
-  if(!btn)return;
-  btn.textContent=CreatorGemini.hasKey()?'Disconnect Gemini Key':'Connect Gemini';
-}
-function toggleGeminiKey(){
-  if(CreatorGemini.hasKey())CreatorGemini.disconnect();
-  else CreatorGemini.showKeyPrompt();
-}
 function aiKeyMap(){return AI_FRAMEWORK_KEYS[currentFramework]||AI_FRAMEWORK_KEYS['product-demo'];}
 async function ensureAiTone(){
   let tone=resolveAiTone(user,userPrefs);
@@ -1343,7 +1327,7 @@ async function ensureAiTone(){
 }
 async function generateAiDraft(){
   if(!user){showToast('Still loading...','error');return;}
-  if(!CreatorGemini.hasKey()){showToast('Connect your Gemini API key first — tap the Gemini Key button.','error');return;}
+
   mobFlushToDesk();
   const productSelect=document.getElementById('productSelect');
   if(!productSelect?.value || productSelect.options[productSelect.selectedIndex]?.textContent === 'Choose product'){
@@ -1423,6 +1407,8 @@ document.getElementById('similaritySlider')?.addEventListener('input',e=>{
 });
 document.addEventListener('input',e=>{if(e.target.closest('.page'))saveLocalDraft();});
 init();
+
+function toggleGeminiKey() { /* key lives in Cloudflare worker */ }
 </script>
 </body>
 </html>
