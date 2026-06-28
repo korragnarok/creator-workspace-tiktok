@@ -18,13 +18,11 @@
       href: 'scripts.html',
       label: 'Scripts',
       icon: 'scripts',
-      activePages: ['script-workshop.html', 'script-scout.html', 'hooks.html', 'ctas.html'],
+      activePages: ['script-workshop.html', 'script-scout.html'],
       children: [
         { href: 'scripts.html', label: 'Script Vault', icon: 'scripts' },
         { href: 'script-workshop.html', label: 'Script Workshop', icon: 'workshop' },
         { href: 'script-scout.html', label: 'Script Scout', icon: 'video' },
-        { href: 'hooks.html', label: 'Hooks', icon: 'hooks' },
-        { href: 'ctas.html', label: 'CTAs', icon: 'scripts' }
       ]
     },
     { href: 'notes.html', label: 'Notes', icon: 'scripts' },
@@ -36,15 +34,13 @@
     { href: 'daily-todo.html', label: 'To Do', icon: 'todo' },
     { href: 'products.html', label: 'Products', icon: 'products' },
     { href: 'script-scout.html', label: 'Scout', icon: 'video' },
-    { href: 'scripts.html', label: 'Scripts', icon: 'scripts', activePages: ['script-workshop.html', 'hooks.html', 'ctas.html'] },
+    { href: 'scripts.html', label: 'Scripts', icon: 'scripts', activePages: ['script-workshop.html'] },
     { href: 'sales-calendar.html', label: 'Sales', icon: 'sales' },
     { href: 'video-tracker.html', label: 'Content', icon: 'video' }
   ];
 
   const MORE_ITEMS = [
     { href: 'script-workshop.html', label: 'Script Workshop', icon: 'workshop' },
-    { href: 'hooks.html', label: 'Hooks', icon: 'hooks' },
-    { href: 'ctas.html', label: 'CTAs', icon: 'scripts' },
     { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products' },
     { href: 'product-scout.html', label: 'Product Scout', icon: 'products' },
     { href: 'notes.html', label: 'Notes', icon: 'scripts' },
