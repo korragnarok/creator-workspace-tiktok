@@ -426,6 +426,8 @@ function displayHookText(text){
     .replace(/^SEO_STRATEGY\s*:[^\n]*\n?/gim,'')
     .replace(/^CAPTION\s*:[^\n]*\n?/gim,'')
     .replace(/^HASHTAGS\s*:[^\n]*\n?/gim,'')
+    .replace(/^SUPPLIES_HAVE\s*:[^\n]*\n?/gim,'')
+    .replace(/^SUPPLIES_NEED\s*:[^\n]*\n?/gim,'')
     .replace(/\n{3,}/g,'\n\n')
     .trim();
 }
@@ -500,7 +502,7 @@ function replaceVisibleHook(notes,nextHook){
   const hidden=String(notes||'')
     .split('\n')
     .map(line=>line.trim())
-    .filter(line=>/^(LOCATION|TYPE|SCHED_TIME|STATUS|ON_SCREEN_TEXT|SEO_STRATEGY|CAPTION|HASHTAGS)\s*:/i.test(line));
+    .filter(line=>/^(LOCATION|TYPE|SCHED_TIME|STATUS|ON_SCREEN_TEXT|SEO_STRATEGY|CAPTION|HASHTAGS|SUPPLIES_HAVE|SUPPLIES_NEED)\s*:/i.test(line));
   return [String(nextHook||'').trim(),...hidden].filter(Boolean).join('\n');
 }
 function locationClass(type){
