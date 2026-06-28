@@ -18,7 +18,7 @@
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 a{text-decoration:none;color:inherit;}
 .page{max-width:min(1760px,calc(100vw - 24px));margin:0 auto;padding:0 28px 100px;min-width:0;}
-.page-header{padding:20px 0 16px;border-bottom:1px solid var(--border-mid);margin-bottom:16px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.page-header{padding:44px 0 32px;border-bottom:1px solid var(--border-mid);margin-bottom:32px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;}
 .page-eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;}
 .page-title{font-family:'IBM Plex Serif',serif;font-size:52px;font-weight:700;line-height:0.9;letter-spacing:-0.02em;color:var(--ink);}
 .page-title em{font-style:italic;color:var(--sage);}
@@ -85,7 +85,7 @@ body{overflow-x:hidden;}
 .pill-count{font-family:'Noto Sans Mono',sans-serif;font-size:10px;margin-left:4px;opacity:0.75;}
 .product-bank{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);}
 table{width:1680px;min-width:100%;border-collapse:collapse;table-layout:fixed;}
-thead th{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.16em;color:var(--text-muted);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface) 80%,var(--bg) 20%);white-space:nowrap;}
+thead th{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.16em;color:var(--text-muted);padding:13px 16px;text-align:left;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface) 80%,var(--bg) 20%);white-space:nowrap;}
 thead th.sortable{cursor:pointer;user-select:none;}
 thead th.sortable:hover,thead th.sortable.active{color:var(--ink);}
 thead th.sortable.active::after{content:' ↑';color:var(--rust);letter-spacing:0;font-size:10px;}
@@ -97,14 +97,14 @@ tbody tr:hover{background:transparent;}
 tbody tr.select-mode{cursor:pointer;}
 tbody tr.selected{background:color-mix(in srgb,var(--rust) 14%,transparent);}
 tbody tr.selected:hover{background:color-mix(in srgb,var(--rust) 18%,transparent);}
-tbody td{padding:7px 12px;color:var(--text-mid);vertical-align:middle;}
-.product-thumb-cell{width:46px;text-align:center;}
-.product-thumb{width:34px;height:34px;border-radius:10px;border:1px solid var(--border-mid);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);overflow:hidden;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;box-shadow:var(--shadow-sm);}
+tbody td{padding:14px 16px;color:var(--text-mid);vertical-align:middle;}
+.product-thumb-cell{width:62px;text-align:center;}
+.product-thumb{width:44px;height:44px;border-radius:10px;border:1px solid var(--border-mid);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);overflow:hidden;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;box-shadow:var(--shadow-sm);}
 .product-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .product-thumb.placeholder{opacity:0.45;}
 .product-thumb.placeholder img{padding:8px;object-fit:contain;}
-.product-cell{display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:800;line-height:1.25;min-width:0;}
-.core-badge{margin-left:6px;display:inline-flex;align-items:center;border-radius:100px;background:var(--tan);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;padding:2px 7px;text-transform:uppercase;}
+.product-cell{display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:800;line-height:1.25;}
+.core-badge{display:inline-flex;align-items:center;border-radius:100px;background:var(--tan);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;padding:2px 7px;text-transform:uppercase;}
 .stock-badge{display:inline-flex;align-items:center;border-radius:6px;padding:3px 8px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.02em;}
 .active-badge{display:inline-flex;align-items:center;border-radius:6px;padding:3px 8px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.02em;}
 .active-yes{background:color-mix(in srgb,var(--sage) 18%,transparent);color:var(--sage);}
@@ -117,10 +117,10 @@ tbody td{padding:7px 12px;color:var(--text-mid);vertical-align:middle;}
 .features-cell{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .shop-link{font-family:'Stack Sans Notch',sans-serif;font-weight:800;color:var(--tan);}
 .shop-link:hover{color:var(--rust);}
-.tbl-actions{display:flex;gap:4px;align-items:center;justify-content:flex-end;flex-wrap:nowrap;}
-.tbl-action{border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer;white-space:nowrap;}
+.tbl-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
+.tbl-action{border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;white-space:nowrap;}
 .tbl-action:hover{border-color:var(--rust);color:var(--rust);}
-.editable-cell{display:inline-flex;align-items:center;min-height:26px;max-width:180px;border:1px solid transparent;border-radius:7px;padding:3px 7px;margin:-3px -7px;cursor:text;transition:border-color 0.12s,background 0.12s;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.editable-cell{display:inline-flex;align-items:center;min-height:26px;max-width:220px;white-space:normal;border:1px solid transparent;border-radius:7px;padding:3px 7px;margin:-3px -7px;cursor:text;transition:border-color 0.12s,background 0.12s;color:inherit;}
 .editable-cell:hover{border-color:var(--border-mid);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);}
 .editable-cell.stock-badge,.editable-cell.active-badge{cursor:pointer;margin:0;}
 .inline-editor{width:100%;min-width:96px;border:1px solid var(--sage);border-radius:7px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:13px;padding:6px 8px;outline:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--sage) 18%,transparent);}
@@ -674,9 +674,9 @@ async function init() {
         '<td class="num"><span class="sold-value">'+(_videoUnitsByProduct.get(p.id)||0).toLocaleString()+'</span></td>'+
         '<td class="num"><span class="sold-value">'+videoCount.toLocaleString()+'</span></td>'+
         '<td class="num"><span class="gmv-value">'+(gmv?fmtMoney(gmv):'-')+'</span></td>'+
-        '<td style="display:none"><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
+        '<td><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
         '<td>'+(link?'<a class="shop-link" href="'+escAttr(link)+'" target="_blank" rel="noopener">Shop ↗</a>':'-')+'</td>'+
-        '<td><div class="tbl-actions"><button class="tbl-action" onclick="event.stopPropagation();viewProductVideos(\''+p.id+'\')">View Videos</button><button class="tbl-action" onclick="event.stopPropagation();makeContent(\''+p.id+'\')">Make Content</button><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button><button class="tbl-action" style="color:var(--sage)" onclick="event.stopPropagation();scoutProduct(\''+p.name+'\',\''+p.brand+'\')">Scout</button></div></td>'+
+        '<td><div class="tbl-actions"><button class="tbl-action" onclick="event.stopPropagation();makeContent(\''+p.id+'\')">Make Content</button><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button><button class="tbl-action" style="color:var(--sage)" onclick="event.stopPropagation();scoutProduct(\''+p.name+'\'',\''+p.brand+'\')">Scout</button></div></td>'+
       '</tr>';
     }).join('');
     updateSortHeaders();
