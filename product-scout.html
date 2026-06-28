@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F8F5F1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/pwa/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
+<title>Product Scout — Take24</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script src="theme-init.js?v=141"></script>
+<link rel="stylesheet" href="layout.css?v=144">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:radial-gradient(circle at 68% 6%,color-mix(in srgb,var(--rust) 8%,transparent),transparent 30%),var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+button,input,select{font:inherit;}
+a{text-decoration:none;color:inherit;}
+
+.page{width:100%;max-width:none;padding:34px clamp(24px,3vw,56px) 92px;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:22px;margin-bottom:28px;}
+.eyebrow{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.18em;text-transform:uppercase;color:var(--rust);margin-bottom:8px;}
+.title{font-family:'Stack Sans Text',sans-serif;font-size:48px;font-weight:800;line-height:0.95;color:var(--ink);letter-spacing:-0.02em;}
+.sub{font-size:14px;color:var(--text-mid);margin-top:10px;max-width:500px;}
+
+/* ── Auth gate ── */
+#authGate{display:flex;align-items:center;justify-content:center;min-height:60vh;}
+.auth-card{border:1px solid var(--border-mid);border-radius:16px;background:var(--surface);padding:40px 32px;text-align:center;max-width:360px;width:100%;}
+.auth-card h2{font-family:'IBM Plex Serif',serif;font-size:24px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.auth-card p{font-size:13px;color:var(--text-mid);margin-bottom:0;}
+.auth-card a{color:var(--rust);font-weight:700;}
+
+/* ── Scout UI ── */
+#scoutUI{display:none;}
+
+.setup-bar{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:20px 22px;margin-bottom:22px;display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;}
+.setup-field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:200px;}
+.setup-field label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-mid);}
+.setup-input{border:1px solid var(--border-mid);border-radius:10px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);color:var(--ink);padding:11px 14px;outline:none;width:100%;font-size:13px;}
+.setup-input:focus{border-color:var(--rust);}
+.setup-input::placeholder{color:var(--text-muted);}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;border:1px solid var(--border-mid);background:transparent;color:var(--ink);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:900;letter-spacing:0.05em;text-transform:uppercase;padding:11px 18px;cursor:pointer;transition:background 0.14s,border-color 0.14s,opacity 0.14s;white-space:nowrap;}
+.btn:hover{background:color-mix(in srgb,var(--surface) 70%,var(--rust) 12%);}
+.btn-primary{background:var(--rust);border-color:var(--rust);color:#fff;}
+.btn-primary:hover{opacity:0.88;background:var(--rust);}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+
+/* ── Quick brands ── */
+.quick-brands{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.quick-btn{border:1px solid var(--border-mid);border-radius:999px;background:color-mix(in srgb,var(--surface) 84%,var(--bg) 16%);color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:8px 16px;cursor:pointer;transition:all 0.14s;}
+.quick-btn:hover{background:var(--surface-2);color:var(--ink);}
+.quick-btn.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+
+/* ── Progress / status ── */
+.progress-bar-wrap{display:none;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:20px 22px;margin-bottom:18px;}
+.progress-label{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mid);margin-bottom:10px;}
+.progress-track{height:6px;border-radius:999px;background:color-mix(in srgb,var(--bg) 70%,var(--surface) 30%);overflow:hidden;margin-bottom:8px;}
+.progress-fill{height:100%;border-radius:999px;background:var(--rust);width:0%;transition:width 0.3s ease;}
+.progress-status{font-size:12px;color:var(--text-muted);}
+
+/* ── Results ── */
+.results-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.results-title{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-mid);}
+.sort-pills{display:flex;gap:6px;}
+.sort-pill{border:1px solid var(--border-mid);border-radius:999px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;cursor:pointer;transition:all 0.14s;}
+.sort-pill.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+
+.product-card{border:1px solid var(--border);border-radius:13px;background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);padding:18px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:12px;transition:border-color 0.14s;}
+.product-card:hover{border-color:var(--border-mid);}
+.product-card.blue-ocean{border-color:color-mix(in srgb,var(--sage) 50%,transparent);}
+.product-card.mid{border-color:color-mix(in srgb,var(--tan) 40%,transparent);}
+
+.card-top{display:flex;gap:12px;align-items:flex-start;}
+.card-img{width:64px;height:64px;border-radius:9px;border:1px solid var(--border-mid);background:var(--bg);object-fit:cover;flex-shrink:0;}
+.card-img-placeholder{width:64px;height:64px;border-radius:9px;border:1px solid var(--border-mid);background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:22px;flex-shrink:0;}
+.card-info{flex:1;min-width:0;}
+.card-name{font-family:'Stack Sans Text',sans-serif;font-weight:800;font-size:14px;color:var(--ink);line-height:1.2;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.card-brand{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);}
+
+.card-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.metric{background:color-mix(in srgb,var(--bg) 60%,var(--surface) 40%);border-radius:8px;padding:10px;text-align:center;}
+.metric-val{font-family:'Noto Sans Mono',monospace;font-size:16px;font-weight:900;color:var(--ink);line-height:1;}
+.metric-val.good{color:var(--sage);}
+.metric-val.warn{color:var(--tan);}
+.metric-val.hot{color:var(--rust);}
+.metric-label{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-top:4px;}
+
+.ocean-badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 12px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;}
+.ocean-badge.blue{background:color-mix(in srgb,var(--sage) 18%,transparent);color:var(--sage);border:1px solid color-mix(in srgb,var(--sage) 30%,transparent);}
+.ocean-badge.mid{background:color-mix(in srgb,var(--tan) 15%,transparent);color:var(--tan);border:1px solid color-mix(in srgb,var(--tan) 25%,transparent);}
+.ocean-badge.red{background:color-mix(in srgb,var(--rust) 14%,transparent);color:var(--rust);border:1px solid color-mix(in srgb,var(--rust) 22%,transparent);}
+
+.card-actions{display:flex;gap:8px;}
+.card-btn{flex:1;padding:9px;border-radius:8px;border:1px solid var(--border-mid);background:transparent;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.14s;}
+.card-btn:hover{background:var(--surface-2);color:var(--ink);}
+.card-btn.primary{background:var(--rust);border-color:var(--rust);color:#fff;}
+.card-btn.primary:hover{opacity:0.88;}
+
+.empty-state{padding:64px 24px;text-align:center;color:var(--text-muted);}
+.empty-icon{font-size:42px;margin-bottom:14px;}
+.empty-title{font-family:'Stack Sans Text',sans-serif;font-size:20px;font-weight:800;color:var(--ink);margin-bottom:8px;}
+.empty-sub{font-size:13px;color:var(--text-muted);max-width:320px;margin:0 auto;}
+
+/* ── API key modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:700;align-items:center;justify-content:center;background:rgba(0,0,0,0.48);backdrop-filter:blur(5px);padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{width:min(480px,100%);border:1px solid var(--border-mid);border-radius:16px;background:var(--bg-lift);box-shadow:var(--shadow-md);padding:28px;position:relative;}
+.modal-title{font-family:'IBM Plex Serif',serif;font-size:26px;font-weight:800;color:var(--ink);margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;}
+.modal-sub a{color:var(--rust);}
+.modal-close{position:absolute;top:16px;right:16px;border:0;background:none;color:var(--text-muted);font-size:24px;cursor:pointer;line-height:1;}
+.form-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-mid);margin-bottom:6px;}
+.form-input{width:100%;border:1px solid var(--border-mid);border-radius:10px;background:var(--surface);color:var(--ink);padding:11px 13px;outline:none;font-size:13px;}
+.form-input:focus{border-color:var(--rust);}
+.modal-actions{display:flex;gap:10px;margin-top:16px;}
+.modal-actions .btn-primary{flex:1;}
+
+@media(max-width:980px){.page{padding:90px 18px 90px;}.title{font-size:36px;}.setup-bar{flex-direction:column;}.results-grid{grid-template-columns:1fr;}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=141"></script>
+</head>
+<body>
+<main class="page">
+  <header class="page-head">
+    <div>
+      <div class="eyebrow">Research</div>
+      <h1 class="title">Product Scout</h1>
+      <p class="sub">Find blue ocean products — high brand spend, low affiliate competition.</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="btn" onclick="openKeyModal()" id="keyBtn">⚙ API Key</button>
+    </div>
+  </header>
+
+  <!-- Auth gate -->
+  <div id="authGate">
+    <div class="auth-card">
+      <h2>Sign in to access Product Scout</h2>
+      <p style="margin-bottom:18px;">This page is private. Please <a href="auth.html">sign in</a> to continue.</p>
+    </div>
+  </div>
+
+  <!-- Scout UI (shown after auth) -->
+  <div id="scoutUI">
+
+    <!-- Quick brand shortcuts -->
+    <div class="quick-brands">
+      <button class="quick-btn active" onclick="setQuickBrand(this,'https://www.tiktok.com/shop/store/qvc/7380455938222596134')">QVC</button>
+      <button class="quick-btn" onclick="setQuickBrand(this,'https://www.tiktok.com/shop/store/hsn/7380447474826641451')">HSN</button>
+      <button class="quick-btn" onclick="setQuickBrand(this,'custom')">Custom URL</button>
+    </div>
+
+    <!-- Setup bar -->
+    <div class="setup-bar">
+      <div class="setup-field" style="flex:2;">
+        <label>TikTok Shop Store URL</label>
+        <input class="setup-input" id="storeUrl" type="url" placeholder="https://www.tiktok.com/shop/store/qvc/..." value="https://www.tiktok.com/shop/store/qvc/7380455938222596134">
+      </div>
+      <div class="setup-field" style="max-width:140px;">
+        <label>Max Products</label>
+        <select class="setup-input" id="maxProducts">
+          <option value="20">20</option>
+          <option value="40" selected>40</option>
+          <option value="60">60</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="runBtn" onclick="runScout()">
+        <span>Run Scout</span>
+      </button>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-bar-wrap" id="progressWrap">
+      <div class="progress-label" id="progressLabel">Fetching catalog…</div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-status" id="progressStatus">Starting…</div>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsSection" style="display:none;">
+      <div class="results-head">
+        <div class="results-title" id="resultsTitle">0 products analyzed</div>
+        <div class="sort-pills">
+          <button class="sort-pill active" onclick="sortResults('ocean',this)">Blue Ocean First</button>
+          <button class="sort-pill" onclick="sortResults('videos',this)">Fewest Videos</button>
+          <button class="sort-pill" onclick="sortResults('sold',this)">Most Sold</button>
+        </div>
+      </div>
+      <div class="results-grid" id="resultsGrid"></div>
+    </div>
+
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🔭</div>
+      <div class="empty-title">Ready to scout</div>
+      <div class="empty-sub">Pick a brand or paste a store URL and hit Run Scout. We'll pull their catalog and score each product for affiliate competition.</div>
+    </div>
+
+  </div>
+</main>
+
+<!-- API Key Modal -->
+<div class="modal-overlay" id="keyModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeKeyModal()">×</button>
+    <div class="modal-title">ScrapeCreators API Key</div>
+    <div class="modal-sub">Your key is stored locally on this device only. Get one free at <a href="https://app.scrapecreators.com" target="_blank">app.scrapecreators.com</a> — 1,000 free credits included.</div>
+    <label class="form-label">API Key</label>
+    <input class="form-input" id="apiKeyInput" type="password" placeholder="sc_xxxxxxxxxxxxxxxx">
+    <div class="modal-actions">
+      <button class="btn" onclick="closeKeyModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveApiKey()">Save Key</button>
+    </div>
+  </div>
+</div>
+
+<script src="layout.js?v=144"></script>
+<script>
+const STORE_KEY = 'creatorHub:scrapeApiKey';
+let _results = [];
+let _sortMode = 'ocean';
+
+// ── Quick brand buttons ──────────────────────────────────────────────────────
+function setQuickBrand(btn, url) {
+  document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (url !== 'custom') {
+    document.getElementById('storeUrl').value = url;
+  } else {
+    document.getElementById('storeUrl').value = '';
+    document.getElementById('storeUrl').focus();
+  }
+}
+
+// ── API Key modal ────────────────────────────────────────────────────────────
+function openKeyModal() {
+  const saved = localStorage.getItem(STORE_KEY) || '';
+  document.getElementById('apiKeyInput').value = saved;
+  document.getElementById('keyModal').classList.add('open');
+}
+function closeKeyModal() {
+  document.getElementById('keyModal').classList.remove('open');
+}
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val) { showToast('Enter a valid API key', 'error'); return; }
+  localStorage.setItem(STORE_KEY, val);
+  closeKeyModal();
+  showToast('API key saved');
+}
+
+// ── Scout ────────────────────────────────────────────────────────────────────
+async function runScout() {
+  const apiKey = localStorage.getItem(STORE_KEY);
+  if (!apiKey) { openKeyModal(); showToast('Add your ScrapeCreators API key first', 'error'); return; }
+
+  const storeUrl = document.getElementById('storeUrl').value.trim();
+  if (!storeUrl) { showToast('Enter a store URL', 'error'); return; }
+
+  const maxProducts = parseInt(document.getElementById('maxProducts').value);
+
+  // UI reset
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('resultsSection').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('runBtn').disabled = true;
+  _results = [];
+
+  setProgress(0, 'Fetching store catalog…');
+
+  // ── Step 1: get catalog ──
+  let products = [];
+  try {
+    const res = await fetch(
+      `https://api.scrapecreators.com/v1/tiktok-shop/profile?url=${encodeURIComponent(storeUrl)}&amount=${maxProducts}`,
+      { headers: { 'x-api-key': apiKey } }
+    );
+    const data = await res.json();
+    // Products may be under data.products, data.items, or data itself
+    products = data?.products || data?.items || data?.data?.products || [];
+    if (!Array.isArray(products) || products.length === 0) {
+      showToast('No products found. Check the store URL.', 'error');
+      resetScout();
+      return;
+    }
+  } catch(e) {
+    showToast('Failed to fetch catalog. Check your API key.', 'error');
+    resetScout();
+    return;
+  }
+
+  setProgress(10, `Found ${products.length} products. Checking affiliate competition…`);
+
+  // ── Step 2: for each product, get video count ──
+  const total = Math.min(products.length, maxProducts);
+  for (let i = 0; i < total; i++) {
+    const p = products[i];
+    const productId = p.id || p.product_id || p.item_id;
+    const productUrl = p.url || p.product_url || (productId ? `https://www.tiktok.com/product/${productId}` : null);
+
+    let videoCount = null;
+    let stockCount = null;
+    let soldCount = p.sold_count ?? p.units_sold ?? null;
+    let price = p.price || p.min_price || null;
+
+    if (productUrl || productId) {
+      try {
+        const detailRes = await fetch(
+          `https://api.scrapecreators.com/v1/tiktok/product?url=${encodeURIComponent(productUrl || `https://www.tiktok.com/product/${productId}`)}`,
+          { headers: { 'x-api-key': apiKey } }
+        );
+        const detail = await detailRes.json();
+        const pd = detail?.product_info || detail?.data || detail;
+        videoCount = pd?.related_video_count ?? pd?.video_count ?? null;
+        stockCount = pd?.stock_count ?? pd?.inventory ?? null;
+        if (soldCount === null) soldCount = pd?.sold_count ?? null;
+        if (!price) price = pd?.price || pd?.min_price || null;
+      } catch(e) {
+        // silently skip
+      }
+    }
+
+    _results.push({
+      id: productId,
+      name: p.name || p.title || p.product_name || 'Unknown Product',
+      image: p.image || p.cover || p.main_image || p.images?.[0] || null,
+      price: formatPrice(price),
+      sold: soldCount,
+      videos: videoCount,
+      stock: stockCount,
+      url: productUrl,
+      oceanScore: calcOceanScore(videoCount, soldCount)
+    });
+
+    const pct = 10 + Math.round(((i + 1) / total) * 85);
+    setProgress(pct, `Analyzed ${i + 1} of ${total} products…`);
+
+    // Small delay to be nice to the API
+    if (i < total - 1) await sleep(120);
+  }
+
+  setProgress(100, 'Done!');
+  await sleep(400);
+
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('runBtn').disabled = false;
+  renderResults();
+}
+
+function calcOceanScore(videos, sold) {
+  // Lower video count = better. Returns 'blue', 'mid', 'red'
+  if (videos === null) return 'unknown';
+  if (videos <= 5) return 'blue';
+  if (videos <= 20) return 'mid';
+  return 'red';
+}
+
+function formatPrice(p) {
+  if (!p) return null;
+  const num = parseFloat(String(p).replace(/[^0-9.]/g,''));
+  if (isNaN(num)) return null;
+  return '$' + num.toFixed(2);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function setProgress(pct, status) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressStatus').textContent = status;
+  if (pct < 10) document.getElementById('progressLabel').textContent = 'Fetching catalog…';
+  else if (pct < 95) document.getElementById('progressLabel').textContent = 'Scoring affiliate competition…';
+  else document.getElementById('progressLabel').textContent = 'Wrapping up…';
+}
+
+function resetScout() {
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('emptyState').style.display = 'block';
+}
+
+// ── Sort & Render ────────────────────────────────────────────────────────────
+function sortResults(mode, btn) {
+  _sortMode = mode;
+  document.querySelectorAll('.sort-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderResults();
+}
+
+function renderResults() {
+  const sorted = [..._results].sort((a, b) => {
+    if (_sortMode === 'ocean') {
+      const order = { blue: 0, mid: 1, unknown: 2, red: 3 };
+      return (order[a.oceanScore] ?? 2) - (order[b.oceanScore] ?? 2);
+    }
+    if (_sortMode === 'videos') {
+      const av = a.videos ?? 9999;
+      const bv = b.videos ?? 9999;
+      return av - bv;
+    }
+    if (_sortMode === 'sold') {
+      return (b.sold ?? 0) - (a.sold ?? 0);
+    }
+    return 0;
+  });
+
+  const blueCount = _results.filter(r => r.oceanScore === 'blue').length;
+  document.getElementById('resultsTitle').textContent =
+    `${_results.length} products · ${blueCount} blue ocean`;
+
+  document.getElementById('resultsGrid').innerHTML = sorted.map(p => productCard(p)).join('');
+  document.getElementById('resultsSection').style.display = 'block';
+  document.getElementById('emptyState').style.display = 'none';
+}
+
+function productCard(p) {
+  const badgeClass = p.oceanScore === 'blue' ? 'blue' : p.oceanScore === 'mid' ? 'mid' : 'red';
+  const badgeLabel = p.oceanScore === 'blue' ? '🌊 Blue Ocean' : p.oceanScore === 'mid' ? '〰 Mid' : p.oceanScore === 'red' ? '🔴 Saturated' : '— Unknown';
+  const cardClass = p.oceanScore === 'blue' ? 'blue-ocean' : p.oceanScore === 'mid' ? 'mid' : '';
+
+  const videoVal = p.videos === null ? '—' : p.videos;
+  const videoClass = p.videos === null ? '' : p.videos <= 5 ? 'good' : p.videos <= 20 ? 'warn' : 'hot';
+
+  const soldVal = p.sold === null ? '—' : p.sold >= 1000 ? (p.sold/1000).toFixed(1)+'k' : p.sold;
+  const stockVal = p.stock === null ? '—' : p.stock >= 1000 ? (p.stock/1000).toFixed(1)+'k' : p.stock;
+
+  const imgHtml = p.image
+    ? `<img class="card-img" src="${p.image}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
+    : '';
+  const placeholder = `<div class="card-img-placeholder" ${p.image ? 'style="display:none"' : ''}>🛍</div>`;
+
+  return `
+    <div class="product-card ${cardClass}">
+      <div class="card-top">
+        ${imgHtml}${placeholder}
+        <div class="card-info">
+          <div class="card-name">${escHtml(p.name)}</div>
+          <div class="card-brand" style="margin-bottom:6px;">${p.price || ''}</div>
+          <span class="ocean-badge ${badgeClass}">${badgeLabel}</span>
+        </div>
+      </div>
+      <div class="card-metrics">
+        <div class="metric">
+          <div class="metric-val ${videoClass}">${videoVal}</div>
+          <div class="metric-label">Videos</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val">${soldVal}</div>
+          <div class="metric-label">Sold</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val">${stockVal}</div>
+          <div class="metric-label">In Stock</div>
+        </div>
+      </div>
+      <div class="card-actions">
+        ${p.url ? `<button class="card-btn" onclick="window.open('${p.url}','_blank')">View Product</button>` : ''}
+        <button class="card-btn primary" onclick="copyProductName('${escHtml(p.name).replace(/'/g,"\\'")}')">Copy Name</button>
+      </div>
+    </div>`;
+}
+
+function copyProductName(name) {
+  navigator.clipboard?.writeText(name).then(() => showToast('Copied!'));
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Auth gate ────────────────────────────────────────────────────────────────
+(async function init() {
+  const user = await requireAuth();
+  if (!user) return;
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('scoutUI').style.display = 'block';
+
+  // Show key hint if not set
+  const hasKey = !!localStorage.getItem(STORE_KEY);
+  if (!hasKey) {
+    setTimeout(() => showToast('Add your ScrapeCreators API key to get started'), 600);
+  }
+})();
+</script>
+</body>
+</html>

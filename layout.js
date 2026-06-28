@@ -7,9 +7,11 @@
       href: 'products.html',
       label: 'Products',
       icon: 'products',
+      activePages: ['brand-deals.html', 'product-scout.html'],
       children: [
         { href: 'products.html', label: 'Products', icon: 'products' },
-        { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products' }
+        { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products' },
+        { href: 'product-scout.html', label: 'Product Scout', icon: 'products' }
       ]
     },
     {
@@ -44,6 +46,7 @@
     { href: 'hooks.html', label: 'Hooks', icon: 'hooks' },
     { href: 'ctas.html', label: 'CTAs', icon: 'scripts' },
     { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products' },
+    { href: 'product-scout.html', label: 'Product Scout', icon: 'products' },
     { href: 'notes.html', label: 'Notes', icon: 'scripts' },
     { href: 'settings.html', label: 'Settings', icon: 'scripts' }
   ];
