@@ -240,10 +240,10 @@ async function doSpySearch() {
     // Strip query params so the API gets a clean URL
     const _cleanUrl = query.split('?')[0];
     try {
-      const res = await fetch(
-        `https://api.scrapecreators.com/v2/tiktok/video?url=${encodeURIComponent(_cleanUrl)}`,
-        { headers: { 'x-api-key': key } }
-      );
+      const workerUrl = new URL('https://take24-scout.kortnycall5.workers.dev');
+      workerUrl.searchParams.set('endpoint', 'v2/tiktok/video');
+      workerUrl.searchParams.set('url', _cleanUrl);
+      const res = await fetch(workerUrl.toString());
       const data = await res.json();
       const v = data?.video || data?.data || data;
       if (v && (v.aweme_id || v.item_id || v.id || v.desc || v.author)) {
