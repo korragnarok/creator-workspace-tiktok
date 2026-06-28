@@ -235,15 +235,18 @@ async function doSpySearch() {
   document.getElementById('spyLoading').style.display = 'block';
 
   // ── Direct URL mode: paste a TikTok link, get that video immediately ──
-  if (/tiktok\.com\/.+\/video\/\d+/i.test(query)) {
+  const _isTikTokUrl = /tiktok\.com/i.test(query) && /\/video\//i.test(query);
+  if (_isTikTokUrl) {
+    // Strip query params so the API gets a clean URL
+    const _cleanUrl = query.split('?')[0];
     try {
       const res = await fetch(
-        `https://api.scrapecreators.com/v2/tiktok/video?url=${encodeURIComponent(query)}`,
+        `https://api.scrapecreators.com/v2/tiktok/video?url=${encodeURIComponent(_cleanUrl)}`,
         { headers: { 'x-api-key': key } }
       );
       const data = await res.json();
       const v = data?.video || data?.data || data;
-      if (v && (v.aweme_id || v.item_id || v.id)) {
+      if (v && (v.aweme_id || v.item_id || v.id || v.desc || v.author)) {
         _spyResults = [v];
         document.getElementById('spyLoading').style.display = 'none';
         document.getElementById('spyResultsMeta').textContent = '1 video found';
@@ -253,6 +256,11 @@ async function doSpySearch() {
         return;
       }
     } catch(e) { /* fall through to normal search */ }
+    // If API failed, show error rather than doing a random search
+    document.getElementById('spyLoading').style.display = 'none';
+    showError('Could not fetch that video. Check the URL and try again.');
+    btn.disabled = false; btn.textContent = 'Search';
+    return;
   }
 
   try {
