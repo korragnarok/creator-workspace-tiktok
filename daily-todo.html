@@ -259,6 +259,22 @@ a{text-decoration:none;color:inherit;}
 body{overflow-x:hidden;}
 @media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:50px;}.date-label{font-size:16px;white-space:normal;}.header-actions .btn{flex:1;justify-content:center;}.modal{max-height:calc(100dvh - 40px);}.modal-list{flex:1;}}
 @media(max-width:768px){.take-fields{grid-template-columns:1fr;}.product-card-row{grid-template-columns:minmax(0,1fr) auto;}.product-card-row .pcard-btns{grid-column:1/-1;justify-content:flex-start;}.product-card-name{font-size:21px;}.weekly-product-head{grid-template-columns:minmax(0,1fr) auto auto;}.weekly-group-title{white-space:normal;font-size:18px;}.weekly-card{grid-template-columns:1fr;}.weekly-actions{justify-content:flex-start;}.weekly-product{white-space:normal;}}
+
+.supplies-divider{display:flex;align-items:center;gap:10px;margin:12px 0 8px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);}
+.supplies-divider::before,.supplies-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.supplies-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.supplies-tab{border:1px solid var(--border-mid);border-radius:999px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:6px 14px;cursor:pointer;transition:all 0.14s;}
+.supplies-tab.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+.supplies-filter-btn{border:1px solid var(--border-mid);border-radius:999px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:4px 12px;cursor:pointer;transition:all 0.14s;}
+.supplies-filter-btn.active{background:var(--rust);border-color:var(--rust);color:#fff;}
+.supplies-group{margin-bottom:18px;}
+.supplies-group-title{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.supplies-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);}
+.supplies-item:last-child{border-bottom:none;}
+.supplies-item-product{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;color:var(--text-muted);margin-top:2px;}
+.supplies-need-badge{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;background:color-mix(in srgb,var(--rust) 15%,transparent);color:var(--rust);border:1px solid color-mix(in srgb,var(--rust) 25%,transparent);border-radius:4px;padding:2px 6px;flex-shrink:0;}
+.supplies-have-badge{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;background:color-mix(in srgb,var(--sage) 15%,transparent);color:var(--sage);border:1px solid color-mix(in srgb,var(--sage) 25%,transparent);border-radius:4px;padding:2px 6px;flex-shrink:0;}
+.supplies-empty{text-align:center;padding:40px 20px;color:var(--text-muted);font-style:italic;font-size:13px;}
 </style>
 </head>
 <body>
@@ -287,6 +303,7 @@ body{overflow-x:hidden;}
       <button class="date-arrow" onclick="changeDay(1)" aria-label="Next day">›</button>
       <div class="header-actions">
         <button class="btn btn-ghost" onclick="restartDay()">Restart</button>
+        <button class="btn btn-ghost" onclick="openSuppliesModal()">🛒 Supplies</button>
         <button class="btn btn-primary" onclick="openPicker()">+ Product</button>
       </div>
     </div>
@@ -452,7 +469,9 @@ const TAKE_FIELD_META={
   onscreen:{key:'ON_SCREEN_TEXT',label:'On-screen text',placeholder:'Text viewers should see on screen...'},
   seo:{key:'SEO_STRATEGY',label:'SEO strategy',placeholder:'Keywords, search phrases, product terms...'},
   caption:{key:'CAPTION',label:'Caption',placeholder:'Write the caption for this video...'},
-  hashtags:{key:'HASHTAGS',label:'Hashtags',placeholder:'#tiktokshop #productfinds'}
+  hashtags:{key:'HASHTAGS',label:'Hashtags',placeholder:'#tiktokshop #productfinds'},
+  supplies_have:{key:'SUPPLIES_HAVE',label:'Supplies (have)',placeholder:'Cutting board, cheese, crackers...'},
+  supplies_need:{key:'SUPPLIES_NEED',label:'Supplies (need to buy)',placeholder:'Strawberries, dipping sauce...'}
 };
 function encodeTakeField(value){
   return encodeURIComponent(String(value||'').trim());
@@ -527,6 +546,8 @@ function takeFieldsHtml(cardId,take){
     ${fieldHtml('seo')}
     ${fieldHtml('caption','full')}
     ${fieldHtml('hashtags','full')}
+    <div class="supplies-divider"><span>Supplies</span></div>
+    <div class="supplies-row">${fieldHtml('supplies_have')}${fieldHtml('supplies_need')}</div>
   </div>`;
 }
 
@@ -1729,6 +1750,146 @@ async function init(){
   render();
 }
 init();
+
+// ─── SUPPLIES MODAL ────────────────────────────────────────────────────────
+let _suppliesTab = 'need';
+let _suppliesFilter = 'all'; // 'all', 'location:X', 'product:X'
+
+function openSuppliesModal() {
+  _suppliesTab = 'need';
+  _suppliesFilter = 'all';
+  document.getElementById('suppliesModal').style.display = 'flex';
+  renderSuppliesModal();
+}
+
+function closeSuppliesModal() {
+  document.getElementById('suppliesModal').style.display = 'none';
+}
+
+function setSuppliesTab(tab) {
+  _suppliesTab = tab;
+  document.querySelectorAll('.supplies-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('stab-' + tab)?.classList.add('active');
+  renderSuppliesModal();
+}
+
+function setSuppliesFilter(filter) {
+  _suppliesFilter = filter;
+  renderSuppliesModal();
+}
+
+function getAllSuppliesData() {
+  const source = viewMode === 'week' ? WEEK_ITEMS : TODO.flatMap(c => (c.takes || []).map(t => ({...t, productName: c.name, productBrand: c.brand})));
+  const items = [];
+  for (const take of source) {
+    const productName = take.productName || take.name || '';
+    const productBrand = take.productBrand || take.brand || '';
+    const loc = getFilmingLocation(take.hookText || take.notes || '');
+    const location = loc.label || 'No location set';
+    const have = getTakeField(take.hookText || take.notes || '', 'supplies_have');
+    const need = getTakeField(take.hookText || take.notes || '', 'supplies_need');
+    if (have || need) {
+      items.push({ productName, productBrand, location, have, need });
+    }
+  }
+  return items;
+}
+
+function renderSuppliesModal() {
+  const allItems = getAllSuppliesData();
+
+  // Build filter pills
+  const locations = [...new Set(allItems.map(i => i.location))].filter(Boolean);
+  const filtersEl = document.getElementById('suppliesFilters');
+  filtersEl.innerHTML = [
+    `<button class="supplies-filter-btn${_suppliesFilter==='all'?' active':''}" onclick="setSuppliesFilter('all')">All</button>`,
+    ...locations.map(loc => `<button class="supplies-filter-btn${_suppliesFilter==='loc:'+loc?' active':''}" onclick="setSuppliesFilter('loc:${loc.replace(/'/g,"\\'")}')">📍 ${esc(loc)}</button>`)
+  ].join('');
+
+  // Filter items
+  const filtered = _suppliesFilter === 'all' ? allItems
+    : allItems.filter(i => _suppliesFilter === 'loc:' + i.location);
+
+  const bodyEl = document.getElementById('suppliesBody');
+
+  if (!filtered.length) {
+    bodyEl.innerHTML = `<div class="supplies-empty">No supplies added yet.<br>Open a take and fill in the Supplies fields.</div>`;
+    return;
+  }
+
+  if (_suppliesTab === 'need') {
+    // Shopping list — only "need to buy", grouped by location
+    const byLocation = {};
+    for (const item of filtered) {
+      if (!item.need) continue;
+      const key = item.location;
+      if (!byLocation[key]) byLocation[key] = [];
+      byLocation[key].push(item);
+    }
+    if (!Object.keys(byLocation).length) {
+      bodyEl.innerHTML = `<div class="supplies-empty">No items marked as "need to buy" yet.</div>`;
+      return;
+    }
+    bodyEl.innerHTML = Object.entries(byLocation).map(([loc, items]) => `
+      <div class="supplies-group">
+        <div class="supplies-group-title">📍 ${esc(loc)}</div>
+        ${items.map(item => `
+          <div class="supplies-item">
+            <span class="supplies-need-badge">Buy</span>
+            <div>
+              <div>${esc(item.need)}</div>
+              <div class="supplies-item-product">${esc(item.productName)}${item.productBrand ? ' · ' + esc(item.productBrand) : ''}</div>
+            </div>
+          </div>`).join('')}
+      </div>`).join('');
+  } else {
+    // All supplies — grouped by location
+    const byLocation = {};
+    for (const item of filtered) {
+      const key = item.location;
+      if (!byLocation[key]) byLocation[key] = [];
+      byLocation[key].push(item);
+    }
+    bodyEl.innerHTML = Object.entries(byLocation).map(([loc, items]) => `
+      <div class="supplies-group">
+        <div class="supplies-group-title">📍 ${esc(loc)}</div>
+        ${items.map(item => `
+          ${item.have ? `<div class="supplies-item">
+            <span class="supplies-have-badge">Have</span>
+            <div>
+              <div>${esc(item.have)}</div>
+              <div class="supplies-item-product">${esc(item.productName)}${item.productBrand ? ' · ' + esc(item.productBrand) : ''}</div>
+            </div>
+          </div>` : ''}
+          ${item.need ? `<div class="supplies-item">
+            <span class="supplies-need-badge">Buy</span>
+            <div>
+              <div>${esc(item.need)}</div>
+              <div class="supplies-item-product">${esc(item.productName)}${item.productBrand ? ' · ' + esc(item.productBrand) : ''}</div>
+            </div>
+          </div>` : ''}`).join('')}
+      </div>`).join('');
+  }
+}
+
 </script>
+
+<!-- Supplies Modal -->
+<div class="modal-overlay" id="suppliesModal" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)closeSuppliesModal()">
+  <div class="modal" style="width:min(640px,100%);max-height:85dvh;display:flex;flex-direction:column;border-radius:16px;background:var(--bg-lift);border:1px solid var(--border-mid);box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="padding:20px 24px 0;flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:800;color:var(--ink);">🛒 Supplies</div>
+        <button onclick="closeSuppliesModal()" style="background:none;border:none;font-size:22px;color:var(--text-muted);cursor:pointer;">×</button>
+      </div>
+      <div id="suppliesTabs" style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="supplies-tab active" onclick="setSuppliesTab('need')" id="stab-need">Shopping List</button>
+        <button class="supplies-tab" onclick="setSuppliesTab('all')" id="stab-all">All Supplies</button>
+      </div>
+      <div id="suppliesFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;"></div>
+    </div>
+    <div id="suppliesBody" style="padding:0 24px 24px;overflow-y:auto;flex:1;"></div>
+  </div>
+</div>
 </body>
 </html>
