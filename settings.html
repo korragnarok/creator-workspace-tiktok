@@ -120,19 +120,10 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="saveAiToneBtn" onclick="saveAiToneSetting()">Save AI Tone</button>
   </div>
 
-  <!-- Product Import API Key -->
+  <!-- TikTok Handle -->
   <div class="settings-section">
     <div class="section-title">Product Import</div>
     <div class="form-group">
-      <label class="form-label">ScrapeCreators API Key</label>
-      <input type="password" class="form-input" id="productImportKeyInput" placeholder="Paste your ScrapeCreators key here...">
-      <div class="form-hint">Used by Products search/import. This stays saved only in this browser.</div>
-    </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn btn-primary" id="saveProductImportKeyBtn" onclick="saveProductImportKeySetting()">Save Import Key</button>
-      <button class="btn btn-ghost" id="clearProductImportKeyBtn" onclick="clearProductImportKeySetting()">Disconnect Key</button>
-    </div>
-    <div class="form-group" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
       <label class="form-label">Your TikTok Handle</label>
       <input type="text" class="form-input" id="tiktokHandleInput" placeholder="@yourhandle" autocomplete="off">
       <div class="form-hint">Auto-fills when importing videos — no need to type it every time.</div>
@@ -234,7 +225,6 @@ body{overflow-x:hidden;}
 <script src="layout.js?v=144"></script>
 <script>
 let _user = null, _prefs = null;
-const PRODUCT_IMPORT_KEY = 'take24:scrapecreators_api_key';
 const TIKTOK_HANDLE_KEY = 'take24:tiktok_handle';
 
 
@@ -351,20 +341,6 @@ async function saveAiToneSetting() {
   showToast(error ? 'AI tone saved on this browser only' : 'AI tone updated', error ? 'error' : 'success');
 }
 
-function saveProductImportKeySetting() {
-  const input = document.getElementById('productImportKeyInput');
-  const key = (input?.value || '').trim();
-  if (!key) { input?.focus(); return; }
-  localStorage.setItem(PRODUCT_IMPORT_KEY, key);
-  showToast('Product import key saved');
-}
-
-function clearProductImportKeySetting() {
-  localStorage.removeItem(PRODUCT_IMPORT_KEY);
-  const input = document.getElementById('productImportKeyInput');
-  if (input) input.value = '';
-  showToast('Product import key disconnected');
-}
 
 function saveTikTokHandleSetting() {
   const input = document.getElementById('tiktokHandleInput');
@@ -417,8 +393,6 @@ async function init() {
   if (streakInput) streakInput.value = resolveStreakGoal(_user, _prefs);
   const aiToneInput = document.getElementById('aiToneInput');
   if (aiToneInput) aiToneInput.value = resolveAiTone(_user, _prefs) || DEFAULT_AI_TONE;
-  const productImportKeyInput = document.getElementById('productImportKeyInput');
-  if (productImportKeyInput) productImportKeyInput.value = localStorage.getItem(PRODUCT_IMPORT_KEY) || '';
   const tiktokHandleInput = document.getElementById('tiktokHandleInput');
   if (tiktokHandleInput) tiktokHandleInput.value = localStorage.getItem(TIKTOK_HANDLE_KEY) || '';
 
@@ -428,7 +402,6 @@ async function init() {
 document.addEventListener('keydown', e => {
   if (document.activeElement === document.getElementById('nameInput')) enterSaves(e, saveName);
   if (document.activeElement === document.getElementById('streakGoalInput')) enterSaves(e, saveStreakGoalSetting);
-  if (document.activeElement === document.getElementById('productImportKeyInput')) enterSaves(e, saveProductImportKeySetting);
   if (document.activeElement === document.getElementById('tiktokHandleInput')) enterSaves(e, saveTikTokHandleSetting);
   if (document.activeElement === document.getElementById('newPass') || document.activeElement === document.getElementById('confirmPass')) enterSaves(e, savePassword);
 });
