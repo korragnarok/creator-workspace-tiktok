@@ -370,6 +370,36 @@ let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
 let TODO = [];
 let WEEK_ITEMS = [];
 let viewMode = localStorage.getItem('take24:todoView') || 'day';
+// ── State persistence ─────────────────────────────────────────────────────
+const DT_STATE_KEY = 'take24:dt_state';
+function saveTodoState() {
+  try {
+    sessionStorage.setItem(DT_STATE_KEY, JSON.stringify({
+      date: currentKey(),
+      viewMode,
+      brandFilter: activeBrandFilter,
+      scroll: document.documentElement.scrollTop || document.body.scrollTop
+    }));
+  } catch(e) {}
+}
+function restoreTodoState() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(DT_STATE_KEY) || 'null');
+    if (!s) return;
+    if (s.date && s.date !== todayKey) {
+      currentDate = new Date(s.date + 'T12:00:00');
+    }
+    if (s.viewMode && s.viewMode !== viewMode) {
+      viewMode = s.viewMode;
+      localStorage.setItem('take24:todoView', viewMode);
+    }
+    if (s.brandFilter) activeBrandFilter = s.brandFilter;
+    if (s.scroll) setTimeout(() => window.scrollTo(0, s.scroll), 150);
+  } catch(e) {}
+}
+window.addEventListener('pagehide', saveTodoState);
+window.addEventListener('beforeunload', saveTodoState);
+
 let activeBrandFilter = 'All';
 let hideFilmed = localStorage.getItem('take24:hideFilmed') === '1';
 let selectedProductId = null;
@@ -1745,6 +1775,7 @@ async function init(){
   await initCore5(_user.id,prefs);
   await initTheme(_user.id,prefs);
   initProfilePopover(_user.id);
+  restoreTodoState();
   updateDateDisplay();
   await Promise.all([loadProducts(),loadHooks(),loadScripts(),loadQueue()]);
   if(viewMode==='week')await loadWeekQueue();

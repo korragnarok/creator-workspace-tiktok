@@ -321,6 +321,46 @@ const TIKTOK_HANDLE_KEY='take24:tiktok_handle';
 const TIKTOK_IMPORT_BATCH_SIZE=60;
 const TIKTOK_IMPORT_MAX_PAGES=40;
 let DATA=[],currentPage=1,filterStatus='all',sortField='date',sortDir=-1,user=null;
+// ── State persistence ─────────────────────────────────────────────────────
+const VT_STATE_KEY = 'take24:vt_state';
+function saveTrackerState() {
+  try {
+    sessionStorage.setItem(VT_STATE_KEY, JSON.stringify({
+      filterStatus,
+      sortField,
+      sortDir,
+      viewMode: _trackerViewMode,
+      search: document.getElementById('searchBox')?.value || '',
+      scroll: document.documentElement.scrollTop || document.body.scrollTop
+    }));
+  } catch(e) {}
+}
+function restoreTrackerState() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(VT_STATE_KEY) || 'null');
+    if (!s) return;
+    filterStatus = s.filterStatus || 'all';
+    sortField = s.sortField || 'date';
+    sortDir = s.sortDir || -1;
+    if (s.viewMode) {
+      _trackerViewMode = s.viewMode;
+      localStorage.setItem(TRACKER_VIEW_KEY, s.viewMode);
+    }
+    if (s.search) {
+      const sb = document.getElementById('searchBox');
+      if (sb) sb.value = s.search;
+    }
+    // Restore filter pill active state
+    document.querySelectorAll('.pill[data-f]').forEach(p => {
+      p.classList.toggle('active', p.dataset.f === filterStatus);
+    });
+    // Restore scroll after render
+    if (s.scroll) setTimeout(() => window.scrollTo(0, s.scroll), 100);
+  } catch(e) {}
+}
+window.addEventListener('pagehide', saveTrackerState);
+window.addEventListener('beforeunload', saveTrackerState);
+
 let _editVideosMode=false,_selectedVideoIds=new Set(),_visibleVideoIds=[];
 let PRODUCT_OPTIONS=[];
 let productFilterId=null,productFilterName='';
@@ -338,6 +378,7 @@ async function init() {
   initProfilePopover(user.id);
   window._user = user;
   await loadVideos();
+  restoreTrackerState();
   document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
   // Import overlay click does NOT close modal (user may have long import in progress)
   document.getElementById('modalOverlay').addEventListener('keydown', e => enterSaves(e, saveVideo));

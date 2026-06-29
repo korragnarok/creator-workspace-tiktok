@@ -616,6 +616,40 @@ let _editProductsMode = false;
 let _selectedProductIds = new Set();
 let _visibleProductIds = [];
 let _brandFilter = 'all';
+// ── State persistence ─────────────────────────────────────────────────────
+const PR_STATE_KEY = 'take24:pr_state';
+function saveProductsState() {
+  try {
+    sessionStorage.setItem(PR_STATE_KEY, JSON.stringify({
+      brandFilter: _brandFilter,
+      stockFilter: _stockFilter,
+      sortField: _sortField,
+      sortDir: _sortDir,
+      search: document.getElementById('searchBox')?.value || '',
+      scroll: document.documentElement.scrollTop || document.body.scrollTop
+    }));
+  } catch(e) {}
+}
+function restoreProductsState() {
+  try {
+    // URL params take priority — only restore from session if no URL params
+    const params = new URLSearchParams(window.location.search);
+    if (params.toString()) return; // URL already has state
+    const s = JSON.parse(sessionStorage.getItem(PR_STATE_KEY) || 'null');
+    if (!s) return;
+    if (s.brandFilter) _brandFilter = s.brandFilter;
+    if (s.stockFilter) _stockFilter = s.stockFilter;
+    if (s.sortField) { _sortField = s.sortField; _sortDir = s.sortDir || 1; }
+    if (s.search) {
+      const sb = document.getElementById('searchBox');
+      if (sb) sb.value = s.search;
+    }
+    if (s.scroll) setTimeout(() => window.scrollTo(0, s.scroll), 150);
+  } catch(e) {}
+}
+window.addEventListener('pagehide', saveProductsState);
+window.addEventListener('beforeunload', saveProductsState);
+
 let _stockFilter = 'active';
 let _allProducts = [];
 let _coreNames = [];
@@ -636,6 +670,7 @@ async function init() {
   window._user = user;
   _coreNames = (prefs.core5 || []).map(value => String(value || '').trim().toLowerCase()).filter(Boolean);
 
+  restoreProductsState();
   async function renderProducts() {
     const q = document.getElementById('searchBox').value.toLowerCase();
     const { data: prods } = await db.from('products').select('*').eq('user_id', user.id).order('created_at', {ascending: false});
