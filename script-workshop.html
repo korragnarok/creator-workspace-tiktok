@@ -1000,6 +1000,9 @@ async function applySpyHandoff(){
   sessionStorage.removeItem('take24:spyScript');
   sessionStorage.removeItem('take24:spyMeta');
   if(!script)return false;
+  // Always capture take context from URL before anything else
+  const spyCtx={cardId:params.get('cardId')||'',takeId:params.get('takeId')||'',queueId:params.get('queueId')||''};
+  if(spyCtx.cardId||spyCtx.takeId||spyCtx.queueId)workshopReturnContext=spyCtx;
 
   // Check if there's existing content — if so, ask first
   const hasDraft=Boolean(fullScript()||detailSummaryText()||inspo.length

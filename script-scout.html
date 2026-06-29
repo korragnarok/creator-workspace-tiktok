@@ -156,6 +156,18 @@ button,input,textarea,select{font:inherit;}
 // ── Constants ──────────────────────────────────────────────────────────────
 const SCRAPE_KEY_STORAGE = 'take24:scrapecreators_api_key';
 const SCOUT_WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
+// ── Capture take context from Daily Todo URL params ──────────────────────────
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  const ctx = {};
+  ['productId','productName','brand','cardId','takeId','queueId'].forEach(k => {
+    if (p.get(k)) ctx[k] = p.get(k);
+  });
+  if (Object.keys(ctx).length) {
+    sessionStorage.setItem('take24:scoutTakeContext', JSON.stringify(ctx));
+  }
+})();
+
 function workerFetch(endpoint, params = {}) {
   const url = new URL(SCOUT_WORKER_URL);
   url.searchParams.set('endpoint', endpoint);
@@ -557,7 +569,6 @@ function sendToWorkshop() {
   const creator = v?.author?.nickname || v?.author?.unique_id || '';
   const caption = (v?.desc || v?.description || v?.caption || '').slice(0, 60);
   sessionStorage.setItem('take24:spyMeta', JSON.stringify({ creator, caption }));
-  // Pass take context back to workshop if we came from daily todo
   const ctx = JSON.parse(sessionStorage.getItem('take24:scoutTakeContext') || 'null');
   const params = new URLSearchParams({ fromSpy: '1' });
   if (ctx) {
