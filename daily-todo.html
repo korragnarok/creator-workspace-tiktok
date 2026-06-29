@@ -740,6 +740,22 @@ function scriptWorkshopUrl(card,take=null){
   if(targetTake?.queueId)params.set('queueId',targetTake.queueId);
   return 'script-workshop.html'+(params.toString()?'?'+params.toString():'');
 }
+
+function scriptScoutUrl(card, take=null) {
+  const params = new URLSearchParams();
+  const targetTake = take
+    || (card?.takes||[]).find(item=>!item.script)
+    || (card?.takes||[])[0]
+    || null;
+  if(card?.name) params.set('q', card.name + (card.brand ? ' ' + card.brand : ''));
+  if(card?.prodId) params.set('productId', card.prodId);
+  if(card?.name) params.set('productName', card.name);
+  if(card?.brand) params.set('brand', card.brand);
+  if(card?.id) params.set('cardId', card.id);
+  if(targetTake?.id) params.set('takeId', targetTake.id);
+  if(targetTake?.queueId) params.set('queueId', targetTake.queueId);
+  return 'script-scout.html?' + params.toString();
+}
 function normalizeInspirationLinks(value){
   if(Array.isArray(value)) return value.map(normalizeUrl).filter(Boolean);
   if(typeof value==='string'){
@@ -1081,6 +1097,7 @@ function renderTakeExpanded(card,take,totalTakes){
   html+=`<button class="btn btn-ghost btn-xs js-toggle-script-edit" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">${take.script?(take.editingScript?'Cancel':'Edit'):'Add Script'}</button>
     ${take.script?`<button class="btn btn-ghost btn-xs js-save-script-library" data-cid="${esc(card.id)}" data-tid="${esc(take.id)}">Save</button>`:''}
     <a class="btn btn-ghost btn-xs" href="${esc(scriptWorkshopUrl(card,take))}" onclick="event.stopPropagation()">Workshop</a>
+    <a class="btn btn-ghost btn-xs" href="${esc(scriptScoutUrl(card,take))}" onclick="event.stopPropagation()">Scout</a>
     <button class="btn btn-ghost btn-xs" onclick="openScriptModal('${esc(card.id)}','${esc(take.id)}')">${take.script?'Swap':'Browse Scripts'}</button>
   </div>`;
   if(take.editingScript){

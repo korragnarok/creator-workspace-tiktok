@@ -552,13 +552,20 @@ document.addEventListener('keydown', e => {
 // ── Send to Workshop ───────────────────────────────────────────────────────
 function sendToWorkshop() {
   if (!_currentTranscript) return;
-  // Store in sessionStorage so script-workshop can pick it up
   sessionStorage.setItem('take24:spyScript', _currentTranscript);
   const v = _currentVideoData;
   const creator = v?.author?.nickname || v?.author?.unique_id || '';
   const caption = (v?.desc || v?.description || v?.caption || '').slice(0, 60);
   sessionStorage.setItem('take24:spyMeta', JSON.stringify({ creator, caption }));
-  window.location.href = 'script-workshop.html?fromSpy=1';
+  // Pass take context back to workshop if we came from daily todo
+  const ctx = JSON.parse(sessionStorage.getItem('take24:scoutTakeContext') || 'null');
+  const params = new URLSearchParams({ fromSpy: '1' });
+  if (ctx) {
+    ['productId','productName','brand','cardId','takeId','queueId'].forEach(k => {
+      if (ctx[k]) params.set(k, ctx[k]);
+    });
+  }
+  window.location.href = 'script-workshop.html?' + params.toString();
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
