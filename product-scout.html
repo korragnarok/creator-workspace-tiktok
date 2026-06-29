@@ -152,7 +152,7 @@ a{text-decoration:none;color:inherit;}
     <div class="empty-state" id="emptyState">
       <div class="empty-icon">🔭</div>
       <div class="empty-title">Ready to scout</div>
-      <div class="empty-sub">Pick a brand shortcut or type any keyword, then hit Run Scout. We'll pull products and score each one for affiliate competition.</div>
+      <div class="empty-sub">Pick a brand shortcut or type any keyword, then hit Run Scout. We'll pull products and score each one for affiliate competition. Blue Ocean = ≤5 videos, ≤50 sold, ≥1k in stock.</div>
     </div>
   </div>
 </main>
@@ -162,6 +162,56 @@ a{text-decoration:none;color:inherit;}
 const WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
 let _results = [];
 let _sortMode = 'ocean';
+// ── State persistence ─────────────────────────────────────────────────────
+const PS_STATE_KEY = 'take24:ps_state';
+
+function saveScoutState() {
+  if (!_results.length) return; // don't save empty state
+  try {
+    sessionStorage.setItem(PS_STATE_KEY, JSON.stringify({
+      results: _results,
+      sortMode: _sortMode,
+      query: document.getElementById('searchQuery')?.value || '',
+      maxProducts: document.getElementById('maxProducts')?.value || '40',
+      activeQuick: document.querySelector('.quick-btn.active')?.textContent || 'QVC',
+      scroll: document.documentElement.scrollTop || document.body.scrollTop
+    }));
+  } catch(e) {}
+}
+
+function restoreScoutState() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(PS_STATE_KEY) || 'null');
+    if (!s || !s.results?.length) return;
+    _results = s.results;
+    _sortMode = s.sortMode || 'ocean';
+    if (s.query) {
+      const sq = document.getElementById('searchQuery');
+      if (sq) sq.value = s.query;
+    }
+    if (s.maxProducts) {
+      const mp = document.getElementById('maxProducts');
+      if (mp) mp.value = s.maxProducts;
+    }
+    // Restore active quick button
+    if (s.activeQuick) {
+      document.querySelectorAll('.quick-btn').forEach(b => {
+        b.classList.toggle('active', b.textContent.trim() === s.activeQuick.trim());
+      });
+    }
+    // Restore sort pill
+    document.querySelectorAll('.sort-pill').forEach(b => {
+      const mode = b.getAttribute('onclick')?.match(/sortResults\('(\w+)'/)?.[1];
+      b.classList.toggle('active', mode === _sortMode);
+    });
+    renderResults();
+    if (s.scroll) setTimeout(() => window.scrollTo(0, s.scroll), 100);
+  } catch(e) {}
+}
+
+window.addEventListener('pagehide', saveScoutState);
+window.addEventListener('beforeunload', saveScoutState);
+
 
 function workerFetch(endpoint, params = {}) {
   const url = new URL(WORKER_URL);
@@ -249,7 +299,7 @@ async function runScout() {
       stock: stockCount,
       firstSeen,
       url: productUrl,
-      oceanScore: oceanScore(videoCount)
+      oceanScore: oceanScore(videoCount, soldCount, stockCount)
     });
 
     const pct = 10 + Math.round(((i + 1) / total) * 86);
@@ -275,11 +325,27 @@ function formatFirstSeen(ts) {
   return Math.floor(days/365) + 'y ago';
 }
 
-function oceanScore(videos) {
-  if (videos === null) return 'unknown';
-  if (videos <= 5) return 'blue';
-  if (videos <= 25) return 'mid';
-  return 'red';
+function oceanScore(videos, sold, stock) {
+  const noVideos = videos === null;
+  const noSold = sold === null;
+  const noStock = stock === null;
+
+  // True blue ocean: low videos, low sales, good stock
+  if (!noVideos && !noSold && !noStock) {
+    if (videos <= 5 && sold <= 50 && stock >= 1000) return 'blue';
+    if (videos <= 5 && sold <= 50 && stock < 1000) return 'mid'; // low competition but low stock
+    if (videos <= 5 && sold > 50) return 'mid'; // low videos but already selling well
+    if (videos <= 25) return 'mid';
+    return 'red';
+  }
+
+  // Partial data — do best we can
+  if (!noVideos) {
+    if (videos <= 5) return noSold || noStock ? 'unknown' : 'blue';
+    if (videos <= 25) return 'mid';
+    return 'red';
+  }
+  return 'unknown';
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -369,6 +435,7 @@ function esc(s) {
   if (!user) return;
   document.getElementById('authGate').style.display = 'none';
   document.getElementById('scoutUI').style.display = 'block';
+  restoreScoutState();
 })();
 </script>
 </body>
