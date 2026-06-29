@@ -259,52 +259,64 @@ async function runScout() {
   setProgress(10, `Found ${products.length} products. Checking affiliate competition…`);
 
   // Step 2: for each product, get detail (video count + stock)
-  for (let i = 0; i < total; i++) {
-    const p = products[i];
-    const productId = p.product_id;
-    const productUrl = p.seo_url?.canonical_url || (productId ? `https://www.tiktok.com/product/${productId}` : null);
-    const image = p.image?.url_list?.[0] || null;
-    const price = p.product_price_info?.sale_price_decimal ? '$' + p.product_price_info.sale_price_decimal : null;
-    const sold = p.sold_info?.sold_count ?? null;
-    const shop = p.seller_info?.shop_name || null;
+  // Helper: fetch product detail with a 6s timeout so stuck calls don't hang forever
+  async function fetchDetail(productUrl) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+    try {
+      const url = new URL(WORKER_URL);
+      url.searchParams.set('endpoint', 'tiktok/product');
+      url.searchParams.set('url', productUrl);
+      const res = await fetch(url.toString(), { signal: controller.signal });
+      return await res.json();
+    } catch(e) { return null; }
+    finally { clearTimeout(timer); }
+  }
 
-    let videoCount = null;
-    let stockCount = null;
-    let firstSeen = null;
+  // Process in batches of 4 in parallel to speed things up
+  const BATCH = 4;
+  for (let i = 0; i < total; i += BATCH) {
+    const batch = products.slice(i, i + BATCH);
+    await Promise.all(batch.map(async (p, bi) => {
+      const productId = p.product_id;
+      const productUrl = p.seo_url?.canonical_url || (productId ? `https://www.tiktok.com/product/${productId}` : null);
+      const image = p.image?.url_list?.[0] || null;
+      const price = p.product_price_info?.sale_price_decimal ? '$' + p.product_price_info.sale_price_decimal : null;
+      const sold = p.sold_info?.sold_count ?? null;
+      const shop = p.seller_info?.shop_name || null;
 
-    if (productUrl) {
-      try {
-        const detailRes = await workerFetch('tiktok/product', { url: productUrl });
-        const detail = await detailRes.json();
-        // Video count = length of related_videos array
-        const relatedVideos = detail?.related_videos || [];
-        videoCount = relatedVideos.length > 0 ? relatedVideos.length : 0;
-        // Earliest upload_time across related videos = first affiliate activity
-        const uploadTimes = relatedVideos.map(v => parseInt(v.upload_time)).filter(t => !isNaN(t));
-        firstSeen = uploadTimes.length ? Math.min(...uploadTimes) : null;
-        // Stock from skus array
-        const pd = detail?.product_info || detail?.data || detail;
-        stockCount = pd?.skus?.[0]?.stock ?? pd?.product_base?.stock_count ?? null;
-      } catch(e) { /* silently skip */ }
-    }
+      let videoCount = null;
+      let stockCount = null;
+      let firstSeen = null;
 
-    _results.push({
-      id: productId,
-      name: p.title || 'Unknown Product',
-      shop,
-      image,
-      price,
-      sold,
-      videos: videoCount,
-      stock: stockCount,
-      firstSeen,
-      url: productUrl,
-      oceanScore: oceanScore(videoCount, soldCount, stockCount)
-    });
+      if (productUrl) {
+        const detail = await fetchDetail(productUrl);
+        if (detail) {
+          const relatedVideos = detail?.related_videos || [];
+          videoCount = relatedVideos.length > 0 ? relatedVideos.length : 0;
+          const uploadTimes = relatedVideos.map(v => parseInt(v.upload_time)).filter(t => !isNaN(t));
+          firstSeen = uploadTimes.length ? Math.min(...uploadTimes) : null;
+          const pd = detail?.product_info || detail?.data || detail;
+          stockCount = pd?.skus?.[0]?.stock ?? pd?.product_base?.stock_count ?? null;
+        }
+      }
 
-    const pct = 10 + Math.round(((i + 1) / total) * 86);
-    setProgress(pct, `Analyzed ${i + 1} of ${total} products…`);
-    if (i < total - 1) await sleep(150);
+      _results.push({
+        id: productId,
+        name: p.title || 'Unknown Product',
+        shop, image, price, sold,
+        videos: videoCount,
+        stock: stockCount,
+        firstSeen,
+        url: productUrl,
+        oceanScore: oceanScore(videoCount, sold, stockCount)
+      });
+    }));
+
+    const done = Math.min(i + BATCH, total);
+    const pct = 10 + Math.round((done / total) * 86);
+    setProgress(pct, `Analyzed ${done} of ${total} products…`);
+    if (i + BATCH < total) await sleep(200);
   }
 
   setProgress(100, 'Done!');
