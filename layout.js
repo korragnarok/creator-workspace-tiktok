@@ -34,7 +34,7 @@
     { href: 'daily-todo.html', label: 'To Do', icon: 'todo' },
     { href: 'products.html', label: 'Products', icon: 'products' },
     { href: 'script-scout.html', label: 'Scout', icon: 'video' },
-    { href: 'scripts.html', label: 'Scripts', icon: 'scripts', activePages: ['script-workshop.html'] },
+    { href: 'script-workshop.html', label: 'Scripts', icon: 'scripts', activePages: ['scripts.html'] },
     { href: 'sales-calendar.html', label: 'Sales', icon: 'sales' },
     { href: 'video-tracker.html', label: 'Content', icon: 'video' }
   ];
