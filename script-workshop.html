@@ -724,7 +724,7 @@ async function init(){
   renderProducts();
   if(pendingDraftProductId)selectProduct(pendingDraftProductId,'desktop');
   await applyProductHandoff();
-  applySpyHandoff();
+  await applySpyHandoff();
   updateSimilarityDisplay(document.getElementById('similaritySlider')?.value||'50');
   renderLibrary();
   renderInspo();
@@ -1018,6 +1018,8 @@ async function applySpyHandoff(){
     }
   }
 
+  // Save context before reset
+  const _savedCtx = workshopReturnContext;
   // Full reset
   document.getElementById('scriptTitle').value='';
   const mTitle=document.getElementById('mScriptTitle');if(mTitle)mTitle.value='';
@@ -1041,6 +1043,8 @@ async function applySpyHandoff(){
   const mCanvas=document.getElementById('mScriptCanvas');
   if(mCanvas)mCanvas.value=script;
 
+  // Restore take context that was set by applyProductHandoff
+  if(_savedCtx) workshopReturnContext = _savedCtx;
   saveLocalDraft();
   history.replaceState({},'',window.location.pathname);
   if(typeof showToast==='function')showToast('Spy script loaded — make it yours!');
