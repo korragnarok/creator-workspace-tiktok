@@ -15,10 +15,10 @@
       ]
     },
     {
-      href: 'scripts.html',
+      href: 'script-workshop.html',
       label: 'Scripts',
       icon: 'scripts',
-      activePages: ['script-workshop.html', 'script-scout.html'],
+      activePages: ['scripts.html', 'script-scout.html'],
       children: [
         { href: 'scripts.html', label: 'Script Vault', icon: 'scripts' },
         { href: 'script-workshop.html', label: 'Script Workshop', icon: 'workshop' },
