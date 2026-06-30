@@ -100,7 +100,7 @@ button,input,select{font:inherit;}
 
       <div class="page-header">
         <div class="page-title">Viral Feed 🔥</div>
-        <div class="page-sub">Videos from the last 14 days averaging 25K+ views/day — actually viral, not just old and accumulated</div>
+        <div class="page-sub">Videos from the last 14 days averaging 10K+ views/day — actually viral, not just old and accumulated</div>
       </div>
 
       <div class="filters-row">
@@ -205,7 +205,7 @@ function formatViews(n) {
 
 // ── Viral velocity settings ──────────────────────────────────────────────
 const RECENCY_WINDOW_DAYS = 14;   // only consider videos posted in the last N days
-const VIRAL_THRESHOLD_PER_DAY = 25000; // minimum average views/day to count as "viral"
+const VIRAL_THRESHOLD_PER_DAY = 10000; // minimum average views/day to count as "viral"
 
 function daysSincePost(createTimeUnix) {
   if (!createTimeUnix) return null;
@@ -375,7 +375,7 @@ function renderGrid() {
     info.style.display = 'none';
     container.innerHTML = `<div class="state-box">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <p>No videos in this category are currently clearing the viral bar (25K+ views/day, posted in the last 14 days). Try again later or check another category.</p>
+      <p>No videos in this category are currently clearing the viral bar (10K+ views/day, posted in the last 14 days). Try again later or check another category.</p>
     </div>`;
     return;
   }
