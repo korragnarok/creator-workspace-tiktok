@@ -136,49 +136,49 @@ const WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
 
 const KEYWORD_CATEGORIES = {
   kitchen: [
-    'kitchen organization tiktok shop',
-    'kitchen gadgets affiliate',
-    'food storage containers tiktok shop',
-    'cookware tiktok shop',
-    'tumbler water bottle affiliate',
-    'kitchen appliances tiktok shop',
-    'pantry organization affiliate',
+    'kitchen organization',
+    'kitchen gadgets',
+    'food storage containers',
+    'cookware set',
+    'tumbler water bottle',
+    'kitchen appliances',
+    'pantry organizer',
   ],
   home: [
-    'home organization tiktok shop',
-    'storage bins affiliate',
-    'closet organization tiktok shop',
-    'home decor affiliate',
-    'shelf organizer tiktok shop',
+    'home organization',
+    'storage bins',
+    'closet organizer',
+    'home decor',
+    'shelf organizer',
   ],
   cleaning: [
-    'cleaning products tiktok shop',
-    'home cleaning gadgets affiliate',
-    'laundry tiktok shop affiliate',
-    'vacuum tiktok shop',
+    'cleaning products',
+    'cleaning gadgets',
+    'laundry products',
+    'cordless vacuum',
   ],
   bedding: [
-    'bedding sheets tiktok shop',
-    'weighted blanket affiliate',
-    'pillow tiktok shop affiliate',
-    'comforter affiliate',
+    'bed sheets',
+    'weighted blanket',
+    'pillow set',
+    'comforter set',
   ],
   outdoor: [
-    'outdoor home tiktok shop',
-    'bug trap pest control affiliate',
-    'garden tiktok shop affiliate',
-    'outdoor lighting affiliate',
+    'outdoor home',
+    'bug trap pest control',
+    'garden tools',
+    'outdoor lighting',
   ],
   pets: [
-    'pet products tiktok shop',
-    'dog supplement affiliate',
-    'pet accessories tiktok shop',
-    'dog treats affiliate',
+    'dog supplements',
+    'pet accessories',
+    'cat products',
+    'dog treats',
   ],
   beauty: [
-    'skincare tiktok shop affiliate',
-    'beauty gadgets affiliate',
-    'hair tools tiktok shop',
+    'skincare routine',
+    'beauty gadgets',
+    'hair tools',
   ],
 };
 
@@ -285,15 +285,16 @@ function hideStatus() {
 
 async function fetchKeyword(keyword) {
   const params = new URLSearchParams({
-    endpoint: 'tiktok/hashtag/videos',
-    name: keyword.replace(/\s+/g, ''),
-    count: 20,
+    endpoint: 'tiktok/shop/search',
+    query: keyword,
+    amount: 20,
+    region: 'US',
   });
   const res = await fetch(`${WORKER_URL}?${params}`);
   if (!res.ok) return [];
   const data = await res.json();
-  // Try various response shapes from ScrapeCreators
-  const videos = data.videos || data.data?.videos || data.itemList || data.items || [];
+  const videos = data.videos || data.data?.videos || data.itemList || data.items || data.data || [];
+  if (!Array.isArray(videos)) return [];
   return videos.map(v => ({ ...v, _keyword: keyword, _category: getKeywordCategory(keyword) }));
 }
 
