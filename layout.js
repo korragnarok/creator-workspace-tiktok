@@ -1,6 +1,7 @@
 (function () {
   const NAV_ITEMS = [
     { href: 'index.html', label: 'Home', icon: 'home', aliases: [''] },
+    { href: 'daily-virals.html', label: 'Viral Feed', icon: 'video' },
     { href: 'daily-todo.html', label: 'Daily To Do', mobileLabel: 'To Do', icon: 'todo' },
     { href: 'video-tracker.html', label: 'Content Tracker', icon: 'video' },
     {
@@ -31,6 +32,7 @@
 
   const MOBILE_ITEMS = [
     { href: 'index.html', label: 'Home', icon: 'home', aliases: [''] },
+    { href: 'daily-virals.html', label: 'Viral Feed', mobileLabel: 'Virals', icon: 'video' },
     { href: 'daily-todo.html', label: 'To Do', icon: 'todo' },
     { href: 'products.html', label: 'Products', icon: 'products' },
     { href: 'script-scout.html', label: 'Scout', icon: 'video' },

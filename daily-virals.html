@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F8F5F1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/pwa/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
+<title>Viral Feed — Take24</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script src="theme-init.js?v=140"></script>
+<link rel="stylesheet" href="layout.css?v=144">
+<style>
+:root{--r:12px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{overflow-x:hidden;max-width:100vw;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+button,input,select{font:inherit;}
+.app-shell{display:grid;grid-template-columns:188px 1fr;min-height:100vh;}
+@media(max-width:768px){.app-shell{grid-template-columns:1fr !important;}.app-shell>.sidebar,.app-shell>.desktop-sidebar{display:none !important;}}
+.workspace{min-width:0;}
+.content{display:block;padding:32px 24px 80px;max-width:100%;}
+
+/* Page header */
+.page-header{margin-bottom:24px;}
+.page-title{font-family:'Stack Sans Text',sans-serif;font-size:clamp(28px,3.5vw,40px);font-weight:800;letter-spacing:-0.01em;line-height:1;color:var(--ink);}
+.page-sub{font-size:14px;color:var(--text-mid);margin-top:6px;}
+
+/* Status bar */
+.status-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.status-pill{display:inline-flex;align-items:center;gap:6px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:5px 11px;border-radius:999px;border:1px solid var(--border-mid);background:var(--surface);color:var(--text-mid);}
+.status-pill.loading{color:var(--rust);border-color:color-mix(in srgb,var(--rust) 40%,var(--border-mid));}
+.status-pill.done{color:var(--sage);border-color:color-mix(in srgb,var(--sage) 40%,var(--border-mid));}
+.status-pill.error{color:#c0392b;border-color:rgba(192,57,43,0.35);}
+.pulse{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* Filters */
+.filters-row{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.filter-label{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);}
+.filter-pill{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;padding:6px 14px;border-radius:999px;border:1px solid var(--border-mid);background:var(--surface);color:var(--text-mid);cursor:pointer;transition:all 0.15s;}
+.filter-pill:hover{border-color:var(--rust);color:var(--ink);}
+.filter-pill.active{background:var(--rust);border-color:var(--rust);color:#fff;}
+.refresh-btn{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:7px 16px;border-radius:999px;border:1px solid var(--border-mid);background:var(--surface);color:var(--text-mid);cursor:pointer;transition:all 0.15s;}
+.refresh-btn:hover{border-color:var(--rust);color:var(--rust);}
+.refresh-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+/* Grid */
+.virals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+@media(max-width:600px){.virals-grid{grid-template-columns:1fr 1fr;gap:10px;}}
+@media(max-width:400px){.virals-grid{grid-template-columns:1fr;}}
+
+/* Video card */
+.viral-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;transition:border-color 0.15s,transform 0.15s;cursor:pointer;}
+.viral-card:hover{border-color:var(--rust);transform:translateY(-2px);}
+.viral-thumb{position:relative;aspect-ratio:9/16;background:var(--bg);overflow:hidden;flex-shrink:0;}
+.viral-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.viral-thumb-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--surface) 60%,var(--bg) 40%);}
+.viral-thumb-placeholder svg{opacity:0.25;}
+.view-badge{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.72);color:#fff;font-family:'Noto Sans Mono',monospace;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;backdrop-filter:blur(6px);}
+.rank-badge{position:absolute;top:8px;left:8px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Noto Sans Mono',monospace;font-size:10px;font-weight:900;color:#fff;}
+.rank-badge.r1{background:#c9a74a;}
+.rank-badge.r2{background:#8a8a8a;}
+.rank-badge.r3{background:#a0673a;}
+.rank-badge.other{background:rgba(0,0,0,0.55);}
+.viral-body{padding:12px;flex:1;display:flex;flex-direction:column;gap:6px;}
+.viral-creator{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--rust);}
+.viral-desc{font-size:12px;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.viral-meta{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:6px;}
+.viral-stat{display:flex;align-items:center;gap:4px;font-family:'Noto Sans Mono',monospace;font-size:10px;font-weight:700;color:var(--text-muted);}
+.viral-stat svg{opacity:0.6;}
+.viral-kw{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:color-mix(in srgb,var(--sage) 18%,var(--surface) 82%);border:1px solid color-mix(in srgb,var(--sage) 28%,var(--border-mid) 72%);color:var(--text-mid);margin-left:auto;}
+
+/* Empty / loading states */
+.state-box{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:64px 24px;color:var(--text-muted);text-align:center;}
+.state-box svg{opacity:0.25;}
+.state-box p{font-size:14px;color:var(--text-mid);}
+.skeleton-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.skeleton-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.skeleton-thumb{aspect-ratio:9/16;background:color-mix(in srgb,var(--border) 60%,var(--surface) 40%);animation:shimmer 1.4s ease-in-out infinite;}
+.skeleton-body{padding:12px;display:flex;flex-direction:column;gap:8px;}
+.skeleton-line{height:10px;border-radius:999px;background:color-mix(in srgb,var(--border) 60%,var(--surface) 40%);animation:shimmer 1.4s ease-in-out infinite;}
+.skeleton-line.short{width:55%;}
+@keyframes shimmer{0%,100%{opacity:1;}50%{opacity:0.45;}}
+
+/* Results count */
+.results-info{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:12px;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="workspace">
+    <div class="content">
+
+      <div class="page-header">
+        <div class="page-title">Viral Feed 🔥</div>
+        <div class="page-sub">Top performing affiliate videos in home &amp; lifestyle — updated on demand</div>
+      </div>
+
+      <div class="filters-row">
+        <span class="filter-label">Category</span>
+        <button class="filter-pill active" data-cat="all">All</button>
+        <button class="filter-pill" data-cat="kitchen">Kitchen</button>
+        <button class="filter-pill" data-cat="home">Home Org</button>
+        <button class="filter-pill" data-cat="cleaning">Cleaning</button>
+        <button class="filter-pill" data-cat="bedding">Bedding</button>
+        <button class="filter-pill" data-cat="outdoor">Outdoor</button>
+        <button class="filter-pill" data-cat="pets">Pets</button>
+        <button class="filter-pill" data-cat="beauty">Beauty</button>
+        <button class="refresh-btn" id="refreshBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      <div id="statusBar" class="status-bar" style="display:none;">
+        <div class="status-pill loading" id="statusPill"><span class="pulse"></span><span id="statusText">Loading...</span></div>
+      </div>
+
+      <div id="resultsInfo" class="results-info" style="display:none;"></div>
+      <div id="gridContainer"></div>
+
+    </div>
+  </div>
+</div>
+
+<script src="supabase.js?v=144"></script>
+<script src="layout.js?v=144"></script>
+<script>
+const WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
+
+const KEYWORD_CATEGORIES = {
+  kitchen: [
+    'kitchen organization tiktok shop',
+    'kitchen gadgets affiliate',
+    'food storage containers tiktok shop',
+    'cookware tiktok shop',
+    'tumbler water bottle affiliate',
+    'kitchen appliances tiktok shop',
+    'pantry organization affiliate',
+  ],
+  home: [
+    'home organization tiktok shop',
+    'storage bins affiliate',
+    'closet organization tiktok shop',
+    'home decor affiliate',
+    'shelf organizer tiktok shop',
+  ],
+  cleaning: [
+    'cleaning products tiktok shop',
+    'home cleaning gadgets affiliate',
+    'laundry tiktok shop affiliate',
+    'vacuum tiktok shop',
+  ],
+  bedding: [
+    'bedding sheets tiktok shop',
+    'weighted blanket affiliate',
+    'pillow tiktok shop affiliate',
+    'comforter affiliate',
+  ],
+  outdoor: [
+    'outdoor home tiktok shop',
+    'bug trap pest control affiliate',
+    'garden tiktok shop affiliate',
+    'outdoor lighting affiliate',
+  ],
+  pets: [
+    'pet products tiktok shop',
+    'dog supplement affiliate',
+    'pet accessories tiktok shop',
+    'dog treats affiliate',
+  ],
+  beauty: [
+    'skincare tiktok shop affiliate',
+    'beauty gadgets affiliate',
+    'hair tools tiktok shop',
+  ],
+};
+
+// All keywords flat
+const ALL_KEYWORDS = Object.values(KEYWORD_CATEGORIES).flat();
+
+let allVideos = [];
+let activeCategory = 'all';
+let isLoading = false;
+
+function formatViews(n) {
+  if (!n || isNaN(n)) return '—';
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+function getKeywordCategory(kw) {
+  for (const [cat, kws] of Object.entries(KEYWORD_CATEGORIES)) {
+    if (kws.includes(kw)) return cat;
+  }
+  return 'other';
+}
+
+function getCategoryLabel(cat) {
+  const labels = { kitchen:'Kitchen', home:'Home Org', cleaning:'Cleaning', bedding:'Bedding', outdoor:'Outdoor', pets:'Pets', beauty:'Beauty', other:'General' };
+  return labels[cat] || cat;
+}
+
+function thumbUrl(video) {
+  return video.video?.cover || video.cover || video.thumbnail || null;
+}
+
+function videoUrl(video) {
+  const id = video.id || video.video_id;
+  const author = video.author?.unique_id || video.author?.uniqueId || video.author_name || '';
+  if (author && id) return `https://www.tiktok.com/@${author}/video/${id}`;
+  return null;
+}
+
+function renderCard(video, rank) {
+  const views = video.play_count || video.stats?.playCount || video.statistics?.play_count || 0;
+  const likes = video.digg_count || video.stats?.diggCount || video.statistics?.digg_count || 0;
+  const author = video.author?.nickname || video.author?.unique_id || video.nickname || 'Creator';
+  const desc = video.desc || video.title || '';
+  const thumb = thumbUrl(video);
+  const url = videoUrl(video);
+  const cat = video._category || 'other';
+
+  const rankClass = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'other';
+
+  const thumbHtml = thumb
+    ? `<img src="${thumb}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'viral-thumb-placeholder\\'><svg width=\\'32\\' height=\\'32\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'2\\' y=\\'2\\' width=\\'20\\' height=\\'20\\' rx=\\'2\\'/><path d=\\'M10 8l6 4-6 4V8z\\'/></svg></div>'">`
+    : `<div class="viral-thumb-placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M10 8l6 4-6 4V8z"/></svg></div>`;
+
+  return `
+    <div class="viral-card" onclick="${url ? `window.open('${url}','_blank')` : ''}">
+      <div class="viral-thumb">
+        ${thumbHtml}
+        <div class="view-badge">👁 ${formatViews(views)}</div>
+        <div class="rank-badge ${rankClass}">${rank}</div>
+      </div>
+      <div class="viral-body">
+        <div class="viral-creator">@${author}</div>
+        ${desc ? `<div class="viral-desc">${desc}</div>` : ''}
+        <div class="viral-meta">
+          <div class="viral-stat">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            ${formatViews(likes)}
+          </div>
+          <div class="viral-kw">${getCategoryLabel(cat)}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderSkeletons(count = 12) {
+  return `<div class="skeleton-grid">${Array.from({length: count}, () => `
+    <div class="skeleton-card">
+      <div class="skeleton-thumb"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function setStatus(text, type = 'loading') {
+  const bar = document.getElementById('statusBar');
+  const pill = document.getElementById('statusPill');
+  const label = document.getElementById('statusText');
+  bar.style.display = 'flex';
+  pill.className = `status-pill ${type}`;
+  pill.innerHTML = type === 'loading'
+    ? `<span class="pulse"></span><span>${text}</span>`
+    : `<span>${text}</span>`;
+  label && (label.textContent = text);
+}
+
+function hideStatus() {
+  document.getElementById('statusBar').style.display = 'none';
+}
+
+async function fetchKeyword(keyword) {
+  const params = new URLSearchParams({
+    endpoint: 'tiktok/hashtag/videos',
+    name: keyword.replace(/\s+/g, ''),
+    count: 20,
+  });
+  const res = await fetch(`${WORKER_URL}?${params}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  // Try various response shapes from ScrapeCreators
+  const videos = data.videos || data.data?.videos || data.itemList || data.items || [];
+  return videos.map(v => ({ ...v, _keyword: keyword, _category: getKeywordCategory(keyword) }));
+}
+
+function dedupeVideos(videos) {
+  const seen = new Set();
+  return videos.filter(v => {
+    const id = v.id || v.video_id || v.aweme_id;
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+function getFilteredVideos() {
+  if (activeCategory === 'all') return allVideos;
+  return allVideos.filter(v => v._category === activeCategory);
+}
+
+function renderGrid() {
+  const container = document.getElementById('gridContainer');
+  const info = document.getElementById('resultsInfo');
+  const filtered = getFilteredVideos();
+
+  if (filtered.length === 0) {
+    info.style.display = 'none';
+    container.innerHTML = `<div class="state-box">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <p>No videos found for this category yet.</p>
+    </div>`;
+    return;
+  }
+
+  info.style.display = 'block';
+  info.textContent = `${filtered.length} videos — sorted by views`;
+  container.innerHTML = `<div class="virals-grid">${filtered.map((v, i) => renderCard(v, i + 1)).join('')}</div>`;
+}
+
+async function loadAllVideos() {
+  if (isLoading) return;
+  isLoading = true;
+  allVideos = [];
+
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+
+  const keywords = activeCategory === 'all'
+    ? ALL_KEYWORDS
+    : KEYWORD_CATEGORIES[activeCategory] || ALL_KEYWORDS;
+
+  document.getElementById('gridContainer').innerHTML = renderSkeletons();
+  document.getElementById('resultsInfo').style.display = 'none';
+  setStatus(`Scanning ${keywords.length} keyword groups...`, 'loading');
+
+  let completed = 0;
+  const results = [];
+
+  // Batch requests — 4 at a time to avoid hammering the API
+  const batchSize = 4;
+  for (let i = 0; i < keywords.length; i += batchSize) {
+    const batch = keywords.slice(i, i + batchSize);
+    const batchResults = await Promise.allSettled(batch.map(kw => fetchKeyword(kw)));
+    batchResults.forEach(r => {
+      if (r.status === 'fulfilled') results.push(...r.value);
+    });
+    completed += batch.length;
+    setStatus(`Scanning ${completed} of ${keywords.length} groups...`, 'loading');
+  }
+
+  // Dedupe + sort by views descending
+  const deduped = dedupeVideos(results);
+  deduped.sort((a, b) => {
+    const va = a.play_count || a.stats?.playCount || a.statistics?.play_count || 0;
+    const vb = b.play_count || b.stats?.playCount || b.statistics?.play_count || 0;
+    return vb - va;
+  });
+
+  allVideos = deduped;
+  isLoading = false;
+  btn.disabled = false;
+
+  if (allVideos.length === 0) {
+    setStatus('No results found', 'error');
+    document.getElementById('gridContainer').innerHTML = `<div class="state-box">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+      <p>Couldn't load videos right now. Try refreshing.</p>
+    </div>`;
+    return;
+  }
+
+  setStatus(`${allVideos.length} videos loaded`, 'done');
+  setTimeout(hideStatus, 3000);
+  renderGrid();
+}
+
+// Category filter buttons
+document.querySelectorAll('.filter-pill[data-cat]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill[data-cat]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCategory = btn.dataset.cat;
+    if (allVideos.length > 0) {
+      renderGrid();
+    } else {
+      loadAllVideos();
+    }
+  });
+});
+
+document.getElementById('refreshBtn').addEventListener('click', () => {
+  allVideos = [];
+  loadAllVideos();
+});
+
+// Auto-load on open
+loadAllVideos();
+</script>
+</body>
+</html>
