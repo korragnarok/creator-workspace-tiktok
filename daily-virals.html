@@ -124,7 +124,12 @@ button,input,select{font:inherit;}
       </div>
 
       <div id="resultsInfo" class="results-info" style="display:none;"></div>
-      <div id="gridContainer"></div>
+      <div id="gridContainer">
+        <div class="state-box">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <p>Click "Refresh" above to scan for today's top affiliate videos.<br>Each scan uses API credits, so it only runs when you ask.</p>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -315,6 +320,14 @@ function getFilteredVideos() {
   return allVideos.filter(v => v._category === activeCategory);
 }
 
+function renderEmptyPrompt() {
+  document.getElementById('resultsInfo').style.display = 'none';
+  document.getElementById('gridContainer').innerHTML = `<div class="state-box">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    <p>Click "Refresh" above to scan this category.<br>Each scan uses API credits, so it only runs when you ask.</p>
+  </div>`;
+}
+
 function renderGrid() {
   const container = document.getElementById('gridContainer');
   const info = document.getElementById('resultsInfo');
@@ -400,7 +413,7 @@ document.querySelectorAll('.filter-pill[data-cat]').forEach(btn => {
     if (allVideos.length > 0) {
       renderGrid();
     } else {
-      loadAllVideos();
+      renderEmptyPrompt();
     }
   });
 });
@@ -423,8 +436,7 @@ db.auth.getSession().then(async ({data:{session}}) => {
   }
 });
 
-// Auto-load on open
-loadAllVideos();
+// Auto-load removed — page now only loads on manual button click to save API credits
 </script>
 </body>
 </html>
