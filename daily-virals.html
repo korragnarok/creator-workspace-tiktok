@@ -100,7 +100,7 @@ button,input,select{font:inherit;}
 
       <div class="page-header">
         <div class="page-title">Viral Feed 🔥</div>
-        <div class="page-sub">Top performing affiliate videos in home &amp; lifestyle — updated on demand</div>
+        <div class="page-sub">Videos from the last 14 days averaging 25K+ views/day — actually viral, not just old and accumulated</div>
       </div>
 
       <div class="filters-row">
@@ -203,6 +203,33 @@ function formatViews(n) {
   return n.toString();
 }
 
+// ── Viral velocity settings ──────────────────────────────────────────────
+const RECENCY_WINDOW_DAYS = 14;   // only consider videos posted in the last N days
+const VIRAL_THRESHOLD_PER_DAY = 25000; // minimum average views/day to count as "viral"
+
+function daysSincePost(createTimeUnix) {
+  if (!createTimeUnix) return null;
+  const postedMs = createTimeUnix * 1000;
+  const ageMs = Date.now() - postedMs;
+  return Math.max(ageMs / (1000 * 60 * 60 * 24), 0.5); // floor at 0.5 days to avoid divide-by-huge-number on brand new posts
+}
+
+function viewsPerDay(product) {
+  const v = product.video;
+  if (!v) return 0;
+  const views = v.statistics?.play_count || 0;
+  const age = daysSincePost(v.create_time);
+  if (!age) return 0;
+  return views / age;
+}
+
+function isWithinRecencyWindow(product) {
+  const v = product.video;
+  if (!v?.create_time) return false;
+  const age = daysSincePost(v.create_time);
+  return age !== null && age <= RECENCY_WINDOW_DAYS;
+}
+
 function getKeywordCategory(kw) {
   for (const [cat, kws] of Object.entries(KEYWORD_CATEGORIES)) {
     if (kws.includes(kw)) return cat;
@@ -229,6 +256,7 @@ function renderCard(product, rank) {
   const v = product.video;
   const views = v?.statistics?.play_count || 0;
   const likes = v?.statistics?.digg_count || 0;
+  const perDay = viewsPerDay(product);
   const author = v?.author?.nickname || v?.author?.unique_id || 'Creator';
   const desc = v?.desc || product.title || '';
   const thumb = thumbUrl(product);
@@ -245,7 +273,7 @@ function renderCard(product, rank) {
     <div class="viral-card" onclick="${url ? `window.open('${url}','_blank')` : ''}">
       <div class="viral-thumb">
         ${thumbHtml}
-        <div class="view-badge">👁 ${formatViews(views)}</div>
+        <div class="view-badge">🔥 ${formatViews(perDay)}/day</div>
         <div class="rank-badge ${rankClass}">${rank}</div>
       </div>
       <div class="viral-body">
@@ -255,6 +283,10 @@ function renderCard(product, rank) {
           <div class="viral-stat">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
             ${formatViews(likes)}
+          </div>
+          <div class="viral-stat">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            ${formatViews(views)} total
           </div>
           <div class="viral-kw">${getCategoryLabel(cat)}</div>
         </div>
@@ -302,9 +334,12 @@ async function fetchKeyword(keyword) {
   const data = await res.json();
   const products = data.products || [];
   if (!Array.isArray(products)) return [];
-  // Only keep products that actually have an attached affiliate video
+  // Only keep products that: (1) have an attached affiliate video,
+  // (2) were posted within the recency window, (3) clear the viral velocity bar
   return products
     .filter(p => p.video && p.video.statistics)
+    .filter(p => isWithinRecencyWindow(p))
+    .filter(p => viewsPerDay(p) >= VIRAL_THRESHOLD_PER_DAY)
     .map(p => ({ ...p, _keyword: keyword, _category: getKeywordCategory(keyword) }));
 }
 
@@ -340,7 +375,7 @@ function renderGrid() {
     info.style.display = 'none';
     container.innerHTML = `<div class="state-box">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <p>No videos found for this category yet.</p>
+      <p>No videos in this category are currently clearing the viral bar (25K+ views/day, posted in the last 14 days). Try again later or check another category.</p>
     </div>`;
     return;
   }
@@ -383,11 +418,7 @@ async function loadAllVideos() {
 
   // Dedupe + sort by views descending
   const deduped = dedupeVideos(results);
-  deduped.sort((a, b) => {
-    const va = a.video?.statistics?.play_count || 0;
-    const vb = b.video?.statistics?.play_count || 0;
-    return vb - va;
-  });
+  deduped.sort((a, b) => viewsPerDay(b) - viewsPerDay(a));
 
   allVideos = deduped;
   isLoading = false;
