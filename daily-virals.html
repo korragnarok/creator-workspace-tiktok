@@ -215,25 +215,25 @@ function getCategoryLabel(cat) {
   return labels[cat] || cat;
 }
 
-function thumbUrl(video) {
-  return video.video?.cover || video.cover || video.thumbnail || null;
+function thumbUrl(product) {
+  return product.video?.img_urls?.[0]
+    || product.image?.url_list?.[0]
+    || null;
 }
 
-function videoUrl(video) {
-  const id = video.id || video.video_id;
-  const author = video.author?.unique_id || video.author?.uniqueId || video.author_name || '';
-  if (author && id) return `https://www.tiktok.com/@${author}/video/${id}`;
-  return null;
+function videoUrl(product) {
+  return product.video?.share_url || null;
 }
 
-function renderCard(video, rank) {
-  const views = video.play_count || video.stats?.playCount || video.statistics?.play_count || 0;
-  const likes = video.digg_count || video.stats?.diggCount || video.statistics?.digg_count || 0;
-  const author = video.author?.nickname || video.author?.unique_id || video.nickname || 'Creator';
-  const desc = video.desc || video.title || '';
-  const thumb = thumbUrl(video);
-  const url = videoUrl(video);
-  const cat = video._category || 'other';
+function renderCard(product, rank) {
+  const v = product.video;
+  const views = v?.statistics?.play_count || 0;
+  const likes = v?.statistics?.digg_count || 0;
+  const author = v?.author?.nickname || v?.author?.unique_id || 'Creator';
+  const desc = v?.desc || product.title || '';
+  const thumb = thumbUrl(product);
+  const url = videoUrl(product);
+  const cat = product._category || 'other';
 
   const rankClass = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'other';
 
@@ -300,15 +300,18 @@ async function fetchKeyword(keyword) {
   const res = await fetch(`${WORKER_URL}?${params}`);
   if (!res.ok) return [];
   const data = await res.json();
-  const videos = data.videos || data.data?.videos || data.itemList || data.items || data.data || [];
-  if (!Array.isArray(videos)) return [];
-  return videos.map(v => ({ ...v, _keyword: keyword, _category: getKeywordCategory(keyword) }));
+  const products = data.products || [];
+  if (!Array.isArray(products)) return [];
+  // Only keep products that actually have an attached affiliate video
+  return products
+    .filter(p => p.video && p.video.statistics)
+    .map(p => ({ ...p, _keyword: keyword, _category: getKeywordCategory(keyword) }));
 }
 
 function dedupeVideos(videos) {
   const seen = new Set();
   return videos.filter(v => {
-    const id = v.id || v.video_id || v.aweme_id;
+    const id = v.video?.aweme_id || v.product_id;
     if (!id || seen.has(id)) return false;
     seen.add(id);
     return true;
@@ -381,8 +384,8 @@ async function loadAllVideos() {
   // Dedupe + sort by views descending
   const deduped = dedupeVideos(results);
   deduped.sort((a, b) => {
-    const va = a.play_count || a.stats?.playCount || a.statistics?.play_count || 0;
-    const vb = b.play_count || b.stats?.playCount || b.statistics?.play_count || 0;
+    const va = a.video?.statistics?.play_count || 0;
+    const vb = b.video?.statistics?.play_count || 0;
     return vb - va;
   });
 
