@@ -443,9 +443,6 @@ async function transcribeVideo(index) {
   const v = _spyResults[index];
   if (!v) return;
 
-  const key = (localStorage.getItem(SCRAPE_KEY_STORAGE) || '').trim();
-  if (!key) { showError('Add your ScrapeCreators API key in Settings first.'); return; }
-
   const btn = document.getElementById(`transcribeBtn${index}`);
   if (btn) { btn.classList.add('loading'); btn.textContent = 'Transcribing...'; }
 
@@ -466,11 +463,12 @@ async function transcribeVideo(index) {
   }
 
   try {
-    // Use ScrapeCreators transcript endpoint
-    const res = await fetch(
-      `https://api.scrapecreators.com/v1/tiktok/video/transcript?url=${encodeURIComponent(videoUrl)}`,
-      { headers: { 'x-api-key': key } }
-    );
+    // Route through Cloudflare Worker (same pattern as every other ScrapeCreators call)
+    const params = new URLSearchParams({
+      endpoint: 'tiktok/video/transcript',
+      url: videoUrl,
+    });
+    const res = await fetch(`${SCOUT_WORKER_URL}?${params}`);
     const data = await res.json();
 
     if (!res.ok) throw new Error(data?.message || `Transcript failed (${res.status})`);
@@ -478,8 +476,7 @@ async function transcribeVideo(index) {
     const transcript = data?.transcript || data?.text || data?.captions || data?.content || '';
 
     if (!transcript) {
-      // Fallback: try Gemini transcription with video description
-      await transcribeWithGemini(v, videoUrl);
+      showTranscriptError('No transcript found for this video — it might be faceless b-roll, ASMR content, or transcription is not yet available for this clip.');
     } else {
       showTranscript(transcript);
     }
@@ -496,9 +493,7 @@ async function transcribeVideo(index) {
   }
 }
 
-async function transcribeWithGemini(v, videoUrl) {
-  showTranscriptError('No transcript found for this video — it might be faceless b-roll or ASMR content.');
-}
+// (transcribeWithGemini stub removed — transcript fetch now goes through the Worker directly)
 
 // ── Transcript modal ───────────────────────────────────────────────────────
 function openTranscriptModal(v) {
