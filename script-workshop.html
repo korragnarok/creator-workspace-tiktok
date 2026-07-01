@@ -996,10 +996,7 @@ async function applyProductHandoff(){
   const title=document.getElementById('scriptTitle');
   if(!title.value.trim())title.value=`${product.name} Script`;
   saveLocalDraft();
-  // Don't strip URL if fromSpy is present — applySpyHandoff still needs it
-  if(!new URLSearchParams(window.location.search).get('fromSpy')){
-    history.replaceState({},'',window.location.pathname);
-  }
+  history.replaceState({},'',window.location.pathname);
   return true;
 }
 async function applySpyHandoff(){
@@ -1016,8 +1013,9 @@ async function applySpyHandoff(){
 
   // Always apply spy script — skip confirm dialog (user already clicked "Workshop This" in scout)
 
-  // Save context before reset
+  // Save context and product before reset
   const _savedCtx = workshopReturnContext;
+  const _savedProductId = document.getElementById('productSelect').value;
   // Full reset
   document.getElementById('scriptTitle').value='';
   const mTitle=document.getElementById('mScriptTitle');if(mTitle)mTitle.value='';
@@ -1041,7 +1039,8 @@ async function applySpyHandoff(){
   const mCanvas=document.getElementById('mScriptCanvas');
   if(mCanvas)mCanvas.value=script;
 
-  // Restore take context that was set by applyProductHandoff
+  // Restore product and take context set by applyProductHandoff
+  if(_savedProductId) selectProduct(_savedProductId, 'desktop');
   if(_savedCtx) workshopReturnContext = _savedCtx;
   saveLocalDraft();
   history.replaceState({},'',window.location.pathname);
