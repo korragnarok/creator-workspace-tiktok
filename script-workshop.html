@@ -996,7 +996,10 @@ async function applyProductHandoff(){
   const title=document.getElementById('scriptTitle');
   if(!title.value.trim())title.value=`${product.name} Script`;
   saveLocalDraft();
-  history.replaceState({},'',window.location.pathname);
+  // Don't strip URL if fromSpy is present — applySpyHandoff still needs it
+  if(!new URLSearchParams(window.location.search).get('fromSpy')){
+    history.replaceState({},'',window.location.pathname);
+  }
   return true;
 }
 async function applySpyHandoff(){
