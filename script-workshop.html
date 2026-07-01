@@ -966,7 +966,8 @@ async function applyProductHandoff(){
   if(!product)return;
   const currentProductId=document.getElementById('productSelect').value;
   const hasDraftText=Boolean(fullScript()||detailSummaryText()||inspo.length);
-  if(hasDraftText&&currentProductId!==product.id){
+  const isSpyHandoff=new URLSearchParams(window.location.search).get('fromSpy');
+  if(hasDraftText&&currentProductId!==product.id&&!isSpyHandoff){
     const startNew=await openWorkshopConfirm(
       'Workshop Draft Already Open',
       `Start a new script for ${product.name}, or keep editing your current workshop draft?`,
@@ -977,6 +978,12 @@ async function applyProductHandoff(){
       history.replaceState({},'',window.location.pathname);
       return false;
     }
+    document.getElementById('scriptTitle').value='';
+    setDetailDraft({});
+    document.getElementById('scriptCanvas').value='';
+    inspo=[];
+  } else if(hasDraftText&&currentProductId!==product.id&&isSpyHandoff){
+    // Spy handoff — clear canvas so spy script takes over cleanly
     document.getElementById('scriptTitle').value='';
     setDetailDraft({});
     document.getElementById('scriptCanvas').value='';
@@ -1004,22 +1011,7 @@ async function applySpyHandoff(){
   const spyCtx={cardId:params.get('cardId')||'',takeId:params.get('takeId')||'',queueId:params.get('queueId')||''};
   if(spyCtx.cardId||spyCtx.takeId||spyCtx.queueId)workshopReturnContext=spyCtx;
 
-  // Check if there's existing content — if so, ask first
-  const hasDraft=Boolean(fullScript()||detailSummaryText()||inspo.length
-    ||document.getElementById('scriptTitle')?.value.trim()
-    ||(document.getElementById('productSelect')?.value));
-  if(hasDraft){
-    const confirmed=await openWorkshopConfirm(
-      'Start a new script?',
-      'This will clear your current title, product, script, and all detail fields. Are you sure?',
-      'Yes, start fresh',
-      'Keep current'
-    );
-    if(!confirmed){
-      history.replaceState({},'',window.location.pathname);
-      return false;
-    }
-  }
+  // Always apply spy script — skip confirm dialog (user already clicked "Workshop This" in scout)
 
   // Save context before reset
   const _savedCtx = workshopReturnContext;
