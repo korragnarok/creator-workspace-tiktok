@@ -299,6 +299,7 @@ function importEscAttr(value) {
   return importEsc(value).replace(/`/g, '&#96;');
 }
 const PRODUCT_IMPORT_KEY = 'take24:scrapecreators_api_key';
+const SCOUT_WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
 function setImportState(state, message='') {
   ['siLoading','siEmpty','siError','siResults'].forEach(id => {
     const el = document.getElementById(id);
@@ -479,10 +480,10 @@ function normalizeImportProduct(product) {
   };
 }
 async function enrichImportProduct(product, key) {
-  if(!key || !product?.link) return product;
+  if(!product?.link) return product;
   try {
-    const detailUrl = `https://api.scrapecreators.com/v1/tiktok/product?url=${encodeURIComponent(product.link)}&region=US`;
-    const res = await fetch(detailUrl, { headers: { 'x-api-key': key } });
+    const detailUrl = `${SCOUT_WORKER_URL}?endpoint=tiktok/product&url=${encodeURIComponent(product.link)}&region=US`;
+    const res = await fetch(detailUrl);
     const text = await res.text();
     let data = {};
     try { data = text ? JSON.parse(text) : {}; } catch(parseErr) { return product; }
@@ -522,19 +523,14 @@ window.closeSearchImport = function() {
 };
 window.doProductSearch = async function() {
   const query = document.getElementById('siQuery').value.trim();
-  const key = (localStorage.getItem(PRODUCT_IMPORT_KEY) || '').trim();
   if(!query) { document.getElementById('siQuery').focus(); return; }
-  if(!key) {
-    setImportState('error', 'Add your ScrapeCreators API key in Settings first.');
-    return;
-  }
   const btn = document.getElementById('siSearchBtn');
   btn.disabled = true;
   btn.textContent = 'Searching...';
   setImportState('loading');
   try {
-    const url = `https://api.scrapecreators.com/v1/tiktok/shop/search?query=${encodeURIComponent(query)}&region=US`;
-    const res = await fetch(url, { headers: { 'x-api-key': key } });
+    const url = `${SCOUT_WORKER_URL}?endpoint=tiktok/shop/search&query=${encodeURIComponent(query)}&region=US`;
+    const res = await fetch(url);
     const text = await res.text();
     let data = {};
     try { data = text ? JSON.parse(text) : {}; } catch(parseErr) { throw new Error('The search API did not return valid product data.'); }
