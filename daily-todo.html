@@ -642,18 +642,18 @@ function renderWeekStrip(){
 }
 async function restartDay(){
   const isWeek = viewMode === 'week';
-  const msg = isWeek
-    ? 'Reset all filmed statuses for the entire week back to not filmed?'
-    : 'Reset all filmed statuses for today back to not filmed?';
-  if(!confirm(msg)) return;
+  if(!isWeek && !confirm('Reset all filmed statuses for today back to not filmed?')) return;
 
   if(isWeek){
-    // Reset week items in memory
-    (WEEK_ITEMS||[]).forEach(item=>{ item.done = false; });
-    // Reset in DB
-    const weekIds = (WEEK_ITEMS||[]).map(item=>item.queueId).filter(Boolean);
-    if(weekIds.length) await db.from('queue').update({done:false}).in('id', weekIds);
-    showToast('Week restarted — all takes marked as not filmed');
+    if(!confirm('Clear the entire week? This deletes every scheduled take for this week — products, hooks, and scripts on them. This can\'t be undone.')) return;
+    const weekIds=(WEEK_ITEMS||[]).map(item=>item.queueId).filter(Boolean);
+    if(weekIds.length){
+      const {error}=await db.from('queue').delete().in('id',weekIds);
+      if(error){console.error('Week clear failed',error);showToast('Clear failed — check console');return;}
+      weekIds.forEach(id=>sessionStorage.removeItem('ts-'+id));
+    }
+    WEEK_ITEMS=[];
+    showToast('Week cleared — fresh start');
   } else {
     // Reset today in memory
     (TODO||[]).forEach(card=>(card.takes||[]).forEach(take=>{ take.done = false; }));
