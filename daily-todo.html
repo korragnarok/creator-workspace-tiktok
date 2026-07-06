@@ -224,6 +224,12 @@ a{text-decoration:none;color:inherit;}
 .modal-search{width:100%;padding:10px 14px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px;font-family:'IBM Plex Serif',serif;outline:none;margin-bottom:12px;}
 .modal-search:focus{border-color:var(--rust);}
 .modal-list{display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:0;}
+.picker-spread{border:1px solid var(--border-mid);border-radius:12px;background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);padding:12px;margin-bottom:12px;}
+.picker-spread-row{display:flex;gap:12px;flex-wrap:wrap;}
+.picker-spread-row label{flex:1;min-width:120px;display:flex;flex-direction:column;gap:5px;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);}
+.picker-spread-row input,.picker-spread-row select{width:100%;padding:8px 10px;border:1px solid var(--border-mid);border-radius:9px;background:var(--bg);color:var(--text);font-size:14px;font-family:'IBM Plex Serif',serif;outline:none;}
+.picker-spread-row input:focus,.picker-spread-row select:focus{border-color:var(--rust);}
+.picker-spread-hint{margin-top:9px;font-size:12px;line-height:1.45;color:var(--text-mid);font-style:italic;}
 .modal-footer{display:flex;gap:8px;margin-top:16px;flex-shrink:0;}
 .modal-cancel{flex:1;background:var(--bg);border:1px solid var(--border-mid);border-radius:10px;padding:12px;font-size:12px;cursor:pointer;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;}
 .modal-confirm{flex:2;background:var(--rust);border:none;border-radius:10px;padding:12px;font-size:12px;cursor:pointer;color:#fff;font-family:'Stack Sans Notch',sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;}
@@ -319,8 +325,19 @@ body{overflow-x:hidden;}
 <!-- PRODUCT PICKER -->
 <div class="modal-overlay" id="pickerModal">
   <div class="modal">
-    <div class="modal-title">What are you filming today?</div>
-    <div class="modal-sub">Select one or more products — each gets its own card.</div>
+    <div class="modal-title" id="pickerTitle">What are you filming today?</div>
+    <div class="modal-sub" id="pickerSub">Select one or more products — each gets its own card.</div>
+    <div class="picker-spread" id="pickerSpread" style="display:none;">
+      <div class="picker-spread-row">
+        <label>Takes per product
+          <input type="number" id="spreadTakes" min="1" max="7" value="6" inputmode="numeric" oninput="updateSpreadHint()">
+        </label>
+        <label>Starting day
+          <select id="spreadStart" onchange="updateSpreadHint()"></select>
+        </label>
+      </div>
+      <div class="picker-spread-hint" id="spreadHint"></div>
+    </div>
     <input type="text" class="modal-search" id="pickerSearch" placeholder="Search products..." oninput="filterPicker()">
     <div class="modal-list" id="pickerList"></div>
     <div class="modal-footer">
@@ -1656,13 +1673,43 @@ document.body.addEventListener('keydown',e=>{
 
 // ─── PRODUCT PICKER ───────────────────────────────────────
 function openPicker(){
-  pickerSelected=viewMode==='week'
+  const isWeek=viewMode==='week';
+  pickerSelected=isWeek
     ? new Set()
     : new Set(TODO.map(c=>c.prodId).filter(Boolean));
   document.getElementById('pickerSearch').value='';
+  document.getElementById('pickerTitle').textContent=isWeek?'What are you filming this week?':'What are you filming today?';
+  document.getElementById('pickerSub').textContent=isWeek
+    ? 'Select products, then choose how many takes each gets — one take lands per day, starting on the day you pick.'
+    : 'Select one or more products — each gets its own card.';
+  document.getElementById('pickerSpread').style.display=isWeek?'block':'none';
+  if(isWeek)setupSpreadControls();
   filterPicker();
   document.getElementById('pickerModal').classList.add('open');
   setTimeout(()=>document.getElementById('pickerSearch').focus(),80);
+}
+function setupSpreadControls(){
+  const start=weekStart(currentDate);
+  const select=document.getElementById('spreadStart');
+  select.innerHTML=[0,1,2,3,4,5,6].map(offset=>{
+    const d=addDays(start,offset);
+    return `<option value="${offset}">${d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</option>`;
+  }).join('');
+  select.value='1'; // default Monday
+  updateSpreadHint();
+}
+function updateSpreadHint(){
+  const hint=document.getElementById('spreadHint');
+  if(!hint)return;
+  const takes=Math.max(1,Math.min(7,parseInt(document.getElementById('spreadTakes').value,10)||1));
+  const offset=parseInt(document.getElementById('spreadStart').value,10)||0;
+  const first=addDays(weekStart(currentDate),offset);
+  const last=addDays(first,takes-1);
+  const fmt=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const spills=(offset+takes-1)>6;
+  hint.textContent=takes===1
+    ? `Each product gets 1 take on ${fmt(first)}.`
+    : `Each product gets ${takes} takes — one per day, ${fmt(first)} through ${fmt(last)}.${spills?' Heads up: some takes land in next week.':''}`;
 }
 function closePicker(){document.getElementById('pickerModal').classList.remove('open');}
 function filterPicker(){
@@ -1675,17 +1722,35 @@ async function addSelectedProducts(){
   if(viewMode==='week'){
     const ids=[...pickerSelected];
     const btn=document.getElementById('pickerConfirmBtn');btn.disabled=true;btn.textContent='Saving...';
-    let nextOrder=WEEK_ITEMS.length;
+    const takesPer=Math.max(1,Math.min(7,parseInt(document.getElementById('spreadTakes').value,10)||1));
+    const startOffset=parseInt(document.getElementById('spreadStart').value,10)||0;
+    const firstDay=addDays(weekStart(currentDate),startOffset);
+    // Track sort order per date so new takes stack after anything already scheduled that day
+    const orderByDate={};
+    (WEEK_ITEMS||[]).forEach(item=>{orderByDate[item.date]=Math.max(orderByDate[item.date]||0,(item.sortOrder||0)+1);});
+    const rows=[];
     for(const id of ids){
       const p=ALL_PRODUCTS.find(x=>x.id===id);if(!p)continue;
-      const card={id:'c-'+uid(),prodId:p.id,name:p.name,brand:p.brand||'',script:'',takes:[]};
-      const take={id:'t-'+uid(),queueId:null,hookText:'',script:'',inspirationLinks:[],done:false,sortOrder:nextOrder++,editingScript:false};
-      await saveQueueRow(card,take);
+      for(let i=0;i<takesPer;i++){
+        const date=dateKey(addDays(firstDay,i));
+        const order=orderByDate[date]||0;
+        orderByDate[date]=order+1;
+        rows.push({user_id:_user.id,date,prod_id:p.id,name:p.name,brand:p.brand||'',notes:'',script:'',done:false,sort_order:order});
+      }
+    }
+    if(rows.length){
+      const {error}=await db.from('queue').insert(rows);
+      if(error){
+        console.error('Bulk queue insert failed',error);
+        btn.disabled=false;btn.textContent='Save';
+        showToast('Save failed — check console');
+        return;
+      }
     }
     closePicker();btn.disabled=false;btn.textContent='Save';pickerSelected.clear();
     await loadWeekQueue();
     render();
-    showToast(ids.length?`Added ${ids.length} to this week`:'No changes');
+    showToast(rows.length?`Added ${ids.length} product${ids.length>1?'s':''} × ${takesPer} take${takesPer>1?'s':''} (${rows.length} total)`:'No changes');
     return;
   }
   const existing=new Set(TODO.map(c=>c.prodId).filter(Boolean));
