@@ -185,7 +185,9 @@ a{text-decoration:none;color:inherit;}
 .add-take-btn:hover{border-color:var(--rust);color:var(--rust);}
 .weekly-wrap{display:flex;flex-direction:column;gap:10px;}
 .weekly-product-group{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
-.weekly-product-head{width:100%;border:0;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);color:var(--text);padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;text-align:left;cursor:pointer;}
+.weekly-product-head{width:100%;border:0;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);color:var(--text);padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:12px;align-items:center;text-align:left;cursor:pointer;}
+.weekly-group-remove{width:30px;height:30px;border:1px solid var(--border-mid);border-radius:8px;background:transparent;color:var(--text-muted);font-size:18px;font-weight:800;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all 0.12s;flex-shrink:0;}
+.weekly-group-remove:hover{border-color:var(--rust);color:var(--rust);}
 .weekly-product-head:hover{background:color-mix(in srgb,var(--surface) 82%,var(--rust) 8%);}
 .weekly-group-title{font-family:'IBM Plex Serif',serif;font-size:20px;font-weight:800;color:var(--ink);line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .weekly-group-meta{font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-top:4px;}
@@ -967,6 +969,7 @@ function renderWeeklyGroup(group){
         <span class="weekly-group-meta">${group.brand?esc(group.brand)+' · ':''}${esc(dates)} · ${done}/${group.items.length} filmed</span>
       </span>
       <span class="weekly-group-count">${group.items.length} take${group.items.length===1?'':'s'}</span>
+      <span class="weekly-group-remove" role="button" tabindex="0" title="Remove product from this week" aria-label="Remove ${esc(group.name)} from this week" onclick="event.stopPropagation();deleteWeeklyGroup(${jsArg(group.key)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();deleteWeeklyGroup(${jsArg(group.key)});}">×</span>
       <span class="weekly-group-toggle">⌄</span>
     </button>
     <div class="weekly-group-body">
@@ -1335,6 +1338,27 @@ async function removeTake(cardId,takeId){
     if(selectedProductId===card.id)selectedProductId=null;
   }
   render();
+}
+async function deleteWeeklyGroup(groupKey){
+  const items=WEEK_ITEMS.filter(row=>weeklyProductKey(row)===String(groupKey));
+  if(!items.length)return;
+  const name=items[0].name||'this product';
+  if(!confirm(`Remove ${name} from this week? This deletes all ${items.length} take${items.length===1?'':'s'} for it.`))return;
+  const ids=items.map(row=>row.queueId).filter(Boolean);
+  const previous=[...WEEK_ITEMS];
+  WEEK_ITEMS=WEEK_ITEMS.filter(row=>weeklyProductKey(row)!==String(groupKey));
+  render();
+  const {error}=await db.from('queue').delete().in('id',ids).eq('user_id',_user.id);
+  if(error){
+    WEEK_ITEMS=previous;
+    render();
+    showToast('Could not remove product: '+error.message,'error');
+    return;
+  }
+  ids.forEach(id=>sessionStorage.removeItem('ts-'+id));
+  expandedWeeklyProducts.delete(String(groupKey));
+  saveExpandedWeeklyProducts();
+  showToast(`${name} removed from this week`);
 }
 async function deleteWeeklyItem(queueId){
   const item=WEEK_ITEMS.find(row=>String(row.queueId)===String(queueId));
