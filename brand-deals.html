@@ -60,6 +60,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
 .tag.sample{background:color-mix(in srgb,#9B7BC8 20%,transparent);color:#C4A0F0;}
 .tag.retainer{background:color-mix(in srgb,#5B8CCC 20%,transparent);color:#89B4F5;}
 .tag.campaign{background:color-mix(in srgb,#E8923A 20%,transparent);color:#F0A855;}
+.tag.creator_connections{background:color-mix(in srgb,#4A9E8F 20%,transparent);color:#5BB8A7;}
 .tag.refundable{background:color-mix(in srgb,var(--sage) 22%,transparent);color:var(--sage);}
 .type-cell{font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;color:var(--text);}
 .progress-wrap{min-width:90px;}
@@ -133,6 +134,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
       <button class="pill" data-filter="sample" onclick="setFilter('sample')">Samples</button>
       <button class="pill" data-filter="retainer" onclick="setFilter('retainer')">Retainers</button>
       <button class="pill" data-filter="campaign" onclick="setFilter('campaign')">Campaigns</button>
+      <button class="pill" data-filter="creator_connections" onclick="setFilter('creator_connections')">Creator Connections</button>
       <button class="pill" data-filter="refundable" onclick="setFilter('refundable')">Refundable Samples</button>
       <button class="pill" data-filter="week" onclick="setFilter('week')">Due This Week</button>
     </div>
@@ -166,7 +168,7 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
     <div class="form-grid">
       <div class="form-row form-wide"><label class="form-label">Deal Name</label><input class="form-input" id="dealName" placeholder="e.g., PetLab Probiotic Chew"></div>
       <div class="form-row"><label class="form-label">Brand</label><input class="form-input" id="dealBrand" placeholder="e.g., PetLab Co"></div>
-      <div class="form-row"><label class="form-label">Type</label><select class="form-input" id="dealType" onchange="toggleModalFields()"><option value="sample">Sample</option><option value="retainer">Retainer</option><option value="campaign">Campaign</option></select></div>
+      <div class="form-row"><label class="form-label">Type</label><select class="form-input" id="dealType" onchange="toggleModalFields()"><option value="sample">Sample</option><option value="retainer">Retainer</option><option value="campaign">Campaign</option><option value="creator_connections">Creator Connections</option></select></div>
       <div class="form-row"><label class="form-label" id="labelReceived">Received</label><input class="form-input" id="dealReceived" type="date" oninput="updateReturnPreview()"></div>
       <div class="form-row" id="dueDateRow"><label class="form-label" id="labelDue">Due Date</label><input class="form-input" id="dealDue" type="date"></div>
       <div class="form-row" id="daysToReturnRow" style="display:none;">
@@ -230,7 +232,7 @@ function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function parseLocalDate(value){const [y,m,d]=String(value||todayKey()).split('-').map(Number);return new Date(y,m-1,d);}
 function daysLeft(due){return Math.ceil((parseLocalDate(due)-parseLocalDate(todayKey()))/86400000);}
-function typeLabel(type){return ({sample:'Sample',retainer:'Retainer',campaign:'Campaign'}[type]||'Sample');}
+function typeLabel(type){return ({sample:'Sample',retainer:'Retainer',campaign:'Campaign',creator_connections:'Creator Connections'}[type]||'Sample');}
 function statusLabel(status){return ({'not-started':'Not Started','in-progress':'In Progress','on-track':'On Track',completed:'Completed',incomplete:'Incomplete'}[status]||'Not Started');}
 function monthDay(value){if(!value)return '—';return parseLocalDate(value).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
 function fmtGmv(n){return n>0?'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'$0.00';}
@@ -294,7 +296,7 @@ function visibleDeals(){
 function updateStats(){
   const active=deals.filter(d=>d.status!=='completed').length;
   const week=deals.filter(d=>d.status!=='completed'&&daysLeft(d.due)>=0&&daysLeft(d.due)<=7).length;
-  const campaigns=deals.filter(d=>d.type==='campaign'&&d.status!=='completed').length;
+  const campaigns=deals.filter(d=>(d.type==='campaign'||d.type==='creator_connections')&&d.status!=='completed').length;
   document.getElementById('statActive').textContent=active;
   document.getElementById('statWeek').textContent=week;
   document.getElementById('statCampaigns').textContent=campaigns;
@@ -315,7 +317,7 @@ function videoMatchesDeal(video,dealId){
 async function fetchDealProgress(deal){
   // Campaigns enforce date range; samples/retainers/refundable count all tagged videos
   let q=db.from('videos').select('gmv,date,units,campaign_id,notes').eq('user_id',user.id);
-  if(deal.type==='campaign'){
+  if(deal.type==='campaign'||deal.type==='creator_connections'){
     if(deal.received) q=q.gte('date',deal.received);
     if(deal.due) q=q.lte('date',deal.due);
   }
@@ -355,7 +357,7 @@ async function renderDeals(){
   }));
 
   body.innerHTML=rows.map(deal=>{
-    const isCampaign=deal.type==='campaign';
+    const isCampaign=deal.type==='campaign'||deal.type==='creator_connections';
     let status, criteriaHtml;
 
     if(isCampaign){
@@ -420,7 +422,7 @@ function closeBriefModal(){document.getElementById('briefModal').classList.remov
 
 function toggleModalFields(){
   const type=document.getElementById('dealType').value;
-  const isCampaign=type==='campaign';
+  const isCampaign=type==='campaign'||type==='creator_connections';
   const isRefundable=!isCampaign&&(document.getElementById('dealRefundable')?.checked||false);
   // campaign-only rows
   document.getElementById('minGmvRow').style.display=isCampaign?'':'none';
@@ -568,9 +570,9 @@ async function saveDeal(){
     received:document.getElementById('dealReceived').value||todayKey(),
     due:computeDueFromDays()||todayKey(),
 
-    done:type==='campaign'?Number(document.getElementById('dealDone').value)||0:0,
+    done:(type==='campaign'||type==='creator_connections')?Number(document.getElementById('dealDone').value)||0:0,
     needed:Number(document.getElementById('dealNeeded').value)||1,
-    min_gmv:type==='campaign'?(parseFloat(document.getElementById('dealMinGmv').value)||0):0,
+    min_gmv:(type==='campaign'||type==='creator_connections')?(parseFloat(document.getElementById('dealMinGmv').value)||0):0,
     link:document.getElementById('dealLink').value.trim(),
     notes:document.getElementById('dealNotes').value.trim(),
     refundable:document.getElementById('dealRefundable')?.checked||false,
