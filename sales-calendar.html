@@ -69,6 +69,7 @@ a{text-decoration:none;color:inherit;}
 .vs-list{display:flex;flex-direction:column;gap:10px;}
 .vs-row{border:1px solid var(--border-mid);border-radius:var(--r);padding:10px;background:color-mix(in srgb,var(--surface) 72%,var(--bg) 28%);}
 .vs-row-top{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.vs-source{flex:0 0 108px;}
 .vs-select{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--border-mid);border-radius:8px;background:var(--surface);color:var(--text);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:600;outline:none;}
 .vs-select:focus{border-color:var(--rust);}
 .vs-remove{flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid var(--border-mid);background:transparent;color:var(--text-muted);cursor:pointer;font-size:15px;line-height:1;}
@@ -77,6 +78,7 @@ a{text-decoration:none;color:inherit;}
 .vs-num-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:8px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;}
 .vs-num{width:100%;padding:7px 9px;border:1px solid var(--border-mid);border-radius:8px;background:var(--surface);color:var(--text);font-family:'Noto Sans Mono',sans-serif;font-size:14px;font-weight:600;outline:none;}
 .vs-num:focus{border-color:var(--rust);}
+.vs-row-top .vs-select{font-size:12px;}
 .vs-empty{font-family:'IBM Plex Serif',serif;font-size:13px;color:var(--text-muted);font-style:italic;}
 .form-input[readonly]{opacity:0.72;cursor:not-allowed;}
 .vs-hint{font-family:'IBM Plex Serif',serif;font-size:11px;color:var(--text-muted);margin-top:6px;}
@@ -149,8 +151,8 @@ body{overflow-x:hidden;}
     <div class="vs-hint" id="vsTotalHint" style="display:none;">Totals above are calculated from the video breakdown below.</div>
     <div class="vs-section">
       <div class="vs-head">
-        <label class="form-label" style="margin-bottom:0;">Sales by video</label>
-        <button type="button" class="btn btn-ghost" style="padding:6px 12px;" onclick="addVideoSaleRow()">+ Add video</button>
+        <label class="form-label" style="margin-bottom:0;">Sales breakdown</label>
+        <button type="button" class="btn btn-ghost" style="padding:6px 12px;" onclick="addVideoSaleRow()">+ Add sale</button>
       </div>
       <div class="vs-list" id="vsList"></div>
     </div>
@@ -176,6 +178,7 @@ async function init(){
   initProfilePopover(user.id);
   _user=user;
   await loadVideoOptions();
+  await loadProductOptions();
   await loadMonth();
 }
 
@@ -203,27 +206,51 @@ async function loadVideoOptions(){
   }));
 }
 
+let _productOptions=[];
+
+async function loadProductOptions(){
+  const {data,error}=await db.from('products')
+    .select('id,name,brand')
+    .eq('user_id',_user.id)
+    .order('name');
+  if(error){console.warn('Could not load products for sales attribution',error);_productOptions=[];return;}
+  _productOptions=(data||[]).map(p=>({
+    id:p.id,
+    label:(String(p.name||'').trim()||'Untitled product')+(String(p.brand||'').trim()?` — ${String(p.brand).trim()}`:'')
+  }));
+}
+
 function parseVideoSales(entry){
   let raw=entry?.video_sales;
   if(!raw)return [];
   if(typeof raw==='string'){try{raw=JSON.parse(raw);}catch(e){return [];}}
   if(!Array.isArray(raw))return [];
-  return raw.map(r=>({
-    uid:++_vsSeq,
-    video_id:String(r?.video_id||''),
-    units:Number(r?.units)||0,
-    gmv:Number(r?.gmv)||0,
-    comm:Number(r?.comm)||0
-  }));
+  return raw.map(r=>{
+    // Rows saved before showcase support had no `source` — treat them as video sales.
+    const source=String(r?.source||'')==='showcase'?'showcase':'video';
+    return {
+      uid:++_vsSeq,
+      source,
+      video_id:String(r?.video_id||''),
+      product_id:String(r?.product_id||''),
+      units:Number(r?.units)||0,
+      gmv:Number(r?.gmv)||0,
+      comm:Number(r?.comm)||0
+    };
+  });
 }
 
 function readVsRowsFromDom(){
   _vsRows=_vsRows.map(row=>{
     const wrap=document.getElementById(`vsRow${row.uid}`);
     if(!wrap)return row;
+    const source=wrap.querySelector('[data-vs="source"]').value==='showcase'?'showcase':'video';
+    const target=wrap.querySelector('[data-vs="target"]');
     return {
       uid:row.uid,
-      video_id:wrap.querySelector('.vs-select').value||'',
+      source,
+      video_id:source==='video'?(target?.value||''):'',
+      product_id:source==='showcase'?(target?.value||''):'',
       units:parseInt(wrap.querySelector('[data-vs="units"]').value,10)||0,
       gmv:parseFloat(wrap.querySelector('[data-vs="gmv"]').value)||0,
       comm:parseFloat(wrap.querySelector('[data-vs="comm"]').value)||0
@@ -240,12 +267,23 @@ function renderVsRows(){
     return;
   }
   list.innerHTML=_vsRows.map(row=>{
-    const opts=['<option value="">Select a video...</option>'].concat(
-      _videoOptions.map(o=>`<option value="${o.id}"${o.id===row.video_id?' selected':''}>${escHtml(o.label)}</option>`)
+    const isShowcase=row.source==='showcase';
+    const options=isShowcase?_productOptions:_videoOptions;
+    const selected=isShowcase?row.product_id:row.video_id;
+    const placeholder=isShowcase?'Select a product...':'Select a video...';
+    const emptyNote=isShowcase
+      ? (_productOptions.length?'':'<option value="" disabled>No products saved yet</option>')
+      : (_videoOptions.length?'':'<option value="" disabled>No videos saved yet</option>');
+    const opts=[`<option value="">${placeholder}</option>`,emptyNote].concat(
+      options.map(o=>`<option value="${o.id}"${o.id===selected?' selected':''}>${escHtml(o.label)}</option>`)
     ).join('');
     return `<div class="vs-row" id="vsRow${row.uid}">
       <div class="vs-row-top">
-        <select class="vs-select">${opts}</select>
+        <select class="vs-select vs-source" data-vs="source" onchange="changeVideoSaleSource(${row.uid},this.value)">
+          <option value="video"${isShowcase?'':' selected'}>Video</option>
+          <option value="showcase"${isShowcase?' selected':''}>Showcase</option>
+        </select>
+        <select class="vs-select" data-vs="target">${opts}</select>
         <button type="button" class="vs-remove" title="Remove" onclick="removeVideoSaleRow(${row.uid})">&#x2715;</button>
       </div>
       <div class="vs-nums">
@@ -279,7 +317,19 @@ function applyVsTotals(){
 
 function addVideoSaleRow(){
   readVsRowsFromDom();
-  _vsRows.push({uid:++_vsSeq,video_id:'',units:0,gmv:0,comm:0});
+  _vsRows.push({uid:++_vsSeq,source:'video',video_id:'',product_id:'',units:0,gmv:0,comm:0});
+  renderVsRows();
+}
+
+function changeVideoSaleSource(uid,value){
+  readVsRowsFromDom();
+  const row=_vsRows.find(r=>r.uid===uid);
+  if(row){
+    row.source=value==='showcase'?'showcase':'video';
+    // Clear the other side so a stale id can't be saved against the wrong source.
+    if(row.source==='showcase')row.video_id='';
+    else row.product_id='';
+  }
   renderVsRows();
 }
 
@@ -292,6 +342,7 @@ function removeVideoSaleRow(uid){
 function escHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 window.addVideoSaleRow=addVideoSaleRow;
+window.changeVideoSaleSource=changeVideoSaleSource;
 window.removeVideoSaleRow=removeVideoSaleRow;
 window.applyVsTotals=applyVsTotals;
 
@@ -399,8 +450,10 @@ function closeModal(){document.getElementById('modalOverlay').classList.remove('
 
 async function saveEntry(){
   const videoSales=readVsRowsFromDom()
-    .filter(r=>r.video_id&&(r.units||r.gmv||r.comm))
-    .map(r=>({video_id:r.video_id,units:r.units,gmv:r.gmv,comm:r.comm}));
+    .filter(r=>(r.source==='showcase'?r.product_id:r.video_id)&&(r.units||r.gmv||r.comm))
+    .map(r=>r.source==='showcase'
+      ? {source:'showcase',product_id:r.product_id,units:r.units,gmv:r.gmv,comm:r.comm}
+      : {source:'video',video_id:r.video_id,units:r.units,gmv:r.gmv,comm:r.comm});
   const units=parseInt(document.getElementById('fUnits').value)||0;
   const gmv=parseFloat(document.getElementById('fGmv').value)||0;
   const comm=parseFloat(document.getElementById('fComm').value)||0;
