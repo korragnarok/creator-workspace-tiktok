@@ -316,7 +316,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 <script>
 const PAGE_SIZE=25;
 const TRACKER_VIEW_KEY='take24:video_tracker_view';
-const PRODUCT_IMPORT_KEY='take24:scrapecreators_api_key';
+// ScrapeCreators key now lives in the Cloudflare worker — no client-side key needed.
 const SCOUT_WORKER_URL='https://take24-scout.kortnycall5.workers.dev';
 const TIKTOK_HANDLE_KEY='take24:tiktok_handle';
 const TIKTOK_IMPORT_BATCH_SIZE=60;
@@ -1146,13 +1146,8 @@ function openImportModal(){
 }
 async function importNew(){
   const savedHandle=(localStorage.getItem(TIKTOK_HANDLE_KEY)||'').trim();
-  const key=(localStorage.getItem(PRODUCT_IMPORT_KEY)||'').trim();
   if(!savedHandle){
     showToast('Add your TikTok handle in Settings first','error');
-    return;
-  }
-  if(!key){
-    showToast('Add your ScrapeCreators key in Settings first','error');
     return;
   }
   const btn=document.getElementById('importNewBtn');
@@ -1621,7 +1616,7 @@ function importThumbError(img){
   img.src='icons/default-product.png';
 }
 window.importThumbError=importThumbError;
-async function fetchTikTokVideosForHandle(handle,key){
+async function fetchTikTokVideosForHandle(handle){
   async function fetchPages(param){
     // Route through Cloudflare worker — no client-side API key needed
     const workerBase=`${SCOUT_WORKER_URL}?endpoint=v3/tiktok/profile/videos&${param}=${encodeURIComponent(handle)}`;
@@ -1682,13 +1677,12 @@ async function fetchTikTokVideosForHandle(handle,key){
 }
 async function searchTikTokVideos(){
   const handle=normalizeTikTokHandle((localStorage.getItem(TIKTOK_HANDLE_KEY)||'').trim());
-  const key=(localStorage.getItem(PRODUCT_IMPORT_KEY)||'').trim();
   if(!handle){importSetState('error','Add your TikTok handle in Settings first.');return;}
   document.getElementById('importResults').innerHTML='';
   importSetState('loading');
   try{
     await ensureProductOptions();
-    const rawVideos=await fetchTikTokVideosForHandle(handle,key);
+    const rawVideos=await fetchTikTokVideosForHandle(handle);
     const importedIdentities=await loadImportedTikTokIdentities();
     const allNormalized=uniqueTikTokVideos(rawVideos.map(normalizeTikTokVideo).filter(video=>video.caption||video.url));
     const remainingNormalized=allNormalized.filter(video=>!isAlreadyImportedTikTok(video,importedIdentities));
