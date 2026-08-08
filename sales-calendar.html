@@ -69,12 +69,9 @@ a{text-decoration:none;color:inherit;}
 .vs-list{display:flex;flex-direction:column;gap:10px;}
 .vs-row{border:1px solid var(--border-mid);border-radius:var(--r);padding:10px;background:color-mix(in srgb,var(--surface) 72%,var(--bg) 28%);}
 .vs-row-top{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
-.vs-search{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--border-mid);border-radius:8px;background:var(--surface);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:13px;outline:none;}
-.vs-search:focus{border-color:var(--rust);}
-.vs-search::placeholder{color:var(--text-muted);}
-.vs-target-select{width:100%;margin-bottom:8px;}
-.vs-target-select[size]{padding:4px;}
-.vs-nomatch{font-family:'IBM Plex Serif',serif;font-size:12px;font-style:italic;color:var(--text-muted);margin-bottom:8px;}
+.vs-combo{flex:1;min-width:0;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:600;}
+.vs-combo::placeholder{color:var(--text-muted);font-weight:500;}
+.vs-combo::-webkit-calendar-picker-indicator{opacity:0.5;cursor:pointer;}
 .vs-source{flex:0 0 108px;}
 .vs-select{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--border-mid);border-radius:8px;background:var(--surface);color:var(--text);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:600;outline:none;}
 .vs-select:focus{border-color:var(--rust);}
@@ -197,7 +194,7 @@ async function loadMonth(){
   render();
 }
 // ── Per-video sales breakdown ──────────────────────────────────────────────
-let _videoOptions=[], _vsRows=[], _vsSeq=0, _vsSearch={};
+let _videoOptions=[], _vsRows=[], _vsSeq=0;
 
 function noteLineValue(notes,label){
   const escaped=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
@@ -226,7 +223,18 @@ async function loadVideoOptions(){
     const caption=shortCaption(v);
     const product=String(v.brand||'').trim()||String(v.title||'').trim();
     const label=[caption,product].filter(Boolean).join(' — ')||'Untitled video';
-    return {id:v.id,label,search:`${caption} ${product}`.toLowerCase()};
+    return {id:v.id,label};
+  });
+  dedupeLabels(_videoOptions);
+}
+
+// A typed label has to resolve to exactly one record, so disambiguate collisions.
+function dedupeLabels(list){
+  const seen={};
+  list.forEach(o=>{
+    const base=o.label;
+    seen[base]=(seen[base]||0)+1;
+    if(seen[base]>1)o.label=`${base} (${seen[base]})`;
   });
 }
 
@@ -240,8 +248,9 @@ async function loadProductOptions(){
   if(error){console.warn('Could not load products for sales attribution',error);_productOptions=[];return;}
   _productOptions=(data||[]).map(p=>{
     const label=(String(p.name||'').trim()||'Untitled product')+(String(p.brand||'').trim()?` — ${String(p.brand).trim()}`:'');
-    return {id:p.id,label,search:label.toLowerCase()};
+    return {id:p.id,label};
   });
+  dedupeLabels(_productOptions);
 }
 
 function parseVideoSales(entry){
@@ -269,12 +278,15 @@ function readVsRowsFromDom(){
     const wrap=document.getElementById(`vsRow${row.uid}`);
     if(!wrap)return row;
     const source=wrap.querySelector('[data-vs="source"]').value==='showcase'?'showcase':'video';
-    const target=wrap.querySelector('[data-vs="target"]');
+    const typed=String(wrap.querySelector('[data-vs="target"]')?.value||'').trim();
+    const pool=source==='showcase'?_productOptions:_videoOptions;
+    const match=pool.find(o=>o.label.toLowerCase()===typed.toLowerCase());
+    const chosenId=match?match.id:'';
     return {
       uid:row.uid,
       source,
-      video_id:source==='video'?(target?.value||''):'',
-      product_id:source==='showcase'?(target?.value||''):'',
+      video_id:source==='video'?chosenId:'',
+      product_id:source==='showcase'?chosenId:'',
       units:parseInt(wrap.querySelector('[data-vs="units"]').value,10)||0,
       gmv:parseFloat(wrap.querySelector('[data-vs="gmv"]').value)||0,
       comm:parseFloat(wrap.querySelector('[data-vs="comm"]').value)||0
@@ -295,31 +307,18 @@ function renderVsRows(){
     const options=isShowcase?_productOptions:_videoOptions;
     const selected=isShowcase?row.product_id:row.video_id;
     const placeholder=isShowcase?'Select a product...':'Select a video...';
-    const emptyNote=isShowcase
-      ? (_productOptions.length?'':'<option value="" disabled>No products saved yet</option>')
-      : (_videoOptions.length?'':'<option value="" disabled>No videos saved yet</option>');
-    const term=String(_vsSearch[row.uid]||'').trim().toLowerCase();
-    // Always keep the chosen option present so filtering can't silently clear it.
-    const visible=term
-      ? options.filter(o=>o.search.includes(term)||o.id===selected)
-      : options;
-    const opts=[`<option value="">${placeholder}</option>`,emptyNote].concat(
-      visible.map(o=>`<option value="${o.id}"${o.id===selected?' selected':''}>${escHtml(o.label)}</option>`)
-    ).join('');
-    const noMatch=term&&!visible.length
-      ? `<div class="vs-nomatch">No ${isShowcase?'products':'videos'} match &ldquo;${escHtml(term)}&rdquo;</div>`
-      : '';
+    const selectedLabel=options.find(o=>o.id===selected)?.label||'';
+    const opts=options.map(o=>`<option value="${escHtml(o.label)}"></option>`).join('');
     return `<div class="vs-row" id="vsRow${row.uid}">
       <div class="vs-row-top">
         <select class="vs-select vs-source" data-vs="source" onchange="changeVideoSaleSource(${row.uid},this.value)">
           <option value="video"${isShowcase?'':' selected'}>Video</option>
           <option value="showcase"${isShowcase?' selected':''}>Showcase</option>
         </select>
-        <input type="search" class="vs-search" data-vs="search" placeholder="Search ${isShowcase?'products':'videos'}..." value="${escHtml(_vsSearch[row.uid]||'')}" oninput="filterVsOptions(${row.uid},this.value)" autocomplete="off">
+        <input class="vs-select vs-combo" data-vs="target" list="vsOpts${row.uid}" value="${escHtml(selectedLabel)}" placeholder="${placeholder}" autocomplete="off">
+        <datalist id="vsOpts${row.uid}">${opts}</datalist>
         <button type="button" class="vs-remove" title="Remove" onclick="removeVideoSaleRow(${row.uid})">&#x2715;</button>
       </div>
-      <select class="vs-select vs-target-select" data-vs="target" size="${visible.length>1&&term?Math.min(visible.length+1,6):1}">${opts}</select>
-      ${noMatch}
       <div class="vs-nums">
         <div><label class="vs-num-label">Units</label><input type="number" class="vs-num" data-vs="units" min="0" placeholder="0" value="${row.units||''}" oninput="applyVsTotals()"></div>
         <div><label class="vs-num-label">GMV ($)</label><input type="number" class="vs-num" data-vs="gmv" min="0" step="0.01" placeholder="0.00" value="${row.gmv||''}" oninput="applyVsTotals()"></div>
@@ -355,14 +354,6 @@ function addVideoSaleRow(){
   renderVsRows();
 }
 
-function filterVsOptions(uid,value){
-  _vsSearch[uid]=value;
-  renderVsRows();
-  // Re-focus the search box and restore the caret after the re-render.
-  const input=document.querySelector(`#vsRow${uid} [data-vs="search"]`);
-  if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length);}
-}
-
 function changeVideoSaleSource(uid,value){
   readVsRowsFromDom();
   const row=_vsRows.find(r=>r.uid===uid);
@@ -371,7 +362,6 @@ function changeVideoSaleSource(uid,value){
     // Clear the other side so a stale id can't be saved against the wrong source.
     if(row.source==='showcase')row.video_id='';
     else row.product_id='';
-    _vsSearch[uid]='';
   }
   renderVsRows();
 }
@@ -386,7 +376,6 @@ function escHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<'
 
 window.addVideoSaleRow=addVideoSaleRow;
 window.changeVideoSaleSource=changeVideoSaleSource;
-window.filterVsOptions=filterVsOptions;
 window.removeVideoSaleRow=removeVideoSaleRow;
 window.applyVsTotals=applyVsTotals;
 
@@ -485,7 +474,6 @@ function openModal(key,day){
   document.getElementById('fComm').value=entry?.comm||'';
   document.getElementById('fNote').value=entry?.note||'';
   _vsRows=parseVideoSales(entry);
-  _vsSearch={};
   renderVsRows();
   document.getElementById('modalOverlay').classList.add('open');
   setTimeout(()=>document.getElementById('fUnits').focus(),100);
