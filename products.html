@@ -120,11 +120,14 @@ tbody td{padding:7px 12px;color:var(--text-mid);vertical-align:middle;}
 .tbl-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
 .tbl-action{border:1px solid var(--border-mid);border-radius:7px;background:transparent;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer;white-space:nowrap;}
 .tbl-action:hover{border-color:var(--rust);color:var(--rust);}
-.editable-cell{display:inline-flex;align-items:center;min-height:26px;max-width:220px;white-space:normal;border:1px solid transparent;border-radius:7px;padding:3px 7px;margin:-3px -7px;cursor:text;transition:border-color 0.12s,background 0.12s;color:inherit;}
+.editable-cell{position:relative;display:inline-flex;align-items:center;min-height:26px;max-width:220px;white-space:normal;border:1px solid transparent;border-radius:7px;padding:3px 7px;margin:-3px -7px;cursor:text;transition:border-color 0.12s,background 0.12s;color:inherit;}
 .editable-cell:hover{border-color:var(--border-mid);background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);}
 .editable-cell.stock-badge,.editable-cell.active-badge{cursor:pointer;margin:0;}
 .inline-editor{width:100%;min-width:96px;border:1px solid var(--sage);border-radius:7px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:13px;padding:6px 8px;outline:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--sage) 18%,transparent);}
 td.num .inline-editor{max-width:96px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:800;}
+/* Long text fields get a roomy overlay so the whole value stays visible while editing. */
+.inline-editor-wide{position:absolute;left:-7px;top:-5px;z-index:60;width:340px;max-width:min(340px,72vw);min-height:64px;line-height:1.4;white-space:pre-wrap;overflow:hidden;resize:none;box-shadow:0 10px 28px rgba(0,0,0,0.22),0 0 0 2px color-mix(in srgb,var(--sage) 24%,transparent);}
+@media (max-width:768px){.inline-editor-wide{width:min(300px,78vw);}}
 .features-cell .editable-cell{display:flex;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .search-import-modal{max-width:700px;}
 .search-import-help{font-size:13px;color:var(--text-muted);margin:-8px 0 18px;line-height:1.6;}
@@ -1116,15 +1119,26 @@ async function init() {
         ? '<option value="active">Active</option><option value="shelved">Shelved</option>'
         : '<option value="active">In Stock</option><option value="paused">Out of Stock</option><option value="promote">Promote Now</option>';
       editor.value = originalValue;
+    } else if(field === 'name' || field === 'brand' || field === 'tags' || field === 'notes') {
+      // Long text: use an auto-growing textarea so the whole value is readable.
+      editor = document.createElement('textarea');
+      editor.rows = 2;
+      editor.value = originalValue;
     } else {
       editor = document.createElement('input');
       editor.type = field === 'units_sold' ? 'number' : 'text';
       if(field === 'units_sold') { editor.min = '0'; editor.step = '1'; }
       editor.value = originalValue;
     }
-    editor.className = 'inline-editor';
+    const isWide = editor.tagName === 'TEXTAREA';
+    editor.className = isWide ? 'inline-editor inline-editor-wide' : 'inline-editor';
     host.innerHTML = '';
     host.appendChild(editor);
+    const autoGrow = () => {
+      editor.style.height = 'auto';
+      editor.style.height = Math.max(64, editor.scrollHeight + 2) + 'px';
+    };
+    if(isWide) { autoGrow(); editor.addEventListener('input', autoGrow); }
     editor.focus();
     if(editor.select) editor.select();
 
@@ -1133,7 +1147,9 @@ async function init() {
     const save = async () => {
       if(saved) return;
       saved = true;
-      const next = field === 'units_sold' ? Math.max(0, parseInt(editor.value, 10) || 0) : editor.value.trim();
+      const next = field === 'units_sold'
+        ? Math.max(0, parseInt(editor.value, 10) || 0)
+        : (field === 'notes' ? editor.value.trim() : editor.value.replace(/\s+/g, ' ').trim());
       if(field === 'name' && !next) {
         saved = false;
         editor.focus();
@@ -1158,7 +1174,7 @@ async function init() {
     };
     editor.addEventListener('click', e => e.stopPropagation());
     editor.addEventListener('keydown', e => {
-      if(e.key === 'Enter') { e.preventDefault(); save(); }
+      if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
       if(e.key === 'Escape') { e.preventDefault(); saved = true; host.innerHTML = originalHtml; }
     });
     editor.addEventListener('blur', save);
