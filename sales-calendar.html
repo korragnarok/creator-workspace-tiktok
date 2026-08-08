@@ -64,6 +64,22 @@ a{text-decoration:none;color:inherit;}
 .form-input{width:100%;padding:10px 14px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:'Noto Sans Mono',sans-serif;font-size:18px;font-weight:600;outline:none;transition:border-color 0.15s;}
 .form-input:focus{border-color:var(--rust);}
 .form-input-sm{font-family:'IBM Plex Serif',serif;font-size:14px;font-weight:400;resize:vertical;min-height:60px;}
+.vs-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px;}
+.vs-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.vs-list{display:flex;flex-direction:column;gap:10px;}
+.vs-row{border:1px solid var(--border-mid);border-radius:var(--r);padding:10px;background:color-mix(in srgb,var(--surface) 72%,var(--bg) 28%);}
+.vs-row-top{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.vs-select{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--border-mid);border-radius:8px;background:var(--surface);color:var(--text);font-family:'Stack Sans Notch',sans-serif;font-size:13px;font-weight:600;outline:none;}
+.vs-select:focus{border-color:var(--rust);}
+.vs-remove{flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid var(--border-mid);background:transparent;color:var(--text-muted);cursor:pointer;font-size:15px;line-height:1;}
+.vs-remove:hover{border-color:var(--rust);color:var(--rust);}
+.vs-nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.vs-num-label{display:block;font-family:'Stack Sans Notch',sans-serif;font-size:8px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;}
+.vs-num{width:100%;padding:7px 9px;border:1px solid var(--border-mid);border-radius:8px;background:var(--surface);color:var(--text);font-family:'Noto Sans Mono',sans-serif;font-size:14px;font-weight:600;outline:none;}
+.vs-num:focus{border-color:var(--rust);}
+.vs-empty{font-family:'IBM Plex Serif',serif;font-size:13px;color:var(--text-muted);font-style:italic;}
+.form-input[readonly]{opacity:0.72;cursor:not-allowed;}
+.vs-hint{font-family:'IBM Plex Serif',serif;font-size:11px;color:var(--text-muted);margin-top:6px;}
 .form-row-half{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .modal-actions{display:flex;gap:10px;margin-top:20px;}
 .log-section{margin-top:36px;}
@@ -130,7 +146,15 @@ body{overflow-x:hidden;}
       <div class="form-row" style="margin-bottom:0"><label class="form-label">GMV ($)</label><input type="number" class="form-input" id="fGmv" min="0" step="0.01" placeholder="0.00"></div>
     </div>
     <div class="form-row" style="margin-top:14px"><label class="form-label">Commission ($)</label><input type="number" class="form-input" id="fComm" min="0" step="0.01" placeholder="0.00"></div>
-    <div class="form-row"><label class="form-label">Note (optional)</label><textarea class="form-input form-input-sm" id="fNote" placeholder="Top product, anything notable..."></textarea></div>
+    <div class="vs-hint" id="vsTotalHint" style="display:none;">Totals above are calculated from the video breakdown below.</div>
+    <div class="vs-section">
+      <div class="vs-head">
+        <label class="form-label" style="margin-bottom:0;">Sales by video</label>
+        <button type="button" class="btn btn-ghost" style="padding:6px 12px;" onclick="addVideoSaleRow()">+ Add video</button>
+      </div>
+      <div class="vs-list" id="vsList"></div>
+    </div>
+    <div class="form-row" style="margin-top:14px;"><label class="form-label">Note (optional)</label><textarea class="form-input form-input-sm" id="fNote" placeholder="Top product, anything notable..."></textarea></div>
     <div class="modal-actions"><button class="btn btn-primary" style="flex:1;" onclick="saveEntry()">Save</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
   </div>
 </div>
@@ -151,6 +175,7 @@ async function init(){
   await initTheme(user.id, prefs);
   initProfilePopover(user.id);
   _user=user;
+  await loadVideoOptions();
   await loadMonth();
 }
 
@@ -162,12 +187,121 @@ async function loadMonth(){
   (data||[]).forEach(r=>{ if(hasSalesData(r)) _salesCache[r.date]=r; });
   render();
 }
+// ── Per-video sales breakdown ──────────────────────────────────────────────
+let _videoOptions=[], _vsRows=[], _vsSeq=0;
+
+async function loadVideoOptions(){
+  const {data,error}=await db.from('videos')
+    .select('id,brand,title,date')
+    .eq('user_id',_user.id)
+    .order('date',{ascending:false,nullsFirst:false});
+  if(error){console.warn('Could not load videos for sales attribution',error);_videoOptions=[];return;}
+  _videoOptions=(data||[]).map(v=>({
+    id:v.id,
+    label:(String(v.brand||'').trim()||String(v.title||'').trim()||'Untitled video')
+      +(v.date?` — ${new Date(v.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}`:'')
+  }));
+}
+
+function parseVideoSales(entry){
+  let raw=entry?.video_sales;
+  if(!raw)return [];
+  if(typeof raw==='string'){try{raw=JSON.parse(raw);}catch(e){return [];}}
+  if(!Array.isArray(raw))return [];
+  return raw.map(r=>({
+    uid:++_vsSeq,
+    video_id:String(r?.video_id||''),
+    units:Number(r?.units)||0,
+    gmv:Number(r?.gmv)||0,
+    comm:Number(r?.comm)||0
+  }));
+}
+
+function readVsRowsFromDom(){
+  _vsRows=_vsRows.map(row=>{
+    const wrap=document.getElementById(`vsRow${row.uid}`);
+    if(!wrap)return row;
+    return {
+      uid:row.uid,
+      video_id:wrap.querySelector('.vs-select').value||'',
+      units:parseInt(wrap.querySelector('[data-vs="units"]').value,10)||0,
+      gmv:parseFloat(wrap.querySelector('[data-vs="gmv"]').value)||0,
+      comm:parseFloat(wrap.querySelector('[data-vs="comm"]').value)||0
+    };
+  });
+  return _vsRows;
+}
+
+function renderVsRows(){
+  const list=document.getElementById('vsList');
+  if(!_vsRows.length){
+    list.innerHTML='<div class="vs-empty">No video tagged — this day logs as a general sale.</div>';
+    applyVsTotals();
+    return;
+  }
+  list.innerHTML=_vsRows.map(row=>{
+    const opts=['<option value="">Select a video...</option>'].concat(
+      _videoOptions.map(o=>`<option value="${o.id}"${o.id===row.video_id?' selected':''}>${escHtml(o.label)}</option>`)
+    ).join('');
+    return `<div class="vs-row" id="vsRow${row.uid}">
+      <div class="vs-row-top">
+        <select class="vs-select">${opts}</select>
+        <button type="button" class="vs-remove" title="Remove" onclick="removeVideoSaleRow(${row.uid})">&#x2715;</button>
+      </div>
+      <div class="vs-nums">
+        <div><label class="vs-num-label">Units</label><input type="number" class="vs-num" data-vs="units" min="0" placeholder="0" value="${row.units||''}" oninput="applyVsTotals()"></div>
+        <div><label class="vs-num-label">GMV ($)</label><input type="number" class="vs-num" data-vs="gmv" min="0" step="0.01" placeholder="0.00" value="${row.gmv||''}" oninput="applyVsTotals()"></div>
+        <div><label class="vs-num-label">Comm ($)</label><input type="number" class="vs-num" data-vs="comm" min="0" step="0.01" placeholder="0.00" value="${row.comm||''}" oninput="applyVsTotals()"></div>
+      </div>
+    </div>`;
+  }).join('');
+  applyVsTotals();
+}
+
+function applyVsTotals(){
+  const rows=readVsRowsFromDom();
+  const unitsEl=document.getElementById('fUnits');
+  const gmvEl=document.getElementById('fGmv');
+  const commEl=document.getElementById('fComm');
+  const hint=document.getElementById('vsTotalHint');
+  if(!rows.length){
+    [unitsEl,gmvEl,commEl].forEach(el=>el.removeAttribute('readonly'));
+    hint.style.display='none';
+    return;
+  }
+  const totals=rows.reduce((acc,r)=>({units:acc.units+r.units,gmv:acc.gmv+r.gmv,comm:acc.comm+r.comm}),{units:0,gmv:0,comm:0});
+  unitsEl.value=totals.units||'';
+  gmvEl.value=totals.gmv?totals.gmv.toFixed(2):'';
+  commEl.value=totals.comm?totals.comm.toFixed(2):'';
+  [unitsEl,gmvEl,commEl].forEach(el=>el.setAttribute('readonly','readonly'));
+  hint.style.display='block';
+}
+
+function addVideoSaleRow(){
+  readVsRowsFromDom();
+  _vsRows.push({uid:++_vsSeq,video_id:'',units:0,gmv:0,comm:0});
+  renderVsRows();
+}
+
+function removeVideoSaleRow(uid){
+  readVsRowsFromDom();
+  _vsRows=_vsRows.filter(r=>r.uid!==uid);
+  renderVsRows();
+}
+
+function escHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+window.addVideoSaleRow=addVideoSaleRow;
+window.removeVideoSaleRow=removeVideoSaleRow;
+window.applyVsTotals=applyVsTotals;
+
 function hasSalesData(entry){
   return !!(
     (parseInt(entry?.units,10)||0) ||
     (parseFloat(entry?.gmv)||0) ||
     (parseFloat(entry?.comm)||0) ||
-    String(entry?.note||'').trim()
+    String(entry?.note||'').trim() ||
+    (Array.isArray(entry?.video_sales) && entry.video_sales.length)
   );
 }
 
@@ -255,6 +389,8 @@ function openModal(key,day){
   document.getElementById('fGmv').value=entry?.gmv||'';
   document.getElementById('fComm').value=entry?.comm||'';
   document.getElementById('fNote').value=entry?.note||'';
+  _vsRows=parseVideoSales(entry);
+  renderVsRows();
   document.getElementById('modalOverlay').classList.add('open');
   setTimeout(()=>document.getElementById('fUnits').focus(),100);
 }
@@ -262,12 +398,15 @@ function openModal(key,day){
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');editingKey=null;}
 
 async function saveEntry(){
+  const videoSales=readVsRowsFromDom()
+    .filter(r=>r.video_id&&(r.units||r.gmv||r.comm))
+    .map(r=>({video_id:r.video_id,units:r.units,gmv:r.gmv,comm:r.comm}));
   const units=parseInt(document.getElementById('fUnits').value)||0;
   const gmv=parseFloat(document.getElementById('fGmv').value)||0;
   const comm=parseFloat(document.getElementById('fComm').value)||0;
   const note=document.getElementById('fNote').value.trim();
   const existing=_salesCache[editingKey];
-  const row={units,gmv,comm,note};
+  const row={units,gmv,comm,note,video_sales:videoSales};
   if(!hasSalesData(row)){
     if(existing) await db.from('sales').delete().eq('id',existing.id).eq('user_id',_user.id);
     showToast('Day reset');
@@ -276,9 +415,11 @@ async function saveEntry(){
     return;
   }
   if(existing){
-    await db.from('sales').update({units,gmv,comm,note}).eq('id',existing.id);
+    const {error}=await db.from('sales').update({units,gmv,comm,note,video_sales:videoSales}).eq('id',existing.id);
+    if(error){showToast('Save failed: '+(error.message||'unknown'),'error');return;}
   } else {
-    await db.from('sales').insert({user_id:_user.id,date:editingKey,units,gmv,comm,note});
+    const {error}=await db.from('sales').insert({user_id:_user.id,date:editingKey,units,gmv,comm,note,video_sales:videoSales});
+    if(error){showToast('Save failed: '+(error.message||'unknown'),'error');return;}
   }
   showToast('Saved');
   closeModal();

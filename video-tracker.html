@@ -170,6 +170,9 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .video-card-stat{border:1px solid var(--border-mid);border-radius:8px;padding:7px 8px;background:color-mix(in srgb,var(--surface) 72%,var(--bg) 28%);}
 .video-card-stat strong{display:block;font-family:'Noto Sans Mono',sans-serif;font-size:13px;color:var(--ink);line-height:1.1;}
 .video-card-stat span{font-family:'Stack Sans Notch',sans-serif;font-size:8px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);}
+.video-card-sales{display:flex;align-items:center;gap:6px;flex-wrap:wrap;border:1px solid color-mix(in srgb,var(--rust) 42%,var(--border-mid));border-radius:8px;padding:7px 9px;background:color-mix(in srgb,var(--rust) 12%,var(--surface) 88%);font-family:'Noto Sans Mono',sans-serif;font-size:11px;font-weight:600;color:var(--text-mid);}
+.video-card-sales .vcs-gmv{font-size:13px;font-weight:800;color:var(--ink);}
+.video-card-sales .vcs-sep{color:var(--text-muted);}
 .video-card-actions{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 14px;}
 .video-card-actions .tbl-action{flex:1;text-align:center;justify-content:center;}
 .import-modal{max-width:920px;}
@@ -646,6 +649,7 @@ async function loadVideos(pageToShow=currentPage){
       v._dealClass=v._dealTags?.[0]?.cls||'';
     });
   }
+  await applyVideoSalesTotals();
   updateStats();
   goPage(pageToShow||1);
 }
@@ -721,6 +725,39 @@ function renderPagination(filtered){
   }
   return {start,pages};
 }
+// ── Per-video sales totals (sourced from the sales calendar) ───────────────
+async function applyVideoSalesTotals(){
+  DATA.forEach(v=>{v._salesUnits=0;v._salesGmv=0;v._salesComm=0;});
+  if(!DATA.length)return;
+  const {data,error}=await db.from('sales').select('video_sales').eq('user_id',user.id);
+  if(error){
+    if(!/video_sales/i.test(error.message||''))console.warn('Could not load sales totals',error);
+    return;
+  }
+  const totals={};
+  (data||[]).forEach(sale=>{
+    let rows=sale?.video_sales;
+    if(typeof rows==='string'){try{rows=JSON.parse(rows);}catch(e){return;}}
+    if(!Array.isArray(rows))return;
+    rows.forEach(r=>{
+      const id=String(r?.video_id||'');
+      if(!id)return;
+      const t=totals[id]||(totals[id]={units:0,gmv:0,comm:0});
+      t.units+=Number(r?.units)||0;
+      t.gmv+=Number(r?.gmv)||0;
+      t.comm+=Number(r?.comm)||0;
+    });
+  });
+  DATA.forEach(v=>{
+    const t=totals[String(v.id)];
+    if(!t)return;
+    v._salesUnits=t.units;v._salesGmv=t.gmv;v._salesComm=t.comm;
+  });
+}
+function fmtMoneyShort(n){
+  const value=Number(n)||0;
+  return '$'+value.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
 function videoCoverUrl(v){
   return String(v.thumbnail_url||v.cover_url||v.image_url||noteLineValue(v.notes,'TikTok thumbnail')||noteLineValue(v.notes,'Thumbnail')||v._productImage||'').trim();
 }
@@ -765,6 +802,12 @@ function renderGrid(){
           <div class="video-card-stat"><strong>${likes?fmtNum(likes):'-'}</strong><span>Likes</span></div>
           <div class="video-card-stat"><strong>${shares?fmtNum(shares):'-'}</strong><span>Shares</span></div>
         </div>
+        ${(v._salesUnits||v._salesGmv)?`<div class="video-card-sales">
+          <span class="vcs-gmv">${fmtMoneyShort(v._salesGmv)}</span>
+          <span class="vcs-sep">&middot;</span>
+          <span>${fmtNum(v._salesUnits)} ${v._salesUnits===1?'unit':'units'}</span>
+          ${v._salesComm?`<span class="vcs-sep">&middot;</span><span>${fmtMoneyShort(v._salesComm)} comm</span>`:''}
+        </div>`:''}
       </div>
       <div class="video-card-actions">
         ${v.link?`<a class="tbl-action" href="${esc(v.link)}" target="_blank" rel="noopener">Watch</a>`:''}
