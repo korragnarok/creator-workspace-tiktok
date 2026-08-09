@@ -798,11 +798,12 @@ async function init() {
   const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
   await carryForwardUnfinishedQueue(user.id, todayStr);
 
-  const [{ data: rows }, { data: products }, videos, { data: queue }] = await Promise.all([
+  const [{ data: rows }, { data: products }, videos, { data: queue }, attributedSales] = await Promise.all([
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
     db.from('products').select('id,name,brand,units_sold,image_url').eq('user_id', user.id).order('created_at', { ascending:false }),
     fetchDashboardVideos(user.id),
-    db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr).order('sort_order')
+    db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr).order('sort_order'),
+    fetchAttributedSales(user.id)
   ]);
   _todayQueue=queue||[];
   _dashboardVideos=videos||[];
@@ -824,7 +825,7 @@ async function init() {
 
   renderTodayContent();
   renderLineup(user.id);
-  const productUnits=videoUnitsByProduct(products||[], videos||[]);
+  const productUnits=videoUnitsByProduct(products||[], videos||[], attributedSales||[]);
   const topProducts=(products||[]).slice().sort((a,b)=>(productUnits.get(b.id)||0)-(productUnits.get(a.id)||0)).filter(p=>(productUnits.get(p.id)||0)>0).slice(0,3);
   if(topProducts.length){
     document.getElementById('top-products').className='top-product-list';
@@ -918,7 +919,18 @@ function videoProductName(video) {
   const productLine = String(video.notes || '').match(/^Product:\s*(.+)$/im);
   return (productLine?.[1] || video.brand || video.title || '').trim();
 }
-function videoUnitsByProduct(products, videos) {
+// All-time attributed sales for the Top Products rollup. Returns [] when the
+// video_sales column is missing so the dashboard still renders.
+async function fetchAttributedSales(userId) {
+  const { data, error } = await db.from('sales').select('video_sales').eq('user_id', userId);
+  if(error) {
+    if(!/video_sales/i.test(error.message || '')) console.warn('Could not load attributed sales', error);
+    return [];
+  }
+  return data || [];
+}
+
+function videoUnitsByProduct(products, videos, attributedSales) {
   const unitSums = new Map((products || []).map(product => [product.id, 0]));
   const byName = new Map();
   (products || []).forEach(product => {
@@ -927,14 +939,33 @@ function videoUnitsByProduct(products, videos) {
     if(!byName.has(key))byName.set(key, []);
     byName.get(key).push(product.id);
   });
+  // Which product(s) each video credits — reused for calendar attribution.
+  const productIdsByVideo = new Map();
   (videos || []).forEach(video => {
     const units = Number(video.units) || 0;
-    if(video.prod_id && unitSums.has(video.prod_id)) {
-      unitSums.set(video.prod_id, (unitSums.get(video.prod_id) || 0) + units);
-      return;
-    }
-    const matches = byName.get(normalizeProductKey(videoProductName(video))) || [];
-    matches.forEach(id => unitSums.set(id, (unitSums.get(id) || 0) + units));
+    let targets;
+    if(video.prod_id && unitSums.has(video.prod_id)) targets = [video.prod_id];
+    else targets = byName.get(normalizeProductKey(videoProductName(video))) || [];
+    productIdsByVideo.set(String(video.id), targets);
+    targets.forEach(id => unitSums.set(id, (unitSums.get(id) || 0) + units));
+  });
+  // Sales logged in the calendar stack on top of the historical video baseline.
+  (attributedSales || []).forEach(sale => {
+    let entries = sale?.video_sales;
+    if(typeof entries === 'string') { try { entries = JSON.parse(entries); } catch(e) { return; } }
+    if(!Array.isArray(entries)) return;
+    entries.forEach(entry => {
+      const units = Number(entry?.units) || 0;
+      if(!units) return;
+      if(String(entry?.source || '') === 'showcase') {
+        const pid = String(entry?.product_id || '');
+        if(pid && unitSums.has(pid)) unitSums.set(pid, (unitSums.get(pid) || 0) + units);
+        return;
+      }
+      (productIdsByVideo.get(String(entry?.video_id || '')) || []).forEach(pid => {
+        if(unitSums.has(pid)) unitSums.set(pid, (unitSums.get(pid) || 0) + units);
+      });
+    });
   });
   return unitSums;
 }
