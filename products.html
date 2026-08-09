@@ -656,6 +656,7 @@ let _sortField = 'product';
 let _sortDir = 1;
 let _videoCountsByProduct = new Map();
 let _videoUnitsByProduct = new Map();
+let _productIdsByVideo = new Map();
 
 async function init() {
   const user = await requireAuth();
@@ -814,6 +815,7 @@ async function init() {
       if(!byName.has(key)) byName.set(key, []);
       byName.get(key).push(p.id);
     });
+    _productIdsByVideo = new Map();
     let result = await db.from('videos').select('id,title,brand,notes,prod_id,units').eq('user_id', user.id);
     if(result.error && /prod_id/i.test(result.error.message || '')) {
       result = await db.from('videos').select('id,title,brand,notes,units').eq('user_id', user.id);
@@ -836,13 +838,45 @@ async function init() {
         if(haystack.includes(` ${item.key} `)) matchedIds.add(item.id);
       });
       if(!matchedIds.size && linkedProduct) matchedIds.add(video.prod_id);
+      _productIdsByVideo.set(String(video.id), Array.from(matchedIds));
       matchedIds.forEach(id => {
         counts.set(id, (counts.get(id) || 0) + 1);
         unitSums.set(id, (unitSums.get(id) || 0) + (Number(video.units) || 0));
       });
     });
+    await addCalendarUnits(unitSums);
     _videoUnitsByProduct = unitSums;
     return counts;
+  }
+
+  // Sales logged in the sales calendar stack on top of the historical video-unit
+  // baseline. Old calendar days have an empty video_sales array, so they add
+  // nothing and existing totals are untouched.
+  async function addCalendarUnits(unitSums) {
+    const { data, error } = await db.from('sales').select('video_sales').eq('user_id', user.id);
+    if(error) {
+      if(!/video_sales/i.test(error.message || '')) console.warn('Could not load calendar sales', error);
+      return;
+    }
+    (data || []).forEach(sale => {
+      let rows = sale?.video_sales;
+      if(typeof rows === 'string') { try { rows = JSON.parse(rows); } catch(e) { return; } }
+      if(!Array.isArray(rows)) return;
+      rows.forEach(r => {
+        const units = Number(r?.units) || 0;
+        if(!units) return;
+        if(String(r?.source || '') === 'showcase') {
+          const pid = String(r?.product_id || '');
+          if(pid && unitSums.has(pid)) unitSums.set(pid, (unitSums.get(pid) || 0) + units);
+          return;
+        }
+        // Video sale: credit whichever product(s) that video resolves to.
+        const targets = _productIdsByVideo.get(String(r?.video_id || '')) || [];
+        targets.forEach(pid => {
+          if(unitSums.has(pid)) unitSums.set(pid, (unitSums.get(pid) || 0) + units);
+        });
+      });
+    });
   }
   function dateKey(d) {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');

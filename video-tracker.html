@@ -1840,7 +1840,14 @@ async function adjustProductUnitsById(productId, delta) {
   await db.from('products').update({ units_sold: nextUnits }).eq('id', productId).eq('user_id', user.id);
   return true;
 }
+// Sales now flow exclusively from the sales calendar. Video unit counts are a
+// note on the video only — they no longer touch products.units_sold, which is
+// frozen as the historical baseline. Kept as a no-op so existing callers work.
 async function syncVideoUnitsToProduct(previousVideo, nextVideo) {
+  return;
+}
+
+async function _legacySyncVideoUnitsToProduct(previousVideo, nextVideo) {
   const prevUnits = Number(previousVideo?.units) || 0;
   const nextUnits = Number(nextVideo?.units) || 0;
   const prevProductId = previousVideo?.prod_id || null;
