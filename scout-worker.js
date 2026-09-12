@@ -86,28 +86,25 @@ export default {
       }
 
       // User info (basic + stats) — GET, forwarded with the caller's access token
-if (action === 'user_info') {
-  if (request.method !== 'GET') {
-    return new Response('Method not allowed', { status: 405, headers: corsHeaders });
-  }
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader) {
-    return new Response(JSON.stringify({ error: 'Missing Authorization header' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  }
-  
-  // Updated fields to match user.info.basic and user.info.stats
-  const fields = 'open_id,avatar_url,display_name,follower_count,likes_count,video_count';
-  
-  try {
-    const apiRes = await fetch(`https://open.tiktokapis.com/v2/user/info/?fields=${fields}`, {
-      headers: { Authorization: authHeader },
-    });
-    const data = await apiRes.text();
-    return new Response(data, { status: apiRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  }
-}
+      if (action === 'user_info') {
+        if (request.method !== 'GET') {
+          return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+        }
+        const authHeader = request.headers.get('Authorization');
+        if (!authHeader) {
+          return new Response(JSON.stringify({ error: 'Missing Authorization header' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        const fields = 'open_id,avatar_url,display_name,follower_count,following_count,likes_count,video_count';
+        try {
+          const apiRes = await fetch(`https://open.tiktokapis.com/v2/user/info/?fields=${fields}`, {
+            headers: { Authorization: authHeader },
+          });
+          const data = await apiRes.text();
+          return new Response(data, { status: apiRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        } catch (e) {
+          return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+      }
 
       // Video list — POST passthrough, forwarded with the caller's access token
       if (action === 'video_list') {

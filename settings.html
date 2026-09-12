@@ -406,13 +406,9 @@ async function checkTikTokOAuthCallback() {
   if (code) {
     if (btn) { btn.disabled = true; btn.textContent = 'Connecting...'; }
     const redirectUri = window.location.origin + '/settings.html';
-    
-    // Clean URL query parameters before performing exchange
-    window.history.replaceState({}, document.title, window.location.pathname);
-
     const { error, userInfo } = await exchangeTikTokCode(_user.id, code, redirectUri);
+    window.history.replaceState({}, document.title, window.location.pathname);
     if (error) {
-      console.error('TikTok Exchange Error:', error);
       showToast('Could not connect TikTok — please try again', 'error');
       if (btn) { btn.disabled = false; btn.textContent = 'Connect TikTok'; }
       return;
