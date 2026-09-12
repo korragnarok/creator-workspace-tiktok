@@ -218,6 +218,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div><div class="page-eyebrow">Content Tracker</div><div class="page-title">Videos <em>&amp;</em> Posts</div><p class="page-sub">Track posted content, views, and what's working.</p></div>
     <div class="header-actions">
       <button class="btn btn-ghost" id="editVideosBtn" onclick="toggleVideoEditMode()">Edit Videos</button>
+      <button class="btn btn-ghost" id="syncTikTokBtn" onclick="syncFromConnectedTikTok()">⟳ Sync from TikTok</button>
       <button class="btn btn-primary" id="importNewBtn" onclick="importNew()">↓ Import New</button>
       <button class="btn btn-primary" onclick="openModal()">+ Log Video</button>
     </div>
@@ -276,7 +277,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="modal-title">Import New Videos</div>
     <div class="import-error" id="importError"></div>
     <div class="import-state" id="importLoading">Looking for posted videos — this may take a minute...</div>
-    <div class="import-state" id="importEmpty">No videos found for that account.</div>
+    <div class="import-state" id="importEmpty">No videos found.</div>
     <div class="import-debug" id="importDebug"></div>
     <div class="import-results" id="importResults"></div>
     <div class="modal-actions">
@@ -1753,6 +1754,94 @@ async function searchTikTokVideos(){
 }
 window.searchTikTokVideos=searchTikTokVideos;
 window.importNew=importNew;
+
+// ── Real TikTok API sync (video.list, via connected account) ─────────────────
+// Separate path from the ScrapeCreators handle-search above: this pulls videos
+// straight from the TikTok account connected in Settings, using the Worker's
+// video_list proxy. Feeds into the exact same review modal / dedupe / import
+// pipeline as the scraper path, just with a different video source.
+function normalizeOfficialTikTokVideo(raw){
+  const caption=raw.video_description||raw.title||'';
+  const posted=normalizeTikTokDate(raw); // raw.create_time (unix seconds) works with the existing date logic
+  const hashtags=[...new Set((caption.match(/#[\w]+/g)||[]))];
+  return {
+    caption,
+    hook:firstSentence(caption),
+    url:raw.share_url||'',
+    thumbnail:raw.cover_image_url||'',
+    thumbnailCandidates:raw.cover_image_url?[raw.cover_image_url]:[],
+    views:Number(raw.view_count)||0,
+    likes:Number(raw.like_count)||0,
+    shares:Number(raw.share_count)||0,
+    comments:Number(raw.comment_count)||0,
+    sound:'',
+    hashtags,
+    date:posted.date,
+    time:posted.time,
+    shopProductId:'',
+    shopProductName:'',
+    source:'api',
+    raw
+  };
+}
+async function fetchTikTokVideosFromAccount(){
+  const accessToken=await getValidTikTokAccessToken(user.id);
+  if(!accessToken)throw new Error('Connect TikTok in Settings first.');
+  let all=[],cursor=null,pages=0;
+  while(pages<TIKTOK_IMPORT_MAX_PAGES){
+    const res=await fetch(`${SCOUT_WORKER_URL}?service=tiktok&action=video_list`,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${accessToken}`,'Content-Type':'application/json'},
+      body:JSON.stringify(cursor?{max_count:20,cursor}:{max_count:20})
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||data.error)throw new Error(data.error?.message||data.error||`TikTok API error ${res.status}`);
+    const videos=extractTikTokVideos(data);
+    if(!videos.length)break;
+    pages++;
+    all=all.concat(videos);
+    if(!extractHasMore(data))break;
+    const nextCursor=data?.data?.cursor;
+    if(!nextCursor||nextCursor===cursor)break;
+    cursor=nextCursor;
+  }
+  return all;
+}
+async function syncFromConnectedTikTok(){
+  const btn=document.getElementById('syncTikTokBtn');
+  document.getElementById('importResults').innerHTML='';
+  _importVideos=[];
+  importSetState('');
+  document.getElementById('importOverlay').classList.add('open');
+  importSetState('loading');
+  if(btn){btn.disabled=true;btn.textContent='Syncing...';}
+  try{
+    await ensureProductOptions();
+    const rawVideos=await fetchTikTokVideosFromAccount();
+    const importedIdentities=await loadImportedTikTokIdentities();
+    const allNormalized=uniqueTikTokVideos(rawVideos.map(normalizeOfficialTikTokVideo).filter(video=>video.caption||video.url));
+    const remainingNormalized=allNormalized.filter(video=>!isAlreadyImportedTikTok(video,importedIdentities));
+    const alreadyImportedCount=allNormalized.length-remainingNormalized.length;
+    const normalized=remainingNormalized.slice(0,TIKTOK_IMPORT_BATCH_SIZE);
+    _importVideos=await Promise.all(normalized.map(enrichTikTokThumbnail));
+    if(!_importVideos.length){
+      const message=allNormalized.length
+        ?`No new videos found. Checked ${allNormalized.length} videos from your TikTok account; ${alreadyImportedCount} were already imported.`
+        :'No videos found on your connected TikTok account.';
+      importSetState('empty',message);
+      importDebugSummary(rawVideos,[],{uniqueCount:allNormalized.length,alreadyImportedCount});
+      return;
+    }
+    importSetState('');
+    importDebugSummary(rawVideos,_importVideos,{uniqueCount:allNormalized.length,alreadyImportedCount});
+    renderImportResults();
+  }catch(err){
+    importSetState('error','Sync failed: '+(err.message||'Unknown error'));
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='⟳ Sync from TikTok';}
+  }
+}
+window.syncFromConnectedTikTok=syncFromConnectedTikTok;
 function importNotesForTikTok(video,product){
   const lines=[
     `Product: ${product?.name||'Unlisted product'}`,
@@ -1765,7 +1854,7 @@ function importNotesForTikTok(video,product){
     video.shares?`Shares: ${video.shares}`:'',
     video.comments?`Comments: ${video.comments}`:'',
     video.sound?`Sound: ${video.sound}`:'',
-    'Imported from TikTok scraper.'
+    video.source==='api'?'Imported from your connected TikTok account.':'Imported from TikTok scraper.'
   ].filter(Boolean);
   return lines.join('\n');
 }
