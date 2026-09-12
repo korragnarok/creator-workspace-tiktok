@@ -351,7 +351,7 @@ async function init() {
   if (tiktokHandleInput) tiktokHandleInput.value = localStorage.getItem(TIKTOK_HANDLE_KEY) || '';
 
   buildProfileIconGrid();
-  checkTikTokOAuthCallback();
+  await checkTikTokOAuthCallback();
 }
 
 document.addEventListener('keydown', e => {
@@ -378,30 +378,49 @@ function initiateTikTokOAuth() {
   window.location.href = authUrl;
 }
 
-function checkTikTokOAuthCallback() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  const isConnected = localStorage.getItem('take24:tiktok_connected') === 'true';
+function renderTikTokConnected(username) {
   const nameEl = document.getElementById('tiktokAccountName');
   const subEl = document.getElementById('tiktokAccountSub');
   const btn = document.getElementById('tiktokAuthBtn');
+  if (nameEl) nameEl.textContent = username ? `@${username}` : 'Connected';
+  if (subEl) subEl.textContent = 'Account linked & active';
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Disconnect';
+    btn.style.background = 'transparent';
+    btn.style.color = 'var(--rust)';
+    btn.style.border = '1px solid var(--border-mid)';
+    btn.onclick = async () => {
+      btn.disabled = true; btn.textContent = 'Disconnecting...';
+      await disconnectTikTok(_user.id);
+      window.location.href = 'settings.html';
+    };
+  }
+}
 
-  if (code || isConnected) {
-    if (code) showToast('TikTok authorized successfully!');
-    if (nameEl) nameEl.textContent = '@connected_creator';
-    if (subEl) subEl.textContent = 'Account linked & active';
-    if (btn) {
-      btn.textContent = 'Disconnect';
-      btn.style.background = 'transparent';
-      btn.style.color = 'var(--rust)';
-      btn.style.border = '1px solid var(--border-mid)';
-      btn.onclick = () => {
-        localStorage.removeItem('take24:tiktok_connected');
-        window.location.href = 'settings.html';
-      };
+async function checkTikTokOAuthCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const btn = document.getElementById('tiktokAuthBtn');
+
+  if (code) {
+    if (btn) { btn.disabled = true; btn.textContent = 'Connecting...'; }
+    const redirectUri = window.location.origin + '/settings.html';
+    const { error, userInfo } = await exchangeTikTokCode(_user.id, code, redirectUri);
+    window.history.replaceState({}, document.title, window.location.pathname);
+    if (error) {
+      showToast('Could not connect TikTok — please try again', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = 'Connect TikTok'; }
+      return;
     }
-    localStorage.setItem('take24:tiktok_connected', 'true');
-    if (code) window.history.replaceState({}, document.title, window.location.pathname);
+    renderTikTokConnected(userInfo?.display_name);
+    showToast('TikTok connected!');
+    return;
+  }
+
+  const tiktokPrefs = await loadTikTokPrefs(_user.id);
+  if (tiktokPrefs?.tiktok_connected) {
+    renderTikTokConnected(tiktokPrefs.tiktok_username);
   }
 }
 </script>
