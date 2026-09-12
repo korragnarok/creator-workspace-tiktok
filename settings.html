@@ -365,7 +365,7 @@ init();
 
 // ── TikTok OAuth Helper ───────────────────────────────────────────────────────
 function initiateTikTokOAuth() {
-  const clientKey = localStorage.getItem('take24:tiktok_client_key') || 'YOUR_CLIENT_KEY';
+  const clientKey = localStorage.getItem('take24:tiktok_client_key') || 'sbawec6gkhecnn619p';
   const redirectUri = encodeURIComponent(window.location.origin + '/settings.html');
   const scope = encodeURIComponent('user.info.basic,user.info.stats,video.list');
   const state = Math.random().toString(36).substring(2);
