@@ -1177,11 +1177,7 @@ function importDebugSummary(rawVideos=[],videos=[],meta={}){
     sampleKeys:Object.keys(sample||{}),
     sampleVideoKeys:Object.keys(sample?.video||{})
   };
-  const el=document.getElementById('importDebug');
-  if(el){
-    el.textContent=`Debug: ${rawCount} raw videos, ${uniqueCount} unique, ${alreadyImportedCount} already imported, ${shownCount} shown, ${thumbCount} thumbnails, ${urlCount} TikTok URLs.`;
-    el.style.display='block';
-  }
+  // Kept for console debugging only — no longer shown in the modal itself.
   console.info('TikTok import debug',_lastImportDebug,sample);
 }
 function openImportModal(){
