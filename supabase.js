@@ -896,7 +896,11 @@ async function fetchTikTokUserInfo(accessToken) {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   const data = await res.json();
-  if (!res.ok || data.error) throw new Error(data.error?.message || data.error || 'Failed to fetch TikTok user info');
+  // TikTok always includes an "error" object, even on success (error.code === "ok").
+  // Only treat it as a real failure when the code says otherwise.
+  if (!res.ok || (data.error && data.error.code && data.error.code !== 'ok')) {
+    throw new Error(data.error?.message || 'Failed to fetch TikTok user info');
+  }
   return data.data?.user || null;
 }
 
