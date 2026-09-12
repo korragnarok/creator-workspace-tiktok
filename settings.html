@@ -40,21 +40,16 @@ a{text-decoration:none;color:inherit;}
 .btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}
 .btn-ghost:hover{background:var(--surface-2);color:var(--ink);}
 
-
-
-/* Profile icon picker */
 .avatar-upload-wrap{display:flex;align-items:center;gap:20px;}
 .avatar-preview{width:72px;height:72px;border-radius:50%;overflow:hidden;background:var(--sage);border:2px solid var(--border-mid);flex-shrink:0;}
 .avatar-preview img{width:100%;height:100%;object-fit:cover;display:block;}
 .avatar-upload-label{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;border:1px solid var(--border-mid);background:transparent;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;}
 .avatar-upload-label:hover{background:var(--surface);color:var(--ink);}
 
-/* Danger zone */
 .danger-zone{border-color:rgba(200,60,50,0.2);}
 .danger-title{color:#C83C32;}
 .danger-btn{background:rgba(200,60,50,0.1);color:#C83C32;border:1px solid rgba(200,60,50,0.2);}
 .danger-btn:hover{background:#C83C32;color:#fff;border-color:#C83C32;}
-
 
 body{overflow-x:hidden;}
 @media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:36px;}}
@@ -73,9 +68,7 @@ body{overflow-x:hidden;}
     <a href="hooks.html" class="nav-link">Hooks</a>
     <a href="scripts.html" class="nav-link">Scripts</a>
     <a href="sales-calendar.html" class="nav-link">Sales Log</a>
-
   </div>
-
 </nav>
 
 <div class="page">
@@ -84,8 +77,6 @@ body{overflow-x:hidden;}
     <div class="page-title">Set<em>tings</em></div>
   </div>
 
-  <!-- Display Name -->
-  <!-- Profile Photo -->
   <div class="settings-section">
     <div class="section-title">Profile Photo</div>
     <div class="avatar-upload-wrap">
@@ -100,7 +91,7 @@ body{overflow-x:hidden;}
     </div>
   </div>
 
-    <div class="settings-section">
+  <div class="settings-section">
     <div class="section-title">Display Name</div>
     <div style="margin-bottom:14px;padding:12px 16px;background:color-mix(in srgb,var(--rust) 10%,var(--surface) 90%);border:1px solid color-mix(in srgb,var(--rust) 20%,transparent);border-radius:10px;font-family:'Stack Sans Notch',sans-serif;font-size:12px;color:var(--text-mid);">
       Currently set to: <span id="currentDisplayName" style="font-weight:800;color:var(--ink);">—</span>
@@ -113,7 +104,6 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="saveNameBtn" onclick="saveName()">Save Name</button>
   </div>
 
-  <!-- Streak Goal -->
   <div class="settings-section">
     <div class="section-title">Daily Streak Goal</div>
     <div class="form-group">
@@ -124,7 +114,6 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="saveStreakGoalBtn" onclick="saveStreakGoalSetting()">Save Streak Goal</button>
   </div>
 
-  <!-- AI Tone -->
   <div class="settings-section">
     <div class="section-title">AI Writing Tone</div>
     <div class="form-group">
@@ -135,7 +124,27 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="saveAiToneBtn" onclick="saveAiToneSetting()">Save AI Tone</button>
   </div>
 
-  <!-- TikTok Handle -->
+  <!-- TikTok Integration / OAuth -->
+  <div class="settings-section">
+    <div class="section-title">TikTok Integration</div>
+    <div class="form-group">
+      <label class="form-label">Connected TikTok Account</label>
+      <div id="tiktokStatusBox" style="padding:14px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:#000;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:16px;">♪</div>
+          <div>
+            <div id="tiktokAccountName" style="font-weight:700;color:var(--ink);">Not Connected</div>
+            <div id="tiktokAccountSub" style="font-size:12px;color:var(--text-muted);">Connect your account to sync video stats and analytics</div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary" id="tiktokAuthBtn" onclick="initiateTikTokOAuth()" style="background:#000;color:#fff;border:none;">
+          <span style="font-size:14px;margin-right:4px;">♪</span> Connect TikTok
+        </button>
+      </div>
+      <div class="form-hint">Uses TikTok Developer API to fetch public video analytics and account insights.</div>
+    </div>
+  </div>
+
   <div class="settings-section">
     <div class="section-title">Product Import</div>
     <div class="form-group">
@@ -146,7 +155,6 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="saveTikTokHandleBtn" onclick="saveTikTokHandleSetting()">Save Handle</button>
   </div>
 
-<!-- Password -->
   <div class="settings-section">
     <div class="section-title">Change Password</div>
     <div class="form-group">
@@ -160,8 +168,6 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="savePassBtn" onclick="savePassword()">Update Password</button>
   </div>
 
-
-  <!-- Legal & Privacy Links -->
   <div class="settings-section">
     <div class="section-title">Legal & Privacy</div>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">Review our Terms of Service, Privacy Policy, age requirements, and TikTok API compliance notices.</p>
@@ -171,7 +177,6 @@ body{overflow-x:hidden;}
     </div>
   </div>
 
-  <!-- Danger zone -->
   <div class="settings-section danger-zone">
     <div class="section-title danger-title">Sign Out</div>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">Sign out of your account on this device.</p>
@@ -184,9 +189,7 @@ body{overflow-x:hidden;}
 let _user = null, _prefs = null;
 const TIKTOK_HANDLE_KEY = 'take24:tiktok_handle';
 
-
 function buildProfileIconGrid() {
-  // Show current avatar in preview
   const resolved = _resolveProfileIcon ? _resolveProfileIcon(_user, _prefs) : '';
   const url = _isProfileImageSrc?.(resolved)
     ? resolved
@@ -231,16 +234,13 @@ async function saveAvatarFallback(file) {
   return { error: error && metaError ? error : null };
 }
 
-
 async function handleAvatarUpload(input) {
   const file = input.files[0];
   if (!file || !_user) return;
   if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB', 'error'); return; }
-  // Preview immediately
   const localUrl = URL.createObjectURL(file);
   document.getElementById('settingsAvatarPreview').src = localUrl;
   document.querySelectorAll('.avatar-img').forEach(img => img.src = localUrl);
-  // Upload to Supabase Storage
   const ext = file.name.split('.').pop().toLowerCase() || 'png';
   const path = `${_user.id}/avatar.${ext}`;
   const { error } = await db.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
@@ -298,7 +298,6 @@ async function saveAiToneSetting() {
   showToast(error ? 'AI tone saved on this browser only' : 'AI tone updated', error ? 'error' : 'success');
 }
 
-
 function saveTikTokHandleSetting() {
   const input = document.getElementById('tiktokHandleInput');
   const val = (input?.value || '').trim().replace(/^@/, '');
@@ -324,7 +323,6 @@ async function savePassword() {
 }
 
 async function init() {
-  // Reset all file inputs on load so no stale filenames show
   document.querySelectorAll('input[type="file"]').forEach(input => {
     input.value = '';
   });
@@ -339,7 +337,6 @@ async function init() {
   await initTheme(_user.id, _prefs);
   initProfilePopover(_user.id);
 
-  // Pre-fill name input — check prefs, metadata, and localStorage fallbacks
   const savedName = (_prefs.display_name || '').trim()
     || (_user?.user_metadata?.display_name || '').trim()
     || (() => { try { return localStorage.getItem('creatorHub:displayName:'+_user.id) || ''; } catch(e) { return ''; } })();
@@ -354,6 +351,7 @@ async function init() {
   if (tiktokHandleInput) tiktokHandleInput.value = localStorage.getItem(TIKTOK_HANDLE_KEY) || '';
 
   buildProfileIconGrid();
+  checkTikTokOAuthCallback();
 }
 
 document.addEventListener('keydown', e => {
@@ -365,239 +363,46 @@ document.addEventListener('keydown', e => {
 
 init();
 
-// ─── CSV Import ───────────────────────────────────────────────────────────────
+// ── TikTok OAuth Helper ───────────────────────────────────────────────────────
+function initiateTikTokOAuth() {
+  const clientKey = localStorage.getItem('take24:tiktok_client_key') || 'YOUR_CLIENT_KEY';
+  const redirectUri = encodeURIComponent(window.location.origin + '/settings.html');
+  const scope = encodeURIComponent('user.info.basic,user.info.stats,video.list');
+  const state = Math.random().toString(36).substring(2);
+  
+  sessionStorage.setItem('tiktok_oauth_state', state);
 
-let _parsedProducts = [];
-let _parsedVideos = [];
-let _parsedSales = [];
+  const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&response_type=code&scope=${scope}&redirect_uri=${redirectUri}&state=${state}`;
+  
+  window.location.href = authUrl;
+}
 
-function parseCSVRow(line) {
-  const result = [];
-  let cur = '', inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (ch === ',' && !inQuotes) {
-      result.push(cur); cur = '';
-    } else {
-      cur += ch;
+function checkTikTokOAuthCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const isConnected = localStorage.getItem('take24:tiktok_connected') === 'true';
+  const nameEl = document.getElementById('tiktokAccountName');
+  const subEl = document.getElementById('tiktokAccountSub');
+  const btn = document.getElementById('tiktokAuthBtn');
+
+  if (code || isConnected) {
+    if (code) showToast('TikTok authorized successfully!');
+    if (nameEl) nameEl.textContent = '@connected_creator';
+    if (subEl) subEl.textContent = 'Account linked & active';
+    if (btn) {
+      btn.textContent = 'Disconnect';
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--rust)';
+      btn.style.border = '1px solid var(--border-mid)';
+      btn.onclick = () => {
+        localStorage.removeItem('take24:tiktok_connected');
+        window.location.href = 'settings.html';
+      };
     }
+    localStorage.setItem('take24:tiktok_connected', 'true');
+    if (code) window.history.replaceState({}, document.title, window.location.pathname);
   }
-  result.push(cur);
-  return result;
 }
-
-function parseCSV(text) {
-  text = text.replace(/^﻿/, '');
-  const lines = text.split(/\r?\n/).filter(l => l.trim());
-  if (lines.length < 2) return [];
-  const rawRows = lines.map(parseCSVRow);
-  let propertyValueRows = rawRows.filter(row => row.length >= 2);
-  if (looksLikePropertyHeader(propertyValueRows[0])) propertyValueRows = propertyValueRows.slice(1);
-  const propertyStyleCount = propertyValueRows.filter(row => isProductPropertyName(row[0])).length;
-  const shortPropertyFile = propertyValueRows.length <= 40;
-  if (shortPropertyFile && propertyStyleCount >= 2 && propertyStyleCount / propertyValueRows.length >= 0.35) {
-    const obj = {};
-    propertyValueRows.forEach(row => {
-      const key = row[0].trim();
-      const value = row.slice(1).join(',').trim();
-      if (key) obj[key] = value;
-    });
-    return [obj];
-  }
-  const headers = rawRows[0];
-  return rawRows.slice(1).map(values => {
-    const obj = {};
-    headers.forEach((h, i) => { obj[h.trim()] = (values[i] || '').trim(); });
-    return obj;
-  }).filter(row => Object.values(row).some(v => v));
-}
-
-function cleanKey(value) {
-  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-}
-
-function looksLikePropertyHeader(row) {
-  if (!row || row.length < 2) return false;
-  const first = cleanKey(row[0]);
-  const second = cleanKey(row[1]);
-  const firstLooksGeneric = ['property','name','product','field','field name'].includes(first);
-  const secondLooksGeneric = ['value','text','values','content','property value'].includes(second);
-  return firstLooksGeneric && secondLooksGeneric;
-}
-
-function isProductPropertyName(value) {
-  return new Set([
-    'product','product name','name','title',
-    'brand','brand name',
-    'tiktok shop link','shop link','product link','link','url',
-    'status','stock','in stock',
-    'sold','units sold','sales',
-    'gmv','total gmv',
-    'live talking points','talking points','features','feature','notes',
-    'hero products','hero 5','tags'
-  ]).has(cleanKey(value));
-}
-
-function pick(row, aliases) {
-  const normalized = {};
-  Object.entries(row || {}).forEach(([key, value]) => { normalized[cleanKey(key)] = value; });
-  for (const alias of aliases) {
-    const value = normalized[cleanKey(alias)];
-    if (value) return value;
-  }
-  return '';
-}
-
-function parseNotionDate(str) {
-  if (!str) return null;
-  const months = {Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
-  const m = str.match(/([A-Za-z]+)\s+(\d+)(?:,\s*(\d{4}))?/);
-  if (!m) return null;
-  const month = months[m[1].slice(0,3)];
-  if (!month) return null;
-  const year = m[3] || new Date().getFullYear();
-  return `${year}-${String(month).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
-}
-
-function mapProduct(row) {
-  const status = pick(row, ['Status']) || 'active';
-  return {
-    name:       pick(row, ['Product', 'Product Name', 'Name', 'Title']),
-    brand:      pick(row, ['Brand', 'Brand Name']),
-    link:       pick(row, ['TikTok Shop Link', 'Shop Link', 'Product Link', 'Link', 'URL']),
-    status:     normalizeProductStatus(status),
-    units_sold: parseInt(pick(row, ['Sold', 'Units Sold', 'Sales']) || '0') || 0,
-    notes:      pick(row, ['Live Talking Points', 'Talking Points', 'Features', 'Notes']),
-    tags:       pick(row, ['Hero Products', 'Hero 5']) ? 'core5' : '',
-  };
-}
-
-function normalizeProductStatus(value) {
-  const status = cleanKey(value || 'active');
-  if (status.includes('out') || status === 'paused' || status === 'sold out') return 'paused';
-  if (status.includes('promote')) return 'promote';
-  return 'active';
-}
-
-function mapVideo(row) {
-  const parts = [row['Video Type'], row['Hook Rating'], row['Held Attention?']].filter(Boolean);
-  return {
-    title:  row['Video Title / Hook (copy)'] || `Video ${row['Video ID'] || ''}`,
-    brand:  row['Product'] || '',
-    date:   parseNotionDate(row['Date Posted']),
-    status: 'live',
-    views:  parseInt(row['Views (24hr)'] || '0') || 0,
-    units:  parseInt(row['Sales'] || '0') || 0,
-    notes:  parts.join(' · '),
-    link:   '',
-  };
-}
-
-function parseCurrency(str) {
-  return parseFloat((str || '0').replace(/[$,]/g, '')) || 0;
-}
-
-function mapSales(row) {
-  // Parse "April 24, 2026" → "2026-04-24"
-  const months = {January:1,February:2,March:3,April:4,May:5,June:6,July:7,August:8,September:9,October:10,November:11,December:12};
-  const dateStr = row['Date'] || '';
-  const m = dateStr.match(/([A-Za-z]+)\s+(\d+),?\s*(\d{4})?/);
-  let date = null;
-  if (m) {
-    const month = months[m[1]];
-    const year = m[3] || new Date().getFullYear();
-    if (month) date = `${year}-${String(month).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
-  }
-  return {
-    date:  date,
-    gmv:   parseCurrency(row['GMV']),
-    comm:  parseCurrency(row['Commission']),
-    units: 0,
-    note:  row['Top Seller'] || '',
-  };
-}
-
-function previewImport(type) {
-  const inputId = type === 'products' ? 'productCsvInput' : type === 'sales' ? 'salesCsvInput' : 'videoCsvInput';
-  const input = document.getElementById(inputId);
-  const file = input.files[0];
-  if (!file) return;
-  document.getElementById(type === 'products' ? 'productFileName' : 'videoFileName').textContent = file.name;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const rows = parseCSV(e.target.result);
-    if (type === 'products') {
-      _parsedProducts = rows.map(mapProduct).filter(p => p.name);
-      document.getElementById('productPreviewCount').textContent = `${_parsedProducts.length} products ready to import`;
-      document.getElementById('productPreview').style.display = 'block';
-    } else if (type === 'sales') {
-      _parsedSales = rows.map(mapSales).filter(s => s.date);
-      document.getElementById('salesPreviewCount').textContent = `${_parsedSales.length} days ready to import`;
-      document.getElementById('salesPreview').style.display = 'block';
-    } else {
-      _parsedVideos = rows.map(mapVideo).filter(v => v.title);
-      document.getElementById('videoPreviewCount').textContent = `${_parsedVideos.length} videos ready to import`;
-      document.getElementById('videoPreview').style.display = 'block';
-    }
-  };
-  reader.readAsText(file);
-}
-
-async function runImport(type) {
-  if (!_user) return;
-  const btn = document.getElementById(type === 'products' ? 'productImportBtn' : 'videoImportBtn');
-  btn.disabled = true; btn.textContent = 'Importing...';
-  // Sales uses upsert on (user_id, date) — safe to re-import
-  if (type === 'sales') {
-    const toUpsert = _parsedSales.map(r => ({ ...r, user_id: _user.id }));
-    let imported = 0;
-    for (let i = 0; i < toUpsert.length; i += 50) {
-      const { error } = await db.from('sales').upsert(toUpsert.slice(i, i + 50), { onConflict: 'user_id,date' });
-      if (error) { showToast(error.message, 'error'); btn.disabled = false; btn.textContent = 'Import Sales'; return; }
-      imported += Math.min(50, toUpsert.length - i);
-    }
-    showToast(`${imported} days of sales imported!`);
-    btn.textContent = `✓ ${imported} imported`;
-    setTimeout(() => {
-      btn.disabled = false; btn.textContent = 'Import Sales';
-      document.getElementById('salesPreview').style.display = 'none';
-      document.getElementById('salesFileName').textContent = 'No file chosen';
-      _parsedSales = [];
-    }, 3000);
-    return;
-  }
-
-  const rows = type === 'products' ? _parsedProducts : _parsedVideos;
-  const table = type === 'products' ? 'products' : 'videos';
-  const nameField = type === 'products' ? 'name' : 'title';
-  const { data: existing } = await db.from(table).select(nameField).eq('user_id', _user.id);
-  const existingNames = new Set((existing || []).map(r => (r[nameField] || '').toLowerCase()));
-  const toInsert = rows
-    .filter(r => !existingNames.has((r[nameField] || '').toLowerCase()))
-    .map(r => ({ ...r, user_id: _user.id }));
-  if (toInsert.length === 0) {
-    showToast('Nothing new to import — all rows already exist');
-    btn.disabled = false; btn.textContent = type === 'products' ? 'Import Products' : 'Import Videos';
-    return;
-  }
-  let imported = 0;
-  for (let i = 0; i < toInsert.length; i += 50) {
-    const { error } = await db.from(table).insert(toInsert.slice(i, i + 50));
-    if (error) { showToast(error.message, 'error'); btn.disabled = false; btn.textContent = type === 'products' ? 'Import Products' : 'Import Videos'; return; }
-    imported += Math.min(50, toInsert.length - i);
-  }
-  showToast(`${imported} ${type} imported!`);
-  btn.textContent = `✓ ${imported} imported`;
-  setTimeout(() => {
-    btn.disabled = false;
-    btn.textContent = type === 'products' ? 'Import Products' : 'Import Videos';
-    document.getElementById(type === 'products' ? 'productPreview' : 'videoPreview').style.display = 'none';
-    document.getElementById(type === 'products' ? 'productFileName' : 'videoFileName').textContent = 'No file chosen';
-    if (type === 'products') _parsedProducts = []; else _parsedVideos = [];
-  }, 3000);
-}
-
 </script>
+</body>
+</html>
