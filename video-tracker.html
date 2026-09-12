@@ -1795,7 +1795,9 @@ async function fetchTikTokVideosFromAccount(){
       body:JSON.stringify(cursor?{max_count:20,cursor}:{max_count:20})
     });
     const data=await res.json().catch(()=>({}));
-    if(!res.ok||data.error)throw new Error(data.error?.message||data.error||`TikTok API error ${res.status}`);
+    // TikTok always includes an "error" object, even on success (error.code === "ok").
+    // Only treat it as a real failure when the code says otherwise.
+    if(!res.ok||(data.error&&data.error.code&&data.error.code!=='ok'))throw new Error(data.error?.message||`TikTok API error ${res.status}`);
     const videos=extractTikTokVideos(data);
     if(!videos.length)break;
     pages++;
