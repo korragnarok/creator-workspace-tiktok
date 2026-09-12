@@ -365,6 +365,7 @@ init();
 
 // ── TikTok OAuth Helper ───────────────────────────────────────────────────────
 function initiateTikTokOAuth() {
+  // Replace 'YOUR_SANDBOX_CLIENT_KEY' with the key copied from Sandbox -> Credentials
   const clientKey = localStorage.getItem('take24:tiktok_client_key') || 'sbawec6gkhecnn619p';
   const redirectUri = encodeURIComponent(window.location.origin + '/settings.html');
   const scope = encodeURIComponent('user.info.basic,user.info.stats,video.list');
