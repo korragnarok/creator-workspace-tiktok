@@ -95,11 +95,8 @@ body{overflow-x:hidden;}
     <div class="avatar-upload-wrap">
       <div class="avatar-preview"><img id="settingsAvatarPreview" src="icons/users/avatar.png" alt="Avatar"></div>
       <div>
-        <label class="avatar-upload-label">
-          Upload Photo
-          <input type="file" accept="image/png,image/jpeg,image/webp" id="avatarFileInput" style="display:none;" onchange="handleAvatarUpload(this)">
-        </label>
-        <div class="form-hint" style="margin-top:8px;">JPG, PNG or WebP. Max 5MB.<br>Shows in your sidebar and profile.</div>
+        <div id="avatarSource" style="font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:6px;">Loading…</div>
+        <div class="form-hint">Pulled from your first connected TikTok account.<br>Connect an account below to set your photo.</div>
       </div>
     </div>
   </div>
@@ -192,72 +189,41 @@ body{overflow-x:hidden;}
 <script>
 let _user = null, _prefs = null;
 
-// ── Profile icon / avatar helpers ────────────────────────────────────────────
-function buildProfileIconGrid() {
-  const resolved = _resolveProfileIcon ? _resolveProfileIcon(_user, _prefs) : '';
-  const url = _isProfileImageSrc?.(resolved)
-    ? resolved
-    : ((_prefs?.profile_icon && _isProfileImageSrc?.(_prefs.profile_icon))
-      ? _prefs.profile_icon
-      : (_cachedAvatarUrl ? _cachedAvatarUrl(_user?.id) : ''));
+// ── Profile photo — sourced from first connected TikTok account ───────────────
+async function loadTikTokAvatar() {
   const preview = document.getElementById('settingsAvatarPreview');
-  if (preview) preview.src = url || 'icons/users/avatar.png';
-}
+  const sourceLabel = document.getElementById('avatarSource');
 
-function fileToAvatarDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = () => { img.src = reader.result; };
-    reader.onerror = reject;
-    img.onload = () => {
-      const size = 320;
-      const canvas = document.createElement('canvas');
-      canvas.width = size; canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      const scale = Math.max(size / img.width, size / img.height);
-      const w = img.width * scale; const h = img.height * scale;
-      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-      resolve(canvas.toDataURL('image/jpeg', 0.82));
-    };
-    img.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+  const { data, error } = await db
+    .from('tiktok_accounts')
+    .select('avatar_url, display_name')
+    .eq('user_id', _user.id)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
-async function saveAvatarFallback(file) {
-  const dataUrl = await fileToAvatarDataUrl(file);
-  _cacheAvatarUrl?.(_user.id, dataUrl);
-  try { localStorage.setItem(`creatorHub:profileIcon:${_user.id}`, dataUrl); } catch(e) {}
-  const { error } = await saveUserPrefs(_user.id, { profile_icon: dataUrl });
-  const { error: metaError } = await db.auth.updateUser({ data: { profile_icon: dataUrl } });
-  document.getElementById('settingsAvatarPreview').src = dataUrl;
-  document.querySelectorAll('.avatar-img').forEach(img => img.src = dataUrl);
-  return { error: error && metaError ? error : null };
-}
-
-async function handleAvatarUpload(input) {
-  const file = input.files[0];
-  if (!file || !_user) return;
-  if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB', 'error'); return; }
-  const localUrl = URL.createObjectURL(file);
-  document.getElementById('settingsAvatarPreview').src = localUrl;
-  document.querySelectorAll('.avatar-img').forEach(img => img.src = localUrl);
-  const ext = file.name.split('.').pop().toLowerCase() || 'png';
-  const path = `${_user.id}/avatar.${ext}`;
-  const { error } = await db.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
-  if (error) {
-    const fallback = await saveAvatarFallback(file);
-    showToast(fallback.error ? 'Photo saved on this browser only' : 'Profile photo saved');
+  if (error || !data || !data.avatar_url) {
+    if (sourceLabel) sourceLabel.textContent = 'No TikTok account connected yet';
     return;
   }
-  const { data: { publicUrl } } = db.storage.from('avatars').getPublicUrl(path);
-  const url = publicUrl + '?t=' + Date.now();
-  _cacheAvatarUrl?.(_user.id, url);
-  await saveUserPrefs(_user.id, { profile_icon: url });
-  await db.auth.updateUser({ data: { profile_icon: url } });
-  document.querySelectorAll('.avatar-img').forEach(img => img.src = url);
-  showToast('Profile photo updated!');
+
+  // Set the preview
+  if (preview) {
+    preview.src = data.avatar_url;
+    preview.onerror = () => { preview.src = 'icons/users/avatar.png'; };
+  }
+
+  // Update the label
+  if (sourceLabel) {
+    sourceLabel.textContent = data.display_name ? `From @${data.display_name}` : 'From TikTok';
+    sourceLabel.style.color = 'var(--sage)';
+  }
+
+  // Sync to sidebar avatars and save to prefs so other pages pick it up
+  document.querySelectorAll('.avatar-img').forEach(img => img.src = data.avatar_url);
+  _cacheAvatarUrl?.(_user.id, data.avatar_url);
+  await saveUserPrefs(_user.id, { profile_icon: data.avatar_url });
+  await db.auth.updateUser({ data: { profile_icon: data.avatar_url } });
 }
 
 // ── Form saves ───────────────────────────────────────────────────────────────
@@ -426,60 +392,84 @@ async function renderTikTokAccountsList() {
 async function checkTikTokOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
+  const errorParam = params.get('error');
 
-  if (code) {
-    const addBtn = document.getElementById('tiktokAddBtn');
-    const list = document.getElementById('tiktokAccountsList');
-    if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Connecting…'; }
-    list.innerHTML = '<div class="tiktok-empty">Connecting account…</div>';
-
-    const redirectUri = window.location.origin + '/settings.html';
-
-    // Exchange code for token via Cloudflare worker
-    const WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
-    let tokenData = null;
-    try {
-      const res = await fetch(`${WORKER_URL}?service=tiktok&action=token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, redirect_uri: redirectUri })
-      });
-      tokenData = await res.json();
-    } catch (e) {
-      showToast('Could not exchange code — please try again', 'error');
-      if (addBtn) { addBtn.disabled = false; addBtn.innerHTML = '<span style="font-size:14px;">♪</span> Add TikTok Account'; }
-      await renderTikTokAccountsList();
-      window.history.replaceState({}, document.title, window.location.pathname);
-      return;
-    }
-
-    // Fetch user info
-    let userInfo = null;
-    try {
-      const infoRes = await fetch(`${WORKER_URL}?service=tiktok&action=user_info`, {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` }
-      });
-      const infoData = await infoRes.json();
-      userInfo = infoData?.data?.user || null;
-    } catch (e) { /* non-fatal */ }
-
-    // Save to tiktok_accounts table
-    const { error } = await upsertTikTokAccount(_user.id, tokenData, userInfo);
+  // Always strip the OAuth params from the URL immediately so a refresh doesn't re-fire
+  if (code || errorParam) {
     window.history.replaceState({}, document.title, window.location.pathname);
+  }
 
-    if (error) {
-      showToast('Could not save account — please try again', 'error');
-    } else {
-      showToast('TikTok account connected!');
-    }
+  // TikTok returned an error (e.g. user cancelled)
+  if (errorParam) {
+    showToast('TikTok connection cancelled', 'error');
+    await renderTikTokAccountsList();
+    return;
+  }
 
+  if (!code) {
+    // Normal page load — just render the list
+    await renderTikTokAccountsList();
+    return;
+  }
+
+  const addBtn = document.getElementById('tiktokAddBtn');
+  const list = document.getElementById('tiktokAccountsList');
+  if (addBtn) { addBtn.disabled = true; addBtn.innerHTML = '<span style="font-size:14px;">♪</span> Connecting…'; }
+  list.innerHTML = '<div class="tiktok-empty">Connecting account…</div>';
+
+  const WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
+  const redirectUri = window.location.origin + '/settings.html';
+
+  // ── Step 1: Exchange code for token ───────────────────────────────────────
+  let tokenData = null;
+  try {
+    const res = await fetch(`${WORKER_URL}?service=tiktok&action=token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, redirect_uri: redirectUri })
+    });
+    tokenData = await res.json();
+  } catch (e) {
+    showToast('Network error — could not reach TikTok. Try again.', 'error');
     if (addBtn) { addBtn.disabled = false; addBtn.innerHTML = '<span style="font-size:14px;">♪</span> Add TikTok Account'; }
     await renderTikTokAccountsList();
     return;
   }
 
-  // No OAuth callback — just render the current list
+  // TikTok returns errors as 200 OK with an error field — check for it
+  if (!tokenData?.access_token) {
+    const reason = tokenData?.error_description || tokenData?.error || 'Unknown error';
+    console.error('TikTok token error:', tokenData);
+    showToast(`Could not connect TikTok: ${reason}`, 'error');
+    if (addBtn) { addBtn.disabled = false; addBtn.innerHTML = '<span style="font-size:14px;">♪</span> Add TikTok Account'; }
+    await renderTikTokAccountsList();
+    return;
+  }
+
+  // ── Step 2: Fetch user info ───────────────────────────────────────────────
+  let userInfo = null;
+  try {
+    const infoRes = await fetch(`${WORKER_URL}?service=tiktok&action=user_info`, {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` }
+    });
+    const infoData = await infoRes.json();
+    userInfo = infoData?.data?.user || null;
+  } catch (e) { /* non-fatal — we still save the token */ }
+
+  // ── Step 3: Save to tiktok_accounts table ─────────────────────────────────
+  const { error } = await upsertTikTokAccount(_user.id, tokenData, userInfo);
+
+  if (error) {
+    console.error('Supabase upsert error:', error);
+    showToast('Could not save account — please try again', 'error');
+  } else {
+    const name = userInfo?.display_name ? `@${userInfo.display_name}` : 'TikTok account';
+    showToast(`${name} connected!`);
+  }
+
+  if (addBtn) { addBtn.disabled = false; addBtn.innerHTML = '<span style="font-size:14px;">♪</span> Add TikTok Account'; }
   await renderTikTokAccountsList();
+  await loadTikTokAvatar();
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────
@@ -504,7 +494,7 @@ async function init() {
   const aiToneInput = document.getElementById('aiToneInput');
   if (aiToneInput) aiToneInput.value = resolveAiTone(_user, _prefs) || DEFAULT_AI_TONE;
 
-  buildProfileIconGrid();
+  await loadTikTokAvatar();
   await checkTikTokOAuthCallback();
 }
 

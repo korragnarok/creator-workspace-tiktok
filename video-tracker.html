@@ -219,8 +219,6 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="header-actions">
       <button class="btn btn-ghost" id="editVideosBtn" onclick="toggleVideoEditMode()">Edit Videos</button>
       <button class="btn btn-ghost" id="syncTikTokBtn" onclick="syncFromConnectedTikTok()">⟳ Sync from TikTok</button>
-      <button class="btn btn-primary" id="importNewBtn" onclick="importNew()">↓ Import New</button>
-      <button class="btn btn-primary" onclick="openModal()">+ Log Video</button>
     </div>
   </div>
   <div class="stat-row">
@@ -867,6 +865,10 @@ function updateVideoEditToolbar(){
   if(editBtn)editBtn.textContent=_editVideosMode?'Done Editing':'Edit Videos';
 }
 function toggleVideoEditMode(){
+  if(!_editVideosMode && _trackerViewMode==='grid'){
+    showToast('Edit Videos can only be used in table view','error');
+    return;
+  }
   _editVideosMode=!_editVideosMode;
   if(!_editVideosMode)_selectedVideoIds.clear();
   renderTable();
