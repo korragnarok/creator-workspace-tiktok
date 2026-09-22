@@ -301,6 +301,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Time Posted</label><input type="time" class="form-input" id="fTime" step="1"></div>
     </div>
     <div class="form-row" style="margin-top:16px"><label class="form-label">Status</label><select class="form-input" id="fStatus"><option value="live">Live</option><option value="scheduled">Scheduled</option><option value="draft">Draft</option></select></div>
+    <div class="form-row"><label class="form-label">TikTok Account</label><select class="form-input" id="fTiktokAccount"><option value="">Loading...</option></select><div class="form-hint">Which account this video was posted to.</div></div>
     <div class="form-row-half">
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Views</label><input type="number" class="form-input" id="fViews" placeholder="0" min="0"></div>
       <div class="form-row" style="margin-bottom:0"><label class="form-label">CTR (%)</label><input type="number" class="form-input" id="fCtr" placeholder="0.00" min="0" step="0.01"></div>
@@ -621,7 +622,9 @@ async function loadVideos(pageToShow=currentPage){
   }
   let {data,error}=await query.order('date', {ascending:false, nullsFirst:false}).order('posted_time', {ascending:false, nullsFirst:false});
   if(error&&/posted_time/i.test(error.message||'')){
-    const retry=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false});
+    let retryQuery = db.from('videos').select('*').eq('user_id', user.id);
+    if (activeId) retryQuery = retryQuery.eq('tiktok_account_id', activeId);
+    const retry = await retryQuery.order('date', {ascending:false, nullsFirst:false});
     data=retry.data;error=retry.error;
   }
   if(error){
@@ -2132,9 +2135,25 @@ async function openModal(id){
   document.getElementById('fNotes').value=notesWithoutDealIds(v?.notes||'');
   document.getElementById('fLink').value=v?.link||'';
   await loadCampaignOptions(selectedDealIdsFromVideo(v));
+  // Populate account dropdown
+  await loadAccountOptions(v?.tiktok_account_id||null);
   document.getElementById('deleteBtn').style.display=v?'':'none';
   document.getElementById('modalOverlay').classList.add('open');
   setTimeout(()=>document.getElementById('fTitle').focus(),100);
+}
+
+async function loadAccountOptions(selectedAccountId) {
+  const sel = document.getElementById('fTiktokAccount');
+  if (!sel) return;
+  const { data } = await db.from('tiktok_accounts').select('tiktok_open_id,display_name,username').eq('user_id', user.id).order('created_at', { ascending: true });
+  const accounts = data || [];
+  const activeId = selectedAccountId || getActiveAccountId() || (accounts[0]?.tiktok_open_id || '');
+  sel.innerHTML = accounts.map(a => {
+    const name = '@' + (a.display_name || a.username || 'account');
+    const selected = a.tiktok_open_id === activeId ? ' selected' : '';
+    return `<option value="${a.tiktok_open_id}"${selected}>${name}</option>`;
+  }).join('');
+  if (!accounts.length) sel.innerHTML = '<option value="">No accounts connected</option>';
 }
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
 async function saveVideo(){
@@ -2146,8 +2165,8 @@ async function saveVideo(){
   const campaignIds=Array.from(document.getElementById('fCampaign').selectedOptions||[]).map(opt=>opt.value).filter(Boolean);
   const previousVideo=window._editId?DATA.find(video=>video.id===window._editId):null;
   const notes=notesWithDealIds(document.getElementById('fNotes').value.trim(),campaignIds);
-  const activeAccountId = getActiveAccountId() || '';
-  const row={user_id:user.id,title,brand:selectedProduct?.name||productName,date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,ctr:parseFloat(document.getElementById('fCtr').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes,link:document.getElementById('fLink').value.trim(),campaign_id:campaignIds[0]||null,prod_id:selectedProduct?.id||null,tiktok_account_id:activeAccountId};
+  const selectedAccountId = document.getElementById('fTiktokAccount')?.value || getActiveAccountId() || '';
+  const row={user_id:user.id,title,brand:selectedProduct?.name||productName,date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,ctr:parseFloat(document.getElementById('fCtr').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes,link:document.getElementById('fLink').value.trim(),campaign_id:campaignIds[0]||null,prod_id:selectedProduct?.id||null,tiktok_account_id:selectedAccountId};
   let result=window._editId?await db.from('videos').update(row).eq('id',window._editId):await db.from('videos').insert(row);
   if(result.error&&/(posted_time|prod_id|ctr)/i.test(result.error.message||'')){
     if(/ctr/i.test(result.error.message||'')&&(Number(row.ctr)||0)>0){
