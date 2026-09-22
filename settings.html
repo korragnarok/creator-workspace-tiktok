@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=143"></script>
-<link rel="stylesheet" href="layout.css?v=144">
+<script src="theme-init.js?v=145"></script>
+<link rel="stylesheet" href="layout.css?v=145">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
@@ -39,6 +39,7 @@ a{text-decoration:none;color:inherit;}
 .btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
 .btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border-mid);}
 .btn-ghost:hover{background:var(--surface-2);color:var(--ink);}
+.btn-sm{padding:7px 14px;font-size:11px;}
 
 .avatar-upload-wrap{display:flex;align-items:center;gap:20px;}
 .avatar-preview{width:72px;height:72px;border-radius:50%;overflow:hidden;background:var(--sage);border:2px solid var(--border-mid);flex-shrink:0;}
@@ -51,11 +52,22 @@ a{text-decoration:none;color:inherit;}
 .danger-btn{background:rgba(200,60,50,0.1);color:#C83C32;border:1px solid rgba(200,60,50,0.2);}
 .danger-btn:hover{background:#C83C32;color:#fff;border-color:#C83C32;}
 
+/* ── TikTok multi-account styles ── */
+.tiktok-accounts-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+.tiktok-account-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--border-mid);border-radius:12px;background:var(--bg);}
+.tiktok-account-left{display:flex;align-items:center;gap:10px;}
+.tiktok-account-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#000;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:900;flex-shrink:0;overflow:hidden;}
+.tiktok-account-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.tiktok-account-name{font-weight:700;color:var(--ink);font-size:14px;}
+.tiktok-account-sub{font-size:11px;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;letter-spacing:0.04em;}
+.tiktok-empty{padding:14px;border:1px dashed var(--border-mid);border-radius:10px;text-align:center;font-size:13px;color:var(--text-muted);}
+.tiktok-connecting{opacity:0.6;pointer-events:none;}
+
 body{overflow-x:hidden;}
 @media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:36px;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=143"></script>
+<script src="supabase.js?v=145"></script>
 </head>
 <body>
 <nav>
@@ -77,6 +89,7 @@ body{overflow-x:hidden;}
     <div class="page-title">Set<em>tings</em></div>
   </div>
 
+  <!-- Profile Photo -->
   <div class="settings-section">
     <div class="section-title">Profile Photo</div>
     <div class="avatar-upload-wrap">
@@ -91,6 +104,7 @@ body{overflow-x:hidden;}
     </div>
   </div>
 
+  <!-- Display Name -->
   <div class="settings-section">
     <div class="section-title">Display Name</div>
     <div style="margin-bottom:14px;padding:12px 16px;background:color-mix(in srgb,var(--rust) 10%,var(--surface) 90%);border:1px solid color-mix(in srgb,var(--rust) 20%,transparent);border-radius:10px;font-family:'Stack Sans Notch',sans-serif;font-size:12px;color:var(--text-mid);">
@@ -104,6 +118,7 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="saveNameBtn" onclick="saveName()">Save Name</button>
   </div>
 
+  <!-- Daily Streak Goal -->
   <div class="settings-section">
     <div class="section-title">Daily Streak Goal</div>
     <div class="form-group">
@@ -114,6 +129,7 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="saveStreakGoalBtn" onclick="saveStreakGoalSetting()">Save Streak Goal</button>
   </div>
 
+  <!-- AI Writing Tone -->
   <div class="settings-section">
     <div class="section-title">AI Writing Tone</div>
     <div class="form-group">
@@ -124,37 +140,23 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="saveAiToneBtn" onclick="saveAiToneSetting()">Save AI Tone</button>
   </div>
 
-  <!-- TikTok Integration / OAuth -->
+  <!-- TikTok Integration — multi-account -->
   <div class="settings-section">
-    <div class="section-title">TikTok Integration</div>
-    <div class="form-group">
-      <label class="form-label">Connected TikTok Account</label>
-      <div id="tiktokStatusBox" style="padding:14px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:36px;height:36px;border-radius:50%;background:#000;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:16px;">♪</div>
-          <div>
-            <div id="tiktokAccountName" style="font-weight:700;color:var(--ink);">Not Connected</div>
-            <div id="tiktokAccountSub" style="font-size:12px;color:var(--text-muted);">Connect your account to sync video stats and analytics</div>
-          </div>
-        </div>
-        <button type="button" class="btn btn-primary" id="tiktokAuthBtn" onclick="initiateTikTokOAuth()" style="background:#000;color:#fff;border:none;">
-          <span style="font-size:14px;margin-right:4px;">♪</span> Connect TikTok
-        </button>
-      </div>
-      <div class="form-hint">Uses TikTok Developer API to fetch public video analytics and account insights.</div>
+    <div class="section-title">TikTok Accounts</div>
+
+    <!-- Connected accounts list -->
+    <div id="tiktokAccountsList" class="tiktok-accounts-list">
+      <div class="tiktok-empty">Loading connected accounts…</div>
     </div>
+
+    <!-- Add account button -->
+    <button type="button" class="btn btn-primary" id="tiktokAddBtn" onclick="initiateTikTokOAuth()" style="background:#000;color:#fff;border:none;">
+      <span style="font-size:14px;">♪</span> Add TikTok Account
+    </button>
+    <div class="form-hint" style="margin-top:10px;">Connect multiple accounts — each syncs its own video stats and analytics.</div>
   </div>
 
-  <div class="settings-section">
-    <div class="section-title">Product Import</div>
-    <div class="form-group">
-      <label class="form-label">Your TikTok Handle</label>
-      <input type="text" class="form-input" id="tiktokHandleInput" placeholder="@yourhandle" autocomplete="off">
-      <div class="form-hint">Auto-fills when importing videos — no need to type it every time.</div>
-    </div>
-    <button class="btn btn-primary" id="saveTikTokHandleBtn" onclick="saveTikTokHandleSetting()">Save Handle</button>
-  </div>
-
+  <!-- Change Password -->
   <div class="settings-section">
     <div class="section-title">Change Password</div>
     <div class="form-group">
@@ -168,6 +170,7 @@ body{overflow-x:hidden;}
     <button class="btn btn-primary" id="savePassBtn" onclick="savePassword()">Update Password</button>
   </div>
 
+  <!-- Legal -->
   <div class="settings-section">
     <div class="section-title">Legal & Privacy</div>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">Review our Terms of Service, Privacy Policy, age requirements, and TikTok API compliance notices.</p>
@@ -177,6 +180,7 @@ body{overflow-x:hidden;}
     </div>
   </div>
 
+  <!-- Sign Out -->
   <div class="settings-section danger-zone">
     <div class="section-title danger-title">Sign Out</div>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">Sign out of your account on this device.</p>
@@ -184,11 +188,11 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=144"></script>
+<script src="layout.js?v=145"></script>
 <script>
 let _user = null, _prefs = null;
-const TIKTOK_HANDLE_KEY = 'take24:tiktok_handle';
 
+// ── Profile icon / avatar helpers ────────────────────────────────────────────
 function buildProfileIconGrid() {
   const resolved = _resolveProfileIcon ? _resolveProfileIcon(_user, _prefs) : '';
   const url = _isProfileImageSrc?.(resolved)
@@ -209,12 +213,10 @@ function fileToAvatarDataUrl(file) {
     img.onload = () => {
       const size = 320;
       const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
+      canvas.width = size; canvas.height = size;
       const ctx = canvas.getContext('2d');
       const scale = Math.max(size / img.width, size / img.height);
-      const w = img.width * scale;
-      const h = img.height * scale;
+      const w = img.width * scale; const h = img.height * scale;
       ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
       resolve(canvas.toDataURL('image/jpeg', 0.82));
     };
@@ -258,6 +260,7 @@ async function handleAvatarUpload(input) {
   showToast('Profile photo updated!');
 }
 
+// ── Form saves ───────────────────────────────────────────────────────────────
 async function saveName() {
   const val = document.getElementById('nameInput').value.trim();
   if (!val) { document.getElementById('nameInput').focus(); return; }
@@ -298,14 +301,6 @@ async function saveAiToneSetting() {
   showToast(error ? 'AI tone saved on this browser only' : 'AI tone updated', error ? 'error' : 'success');
 }
 
-function saveTikTokHandleSetting() {
-  const input = document.getElementById('tiktokHandleInput');
-  const val = (input?.value || '').trim().replace(/^@/, '');
-  if (!val) { input?.focus(); return; }
-  localStorage.setItem(TIKTOK_HANDLE_KEY, val);
-  showToast('TikTok handle saved');
-}
-
 async function savePassword() {
   const np = document.getElementById('newPass').value;
   const cp = document.getElementById('confirmPass').value;
@@ -322,13 +317,174 @@ async function savePassword() {
   showToast('Password updated');
 }
 
+// ── TikTok multi-account ─────────────────────────────────────────────────────
+
+function initiateTikTokOAuth() {
+  const clientKey = 'sbawec6gkhecnn619p';
+  const redirectUri = encodeURIComponent(window.location.origin + '/settings.html');
+  const scope = encodeURIComponent('user.info.basic,user.info.stats,video.list');
+  const state = Math.random().toString(36).substring(2);
+  sessionStorage.setItem('tiktok_oauth_state', state);
+  const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&response_type=code&scope=${scope}&redirect_uri=${redirectUri}&state=${state}`;
+  window.location.href = authUrl;
+}
+
+// Load all connected accounts from tiktok_accounts table
+async function loadTikTokAccounts(userId) {
+  const { data, error } = await db
+    .from('tiktok_accounts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('loadTikTokAccounts:', error); return []; }
+  return data || [];
+}
+
+// Remove one account by its tiktok_open_id
+async function removeTikTokAccount(userId, openId) {
+  const { error } = await db
+    .from('tiktok_accounts')
+    .delete()
+    .eq('user_id', userId)
+    .eq('tiktok_open_id', openId);
+  return { error };
+}
+
+// Upsert a newly-connected account into tiktok_accounts
+async function upsertTikTokAccount(userId, tokenData, userInfo) {
+  const row = {
+    user_id: userId,
+    tiktok_open_id: tokenData.open_id || userInfo?.open_id || '',
+    username: userInfo?.display_name || '',
+    display_name: userInfo?.display_name || '',
+    avatar_url: userInfo?.avatar_url || '',
+    access_token: tokenData.access_token || '',
+    refresh_token: tokenData.refresh_token || '',
+    token_expires_at: tokenData.expires_in
+      ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+      : null,
+    follower_count: userInfo?.follower_count || 0,
+    following_count: userInfo?.following_count || 0,
+    likes_count: userInfo?.likes_count || 0,
+    video_count: userInfo?.video_count || 0,
+    stats_updated_at: new Date().toISOString()
+  };
+  const { error } = await db
+    .from('tiktok_accounts')
+    .upsert(row, { onConflict: 'user_id,tiktok_open_id' });
+  return { error };
+}
+
+function renderTikTokAccountCard(account) {
+  const card = document.createElement('div');
+  card.className = 'tiktok-account-card';
+  card.dataset.openId = account.tiktok_open_id;
+
+  const avatarHtml = account.avatar_url
+    ? `<img src="${account.avatar_url}" alt="">`
+    : '♪';
+
+  card.innerHTML = `
+    <div class="tiktok-account-left">
+      <div class="tiktok-account-avatar">${avatarHtml}</div>
+      <div>
+        <div class="tiktok-account-name">${account.display_name ? '@' + account.display_name : 'Connected Account'}</div>
+        <div class="tiktok-account-sub">${account.follower_count?.toLocaleString() || '0'} followers · linked ${new Date(account.created_at).toLocaleDateString()}</div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-ghost btn-sm" data-disconnect="${account.tiktok_open_id}">Disconnect</button>
+  `;
+
+  card.querySelector('[data-disconnect]').addEventListener('click', async (e) => {
+    const openId = e.currentTarget.dataset.disconnect;
+    e.currentTarget.disabled = true;
+    e.currentTarget.textContent = 'Removing…';
+    const { error } = await removeTikTokAccount(_user.id, openId);
+    if (error) { showToast('Could not disconnect — try again', 'error'); e.currentTarget.disabled = false; e.currentTarget.textContent = 'Disconnect'; return; }
+    card.remove();
+    showToast('Account disconnected');
+    const list = document.getElementById('tiktokAccountsList');
+    if (!list.querySelector('.tiktok-account-card')) {
+      list.innerHTML = '<div class="tiktok-empty">No TikTok accounts connected yet.</div>';
+    }
+  });
+
+  return card;
+}
+
+async function renderTikTokAccountsList() {
+  const list = document.getElementById('tiktokAccountsList');
+  const accounts = await loadTikTokAccounts(_user.id);
+  list.innerHTML = '';
+  if (!accounts.length) {
+    list.innerHTML = '<div class="tiktok-empty">No TikTok accounts connected yet.</div>';
+    return;
+  }
+  accounts.forEach(account => list.appendChild(renderTikTokAccountCard(account)));
+}
+
+async function checkTikTokOAuthCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+
+  if (code) {
+    const addBtn = document.getElementById('tiktokAddBtn');
+    const list = document.getElementById('tiktokAccountsList');
+    if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Connecting…'; }
+    list.innerHTML = '<div class="tiktok-empty">Connecting account…</div>';
+
+    const redirectUri = window.location.origin + '/settings.html';
+
+    // Exchange code for token via Cloudflare worker
+    const WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
+    let tokenData = null;
+    try {
+      const res = await fetch(`${WORKER_URL}?service=tiktok&action=token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, redirect_uri: redirectUri })
+      });
+      tokenData = await res.json();
+    } catch (e) {
+      showToast('Could not exchange code — please try again', 'error');
+      if (addBtn) { addBtn.disabled = false; addBtn.innerHTML = '<span style="font-size:14px;">♪</span> Add TikTok Account'; }
+      await renderTikTokAccountsList();
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    // Fetch user info
+    let userInfo = null;
+    try {
+      const infoRes = await fetch(`${WORKER_URL}?service=tiktok&action=user_info`, {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` }
+      });
+      const infoData = await infoRes.json();
+      userInfo = infoData?.data?.user || null;
+    } catch (e) { /* non-fatal */ }
+
+    // Save to tiktok_accounts table
+    const { error } = await upsertTikTokAccount(_user.id, tokenData, userInfo);
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    if (error) {
+      showToast('Could not save account — please try again', 'error');
+    } else {
+      showToast('TikTok account connected!');
+    }
+
+    if (addBtn) { addBtn.disabled = false; addBtn.innerHTML = '<span style="font-size:14px;">♪</span> Add TikTok Account'; }
+    await renderTikTokAccountsList();
+    return;
+  }
+
+  // No OAuth callback — just render the current list
+  await renderTikTokAccountsList();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
-  document.querySelectorAll('input[type="file"]').forEach(input => {
-    input.value = '';
-  });
-  document.querySelectorAll('[id$="FileName"]').forEach(el => {
-    el.textContent = 'No file chosen';
-  });
+  document.querySelectorAll('input[type="file"]').forEach(input => { input.value = ''; });
   _user = await requireAuth();
   if (!_user) return;
   _prefs = await loadUserPrefs(_user.id);
@@ -347,8 +503,6 @@ async function init() {
   if (streakInput) streakInput.value = resolveStreakGoal(_user, _prefs);
   const aiToneInput = document.getElementById('aiToneInput');
   if (aiToneInput) aiToneInput.value = resolveAiTone(_user, _prefs) || DEFAULT_AI_TONE;
-  const tiktokHandleInput = document.getElementById('tiktokHandleInput');
-  if (tiktokHandleInput) tiktokHandleInput.value = localStorage.getItem(TIKTOK_HANDLE_KEY) || '';
 
   buildProfileIconGrid();
   await checkTikTokOAuthCallback();
@@ -357,72 +511,10 @@ async function init() {
 document.addEventListener('keydown', e => {
   if (document.activeElement === document.getElementById('nameInput')) enterSaves(e, saveName);
   if (document.activeElement === document.getElementById('streakGoalInput')) enterSaves(e, saveStreakGoalSetting);
-  if (document.activeElement === document.getElementById('tiktokHandleInput')) enterSaves(e, saveTikTokHandleSetting);
   if (document.activeElement === document.getElementById('newPass') || document.activeElement === document.getElementById('confirmPass')) enterSaves(e, savePassword);
 });
 
 init();
-
-// ── TikTok OAuth Helper ───────────────────────────────────────────────────────
-function initiateTikTokOAuth() {
-  const clientKey = 'sbawec6gkhecnn619p'; // Your Sandbox Client Key
-  const redirectUri = encodeURIComponent(window.location.origin + '/settings.html');
-  const scope = encodeURIComponent('user.info.basic,user.info.stats,video.list');
-  const state = Math.random().toString(36).substring(2);
-  
-  sessionStorage.setItem('tiktok_oauth_state', state);
-
-  // Correct Web Authorization URL
-  const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&response_type=code&scope=${scope}&redirect_uri=${redirectUri}&state=${state}`;
-  
-  window.location.href = authUrl;
-}
-
-function renderTikTokConnected(username) {
-  const nameEl = document.getElementById('tiktokAccountName');
-  const subEl = document.getElementById('tiktokAccountSub');
-  const btn = document.getElementById('tiktokAuthBtn');
-  if (nameEl) nameEl.textContent = username ? `@${username}` : 'Connected';
-  if (subEl) subEl.textContent = 'Account linked & active';
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = 'Disconnect';
-    btn.style.background = 'transparent';
-    btn.style.color = 'var(--rust)';
-    btn.style.border = '1px solid var(--border-mid)';
-    btn.onclick = async () => {
-      btn.disabled = true; btn.textContent = 'Disconnecting...';
-      await disconnectTikTok(_user.id);
-      window.location.href = 'settings.html';
-    };
-  }
-}
-
-async function checkTikTokOAuthCallback() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  const btn = document.getElementById('tiktokAuthBtn');
-
-  if (code) {
-    if (btn) { btn.disabled = true; btn.textContent = 'Connecting...'; }
-    const redirectUri = window.location.origin + '/settings.html';
-    const { error, userInfo } = await exchangeTikTokCode(_user.id, code, redirectUri);
-    window.history.replaceState({}, document.title, window.location.pathname);
-    if (error) {
-      showToast('Could not connect TikTok — please try again', 'error');
-      if (btn) { btn.disabled = false; btn.textContent = 'Connect TikTok'; }
-      return;
-    }
-    renderTikTokConnected(userInfo?.display_name);
-    showToast('TikTok connected!');
-    return;
-  }
-
-  const tiktokPrefs = await loadTikTokPrefs(_user.id);
-  if (tiktokPrefs?.tiktok_connected) {
-    renderTikTokConnected(tiktokPrefs.tiktok_username);
-  }
-}
 </script>
 </body>
 </html>
