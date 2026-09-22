@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
 <title>Products — Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=146"></script>
+<script src="theme-init.js?v=140"></script>
 <link rel="stylesheet" href="layout.css?v=144">
 <style>
 :root{--r:12px;}
@@ -80,6 +80,7 @@ body{overflow-x:hidden;}
 .brand-pill,.stock-pill{border:1px solid var(--border-mid);border-radius:100px;background:var(--surface);color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.02em;padding:7px 16px;white-space:nowrap;cursor:pointer;transition:all 0.15s;}
 .brand-pill.active,.stock-pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
 .brand-pill:hover:not(.active),.stock-pill:hover:not(.active){background:var(--sand);color:var(--ink);}
+.sample-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:color-mix(in srgb,#8E63B7 18%,var(--surface) 82%);border:1px solid color-mix(in srgb,#8E63B7 38%,transparent);color:#6B3FA0;margin-left:6px;flex-shrink:0;}
 .hero-pill{border-color:var(--rust);color:var(--rust);}
 .hero-pill.active{background:var(--rust);color:#fff;border-color:var(--rust);}
 .pill-count{font-family:'Noto Sans Mono',sans-serif;font-size:10px;margin-left:4px;opacity:0.75;}
@@ -175,13 +176,13 @@ tr.select-mode .tbl-action{display:none;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=146"></script>
+<script src="supabase.js?v=140"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand">Creator Hub</a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link active">Products</a><a href="video-tracker.html" class="nav-link">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
 <div class="page">
   <div class="page-header">
-    <div><div class="page-eyebrow">Your Catalog</div><div class="page-title">Products <em>DB</em></div><p class="page-sub">Add products you promote with talking points, links, and status. <span id="activeAccountBadge" style="display:none;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--rust);margin-left:8px;"></span></p></div>
+    <div><div class="page-eyebrow">Your Catalog</div><div class="page-title">Products <em>DB</em></div><p class="page-sub">Add products you promote with talking points, links, and status.</p></div>
     <div class="header-actions">
       <button class="btn btn-ghost" id="editProductsBtn" onclick="toggleEditMode()">Edit Products</button>
       <button class="btn btn-ghost" onclick="openSearchImport()">Search &amp; Import</button>
@@ -251,6 +252,13 @@ tr.select-mode .tbl-action{display:none;}
     <div class="form-row"><label class="form-label">TikTok Shop Link</label><input type="url" class="form-input" id="fLink" placeholder="https://..."></div>
     <div class="form-row"><label class="form-label">Units Sold</label><input type="number" class="form-input" id="fUnitsSold" placeholder="0" min="0" step="1"></div>
     <div class="form-row"><label class="form-label">Stock</label><select class="form-input" id="fStatus"><option value="active">In Stock</option><option value="shelved">Shelved</option><option value="paused">Out of Stock</option><option value="promote">Promote Now</option></select></div>
+    <div class="form-row" style="margin-bottom:18px;">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="fFreeSample" style="width:18px;height:18px;accent-color:var(--rust);cursor:pointer;flex-shrink:0;">
+        <span style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mid);">Free Sample</span>
+      </label>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:5px;margin-left:28px;">Mark this product as a gifted or PR sample.</div>
+    </div>
     <div class="form-row"><label class="form-label">Talking Points / Notes</label><textarea class="form-input form-textarea" id="fNotes" placeholder="Key benefits, compliance notes, angles that work..."></textarea></div>
     <div class="modal-actions"><button class="btn btn-primary" style="flex:1;" onclick="saveProduct()">Save Product</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-danger" id="deleteBtn" style="display:none;" onclick="deleteProduct()">Delete</button></div>
   </div>
@@ -670,23 +678,10 @@ async function init() {
   window._user = user;
   _coreNames = (prefs.core5 || []).map(value => String(value || '').trim().toLowerCase()).filter(Boolean);
 
-  // Show active account badge
-  const activeAccount = await getActiveAccount(user.id);
-  const activeAccountId = activeAccount?.tiktok_open_id || null;
-  const badge = document.getElementById('activeAccountBadge');
-  if (badge && activeAccount) {
-    badge.textContent = '· @' + (activeAccount.display_name || activeAccount.username || 'account');
-    badge.style.display = '';
-  }
-
   restoreProductsState();
   async function renderProducts() {
     const q = document.getElementById('searchBox').value.toLowerCase();
-    let prodQuery = db.from('products').select('*').eq('user_id', user.id);
-    if (activeAccountId) {
-      prodQuery = prodQuery.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
-    }
-    const { data: prods } = await prodQuery.order('created_at', {ascending: false});
+    const { data: prods } = await db.from('products').select('*').eq('user_id', user.id).order('created_at', {ascending: false});
     _allProducts = prods || [];
     _videoCountsByProduct = await loadVideoCounts(_allProducts);
     renderBrandFilters(_allProducts);
@@ -711,11 +706,12 @@ async function init() {
       const active = productActiveState(p);
       const gmv = productGmv(p);
       const hasCore = isCoreProduct(p);
+      const isFreeSample = /FREE_SAMPLE/.test(p.notes || '');
       const link = String(p.link || '').trim();
       const videoCount = productVideoCount(p);
       return '<tr class="'+(_editProductsMode?'select-mode ':'')+(selected?'selected':'')+'" onclick="handleProductRowClick(event,\''+p.id+'\')">'+
         '<td class="product-thumb-cell">'+productThumbHtml(p)+'</td>'+
-        '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'name\')">'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Hero</span>':'')+'</div></td>'+
+        '<td><div class="product-cell"><span class="prod-select" aria-hidden="true"></span><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'name\')">'+esc(p.name||'Untitled product')+'</span>'+(hasCore?'<span class="core-badge">Hero</span>':'')+(isFreeSample?'<span class="sample-badge">Sample</span>':'')+'</div></td>'+
         '<td><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'brand\')">'+esc(p.brand||'-')+'</span></td>'+
         '<td><span class="editable-cell active-badge '+active.className+'" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'active_status\')">'+active.label+'</span></td>'+
         '<td><span class="editable-cell stock-badge '+(inStock?'stock-in':'stock-out')+'" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'status\')">'+productStockLabel(p)+'</span></td>'+
@@ -896,7 +892,7 @@ async function init() {
   }
   function productFeatures(p) {
     const tags = String(p.tags || '').split(',').map(t => t.trim()).filter(Boolean).join(', ');
-    const notes = String(p.notes || '').trim().replace(/\s+/g, ' ');
+    const notes = String(p.notes || '').replace(/\nFREE_SAMPLE|FREE_SAMPLE\n|FREE_SAMPLE/g, '').trim().replace(/\s+/g, ' ');
     return notes || tags || '-';
   }
   function isCoreProduct(p) {
@@ -1239,7 +1235,8 @@ async function init() {
     document.getElementById('fLink').value = p?.link || '';
     document.getElementById('fUnitsSold').value = p?.units_sold || '';
     document.getElementById('fStatus').value = p?.status || 'active';
-    document.getElementById('fNotes').value = p?.notes || '';
+    document.getElementById('fNotes').value = String(p?.notes || '').replace(/\nFREE_SAMPLE|FREE_SAMPLE\n|FREE_SAMPLE/g, '').trim();
+    document.getElementById('fFreeSample').checked = p?.notes ? /FREE_SAMPLE/.test(p.notes) : false;
     document.getElementById('deleteBtn').style.display = p ? '' : 'none';
     // Image
     window._existingImgUrl = p?.image_url || '';
@@ -1275,7 +1272,12 @@ async function init() {
       image_url = urlData.publicUrl;
     }
 
-    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: document.getElementById('fNotes').value.trim(), image_url, tiktok_account_id: activeAccountId || '' };
+    const isFreeSample = document.getElementById('fFreeSample').checked;
+    let notesVal = document.getElementById('fNotes').value.trim();
+    notesVal = notesVal.replace(/\nFREE_SAMPLE|FREE_SAMPLE\n|FREE_SAMPLE/g, '').trim();
+    if(isFreeSample) notesVal = notesVal ? notesVal + '\nFREE_SAMPLE' : 'FREE_SAMPLE';
+
+    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: notesVal, image_url };
     const { error: dbErr } = window._editId
       ? await db.from('products').update(fields).eq('id', window._editId).eq('user_id', user.id)
       : await db.from('products').insert({ user_id: user.id, ...fields });
