@@ -795,13 +795,13 @@ async function initTikTokFollowerCard(userId) {
 async function fetchDashboardVideos(userId, activeAccountId){
   let base = db.from('videos').select('*').eq('user_id', userId);
   if(activeAccountId){
-    base = base.or(`tiktok_account_id.eq.${activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    base = base.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
   }
   let result = await base.order('date', { ascending:false, nullsFirst:false });
   if(result.error){
     console.warn('Dashboard videos fetch failed, retrying without date order:', result.error);
     let retry = db.from('videos').select('*').eq('user_id', userId);
-    if(activeAccountId) retry = retry.or(`tiktok_account_id.eq.${activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    if(activeAccountId) retry = retry.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
     result = await retry;
   }
   if(result.error){
@@ -843,16 +843,25 @@ async function init() {
   // Build account-scoped product query
   let productQuery = db.from('products').select('id,name,brand,units_sold,image_url').eq('user_id', user.id);
   if(activeAccountId){
-    productQuery = productQuery.or(`tiktok_account_id.eq.${activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    productQuery = productQuery.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
   }
   productQuery = productQuery.order('created_at', { ascending:false });
 
+  let salesQuery = db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date');
+  if(activeAccountId){
+    salesQuery = salesQuery.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+  }
+  let monthSalesQuery = db.from('sales').select('gmv').eq('user_id', user.id);
+  if(activeAccountId){
+    monthSalesQuery = monthSalesQuery.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+  }
+
   const [{ data: rows }, { data: products }, videos, { data: queue }, attributedSales] = await Promise.all([
-    db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
+    salesQuery,
     productQuery,
     fetchDashboardVideos(user.id, activeAccountId),
     db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr).order('sort_order'),
-    fetchAttributedSales(user.id)
+    fetchAttributedSales(user.id, activeAccountId)
   ]);
   _todayQueue=queue||[];
   _dashboardVideos=videos||[];
@@ -891,7 +900,7 @@ async function init() {
 
   const y=today.getFullYear(), m=today.getMonth();
   const monthStart=`${y}-${String(m+1).padStart(2,'0')}-01`;
-  const { data: monthRows } = await db.from('sales').select('gmv').eq('user_id',user.id).gte('date',monthStart);
+  const { data: monthRows } = await monthSalesQuery.gte('date',monthStart);
   const monthGmv=(monthRows||[]).reduce((s,r)=>s+(parseFloat(r.gmv)||0),0);
 
   let lvlIdx=0;
@@ -970,8 +979,12 @@ function videoProductName(video) {
 }
 // All-time attributed sales for the Top Products rollup. Returns [] when the
 // video_sales column is missing so the dashboard still renders.
-async function fetchAttributedSales(userId) {
-  const { data, error } = await db.from('sales').select('video_sales').eq('user_id', userId);
+async function fetchAttributedSales(userId, activeAccountId) {
+  let query = db.from('sales').select('video_sales').eq('user_id', userId);
+  if(activeAccountId){
+    query = query.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+  }
+  const { data, error } = await query;
   if(error) {
     if(!/video_sales/i.test(error.message || '')) console.warn('Could not load attributed sales', error);
     return [];

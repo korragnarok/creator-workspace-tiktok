@@ -617,7 +617,7 @@ async function loadVideos(pageToShow=currentPage){
   // Filter by account — untagged rows (empty string) show under whichever account is active
   // once user starts tagging; until then show everything
   if (activeId) {
-    query = query.or(`tiktok_account_id.eq.${activeId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    query = query.or(`tiktok_account_id.eq."${activeId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
   }
   let {data,error}=await query.order('date', {ascending:false, nullsFirst:false}).order('posted_time', {ascending:false, nullsFirst:false});
   if(error&&/posted_time/i.test(error.message||'')){

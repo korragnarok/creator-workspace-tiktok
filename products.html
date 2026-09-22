@@ -684,7 +684,7 @@ async function init() {
     const q = document.getElementById('searchBox').value.toLowerCase();
     let prodQuery = db.from('products').select('*').eq('user_id', user.id);
     if (activeAccountId) {
-      prodQuery = prodQuery.or(`tiktok_account_id.eq.${activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+      prodQuery = prodQuery.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
     }
     const { data: prods } = await prodQuery.order('created_at', {ascending: false});
     _allProducts = prods || [];
