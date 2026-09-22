@@ -758,7 +758,9 @@ async function getActiveAccount(userId) {
     .order('created_at', { ascending: true });
   if (error || !data?.length) return null;
   const savedId = getActiveAccountId();
-  return data.find(a => a.tiktok_open_id === savedId) || data[0];
+  const match = data.find(a => a.tiktok_open_id === savedId);
+  if (!match) setActiveAccountId(data[0].tiktok_open_id);
+  return match || data[0];
 }
 
 // ─── Profile Popover ─────────────────────────────────────────────────────────
