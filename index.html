@@ -792,12 +792,17 @@ async function initTikTokFollowerCard(userId) {
   }).catch(() => {});
 }
 
-async function fetchDashboardVideos(userId){
-  const base = db.from('videos').select('*').eq('user_id', userId);
+async function fetchDashboardVideos(userId, activeAccountId){
+  let base = db.from('videos').select('*').eq('user_id', userId);
+  if(activeAccountId){
+    base = base.or(`tiktok_account_id.eq.${activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+  }
   let result = await base.order('date', { ascending:false, nullsFirst:false });
   if(result.error){
     console.warn('Dashboard videos fetch failed, retrying without date order:', result.error);
-    result = await db.from('videos').select('*').eq('user_id', userId);
+    let retry = db.from('videos').select('*').eq('user_id', userId);
+    if(activeAccountId) retry = retry.or(`tiktok_account_id.eq.${activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    result = await retry;
   }
   if(result.error){
     console.error('Dashboard videos fetch failed:', result.error);
@@ -820,16 +825,32 @@ async function init() {
   initProfilePopover(user.id);
   initTikTokFollowerCard(user.id); // fire-and-forget: shows cached count immediately, refreshes silently
 
+  // Get active TikTok account and scope all data to it
+  const activeAccount = await getActiveAccount(user.id);
+  const activeAccountId = activeAccount?.tiktok_open_id || null;
+  const heroSub = document.querySelector('.hero-sub');
+  if(heroSub && activeAccount){
+    const accountName = activeAccount.display_name || activeAccount.username || 'account';
+    heroSub.innerHTML = `Viewing <strong>@${accountName}</strong> — let's <strong>create</strong>, plan, and stay consistent.`;
+  }
+
   const today = new Date();
   const since = new Date(today); since.setDate(today.getDate() - 29);
   const sinceStr = since.getFullYear()+'-'+String(since.getMonth()+1).padStart(2,'0')+'-'+String(since.getDate()).padStart(2,'0');
   const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
   await carryForwardUnfinishedQueue(user.id, todayStr);
 
+  // Build account-scoped product query
+  let productQuery = db.from('products').select('id,name,brand,units_sold,image_url').eq('user_id', user.id);
+  if(activeAccountId){
+    productQuery = productQuery.or(`tiktok_account_id.eq.${activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+  }
+  productQuery = productQuery.order('created_at', { ascending:false });
+
   const [{ data: rows }, { data: products }, videos, { data: queue }, attributedSales] = await Promise.all([
     db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date'),
-    db.from('products').select('id,name,brand,units_sold,image_url').eq('user_id', user.id).order('created_at', { ascending:false }),
-    fetchDashboardVideos(user.id),
+    productQuery,
+    fetchDashboardVideos(user.id, activeAccountId),
     db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr).order('sort_order'),
     fetchAttributedSales(user.id)
   ]);
