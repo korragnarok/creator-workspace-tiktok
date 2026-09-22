@@ -209,13 +209,13 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .sort-pill.sort-active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=143"></script>
+<script src="supabase.js?v=146"></script>
 </head>
 <body>
 <nav><a href="index.html" class="nav-brand"><img src="logo.png" alt="Take24" style="height:28px;width:auto;object-fit:contain;display:block;"></a><div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="daily-todo.html" class="nav-link">To Do</a><a href="products.html" class="nav-link">Products</a><a href="video-tracker.html" class="nav-link active">Videos</a><a href="hooks.html" class="nav-link">Hooks</a><a href="scripts.html" class="nav-link">Scripts</a><a href="sales-calendar.html" class="nav-link">Sales Log</a></div></nav>
 <div class="page">
   <div class="page-header">
-    <div><div class="page-eyebrow">Content Tracker</div><div class="page-title">Videos <em>&amp;</em> Posts</div><p class="page-sub">Track posted content, views, and what's working.</p></div>
+    <div><div class="page-eyebrow">Content Tracker</div><div class="page-title">Videos <em>&amp;</em> Posts</div><p class="page-sub">Track posted content, views, and what's working. <span id="activeAccountBadge" style="display:none;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--rust);margin-left:8px;"></span></p></div>
     <div class="header-actions">
       <button class="btn btn-ghost" id="editVideosBtn" onclick="toggleVideoEditMode()">Edit Videos</button>
       <button class="btn btn-ghost" id="syncTikTokBtn" onclick="syncFromConnectedTikTok()">⟳ Sync from TikTok</button>
@@ -605,7 +605,21 @@ function videoSaveErrorMessage(error){
 async function loadVideos(pageToShow=currentPage){
   const tbody=document.getElementById('tbody');
   tbody.innerHTML='<tr><td colspan="10"><div class="empty">Loading...</div></td></tr>';
-  let {data,error}=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false}).order('posted_time', {ascending:false, nullsFirst:false});
+  const activeAccount = await getActiveAccount(user.id);
+  const activeId = activeAccount?.tiktok_open_id || null;
+  // Show which account we're viewing
+  const badge = document.getElementById('activeAccountBadge');
+  if (badge && activeAccount) {
+    badge.textContent = '· @' + (activeAccount.display_name || activeAccount.username || 'account');
+    badge.style.display = '';
+  }
+  let query = db.from('videos').select('*').eq('user_id', user.id);
+  // Filter by account — untagged rows (empty string) show under whichever account is active
+  // once user starts tagging; until then show everything
+  if (activeId) {
+    query = query.or(`tiktok_account_id.eq.${activeId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+  }
+  let {data,error}=await query.order('date', {ascending:false, nullsFirst:false}).order('posted_time', {ascending:false, nullsFirst:false});
   if(error&&/posted_time/i.test(error.message||'')){
     const retry=await db.from('videos').select('*').eq('user_id', user.id).order('date', {ascending:false, nullsFirst:false});
     data=retry.data;error=retry.error;
@@ -2102,7 +2116,8 @@ async function saveVideo(){
   const campaignIds=Array.from(document.getElementById('fCampaign').selectedOptions||[]).map(opt=>opt.value).filter(Boolean);
   const previousVideo=window._editId?DATA.find(video=>video.id===window._editId):null;
   const notes=notesWithDealIds(document.getElementById('fNotes').value.trim(),campaignIds);
-  const row={user_id:user.id,title,brand:selectedProduct?.name||productName,date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,ctr:parseFloat(document.getElementById('fCtr').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes,link:document.getElementById('fLink').value.trim(),campaign_id:campaignIds[0]||null,prod_id:selectedProduct?.id||null};
+  const activeAccountId = getActiveAccountId() || '';
+  const row={user_id:user.id,title,brand:selectedProduct?.name||productName,date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,ctr:parseFloat(document.getElementById('fCtr').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes,link:document.getElementById('fLink').value.trim(),campaign_id:campaignIds[0]||null,prod_id:selectedProduct?.id||null,tiktok_account_id:activeAccountId};
   let result=window._editId?await db.from('videos').update(row).eq('id',window._editId):await db.from('videos').insert(row);
   if(result.error&&/(posted_time|prod_id|ctr)/i.test(result.error.message||'')){
     if(/ctr/i.test(result.error.message||'')&&(Number(row.ctr)||0)>0){
