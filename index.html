@@ -769,22 +769,21 @@ function removeLegacyLevelStatCard(){
   const card = document.getElementById('s-level-name')?.closest('.stat-card');
   if(card) card.remove();
 }
-async function initTikTokFollowerCard(userId) {
+async function initTikTokFollowerCard(userId, activeAccount) {
   const valEl = document.getElementById('s-followers');
   const subEl = document.getElementById('s-followers-sub');
   const card = document.getElementById('tiktokFollowerCard');
   if (!valEl) return;
 
-  const prefs = await loadTikTokPrefs(userId);
-  if (!prefs?.tiktok_connected) return; // leave the "Connect TikTok" default in place
+  if (!activeAccount) return;
 
-  if (card) card.removeAttribute('href'); // no need to link out once connected
-  if (typeof prefs.tiktok_follower_count === 'number') {
-    valEl.textContent = prefs.tiktok_follower_count.toLocaleString();
+  if (card) card.removeAttribute('href');
+  if (typeof activeAccount.follower_count === 'number') {
+    valEl.textContent = activeAccount.follower_count.toLocaleString();
   }
-  if (subEl) subEl.textContent = prefs.tiktok_username ? `@${prefs.tiktok_username}` : 'from TikTok';
+  if (subEl) subEl.textContent = activeAccount.display_name ? `@${activeAccount.display_name}` : 'from TikTok';
 
-  // Best-effort silent refresh — doesn't block the card from showing cached numbers first.
+  // Best-effort silent refresh
   refreshTikTokStats(userId).then(userInfo => {
     if (!userInfo) return;
     valEl.textContent = (userInfo.follower_count ?? 0).toLocaleString();
@@ -823,11 +822,12 @@ async function init() {
   await initCore5(user.id, prefs);
   await initTheme(user.id, prefs);
   initProfilePopover(user.id);
-  initTikTokFollowerCard(user.id); // fire-and-forget: shows cached count immediately, refreshes silently
 
   // Get active TikTok account and scope all data to it
   const activeAccount = await getActiveAccount(user.id);
   const activeAccountId = activeAccount?.tiktok_open_id || null;
+
+  initTikTokFollowerCard(user.id, activeAccount);
   const heroSub = document.querySelector('.hero-sub');
   if(heroSub && activeAccount){
     const accountName = activeAccount.display_name || activeAccount.username || 'account';

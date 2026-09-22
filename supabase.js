@@ -984,41 +984,59 @@ async function fetchTikTokUserInfo(accessToken) {
   return data.data?.user || null;
 }
 
-// Returns a currently-valid access token for this user, silently refreshing
-// it first if it's expired (or about to expire). Returns null if not connected.
+// Returns a currently-valid access token for the active TikTok account,
+// silently refreshing it first if expired. Returns null if not connected.
 async function getValidTikTokAccessToken(userId) {
-  const prefs = await loadTikTokPrefs(userId);
-  if (!prefs?.tiktok_connected || !prefs.tiktok_refresh_token) return null;
+  const account = await getActiveAccount(userId);
+  if (!account?.access_token) return null;
 
-  const expiresAt = prefs.tiktok_token_expires_at ? Date.parse(prefs.tiktok_token_expires_at) : 0;
-  const stillValid = expiresAt && (expiresAt - Date.now() > 5 * 60 * 1000); // 5 min buffer
-  if (stillValid && prefs.tiktok_access_token) return prefs.tiktok_access_token;
+  const expiresAt = account.token_expires_at ? Date.parse(account.token_expires_at) : 0;
+  const stillValid = expiresAt && (expiresAt - Date.now() > 5 * 60 * 1000);
+  if (stillValid) return account.access_token;
+
+  if (!account.refresh_token) return account.access_token || null;
 
   try {
     const res = await fetch(`${TIKTOK_WORKER_URL}/?service=tiktok&action=refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: prefs.tiktok_refresh_token }),
+      body: JSON.stringify({ refresh_token: account.refresh_token }),
     });
     const data = await res.json();
-    if (!res.ok || data.error || !data.access_token) return null;
-    await saveTikTokConnection(userId, data, null);
+    if (!res.ok || data.error || !data.access_token) return account.access_token || null;
+    // Save refreshed token back to tiktok_accounts
+    await db.from('tiktok_accounts').update({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || account.refresh_token,
+      token_expires_at: data.expires_in
+        ? new Date(Date.now() + Number(data.expires_in) * 1000).toISOString()
+        : null
+    }).eq('tiktok_open_id', account.tiktok_open_id).eq('user_id', userId);
     return data.access_token;
   } catch (e) {
     console.warn('TikTok token refresh failed', e);
-    return null;
+    return account.access_token || null;
   }
 }
 
-// Refreshes cached follower/like/video stats from TikTok. Safe to call
-// opportunistically (e.g. once per dashboard load) — silently no-ops if
-// not connected or the call fails.
+// Refreshes cached follower/like/video stats from TikTok for the active account.
 async function refreshTikTokStats(userId) {
   const accessToken = await getValidTikTokAccessToken(userId);
   if (!accessToken) return null;
   try {
     const userInfo = await fetchTikTokUserInfo(accessToken);
-    await saveTikTokConnection(userId, { access_token: accessToken }, userInfo);
+    if (!userInfo) return null;
+    const account = await getActiveAccount(userId);
+    if (account) {
+      await db.from('tiktok_accounts').update({
+        follower_count: userInfo.follower_count ?? 0,
+        following_count: userInfo.following_count ?? 0,
+        likes_count: userInfo.likes_count ?? 0,
+        video_count: userInfo.video_count ?? 0,
+        avatar_url: userInfo.avatar_url || account.avatar_url,
+        stats_updated_at: new Date().toISOString()
+      }).eq('tiktok_open_id', account.tiktok_open_id).eq('user_id', userId);
+    }
     return userInfo;
   } catch (e) {
     console.warn('TikTok stats refresh failed', e);
