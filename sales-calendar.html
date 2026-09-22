@@ -124,7 +124,7 @@ body{overflow-x:hidden;}
   <div class="page-header">
     <div class="page-eyebrow">Track · Log · Review</div>
     <div class="page-title">Sales <em>Log</em></div>
-    <p class="page-sub">Tap any day to log units sold, GMV, and commissions.</p>
+    <p class="page-sub">Tap any day to log units sold, GMV, and commissions. <span id="activeAccountBadge" style="display:none;font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--rust);margin-left:4px;"></span></p>
   </div>
   <div class="month-nav">
     <div class="month-label" id="monthLabel"></div>
@@ -167,7 +167,7 @@ body{overflow-x:hidden;}
 <script src="layout.js?v=144"></script>
 <script>
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-let viewYear, viewMonth, editingKey=null, _user=null, _salesCache={};
+let viewYear, viewMonth, editingKey=null, _user=null, _salesCache={}, _activeAccountId=null;
 const today=new Date(); viewYear=today.getFullYear(); viewMonth=today.getMonth();
 
 function fmtMoney(n){return'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -180,6 +180,16 @@ async function init(){
   await initTheme(user.id, prefs);
   initProfilePopover(user.id);
   _user=user;
+
+  // Show active account badge
+  const activeAccount = await getActiveAccount(user.id);
+  _activeAccountId = activeAccount?.tiktok_open_id || null;
+  const badge = document.getElementById('activeAccountBadge');
+  if(badge && activeAccount){
+    badge.textContent = '· @' + (activeAccount.display_name || activeAccount.username || 'account');
+    badge.style.display = '';
+  }
+
   await loadVideoOptions();
   await loadProductOptions();
   await loadMonth();
@@ -188,7 +198,11 @@ async function init(){
 async function loadMonth(){
   const start=`${viewYear}-${String(viewMonth+1).padStart(2,'0')}-01`;
   const end=`${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${new Date(viewYear,viewMonth+1,0).getDate()}`;
-  const {data}=await db.from('sales').select('*').eq('user_id',_user.id).gte('date',start).lte('date',end);
+  let query = db.from('sales').select('*').eq('user_id',_user.id).gte('date',start).lte('date',end);
+  if(_activeAccountId){
+    query = query.or(`tiktok_account_id.eq.${_activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+  }
+  const {data}=await query;
   _salesCache={};
   (data||[]).forEach(r=>{ if(hasSalesData(r)) _salesCache[r.date]=r; });
   render();
@@ -214,10 +228,14 @@ function shortCaption(video,wordCount=5){
 }
 
 async function loadVideoOptions(){
-  const {data,error}=await db.from('videos')
+  let query = db.from('videos')
     .select('id,brand,title,date,notes')
     .eq('user_id',_user.id)
     .order('date',{ascending:false,nullsFirst:false});
+  if(_activeAccountId){
+    query = query.or(`tiktok_account_id.eq.${_activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+  }
+  const {data,error}=await query;
   if(error){console.warn('Could not load videos for sales attribution',error);_videoOptions=[];return;}
   _videoOptions=(data||[]).map(v=>{
     const caption=shortCaption(v);
@@ -241,10 +259,14 @@ function dedupeLabels(list){
 let _productOptions=[];
 
 async function loadProductOptions(){
-  const {data,error}=await db.from('products')
+  let query = db.from('products')
     .select('id,name,brand')
     .eq('user_id',_user.id)
     .order('name');
+  if(_activeAccountId){
+    query = query.or(`tiktok_account_id.eq.${_activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+  }
+  const {data,error}=await query;
   if(error){console.warn('Could not load products for sales attribution',error);_productOptions=[];return;}
   _productOptions=(data||[]).map(p=>{
     const label=(String(p.name||'').trim()||'Untitled product')+(String(p.brand||'').trim()?` — ${String(p.brand).trim()}`:'');
@@ -504,7 +526,7 @@ async function saveEntry(){
     const {error}=await db.from('sales').update({units,gmv,comm,note,video_sales:videoSales}).eq('id',existing.id);
     if(error){showToast('Save failed: '+(error.message||'unknown'),'error');return;}
   } else {
-    const {error}=await db.from('sales').insert({user_id:_user.id,date:editingKey,units,gmv,comm,note,video_sales:videoSales});
+    const {error}=await db.from('sales').insert({user_id:_user.id,date:editingKey,units,gmv,comm,note,video_sales:videoSales,tiktok_account_id:_activeAccountId||''});
     if(error){showToast('Save failed: '+(error.message||'unknown'),'error');return;}
   }
   showToast('Saved');
