@@ -734,23 +734,55 @@ async function saveCore5Modal() {
   showToast(error && metaError ? 'Hero Brands saved locally' : 'Hero Brands saved', error && metaError ? 'error' : 'success');
 }
 
+// ─── Active TikTok Account ────────────────────────────────────────────────────
+// Global account switcher — stored in localStorage, read by any page.
+
+const ACTIVE_ACCOUNT_KEY = 'take24:active_tiktok_account';
+
+function getActiveAccountId() {
+  try { return localStorage.getItem(ACTIVE_ACCOUNT_KEY) || null; } catch(e) { return null; }
+}
+
+function setActiveAccountId(openId) {
+  try { localStorage.setItem(ACTIVE_ACCOUNT_KEY, openId); } catch(e) {}
+  window.dispatchEvent(new CustomEvent('take24:account-change', { detail: { openId } }));
+}
+
+// Returns the full row from tiktok_accounts for the active account,
+// or the first account if nothing is explicitly selected yet.
+async function getActiveAccount(userId) {
+  const { data, error } = await db
+    .from('tiktok_accounts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
+  if (error || !data?.length) return null;
+  const savedId = getActiveAccountId();
+  return data.find(a => a.tiktok_open_id === savedId) || data[0];
+}
+
 // ─── Profile Popover ─────────────────────────────────────────────────────────
 // Injected into every page. Click avatar/profile name to open.
+// Loads connected TikTok accounts and renders them as a switcher.
 
 function initProfilePopover(userId) {
-  // Build the popover element once
   if (document.getElementById('_profilePopover')) return;
+
   const pop = document.createElement('div');
   pop.id = '_profilePopover';
   pop.style.cssText = `
     display:none;position:fixed;z-index:800;
     background:var(--surface);border:1px solid var(--border-mid);
     border-radius:14px;box-shadow:var(--shadow-md);
-    padding:8px;min-width:180px;
+    padding:8px;min-width:210px;max-width:260px;
     font-family:'Stack Sans Notch',sans-serif;
   `;
-  pop.innerHTML = `
-    <a href="settings.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:background 0.12s;" onmouseover="this.style.background='var(--sand)'" onmouseout="this.style.background=''" >
+
+  // Static bottom section — accounts section injected above it
+  const bottomHTML = `
+    <div id="_popAccountsSection"></div>
+    <div style="height:1px;background:var(--border);margin:4px 0;"></div>
+    <a href="settings.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:background 0.12s;" onmouseover="this.style.background='var(--sand)'" onmouseout="this.style.background=''">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
       Settings
     </a>
@@ -760,7 +792,56 @@ function initProfilePopover(userId) {
       Sign Out
     </button>
   `;
+  pop.innerHTML = bottomHTML;
   document.body.appendChild(pop);
+
+  // Load accounts and render the switcher section
+  async function renderAccountSwitcher() {
+    const section = document.getElementById('_popAccountsSection');
+    if (!section) return;
+    const { data, error } = await db
+      .from('tiktok_accounts')
+      .select('tiktok_open_id, display_name, avatar_url, username')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true });
+    if (error || !data?.length) {
+      section.innerHTML = '';
+      return;
+    }
+    const activeId = getActiveAccountId() || data[0].tiktok_open_id;
+    // Auto-save the first account if nothing was set yet
+    if (!getActiveAccountId()) setActiveAccountId(data[0].tiktok_open_id);
+
+    section.innerHTML = `
+      <div style="padding:6px 12px 4px;font-size:9px;font-weight:900;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);">Viewing as</div>
+      ${data.map(acc => {
+        const isActive = acc.tiktok_open_id === activeId;
+        const name = acc.display_name || acc.username || 'TikTok Account';
+        const avatarHtml = acc.avatar_url
+          ? `<img src="${acc.avatar_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">`
+          : `<div style="width:28px;height:28px;border-radius:50%;background:var(--sand);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">♪</div>`;
+        return `
+          <button
+            onclick="switchTikTokAccount('${acc.tiktok_open_id}')"
+            style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;transition:background 0.12s;
+              background:${isActive ? 'color-mix(in srgb,var(--rust) 12%,var(--surface) 88%)' : 'none'};
+              color:${isActive ? 'var(--ink)' : 'var(--text-mid)'};"
+            onmouseover="this.style.background='var(--sand)'" onmouseout="this.style.background='${isActive ? 'color-mix(in srgb,var(--rust) 12%,var(--surface) 88%)' : 'none'}'">
+            ${avatarHtml}
+            <span style="flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@${name}</span>
+            ${isActive ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--rust)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+          </button>`;
+      }).join('')}
+      <div style="height:1px;background:var(--border);margin:4px 0;"></div>
+    `;
+  }
+
+  // Switch account and reload the page so all data refreshes
+  window.switchTikTokAccount = function(openId) {
+    setActiveAccountId(openId);
+    pop.style.display = 'none';
+    window.location.reload();
+  };
 
   // Close on outside click
   document.addEventListener('click', e => {
@@ -781,22 +862,21 @@ function initProfilePopover(userId) {
         const isVisible = pop.style.display === 'block';
         pop.style.display = isVisible ? 'none' : 'block';
         if (!isVisible) {
-          // Position above or below depending on space
+          renderAccountSwitcher(); // refresh on each open
           const spaceBelow = window.innerHeight - rect.bottom;
-          if (spaceBelow < 120) {
+          if (spaceBelow < 180) {
             pop.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
             pop.style.top = 'auto';
           } else {
             pop.style.top = (rect.bottom + 8) + 'px';
             pop.style.bottom = 'auto';
           }
-          pop.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
+          pop.style.left = Math.min(rect.left, window.innerWidth - 220) + 'px';
         }
       });
     });
   }
   wireProfileTriggers();
-  // Re-wire after any dynamic render
   const obs = new MutationObserver(wireProfileTriggers);
   obs.observe(document.body, { childList: true, subtree: true });
 }
