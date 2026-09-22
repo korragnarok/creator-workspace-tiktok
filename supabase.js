@@ -563,6 +563,14 @@ async function initDisplayName(user, prefs) {
   const name = savedName || _emailFallbackName(user.email);
   _applyDisplayName(name);
   applyProfileIcon(_resolveProfileIcon(user, prefs));
+
+  // Show active TikTok handle in the profile role slot
+  const activeAccount = await getActiveAccount(user.id);
+  if (activeAccount) {
+    const handle = '@' + (activeAccount.display_name || activeAccount.username || 'account');
+    document.querySelectorAll('.profile-role').forEach(el => el.textContent = handle);
+  }
+
   const modal = document.getElementById('nameModal');
   if (modal && !savedName && prefs._isNewPrefs && _isFreshSignup(user)) {
     modal.classList.add('open');
