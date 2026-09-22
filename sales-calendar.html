@@ -200,7 +200,7 @@ async function loadMonth(){
   const end=`${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${new Date(viewYear,viewMonth+1,0).getDate()}`;
   let query = db.from('sales').select('*').eq('user_id',_user.id).gte('date',start).lte('date',end);
   if(_activeAccountId){
-    query = query.or(`tiktok_account_id.eq."${_activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    query = query.eq("tiktok_account_id", _activeAccountId);
   }
   const {data}=await query;
   _salesCache={};
@@ -233,7 +233,7 @@ async function loadVideoOptions(){
     .eq('user_id',_user.id)
     .order('date',{ascending:false,nullsFirst:false});
   if(_activeAccountId){
-    query = query.or(`tiktok_account_id.eq."${_activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    query = query.eq("tiktok_account_id", _activeAccountId);
   }
   const {data,error}=await query;
   if(error){console.warn('Could not load videos for sales attribution',error);_videoOptions=[];return;}
@@ -264,7 +264,7 @@ async function loadProductOptions(){
     .eq('user_id',_user.id)
     .order('name');
   if(_activeAccountId){
-    query = query.or(`tiktok_account_id.eq."${_activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    query = query.eq("tiktok_account_id", _activeAccountId);
   }
   const {data,error}=await query;
   if(error){console.warn('Could not load products for sales attribution',error);_productOptions=[];return;}

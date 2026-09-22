@@ -794,13 +794,13 @@ async function initTikTokFollowerCard(userId, activeAccount) {
 async function fetchDashboardVideos(userId, activeAccountId){
   let base = db.from('videos').select('*').eq('user_id', userId);
   if(activeAccountId){
-    base = base.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    base = base.eq("tiktok_account_id", activeAccountId);
   }
   let result = await base.order('date', { ascending:false, nullsFirst:false });
   if(result.error){
     console.warn('Dashboard videos fetch failed, retrying without date order:', result.error);
     let retry = db.from('videos').select('*').eq('user_id', userId);
-    if(activeAccountId) retry = retry.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    if(activeAccountId) retry = retry.eq("tiktok_account_id", activeAccountId);
     result = await retry;
   }
   if(result.error){
@@ -843,17 +843,17 @@ async function init() {
   // Build account-scoped product query
   let productQuery = db.from('products').select('id,name,brand,units_sold,image_url').eq('user_id', user.id);
   if(activeAccountId){
-    productQuery = productQuery.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    productQuery = productQuery.eq("tiktok_account_id", activeAccountId);
   }
   productQuery = productQuery.order('created_at', { ascending:false });
 
   let salesQuery = db.from('sales').select('date,gmv,comm,units').eq('user_id', user.id).gte('date', sinceStr).order('date');
   if(activeAccountId){
-    salesQuery = salesQuery.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    salesQuery = salesQuery.eq("tiktok_account_id", activeAccountId);
   }
   let monthSalesQuery = db.from('sales').select('gmv').eq('user_id', user.id);
   if(activeAccountId){
-    monthSalesQuery = monthSalesQuery.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    monthSalesQuery = monthSalesQuery.eq("tiktok_account_id", activeAccountId);
   }
 
   const [{ data: rows }, { data: products }, videos, { data: queue }, attributedSales] = await Promise.all([
@@ -982,7 +982,7 @@ function videoProductName(video) {
 async function fetchAttributedSales(userId, activeAccountId) {
   let query = db.from('sales').select('video_sales').eq('user_id', userId);
   if(activeAccountId){
-    query = query.or(`tiktok_account_id.eq."${activeAccountId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    query = query.eq("tiktok_account_id", activeAccountId);
   }
   const { data, error } = await query;
   if(error) {

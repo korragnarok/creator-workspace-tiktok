@@ -617,7 +617,7 @@ async function loadVideos(pageToShow=currentPage){
   // Filter by account — untagged rows (empty string) show under whichever account is active
   // once user starts tagging; until then show everything
   if (activeId) {
-    query = query.or(`tiktok_account_id.eq."${activeId}",tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    query = query.eq("tiktok_account_id", activeId);
   }
   let {data,error}=await query.order('date', {ascending:false, nullsFirst:false}).order('posted_time', {ascending:false, nullsFirst:false});
   if(error&&/posted_time/i.test(error.message||'')){
@@ -1796,9 +1796,39 @@ function normalizeOfficialTikTokVideo(raw){
     raw
   };
 }
+async function getActiveAccountToken() {
+  const activeAccount = await getActiveAccount(user.id);
+  if (!activeAccount?.access_token) throw new Error('Connect TikTok in Settings first.');
+
+  // Check if token is expired and refresh if needed
+  const expiresAt = activeAccount.token_expires_at ? Date.parse(activeAccount.token_expires_at) : 0;
+  const stillValid = expiresAt && (expiresAt - Date.now() > 5 * 60 * 1000);
+  if (stillValid) return activeAccount.access_token;
+
+  // Try to refresh
+  try {
+    const res = await fetch(`${SCOUT_WORKER_URL}?service=tiktok&action=refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: activeAccount.refresh_token })
+    });
+    const data = await res.json();
+    if (!data.access_token) throw new Error('Refresh failed');
+    // Save refreshed token back to tiktok_accounts
+    await db.from('tiktok_accounts').update({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || activeAccount.refresh_token,
+      token_expires_at: data.expires_in ? new Date(Date.now() + data.expires_in * 1000).toISOString() : null
+    }).eq('tiktok_open_id', activeAccount.tiktok_open_id).eq('user_id', user.id);
+    return data.access_token;
+  } catch(e) {
+    console.warn('Token refresh failed, trying existing token', e);
+    return activeAccount.access_token;
+  }
+}
+
 async function fetchTikTokVideosFromAccount(){
-  const accessToken=await getValidTikTokAccessToken(user.id);
-  if(!accessToken)throw new Error('Connect TikTok in Settings first.');
+  const accessToken = await getActiveAccountToken();
   let all=[],cursor=null,pages=0;
   while(pages<TIKTOK_IMPORT_MAX_PAGES){
     const res=await fetch(`${SCOUT_WORKER_URL}?service=tiktok&action=video_list`,{

@@ -678,10 +678,20 @@ async function init() {
   window._user = user;
   _coreNames = (prefs.core5 || []).map(value => String(value || '').trim().toLowerCase()).filter(Boolean);
 
+  const activeAccount = await getActiveAccount(user.id);
+  const activeAccountId = activeAccount?.tiktok_open_id || null;
+  const badge = document.getElementById('activeAccountBadge');
+  if (badge && activeAccount) {
+    badge.textContent = '· @' + (activeAccount.display_name || activeAccount.username || 'account');
+    badge.style.display = '';
+  }
+
   restoreProductsState();
   async function renderProducts() {
     const q = document.getElementById('searchBox').value.toLowerCase();
-    const { data: prods } = await db.from('products').select('*').eq('user_id', user.id).order('created_at', {ascending: false});
+    let prodQuery = db.from('products').select('*').eq('user_id', user.id);
+    if (activeAccountId) prodQuery = prodQuery.eq('tiktok_account_id', activeAccountId);
+    const { data: prods } = await prodQuery.order('created_at', {ascending: false});
     _allProducts = prods || [];
     _videoCountsByProduct = await loadVideoCounts(_allProducts);
     renderBrandFilters(_allProducts);
@@ -1277,7 +1287,7 @@ async function init() {
     notesVal = notesVal.replace(/\nFREE_SAMPLE|FREE_SAMPLE\n|FREE_SAMPLE/g, '').trim();
     if(isFreeSample) notesVal = notesVal ? notesVal + '\nFREE_SAMPLE' : 'FREE_SAMPLE';
 
-    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: notesVal, image_url };
+    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: notesVal, image_url, tiktok_account_id: activeAccountId || '' };
     const { error: dbErr } = window._editId
       ? await db.from('products').update(fields).eq('id', window._editId).eq('user_id', user.id)
       : await db.from('products').insert({ user_id: user.id, ...fields });
