@@ -347,7 +347,7 @@ async function loadUserPrefs(userId) {
     merged.streak_goal = _normalizeStreakGoal(row.streak_goal, merged.streak_goal);
     return { ...merged, core5: _resolveCore5(userId, merged.core5) };
   }
-  const cachedCore5 = _cachedCore5(userId);
+  const cachedCore5 = _cachedCore5(userId, (typeof getActiveAccountId === 'function' ? getActiveAccountId() : null) || 'default');
   const streakGoal = _cachedStreakGoal(userId);
   return { display_name: null, core5: cachedCore5, theme, profile_icon: _cachedAvatarUrl(userId) || _cachedProfileIcon(userId), streak_goal: streakGoal, _isNewPrefs: true };
 }
@@ -590,8 +590,9 @@ async function saveDisplayName(userId) {
 
 // ─── Core 5 ──────────────────────────────────────────────────────────────────
 
-function _core5Key(userId) {
-  return `creatorHub:core5:${userId || 'local'}`;
+function _core5Key(userId, accountId) {
+  const acct = accountId || (typeof getActiveAccountId === 'function' ? getActiveAccountId() : null) || 'default';
+  return `creatorHub:core5:${userId || 'local'}:${acct}`;
 }
 
 function _normalizeCore5(values) {
@@ -599,9 +600,9 @@ function _normalizeCore5(values) {
   return Array.from({ length: 7 }, (_, i) => String(arr[i] || '').trim());
 }
 
-function _cachedCore5(userId) {
+function _cachedCore5(userId, accountId) {
   try {
-    return _normalizeCore5(JSON.parse(localStorage.getItem(_core5Key(userId)) || '[]'));
+    return _normalizeCore5(JSON.parse(localStorage.getItem(_core5Key(userId, accountId)) || '[]'));
   } catch(e) { return []; }
 }
 
@@ -609,14 +610,17 @@ function _metadataCore5(user) {
   return _normalizeCore5(user?.user_metadata?.core5);
 }
 
-function _cacheCore5(userId, values) {
-  try { localStorage.setItem(_core5Key(userId), JSON.stringify(_normalizeCore5(values))); } catch(e) {}
+function _cacheCore5(userId, values, accountId) {
+  try { localStorage.setItem(_core5Key(userId, accountId), JSON.stringify(_normalizeCore5(values))); } catch(e) {}
 }
 
-function _resolveCore5(userId, savedValues) {
+function _resolveCore5(userId, savedValues, accountId) {
+  const acctId = accountId || (typeof getActiveAccountId === 'function' ? getActiveAccountId() : null) || 'default';
+  const byAccount = (savedValues && typeof savedValues === 'object' && !Array.isArray(savedValues)) ? null : null;
+  const cached = _cachedCore5(userId, acctId);
+  if (cached.some(Boolean)) return cached;
   const saved = _normalizeCore5(savedValues);
-  const cached = _cachedCore5(userId);
-  return saved.some(Boolean) ? saved : cached;
+  return saved.some(Boolean) ? saved : [];
 }
 
 function _updateCoreCount() {
@@ -645,21 +649,18 @@ function _renderCore5Pills(values) {
 }
 
 async function initCore5(userId, prefs) {
+  const acctId = (typeof getActiveAccountId === 'function' ? getActiveAccountId() : null) || 'default';
+  const byAccountMap = prefs?.core5_by_account || {};
+  const acctValues = byAccountMap[acctId] ? _normalizeCore5(byAccountMap[acctId]) : null;
   const user = await getUser();
-  const prefValues = _normalizeCore5(prefs.core5);
   const metaValues = _metadataCore5(user);
-  const cachedValues = _cachedCore5(userId);
-  const values = metaValues.some(Boolean)
-    ? metaValues
-    : (prefValues.some(Boolean) ? prefValues : cachedValues);
-  _cacheCore5(userId, values);
+  const cachedValues = _cachedCore5(userId, acctId);
+  const prefValues = _normalizeCore5(prefs.core5);
+  const values = (acctValues && acctValues.some(Boolean))
+    ? acctValues
+    : (cachedValues.some(Boolean) ? cachedValues : (prefValues.some(Boolean) ? prefValues : metaValues));
+  _cacheCore5(userId, values, acctId);
   _renderCore5Pills(values);
-  if (userId && JSON.stringify(prefValues) !== JSON.stringify(values)) {
-    await saveUserPrefs(userId, { core5: values });
-  }
-  if (userId && JSON.stringify(metaValues) !== JSON.stringify(values)) {
-    await db.auth.updateUser({ data: { core5: values } });
-  }
 
   // Add edit button to sidebar head if not already there
   const head = document.querySelector('.core-sidebar-head');
@@ -700,7 +701,8 @@ async function initCore5(userId, prefs) {
 function openCore5Modal() {
   const modal = document.getElementById('_core5Modal');
   if (!modal) return;
-  const values = _cachedCore5(window._core5UserId);
+  const acctId = (typeof getActiveAccountId === 'function' ? getActiveAccountId() : null) || 'default';
+  const values = _cachedCore5(window._core5UserId, acctId);
   const container = document.getElementById('_core5Inputs');
   container.innerHTML = [0,1,2,3,4,5,6].map(i => `
     <div style="display:flex;gap:8px;align-items:center;">
@@ -725,13 +727,21 @@ function closeCore5Modal() {
 
 async function saveCore5Modal() {
   const userId = window._core5UserId;
+  const acctId = (typeof getActiveAccountId === 'function' ? getActiveAccountId() : null) || 'default';
   const values = [0,1,2,3,4,5,6].map(i => (document.getElementById(`_c5input${i}`)?.value || '').trim());
-  _cacheCore5(userId, values);
+  _cacheCore5(userId, values, acctId);
   _renderCore5Pills(values);
   closeCore5Modal();
-  const { error } = await saveUserPrefs(userId, { core5: values });
-  const { error: metaError } = await db.auth.updateUser({ data: { core5: values } });
-  showToast(error && metaError ? 'Hero Brands saved locally' : 'Hero Brands saved', error && metaError ? 'error' : 'success');
+  try {
+    // Load existing by-account map and update this account's slot
+    const { data } = await db.from('user_prefs').select('core5_by_account').eq('user_id', userId).maybeSingle();
+    const existing = data?.core5_by_account || {};
+    const updated = { ...existing, [acctId]: _normalizeCore5(values) };
+    await saveUserPrefs(userId, { core5_by_account: updated });
+    showToast('Hero Brands saved');
+  } catch(e) {
+    showToast('Hero Brands saved locally', 'error');
+  }
 }
 
 // ─── Active TikTok Account ────────────────────────────────────────────────────

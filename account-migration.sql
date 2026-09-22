@@ -20,3 +20,7 @@ create index if not exists products_tiktok_account_id_idx
 
 create index if not exists sales_tiktok_account_id_idx
   on public.sales (user_id, tiktok_account_id);
+
+-- Add core5_by_account column to store per-account Hero Brands
+alter table public.user_prefs
+  add column if not exists core5_by_account jsonb default '{}'::jsonb;
