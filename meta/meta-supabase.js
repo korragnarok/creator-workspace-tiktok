@@ -20,3 +20,31 @@ async function signOut() {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}));
 }
+
+// ─── Meta (Facebook + Instagram) ─────────────────────────────────────────
+const META_APP_ID = '1569299174362194';          // public — safe to be in browser code
+const META_WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
+const GRAPH = 'https://graph.facebook.com/v23.0';
+const META_SCOPES = [
+  'pages_show_list', 'pages_read_engagement', 'pages_read_user_content', 'read_insights',
+  'instagram_basic', 'instagram_manage_insights', 'business_management'
+].join(',');
+
+async function graph(path, token, params = {}) {
+  const u = new URL(GRAPH + path);
+  Object.entries({ ...params, access_token: token }).forEach(([k, v]) => u.searchParams.set(k, v));
+  const res = await fetch(u);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data;
+}
+async function graphAll(path, token, params = {}, max = 500) {
+  let out = [], data = await graph(path, token, { limit: 50, ...params });
+  out.push(...(data.data || []));
+  while (data.paging?.next && out.length < max) {
+    data = await (await fetch(data.paging.next)).json();
+    if (data.error) break;
+    out.push(...(data.data || []));
+  }
+  return out;
+}
