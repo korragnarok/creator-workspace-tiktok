@@ -159,6 +159,7 @@ async function syncAll() {
       total += rows.length;
     }
     status(`Synced ${total} video${total === 1 ? '' : 's'} ✓`);
+    try { localStorage.setItem('take24meta:lastSync', String(Date.now())); } catch {}
     await render();
   } catch (e) { status(''); alert('Sync failed: ' + e.message); }
   finally { btn.disabled = false; }
@@ -194,6 +195,12 @@ document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
     else try { await finishConnect(qs.get('code')); await syncAll(); } catch (e) { status(''); alert('Connect failed: ' + e.message); }
   }
   await render();
+  // Keep views current: auto-sync when you open this page if the last sync was 6+ hours ago.
+  const last = Number(localStorage.getItem('take24meta:lastSync') || 0);
+  if (Date.now() - last > 6 * 60 * 60 * 1000) {
+    const { count } = await db.from('meta_accounts').select('id', { count: 'exact', head: true }).eq('user_id', user.id);
+    if (count) syncAll();
+  }
 })();
 </script>
 </body>
