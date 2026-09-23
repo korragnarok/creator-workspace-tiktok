@@ -3,51 +3,274 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#F4F1EC">
+<meta name="theme-color" content="#EFEAE3">
 <title>Take24 Meta</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Pinyon+Script&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#F4F1EC;--surface:#FFFFFF;--sage:#8A9A7B;--sage-soft:#E4EADD;--lav:#A99BC2;--lav-soft:#ECE7F3;--brown:#6B5446;--brown-soft:#EFE6DE;--text:#3E3530;--muted:#8C8078;--border:rgba(107,84,70,.12);}
+:root{
+  --paper:#EFEAE3; --card:#FBF9F6; --line:rgba(94,74,62,.14);
+  --sage:#8E9C80; --sage-soft:#E3E8DC; --lav:#A89BBE; --lav-soft:#E9E4F1;
+  --brown:#5E4A3E; --taupe:#8A7466; --taupe-soft:#E6DDD4; --muted:#9A8C82; --ink:#3A302A;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;padding:28px;padding-top:max(28px,env(safe-area-inset-top));}
-header{display:flex;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto 28px;}
-.brand{font-weight:800;font-size:22px;color:var(--brown);}
-.brand span{color:var(--lav);}
-.actions{display:flex;gap:10px;}
-.pill{border:1px solid var(--border);background:var(--surface);color:var(--brown);border-radius:999px;padding:9px 16px;font:700 13px 'Nunito',sans-serif;cursor:pointer;}
-.pill:hover{background:var(--sage-soft);}
-main{max-width:1100px;margin:0 auto;}
-.hello{font-size:28px;font-weight:800;color:var(--brown);margin-bottom:4px;}
-.subhello{color:var(--muted);margin-bottom:24px;}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:22px;box-shadow:0 6px 24px rgba(107,84,70,.06);}
-.card h3{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
-.card.fb{background:var(--lav-soft);} .card.fb h3{color:#6E5E8C;}
-.card.ig{background:var(--sage-soft);} .card.ig h3{color:#5F6E52;}
-.card.aff{background:var(--brown-soft);} .card.aff h3{color:var(--brown);}
-.card p{color:var(--muted);font-size:14px;line-height:1.5;}
-.soon{display:inline-block;margin-top:12px;background:rgba(255,255,255,.7);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;color:var(--muted);}
+html{height:100%;}
+body{min-height:100%;background:var(--paper);color:var(--ink);font-family:'Nunito Sans',sans-serif;font-size:13px;
+  padding:26px;padding-top:max(26px,env(safe-area-inset-top));padding-bottom:max(26px,env(safe-area-inset-bottom));
+  background-image:radial-gradient(rgba(94,74,62,.035) 1px,transparent 1px);background-size:14px 14px;}
+.board{max-width:1320px;margin:0 auto;display:grid;gap:18px;
+  grid-template-columns:260px minmax(0,1fr) 250px;
+  grid-template-areas:
+   "side  top    right"
+   "side  week   right"
+   "side  mid    right";}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 8px 28px rgba(94,74,62,.06);}
+h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:var(--brown);text-align:center;margin-bottom:12px;letter-spacing:.01em;}
+.label{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
+
+/* ── left column ── */
+.side{grid-area:side;display:flex;flex-direction:column;gap:18px;}
+.year{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:54px;line-height:.9;color:var(--brown);padding-left:4px;}
+.cal{background:var(--taupe);color:#F6F0EA;border:none;}
+.cal .photo{height:150px;border-radius:14px;margin:-4px -4px 16px;}
+.cal-month{font-family:'Cormorant Garamond',serif;font-size:24px;text-align:center;margin-bottom:8px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px 0;text-align:center;font-size:12px;}
+.cal-grid .dow{font-weight:800;font-size:10px;opacity:.7;padding-bottom:6px;border-bottom:1px solid rgba(246,240,234,.25);margin-bottom:4px;}
+.cal-grid .d{padding:4px 0;border-radius:50%;}
+.cal-grid .today{background:#F6F0EA;color:var(--taupe);font-weight:800;}
+.minis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.minis .photo{height:74px;border-radius:12px;}
+
+/* photo slots: tap to add your own image */
+.photo{position:relative;background:linear-gradient(135deg,var(--taupe-soft),var(--lav-soft));background-size:cover;background-position:center;cursor:pointer;overflow:hidden;}
+.photo:not(.has)::after{content:'+ photo';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--taupe);opacity:.7;}
+.cal .photo:not(.has)::after{color:#F6F0EA;}
+
+/* ── top row ── */
+.top{grid-area:top;display:grid;grid-template-columns:1.1fr 1fr;gap:18px;}
+.hello h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:40px;line-height:1.05;color:var(--brown);}
+.hello h1 em{font-family:'Pinyon Script',cursive;font-style:normal;font-size:48px;color:var(--lav);}
+.hello p{color:var(--muted);margin-top:8px;}
+.hello .switch{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;}
+.btn{border:1px solid var(--line);background:#fff;color:var(--brown);border-radius:999px;padding:8px 14px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}
+.btn:hover{background:var(--sage-soft);}
+.quote{background:var(--sage);color:#F7F5F0;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;}
+.quote .q{font-family:'Pinyon Script',cursive;font-size:34px;line-height:1.2;}
+.quote .qsub{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;opacity:.85;margin-top:6px;}
+.quote button{position:absolute;right:14px;bottom:12px;background:none;border:none;color:#F7F5F0;opacity:.6;cursor:pointer;font-size:16px;}
+
+/* ── weekly schedule ── */
+.week{grid-area:week;}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
+.day{border-radius:16px;background:var(--lav-soft);padding:10px;min-height:150px;display:flex;flex-direction:column;}
+.day.is-today{background:var(--sage-soft);outline:1.5px solid var(--sage);}
+.day .dname{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--brown);text-align:center;}
+.day .ddate{font-size:10px;color:var(--muted);text-align:center;margin-bottom:8px;}
+.day textarea{flex:1;width:100%;border:none;background:rgba(255,255,255,.55);border-radius:10px;padding:8px;resize:none;font:12px/1.45 'Nunito Sans',sans-serif;color:var(--ink);outline:none;}
+.day textarea:focus{background:#fff;}
+
+/* ── lists ── */
+.mid{grid-area:mid;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.list ul{list-style:none;display:flex;flex-direction:column;gap:7px;min-height:40px;}
+.list li{display:flex;align-items:flex-start;gap:9px;line-height:1.35;}
+.list li input{margin-top:2px;accent-color:var(--sage);width:15px;height:15px;flex-shrink:0;cursor:pointer;}
+.list li.done span{text-decoration:line-through;color:var(--muted);}
+.list li .x{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;opacity:0;font-size:14px;}
+.list li:hover .x{opacity:1;}
+.list .add{margin-top:12px;width:100%;border:none;border-bottom:1px dashed var(--line);background:none;padding:6px 2px;font:13px 'Nunito Sans',sans-serif;outline:none;color:var(--ink);}
+.list.lav{background:var(--lav-soft);} .list.sage{background:var(--sage-soft);} .list.taupe{background:var(--taupe-soft);}
+
+/* ── right column ── */
+.right{grid-area:right;display:flex;flex-direction:column;gap:18px;}
+.folders{background:var(--taupe-soft);}
+.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 6px;}
+.folder{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--brown);font-size:10.5px;font-weight:700;text-align:center;cursor:pointer;}
+.folder .ic{width:44px;height:36px;border-radius:6px 10px 10px 10px;position:relative;background:var(--f,var(--taupe));box-shadow:inset 0 -8px 0 rgba(0,0,0,.06);}
+.folder .ic::before{content:'';position:absolute;top:-6px;left:0;width:20px;height:8px;border-radius:5px 5px 0 0;background:var(--f,var(--taupe));}
+.folder.soon{opacity:.55;cursor:default;}
+.goals .goal{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);}
+.goals .goal:last-child{border:none;}
+.goals .num{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--lav);width:18px;}
+.goals input{flex:1;border:none;background:none;font:13px 'Nunito Sans',sans-serif;color:var(--ink);outline:none;}
+.mood .photo{height:180px;border-radius:16px;}
+
+@media(max-width:1100px){
+  .board{grid-template-columns:1fr 1fr;grid-template-areas:"top top" "week week" "mid mid" "side right";}
+}
+@media(max-width:700px){
+  body{padding:16px;}
+  .board{grid-template-columns:1fr;grid-template-areas:"top" "week" "mid" "right" "side";}
+  .top{grid-template-columns:1fr;}
+  .mid{grid-template-columns:1fr;}
+  .week-grid{grid-template-columns:repeat(7,150px);overflow-x:auto;padding-bottom:6px;}
+}
 </style>
 </head>
 <body>
-<header>
-  <div class="brand">Take24 <span>Meta</span></div>
-  <div class="actions">
-    <button class="pill" onclick="switchToTikTok()">Switch to TikTok</button>
-    <button class="pill" onclick="signOut()">Sign out</button>
-  </div>
-</header>
-<main>
-  <div class="hello">Hi there 🌿</div>
-  <div class="subhello">Your Facebook, Instagram, and affiliate workspace.</div>
-  <div class="grid">
-    <div class="card fb"><h3>Facebook</h3><p>Videos posted and follower growth across your Pages.</p><span class="soon">Coming soon</span></div>
-    <div class="card ig"><h3>Instagram</h3><p>Reels, views, saves, and followers.</p><span class="soon">Coming soon</span></div>
-    <div class="card aff"><h3>Affiliate Links</h3><p>Amazon and Mavely links, clicks, and earnings.</p><span class="soon">Coming soon</span></div>
-  </div>
-</main>
+<div class="board">
+
+  <!-- LEFT -->
+  <aside class="side">
+    <div class="year" id="year"></div>
+    <div class="card cal">
+      <div class="photo" data-photo="cal"></div>
+      <div class="cal-month" id="calMonth"></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+    <div class="minis">
+      <div class="photo" data-photo="m1"></div>
+      <div class="photo" data-photo="m2"></div>
+      <div class="photo" data-photo="m3"></div>
+    </div>
+  </aside>
+
+  <!-- TOP -->
+  <section class="top">
+    <div class="card hello">
+      <div class="label" id="todayLabel"></div>
+      <h1 id="greet">Good morning, <em>Kourtney</em></h1>
+      <p>Facebook, Instagram &amp; affiliate links — all in one place.</p>
+      <div class="switch">
+        <button class="btn" onclick="switchToTikTok()">Switch to TikTok</button>
+        <button class="btn" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+    <div class="card quote">
+      <div class="q" id="quote"></div>
+      <div class="qsub" id="quoteSub"></div>
+      <button onclick="nextQuote()" title="New quote">↻</button>
+    </div>
+  </section>
+
+  <!-- WEEK -->
+  <section class="card week">
+    <h2>This Week</h2>
+    <div class="week-grid" id="weekGrid"></div>
+  </section>
+
+  <!-- LISTS -->
+  <section class="mid">
+    <div class="card list lav"  data-list="content"><h2>Content</h2><ul></ul><input class="add" placeholder="+ add a post idea"></div>
+    <div class="card list sage" data-list="links"><h2>Links &amp; Deals</h2><ul></ul><input class="add" placeholder="+ add a link to post"></div>
+    <div class="card list taupe" data-list="admin"><h2>Admin</h2><ul></ul><input class="add" placeholder="+ add a task"></div>
+  </section>
+
+  <!-- RIGHT -->
+  <aside class="right">
+    <div class="card folders">
+      <h2>Folders</h2>
+      <div class="fgrid">
+        <a class="folder soon" style="--f:#A89BBE"><span class="ic"></span>Facebook</a>
+        <a class="folder soon" style="--f:#8E9C80"><span class="ic"></span>Instagram</a>
+        <a class="folder soon" style="--f:#8A7466"><span class="ic"></span>Links</a>
+        <a class="folder soon" style="--f:#B7A99A"><span class="ic"></span>Products</a>
+        <a class="folder soon" style="--f:#C4B7D6"><span class="ic"></span>Earnings</a>
+        <a class="folder" style="--f:#6F7D63" href="../index.html" onclick="switchToTikTok();return false;"><span class="ic"></span>TikTok</a>
+      </div>
+    </div>
+    <div class="card goals">
+      <h2>Monthly Goals</h2>
+      <div id="goals"></div>
+    </div>
+    <div class="card mood"><div class="photo" data-photo="mood"></div></div>
+  </aside>
+</div>
+
+<input type="file" id="photoPicker" accept="image/*" hidden>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="meta-supabase.js?v=1"></script>
-<script>requireMetaAuth();</script>
+<script src="meta-supabase.js?v=2"></script>
+<script>
+// Everything on this board saves on this device for now (localStorage).
+// Once the Meta tables exist we'll move it to Supabase so it syncs.
+const K = k => 'take24meta:' + k;
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(K(k))) ?? d; } catch(e) { return d; } };
+const save = (k, v) => { try { localStorage.setItem(K(k), JSON.stringify(v)); } catch(e) { alert('Storage is full — try a smaller photo.'); } };
+const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const now = new Date();
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+// Header
+document.getElementById('year').textContent = now.getFullYear();
+document.getElementById('todayLabel').textContent = now.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+const h = now.getHours();
+document.getElementById('greet').innerHTML = `${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, <em>Kourtney</em>`;
+
+// Mini calendar
+(function(){
+  const y=now.getFullYear(), m=now.getMonth();
+  document.getElementById('calMonth').textContent = now.toLocaleDateString(undefined,{month:'long'});
+  const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
+  let html=['S','M','T','W','T','F','S'].map(d=>`<div class="dow">${d}</div>`).join('');
+  for(let i=0;i<first;i++) html+='<div></div>';
+  for(let d=1;d<=days;d++) html+=`<div class="d${d===now.getDate()?' today':''}">${d}</div>`;
+  document.getElementById('calGrid').innerHTML=html;
+})();
+
+// Quotes
+const QUOTES=[['Just keep moving forward','one post at a time'],['Your energy attracts your reality',''],['Great. Act now.','done is better than perfect'],['Show up, even when it\u2019s small',''],['Consistency is the secret','not perfection']];
+let qi=load('quoteIdx',0);
+function showQuote(){const [q,s]=QUOTES[qi%QUOTES.length];document.getElementById('quote').textContent=q;document.getElementById('quoteSub').textContent=s;}
+function nextQuote(){qi=(qi+1)%QUOTES.length;save('quoteIdx',qi);showQuote();}
+showQuote();
+
+// Week (Mon–Sun), notes saved per date
+(function(){
+  const start=new Date(now); start.setDate(now.getDate()-((now.getDay()+6)%7));
+  const notes=load('week',{});
+  const grid=document.getElementById('weekGrid');
+  grid.innerHTML=[...Array(7)].map((_,i)=>{
+    const d=new Date(start); d.setDate(start.getDate()+i); const key=ymd(d);
+    return `<div class="day${key===ymd(now)?' is-today':''}">
+      <div class="dname">${d.toLocaleDateString(undefined,{weekday:'short'})}</div>
+      <div class="ddate">${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div>
+      <textarea data-date="${key}" placeholder="plans…">${esc(notes[key]||'')}</textarea></div>`;
+  }).join('');
+  grid.addEventListener('input',e=>{ if(e.target.dataset.date){ const n=load('week',{}); n[e.target.dataset.date]=e.target.value; save('week',n);} });
+})();
+
+// Lists
+document.querySelectorAll('[data-list]').forEach(card=>{
+  const key='list:'+card.dataset.list, ul=card.querySelector('ul'), input=card.querySelector('.add');
+  const render=()=>{ ul.innerHTML=load(key,[]).map((t,i)=>`<li class="${t.done?'done':''}"><input type="checkbox" data-i="${i}" ${t.done?'checked':''}><span>${esc(t.text)}</span><button class="x" data-del="${i}">×</button></li>`).join(''); };
+  input.addEventListener('keydown',e=>{ if(e.key==='Enter'&&input.value.trim()){ const l=load(key,[]); l.push({text:input.value.trim(),done:false}); save(key,l); input.value=''; render(); } });
+  ul.addEventListener('click',e=>{
+    const l=load(key,[]);
+    if(e.target.dataset.i!==undefined){ l[e.target.dataset.i].done=e.target.checked; }
+    else if(e.target.dataset.del!==undefined){ l.splice(+e.target.dataset.del,1); }
+    else return;
+    save(key,l); render();
+  });
+  render();
+});
+
+// Goals
+(function(){
+  const g=load('goals',['','','','']);
+  const el=document.getElementById('goals');
+  el.innerHTML=g.map((v,i)=>`<div class="goal"><span class="num">${i+1}</span><input data-g="${i}" value="${esc(v)}" placeholder="goal for this month"></div>`).join('');
+  el.addEventListener('input',e=>{ const x=load('goals',['','','','']); x[e.target.dataset.g]=e.target.value; save('goals',x); });
+})();
+
+// Photo slots — tap to pick an image; it's shrunk and saved on this device.
+let activeSlot=null;
+function paintPhotos(){ const p=load('photos',{}); document.querySelectorAll('[data-photo]').forEach(el=>{ const src=p[el.dataset.photo]; el.classList.toggle('has',!!src); el.style.backgroundImage=src?`url(${src})`:''; }); }
+document.querySelectorAll('[data-photo]').forEach(el=>el.addEventListener('click',()=>{ activeSlot=el.dataset.photo; document.getElementById('photoPicker').click(); }));
+document.getElementById('photoPicker').addEventListener('change',e=>{
+  const file=e.target.files[0]; if(!file||!activeSlot) return;
+  const img=new Image(), reader=new FileReader();
+  reader.onload=()=>{ img.onload=()=>{
+    const max=700, s=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement('canvas'); c.width=img.width*s; c.height=img.height*s;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    const p=load('photos',{}); p[activeSlot]=c.toDataURL('image/jpeg',0.8); save('photos',p); paintPhotos();
+  }; img.src=reader.result; };
+  reader.readAsDataURL(file); e.target.value='';
+});
+paintPhotos();
+
+requireMetaAuth();
+</script>
 </body>
 </html>
