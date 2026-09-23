@@ -11,6 +11,7 @@
 <title>Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Bad+Script&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
 <script src="theme-init.js?v=145"></script>
 <link rel="stylesheet" href="layout.css?v=145">
@@ -221,7 +222,8 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .script-modal-btn.primary:hover{filter:brightness(1.08);color:#fff;}
 .mob-mini-ladder-wrap{display:none!important;}
 @media(min-width:769px){.lineup-section{display:none!important;}}
-@media(min-width:1281px) and (min-height:760px){
+/* old fixed-height desktop layout — retired for the planner board */
+@media(min-width:99999px){
   html,body{height:100%;overflow:hidden;}
   .app-shell{height:100vh;min-height:0;overflow:hidden;}
   .workspace{height:100vh;min-height:0;overflow:hidden;}
@@ -358,6 +360,55 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .app-shell{grid-template-columns:1fr !important;}
   .workspace{grid-column:1 !important;}
 }
+/* ─── Planner board layout ─────────────────────────────────────────── */
+@media(min-width:769px){
+  .app-shell{display:block;}
+  .app-shell>.desktop-sidebar{display:none!important;}   /* nav lives in the Folders card on Home */
+}
+.board{display:grid;grid-template-columns:250px minmax(0,1fr) 240px;gap:18px;align-items:start;}
+.b-col{display:flex;flex-direction:column;gap:18px;min-width:0;}
+.b-card{background:var(--surface);border:1px solid var(--border-mid);border-radius:22px;padding:18px;box-shadow:var(--shadow-md);}
+.b-title{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:var(--ink);text-align:center;margin-bottom:12px;}
+.b-word{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:54px;line-height:.9;color:var(--ink);padding-left:4px;}
+.b-cal{background:var(--rust);border:none;color:#fff;}
+.b-cal .b-title{color:#fff;}
+.b-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px 0;text-align:center;font-size:12px;}
+.b-cal-grid .dow{font-weight:800;font-size:10px;opacity:.75;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.25);margin-bottom:4px;}
+.b-cal-grid .d{height:26px;display:flex;align-items:center;justify-content:center;}
+.b-cal-grid .today{width:26px;margin:0 auto;border-radius:50%;background:#fff;color:var(--rust);font-weight:800;}
+.welcome em,.b-script{font-family:'Bad Script',cursive;font-style:normal;color:var(--rust);}
+.b-quote{background:color-mix(in srgb,var(--rust) 70%,var(--surface) 30%);border:none;color:#fff;text-align:center;position:relative;min-height:130px;display:flex;flex-direction:column;justify-content:center;}
+.b-quote .q{font-family:'Bad Script',cursive;font-size:24px;line-height:1.25;}
+.b-quote .qs{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;opacity:.85;margin-top:4px;}
+.b-quote button{position:absolute;right:12px;bottom:10px;background:none;border:none;color:#fff;opacity:.6;cursor:pointer;font-size:15px;}
+/* folders = navigation */
+.b-folders .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 4px;}
+.b-folder{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:10.5px;font-weight:700;text-align:center;line-height:1.2;}
+.b-folder:hover{color:var(--ink);}
+.b-folder .ic{width:46px;height:46px;object-fit:contain;display:block;transition:transform .15s;}
+.b-folder:hover .ic{transform:translateY(-2px);}
+.b-folder .ic.fallback{width:42px;height:34px;margin:6px 0;border-radius:6px 10px 10px 10px;position:relative;background:var(--f,var(--rust));}
+.b-folder .ic.fallback::before{content:'';position:absolute;top:-6px;left:0;width:19px;height:8px;border-radius:5px 5px 0 0;background:var(--f,var(--rust));}
+/* Hero Brands moved out of the sidebar */
+.b-left .core-sidebar{background:var(--surface);border:1px solid var(--border-mid);border-radius:22px;padding:16px;box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:9px;}
+.b-left .core-sidebar-head{display:flex;align-items:center;justify-content:space-between;font-family:'Cormorant Garamond',serif;font-size:21px;color:var(--ink);}
+.b-left .core-mini-list{display:flex;flex-direction:column;gap:6px;}
+.b-left .core-mini-num,.b-left .core-mini-input{display:none;}
+.b-left .core-pill{border:1px solid var(--border-mid);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;cursor:pointer;background:color-mix(in srgb,var(--surface) 75%,var(--sand) 25%);}
+.b-left .core-pill:hover{border-color:var(--rust);}
+.b-left .core-pill-text{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;}
+/* center column: existing sections, softened to match */
+.board .card,.board .stat-card,.board .level-feature{border-radius:20px;}
+.board .top-layout{grid-template-columns:1fr;margin-bottom:0;}
+.board .stats-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));}
+.board .lower-grid{margin-bottom:0;}
+.board .hero-row{margin-bottom:0;}
+@media(max-width:1180px){.board{grid-template-columns:220px minmax(0,1fr);} .b-right{grid-column:1 / -1;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}}
+@media(max-width:768px){
+  .board{display:block;}
+  .b-left,.b-right{display:none;}            /* phone keeps its current layout + bottom tab bar */
+  .board .b-center{display:contents;}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=145"></script>
@@ -369,7 +420,17 @@ select.sched-location-tag:focus{border-color:var(--rust);}
       <img src="logo.png" alt="Take24" style="height:80px;width:auto;object-fit:contain;">
     </header>
     <main class="content">
-      <div class="main">
+      <div class="main board">
+        <aside class="b-col b-left">
+          <div class="b-word">take 24</div>
+          <div class="b-card b-cal">
+            <div class="b-title" id="bCalMonth"></div>
+            <div class="b-cal-grid" id="bCalGrid"></div>
+          </div>
+          <div id="heroBrandsSlot"></div>
+        </aside>
+
+        <div class="b-col b-center">
         <div class="hero-row">
           <div>
             <h1 class="welcome" id="welcomeTitle">welcome back</h1>
@@ -503,6 +564,19 @@ select.sched-location-tag:focus{border-color:var(--rust);}
           </div>
           <div class="lineup-strip" id="lineupStrip"></div>
         </section>
+        </div><!-- /b-center -->
+
+        <aside class="b-col b-right">
+          <div class="b-card b-folders">
+            <div class="b-title">Folders</div>
+            <div class="fgrid" id="bFolders"></div>
+          </div>
+          <div class="b-card b-quote">
+            <div class="q" id="bQuote"></div>
+            <div class="qs" id="bQuoteSub"></div>
+            <button type="button" onclick="bNextQuote()" title="New quote">↻</button>
+          </div>
+        </aside>
       </div>
 
     </main>
@@ -533,6 +607,46 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 </div>
 
 <script src="layout.js?v=145"></script>
+<script>
+// ─── Planner board extras ──────────────────────────────────────────────
+(function(){
+  const now = new Date();
+  // Mini calendar
+  const y = now.getFullYear(), m = now.getMonth();
+  document.getElementById('bCalMonth').textContent = now.toLocaleDateString(undefined, { month: 'long' });
+  const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  let html = ['S','M','T','W','T','F','S'].map(d => `<div class="dow">${d}</div>`).join('');
+  for (let i = 0; i < first; i++) html += '<div></div>';
+  for (let d = 1; d <= days; d++) html += `<div class="d${d === now.getDate() ? ' today' : ''}">${d}</div>`;
+  document.getElementById('bCalGrid').innerHTML = html;
+
+  // Folders — every page from the old sidebar. Drop your own folder.png in the main folder to change the icon.
+  const FOLDERS = [
+    ['daily-virals.html','Viral Feed'], ['daily-todo.html','Daily To Do'], ['video-tracker.html','Content Tracker'],
+    ['products.html','Products'], ['brand-deals.html','Brand Deals'], ['product-scout.html','Product Scout'],
+    ['scripts.html','Script Vault'], ['script-workshop.html','Script Workshop'], ['script-scout.html','Script Scout'],
+    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'], ['settings.html','Settings'],
+    ['meta/index.html','Switch to Meta']
+  ];
+  document.getElementById('bFolders').innerHTML = FOLDERS.map(([href, label]) =>
+    `<a class="b-folder" href="${href}"${href.startsWith('meta/') ? ` onclick="try{localStorage.setItem('take24:workspace','meta')}catch(e){}"` : ''}>
+       <img class="ic" src="folder.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">${label}</a>`).join('');
+
+  // Quote
+  const QUOTES = [['Just keep moving forward','one video at a time'],['Your energy attracts your reality',''],['Great. Act now.','done is better than perfect'],['Show up, even when it\u2019s small',''],['Consistency is the secret','not perfection']];
+  let qi = 0; try { qi = Number(localStorage.getItem('take24:quoteIdx') || 0); } catch(e) {}
+  window.bNextQuote = function(step = 1){ qi = (qi + step) % QUOTES.length; try { localStorage.setItem('take24:quoteIdx', qi); } catch(e) {}
+    document.getElementById('bQuote').textContent = QUOTES[qi][0]; document.getElementById('bQuoteSub').textContent = QUOTES[qi][1]; };
+  bNextQuote(0);
+
+  // Hero Brands: move the existing widget (same inputs, edit button, and data) out of the hidden sidebar
+  function moveHeroBrands(){
+    const core = document.querySelector('.desktop-sidebar .core-sidebar');
+    if (core) document.getElementById('heroBrandsSlot').appendChild(core);
+  }
+  moveHeroBrands();
+})();
+</script>
 <script>
 const LEVELS=[{name:'Bronze',icon:'bronze',min:0,max:999,color:'#c9a87a'},{name:'Silver',icon:'silver',min:1000,max:4999,color:'#9a9890'},{name:'Gold',icon:'gold',min:5000,max:24999,color:'#ba7517'},{name:'Platinum',icon:'platinum',min:25000,max:59999,color:'#7a9e7e'},{name:'Ruby',icon:'ruby',min:60000,max:149999,color:'#b86040'},{name:'Emerald',icon:'emerald',min:150000,max:399999,color:'#4a6040'},{name:'Sapphire',icon:'sapphire',min:400000,max:1499999,color:'#185fa5'},{name:'Diamond',icon:'diamond',min:1500000,max:999999999,color:'#4a4a5a'}];
 let _dashboardUser=null, _todayQueue=[], _dashboardVideos=[], _dashboardProducts=[], _doneToday=0, _postedToday=0, _streakGoal=1;
