@@ -286,7 +286,7 @@ async function savePassword() {
 // ── TikTok multi-account ─────────────────────────────────────────────────────
 
 function initiateTikTokOAuth() {
-  const clientKey = 'awiftay9wo0a8m7w';
+  const clientKey = 'sbawec6gkhecnn619p';
   const redirectUri = encodeURIComponent(window.location.origin + '/settings.html');
   const scope = encodeURIComponent('user.info.basic,user.info.stats,video.list');
   const state = Math.random().toString(36).substring(2);
@@ -316,13 +316,18 @@ async function removeTikTokAccount(userId, openId) {
   return { error };
 }
 
-// Upsert a newly-connected account into tiktok_accounts
+// Upsert a newly-connected account into tiktok_accounts.
+// Smart reconnect: if same username already exists with a different open_id,
+// update that row and retag all data to the new open_id instead of creating a duplicate.
 async function upsertTikTokAccount(userId, tokenData, userInfo) {
+  const newOpenId = tokenData.open_id || userInfo?.open_id || '';
+  const username = userInfo?.display_name || userInfo?.username || '';
+
   const row = {
     user_id: userId,
-    tiktok_open_id: tokenData.open_id || userInfo?.open_id || '',
-    username: userInfo?.display_name || '',
-    display_name: userInfo?.display_name || '',
+    tiktok_open_id: newOpenId,
+    username,
+    display_name: username,
     avatar_url: userInfo?.avatar_url || '',
     access_token: tokenData.access_token || '',
     refresh_token: tokenData.refresh_token || '',
@@ -335,6 +340,47 @@ async function upsertTikTokAccount(userId, tokenData, userInfo) {
     video_count: userInfo?.video_count || 0,
     stats_updated_at: new Date().toISOString()
   };
+
+  // Check if this username already exists with a different open_id (reconnect case)
+  if (username) {
+    const { data: existing } = await db
+      .from('tiktok_accounts')
+      .select('tiktok_open_id')
+      .eq('user_id', userId)
+      .eq('username', username)
+      .maybeSingle();
+
+    if (existing && existing.tiktok_open_id !== newOpenId) {
+      const oldOpenId = existing.tiktok_open_id;
+      console.log(`Smart reconnect: ${username} changed open_id from ${oldOpenId} to ${newOpenId}`);
+
+      // Update the existing row with new open_id and tokens
+      const { error: updateErr } = await db
+        .from('tiktok_accounts')
+        .update({ ...row })
+        .eq('user_id', userId)
+        .eq('tiktok_open_id', oldOpenId);
+
+      if (!updateErr) {
+        // Retag all data to the new open_id
+        await db.from('products').update({ tiktok_account_id: newOpenId }).eq('user_id', userId).eq('tiktok_account_id', oldOpenId);
+        await db.from('videos').update({ tiktok_account_id: newOpenId }).eq('user_id', userId).eq('tiktok_account_id', oldOpenId);
+        await db.from('sales').update({ tiktok_account_id: newOpenId }).eq('user_id', userId).eq('tiktok_account_id', oldOpenId);
+
+        // Update localStorage if this was the active account
+        try {
+          if (localStorage.getItem('take24:active_tiktok_account') === oldOpenId) {
+            localStorage.setItem('take24:active_tiktok_account', newOpenId);
+          }
+        } catch(e) {}
+
+        showToast(`@${username} reconnected — all data updated automatically`);
+        return { error: null };
+      }
+    }
+  }
+
+  // Normal upsert for new accounts or same open_id
   const { error } = await db
     .from('tiktok_accounts')
     .upsert(row, { onConflict: 'user_id,tiktok_open_id' });
