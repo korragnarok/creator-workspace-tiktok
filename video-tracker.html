@@ -620,11 +620,11 @@ async function loadVideos(pageToShow=currentPage){
   if (activeId) {
     query = query.eq("tiktok_account_id", activeId);
   }
-  let {data,error}=await query.order('date', {ascending:false, nullsFirst:false}).order('posted_time', {ascending:false, nullsFirst:false});
+  let {data,error}=await query.order('date', {ascending:false, nullsFirst:false}).order('posted_time', {ascending:false, nullsFirst:false}).limit(2000);
   if(error&&/posted_time/i.test(error.message||'')){
     let retryQuery = db.from('videos').select('*').eq('user_id', user.id);
     if (activeId) retryQuery = retryQuery.eq('tiktok_account_id', activeId);
-    const retry = await retryQuery.order('date', {ascending:false, nullsFirst:false});
+    const retry = await retryQuery.order('date', {ascending:false, nullsFirst:false}).limit(2000);
     data=retry.data;error=retry.error;
   }
   if(error){
