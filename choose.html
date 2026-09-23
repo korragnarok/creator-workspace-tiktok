@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2A1822">
+<title>Choose Workspace — Take24</title>
+<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@400;700&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<script src="theme-init.js?v=160"></script>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/pwa/apple-touch-icon.png">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;padding-top:max(24px,env(safe-area-inset-top));}
+.wrap{width:100%;max-width:640px;text-align:center;}
+.logo img{height:44px;width:auto;margin:0 auto 10px;display:block;}
+h1{font-family:'Stack Sans Notch',sans-serif;font-size:22px;color:var(--ink);margin-bottom:6px;}
+p.sub{font-size:13px;color:var(--text-muted);margin-bottom:28px;}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:560px){.cards{grid-template-columns:1fr;}}
+.card{display:block;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--border-mid);border-radius:20px;padding:32px 24px;box-shadow:var(--shadow-md);transition:transform .15s,border-color .15s;cursor:pointer;}
+.card:hover{transform:translateY(-3px);border-color:var(--rust);}
+.card .icon{font-size:40px;margin-bottom:12px;}
+.card .name{font-family:'Stack Sans Notch',sans-serif;font-size:20px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.card .desc{font-size:13px;color:var(--text-mid);line-height:1.5;}
+.card.meta{background:linear-gradient(160deg,#EEF0E6,#E6E0EE);border-color:rgba(122,129,108,.3);}
+.card.meta .name{color:#4E4458;} .card.meta .desc{color:#6B7560;}
+.signout{margin-top:28px;background:none;border:none;color:var(--text-muted);font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo"><img src="logo.png" alt="Take24"></div>
+  <h1>Where are we working today?</h1>
+  <p class="sub">You can switch anytime from your profile menu.</p>
+  <div class="cards">
+    <a class="card" href="index.html" onclick="pick('tiktok')">
+      <div class="icon">🎬</div>
+      <div class="name">TikTok</div>
+      <div class="desc">Videos, products, brand deals, and TikTok Shop sales.</div>
+    </a>
+    <a class="card meta" href="meta/index.html" onclick="pick('meta')">
+      <div class="icon">🌿</div>
+      <div class="name">Meta</div>
+      <div class="desc">Facebook, Instagram, and affiliate links.</div>
+    </a>
+  </div>
+  <button class="signout" onclick="signOut()">Sign out</button>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=160"></script>
+<script>
+function pick(ws){ try{ localStorage.setItem('take24:workspace', ws); }catch(e){} }
+(async () => {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  // Opening the app normally: jump to the last-used side. After login (?ask=1): always ask.
+  const ask = new URLSearchParams(location.search).has('ask');
+  let last = null; try { last = localStorage.getItem('take24:workspace'); } catch(e) {}
+  if (!ask && last === 'meta') location.replace('meta/index.html');
+  else if (!ask && last === 'tiktok') location.replace('index.html');
+})();
+</script>
+</body>
+</html>

@@ -1,11 +1,12 @@
 // ─── Creator Hub Service Worker ───────────────────────────────────────────────
-const CACHE = 'creator-hub-v159';
+const CACHE = 'creator-hub-v160';
 
 // Core files to cache for offline shell
 const PRECACHE = [
   '/',
   '/index.html',
   '/auth.html',
+  '/choose.html',
   '/daily-todo.html',
   '/brand-deals.html',
   '/hooks.html',
@@ -58,6 +59,8 @@ self.addEventListener('fetch', e => {
       url.hostname.includes('jsdelivr.net')) {
     return; // let browser handle it normally
   }
+
+  if (url.origin === self.location.origin && url.pathname.startsWith('/meta/')) return;
 
   const isAppFile = url.origin === self.location.origin;
 

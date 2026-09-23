@@ -802,6 +802,11 @@ function initProfilePopover(userId) {
   const bottomHTML = `
     <div id="_popAccountsSection"></div>
     <div style="height:1px;background:var(--border);margin:4px 0;"></div>
+    <a href="meta/index.html" onclick="try{localStorage.setItem('take24:workspace','meta')}catch(e){}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:background 0.12s;" onmouseover="this.style.background='var(--sand)'" onmouseout="this.style.background=''">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      Switch to Meta
+    </a>
+    <div style="height:1px;background:var(--border);margin:4px 0;"></div>
     <a href="settings.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:background 0.12s;" onmouseover="this.style.background='var(--sand)'" onmouseout="this.style.background=''">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
       Settings
