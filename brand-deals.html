@@ -313,8 +313,45 @@ function videoMatchesDeal(video,dealId){
   return video.campaign_id===dealId||dealIdsFromVideoNotes(video.notes).includes(dealId);
 }
 
+function normDealName(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+// Samples (free + refundable) auto-complete from any video for that product
+// posted on/after the received date — no tagging needed.
+let _productsCache=null;
+async function productIdsForDeal(deal){
+  if(!_productsCache){
+    const {data}=await db.from('products').select('id,name,link').eq('user_id',user.id);
+    _productsCache=data||[];
+  }
+  const name=normDealName(deal.name);
+  const link=String(deal.link||'').trim();
+  return _productsCache
+    .filter(p=>(name&&normDealName(p.name)===name)||(link&&String(p.link||'').trim()===link))
+    .map(p=>p.id);
+}
+async function fetchSampleProgress(deal){
+  const empty={videoCount:0,salesCount:0,totalUnits:0,totalGmv:0};
+  let q=db.from('videos').select('gmv,date,units,campaign_id,notes,prod_id,brand').eq('user_id',user.id);
+  if(deal.received) q=q.gte('date',deal.received);
+  const {data,error}=await q;
+  if(error||!data) return empty;
+  const ids=new Set(await productIdsForDeal(deal));
+  const name=normDealName(deal.name);
+  const matched=data.filter(v=>
+    videoMatchesDeal(v,deal.id) ||
+    (v.prod_id&&ids.has(v.prod_id)) ||
+    (name&&normDealName(v.brand)===name)
+  );
+  return {
+    videoCount:matched.length,
+    salesCount:matched.filter(v=>(Number(v.units)||0)>0).length,
+    totalUnits:matched.reduce((sum,v)=>sum+(Number(v.units)||0),0),
+    totalGmv:matched.reduce((sum,v)=>sum+(Number(v.gmv)||0),0)
+  };
+}
+
 // Campaign progress: count videos linked directly or through multi-deal metadata.
 async function fetchDealProgress(deal){
+  if(deal.type==='sample') return fetchSampleProgress(deal);
   // Campaigns enforce date range; samples/retainers/refundable count all tagged videos
   let q=db.from('videos').select('gmv,date,units,campaign_id,notes').eq('user_id',user.id);
   if(deal.type==='campaign'||deal.type==='creator_connections'){
@@ -336,7 +373,8 @@ function calcDealStatus(deal, videoCount, salesCount, totalUnits, totalGmv){
   const needVideos=Math.max(Number(deal.needed)||1,1);
   const needGmv=Number(deal.min_gmv)||0;
   // Refundable uses totalUnits from tagged videos; campaign/sample/retainer uses videoCount
-  const count=deal.refundable?totalUnits:videoCount;
+  // Samples (incl. refundable) finish once a video is posted; others keep their existing rules.
+  const count=(deal.refundable&&deal.type!=='sample')?totalUnits:videoCount;
   const videosOk=count>=needVideos;
   const gmvOk=deal.type!=='campaign'||needGmv===0||totalGmv>=needGmv;
   if(videosOk&&gmvOk) return 'completed';
@@ -351,6 +389,7 @@ async function renderDeals(){
   if(!rows.length){body.innerHTML='<tr><td colspan="8"><div class="empty">No brand deals yet. Add one above.</div></td></tr>';return;}
 
   // Fetch progress from tagged videos for all deals in parallel
+  _productsCache=null;
   const progressMap={};
   await Promise.all(rows.map(async d=>{
     progressMap[d.id]=await fetchDealProgress(d);
@@ -380,12 +419,12 @@ async function renderDeals(){
     } else {
       const prog=progressMap[deal.id]||{videoCount:0,salesCount:0,totalGmv:0};
       // Refundable: manual done count (sales are complex). Sample/retainer: auto from tagged videos.
-      const count=deal.refundable?prog.totalUnits:prog.videoCount;
+      const count=(deal.refundable&&deal.type!=='sample')?prog.totalUnits:prog.videoCount;
       status=calcDealStatus(deal,prog.videoCount,prog.salesCount,prog.totalUnits,prog.totalGmv);
       const needed=Math.max(Number(deal.needed)||1,1);
       const done=Math.min(count,needed);
       const pct=Math.min(100,Math.round((done/needed)*100));
-      criteriaHtml=`<div class="progress-wrap"><div class="progress-top">${done} / ${needed} <span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);">${deal.refundable?'sales':'videos'}</span></div><div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div>`;
+      criteriaHtml=`<div class="progress-wrap"><div class="progress-top">${done} / ${needed} <span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);">${(deal.refundable&&deal.type!=='sample')?'sales':'videos'}</span></div><div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div>`;
     }
 
     const left=daysLeft(deal.due);
