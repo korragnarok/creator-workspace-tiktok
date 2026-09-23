@@ -55,12 +55,21 @@
       '--text':'#2A2E2E','--text-mid':'#4A6163','--text-muted':'#7A8A8B','--ink':'#1A2020',
       '--sage':'#4A6163','--rose':'#F17A7E','--rust':'#F9A66C','--tan':'#FFC94B','--sand':'#E6E7DF',
       '--shadow-sm':'0 1px 4px rgba(74,97,99,0.08)','--shadow-md':'0 4px 20px rgba(74,97,99,0.12)'
+    },
+    espresso: {
+      label: 'Espresso', swatch: ['#1F1F1E','#373635','#955B3B','#C4A083'],
+      '--bg':'#1F1F1E','--bg-lift':'#262524','--surface':'#2B2A29','--surface-2':'#373635',
+      '--border':'rgba(196,160,131,0.12)','--border-mid':'rgba(196,160,131,0.20)',
+      '--text':'#EDE3D8','--text-mid':'#C4A083','--text-muted':'#A08D7C','--ink':'#F3EADF',
+      '--sage':'#C4A083','--rose':'#C4A083','--rust':'#955B3B','--tan':'#C4A083','--sand':'#373635',
+      '--shadow-sm':'0 1px 4px rgba(0,0,0,0.35)','--shadow-md':'0 10px 30px rgba(0,0,0,0.35)'
     }
   };
-  const DEFAULT_THEME = 'dusk';
+  const DEFAULT_THEME = 'espresso';
   let key = DEFAULT_THEME;
   try {
-    const saved = localStorage.getItem('creatorHub:theme');
+    let saved = localStorage.getItem('creatorHub:theme');
+    if (saved === 'grove' && localStorage.getItem('take24:espressoSwitch') !== '1') saved = 'espresso';
     if (THEMES[saved]) key = saved;
   } catch (e) {}
   const root = document.documentElement;
