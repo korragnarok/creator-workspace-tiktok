@@ -113,9 +113,16 @@ async function igViews(id, token) {
   } catch { return {}; }
 }
 async function fbViews(id, token) {
-  try { const d = await graph(`/${id}/video_insights`, token, { metric: 'total_video_views' });
-    return { views: d.data?.[0]?.values?.[0]?.value || 0 };
-  } catch { return {}; }
+  // Facebook counts Reels and regular videos differently, so try each metric until one returns a number.
+  for (const metric of ['blue_reels_play_count', 'fb_reels_total_plays', 'total_video_views', 'total_video_impressions']) {
+    try {
+      const d = await graph(`/${id}/video_insights`, token, { metric });
+      const val = d.data?.[0]?.values?.[0]?.value;
+      if (typeof val === 'number' && val > 0) return { views: val };
+    } catch { /* metric not available for this video type — try the next one */ }
+  }
+  try { const d = await graph(`/${id}`, token, { fields: 'views' }); if (d.views) return { views: d.views }; } catch {}
+  return {};
 }
 async function syncAll() {
   const btn = document.getElementById('syncBtn'); btn.disabled = true;
