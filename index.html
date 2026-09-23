@@ -458,6 +458,32 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .tp-brand{font-size:11px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tp-sold{font-family:'Noto Sans Mono',monospace;font-size:17px;font-weight:800;color:var(--tan);text-align:right;white-space:nowrap;}
 .tp-sold span{display:block;font-family:inherit;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);}
+/* Today — filming tiles (same controls, card layout like the Meta "This Week" days) */
+.today-title{font-family:'Cormorant Garamond',serif!important;font-size:26px!important;font-weight:400!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink);}
+.today-date{font-family:'Bad Script',cursive;font-size:17px;color:var(--tan);margin-left:6px;}
+.board .sched-list{max-height:none;}
+.board .sched-table-head{display:none;}
+.board .sched-list-inner{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px;}
+.board .sched-row{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:10px;border:1px solid var(--border-mid)!important;border-radius:18px;background:var(--surface-2);position:relative;}
+.board .sched-row:hover{border-color:var(--tan)!important;}
+.board .sched-row.done{opacity:.55;}
+.board .sched-product-cell{order:1;display:flex;flex-direction:column;gap:8px;}
+.board .sched-thumb{width:100%;height:auto;aspect-ratio:1/1;border-radius:12px;object-fit:cover;box-shadow:none;}
+.board .sched-name{font-size:14px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.board .sched-angle{display:none;}
+.board .sched-time-cell{order:0;position:absolute;top:16px;left:16px;z-index:1;}
+.board .sched-time{background:rgba(0,0,0,.6);color:#fff;padding:3px 8px;border-radius:999px;font-size:11px;}
+.board .sched-time.no-time{color:#ddd;}
+.board .sched-type-cell,.board .sched-location-cell{order:2;}
+.board .sched-type-pill,.board .sched-location-tag{width:100%;padding:5px 8px;font-size:9px;}
+.board .sched-row>.sched-status{order:3;align-self:stretch;text-align:center;}
+.board .sched-actions{order:4;justify-content:space-between;}
+.board .sched-bulk-cb{position:absolute;top:16px;right:16px;z-index:2;}
+/* Monthly Goals */
+.b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
+.b-goals .goal:last-child{border:none;}
+.b-goals .num{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--tan);width:16px;}
+.b-goals input{flex:1;min-width:0;border:none;background:none;color:var(--text);font:13px 'IBM Plex Serif',serif;outline:none;}
 /* Level Ladder — compact vertical version in the right column */
 .b-right .level-feature{padding:14px;min-height:0;}
 .b-right .level-feature-head{margin-bottom:8px;justify-content:center;}
@@ -544,7 +570,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
             <div class="card" style="min-height:0;">
               <div class="card-head">
                 <div>
-                  <div class="card-title">Today's Filming Schedule</div>
+                  <div class="card-title today-title">Today <span class="today-date" id="todayDateLabel"></span></div>
                   <div style="font-size:11px;color:var(--text-muted);margin-top:2px;" id="sched-count-label">0 scripts planned</div>
                 </div>
                 <div style="display:flex;gap:6px;align-items:center;">
@@ -642,6 +668,10 @@ select.sched-location-tag:focus{border-color:var(--rust);}
               <button class="tier" type="button" onclick="showTierPopup('Diamond','$1,500,000+',this)" data-tier="Diamond" data-range="$1,500,000+" aria-label="Diamond range $1,500,000 and up"><img class="tier-icon" src="icons/levels/diamond.png" alt=""><div class="tier-name">Diamond</div><div class="tier-range">$1,500,000+</div></button>
             </div>
           </div>
+          <div class="b-card b-goals">
+            <div class="b-title">Monthly Goals</div>
+            <div id="bGoals"></div>
+          </div>
         </aside>
       </div>
 
@@ -698,6 +728,17 @@ select.sched-location-tag:focus{border-color:var(--rust);}
     `<a class="b-folder" href="${href}"${href.startsWith('meta/') ? ` onclick="try{localStorage.setItem('take24:workspace','meta')}catch(e){}"` : ''}>
        <img class="ic" src="folder.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">${label}</a>`).join('');
 
+
+  // Today's date on the filming card
+  const tdl = document.getElementById('todayDateLabel');
+  if (tdl) tdl.textContent = now.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+
+  // Monthly Goals — saved on this device
+  const gEl = document.getElementById('bGoals');
+  let goals = ['','','','']; try { goals = JSON.parse(localStorage.getItem('take24:goals')) || goals; } catch(e) {}
+  const escG = v => String(v||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  gEl.innerHTML = goals.map((g,i) => `<div class="goal"><span class="num">${i+1}</span><input data-g="${i}" value="${escG(g)}" placeholder="goal for this month"></div>`).join('');
+  gEl.addEventListener('input', e => { goals[e.target.dataset.g] = e.target.value; try { localStorage.setItem('take24:goals', JSON.stringify(goals)); } catch(err) {} });
 
   // Hero Brands: move the existing widget (same inputs, edit button, and data) out of the hidden sidebar
   function moveHeroBrands(){
