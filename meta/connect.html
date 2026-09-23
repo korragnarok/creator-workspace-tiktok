@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1F1F1E">
+<title>Videos — Take24 Meta</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Bad+Script&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#1F1F1E;--card:#2B2A29;--line:rgba(196,160,131,.16);--rust:#955B3B;--tan:#C4A083;--char:#373635;--ink:#EDE3D8;--muted:#A08D7C;--cream:#F3EADF;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font:13px 'Nunito Sans',sans-serif;padding:26px;padding-top:max(26px,env(safe-area-inset-top));}
+.wrap{max-width:1100px;margin:0 auto;}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:22px;}
+h1{font:300 40px 'Cormorant Garamond',serif;color:var(--cream);}
+h1 em{font:28px 'Bad Script',cursive;color:var(--tan);}
+.btn{border:1px solid var(--line);background:var(--char);color:var(--cream);border-radius:999px;padding:9px 16px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-block;}
+.btn:hover{background:var(--rust);}
+.btn.primary{background:var(--rust);}
+.btn:disabled{opacity:.5;cursor:wait;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:18px;}
+.label{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.accts{display:flex;gap:10px;flex-wrap:wrap;}
+.acct{display:flex;align-items:center;gap:10px;background:var(--char);border-radius:14px;padding:8px 12px;}
+.acct img{width:30px;height:30px;border-radius:50%;object-fit:cover;background:#444;}
+.acct .p{font-size:10px;color:var(--tan);font-weight:800;text-transform:uppercase;letter-spacing:.1em;}
+.filters{display:flex;gap:8px;margin-bottom:14px;}
+.filters .btn.on{background:var(--tan);color:var(--paper);}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;}
+.post{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:var(--ink);display:block;}
+.post .th{aspect-ratio:9/13;background:#333 center/cover;position:relative;}
+.post .badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.6);color:var(--cream);font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:3px 8px;}
+.post .meta{padding:10px;}
+.post .cap{font-size:12px;line-height:1.35;height:32px;overflow:hidden;}
+.post .stats{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--muted);}
+.post .stats b{color:var(--tan);}
+#status{color:var(--tan);margin-left:6px;}
+.empty{color:var(--muted);text-align:center;padding:40px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Videos <em>facebook &amp; instagram</em></h1>
+    <div>
+      <a class="btn" href="index.html">← Dashboard</a>
+      <button class="btn" id="connectBtn" onclick="connectMeta()">Connect Meta</button>
+      <button class="btn primary" id="syncBtn" onclick="syncAll()">Sync videos</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="label">Connected accounts <span id="status"></span></div>
+    <div class="accts" id="accts"><span class="empty" style="padding:0">Nothing connected yet — tap Connect Meta.</span></div>
+  </div>
+
+  <div class="filters">
+    <button class="btn on" data-f="all">All</button>
+    <button class="btn" data-f="facebook">Facebook</button>
+    <button class="btn" data-f="instagram">Instagram</button>
+  </div>
+  <div class="grid" id="posts"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="meta-supabase.js?v=3"></script>
+<script>
+const REDIRECT = location.origin + location.pathname;
+let user, filter = 'all';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n||0);
+const status = t => document.getElementById('status').textContent = t || '';
+
+// ── 1. Send you to Facebook to approve access ──
+function connectMeta() {
+  if (META_APP_ID.startsWith('PASTE')) { alert('Add your Meta App ID to meta-supabase.js first.'); return; }
+  const state = crypto.randomUUID(); sessionStorage.setItem('meta_oauth_state', state);
+  location.href = 'https://www.facebook.com/v23.0/dialog/oauth?' + new URLSearchParams({
+    client_id: META_APP_ID, redirect_uri: REDIRECT, state, scope: META_SCOPES, response_type: 'code'
+  });
+}
+
+// ── 2. Back from Facebook: trade the code for a token, save Pages + Instagram accounts ──
+async function finishConnect(code) {
+  status('Connecting…');
+  const r = await fetch(`${META_WORKER_URL}/?service=meta&action=token`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, redirect_uri: REDIRECT })
+  });
+  const tok = await r.json();
+  if (!tok.access_token) throw new Error(tok.error || 'Could not connect');
+  const pages = await graphAll('/me/accounts', tok.access_token, { fields: 'id,name,access_token,picture{url},followers_count,instagram_business_account{id,username,name,profile_picture_url,followers_count}' });
+  if (!pages.length) throw new Error('No Facebook Pages found. Make sure you selected your Page when approving.');
+  const rows = [];
+  for (const p of pages) {
+    rows.push({ user_id: user.id, platform: 'facebook', account_id: p.id, name: p.name, username: p.name,
+      avatar_url: p.picture?.data?.url || '', page_id: p.id, access_token: p.access_token, follower_count: p.followers_count || 0 });
+    const ig = p.instagram_business_account;
+    if (ig) rows.push({ user_id: user.id, platform: 'instagram', account_id: ig.id, name: ig.name || ig.username, username: ig.username,
+      avatar_url: ig.profile_picture_url || '', page_id: p.id, access_token: p.access_token, follower_count: ig.followers_count || 0 });
+  }
+  const { error } = await db.from('meta_accounts').upsert(rows, { onConflict: 'user_id,platform,account_id' });
+  if (error) throw error;
+  history.replaceState(null, '', REDIRECT);
+  status(`Connected ${rows.length} account${rows.length === 1 ? '' : 's'} ✓`);
+}
+
+// ── 3. Import videos ──
+async function igViews(id, token) {
+  try { const d = await graph(`/${id}/insights`, token, { metric: 'views,shares,saved' });
+    const v = k => d.data?.find(x => x.name === k)?.values?.[0]?.value || 0;
+    return { views: v('views'), shares: v('shares'), saves: v('saved') };
+  } catch { return {}; }
+}
+async function fbViews(id, token) {
+  try { const d = await graph(`/${id}/video_insights`, token, { metric: 'total_video_views' });
+    return { views: d.data?.[0]?.values?.[0]?.value || 0 };
+  } catch { return {}; }
+}
+async function syncAll() {
+  const btn = document.getElementById('syncBtn'); btn.disabled = true;
+  try {
+    const { data: accts } = await db.from('meta_accounts').select('*').eq('user_id', user.id);
+    if (!accts?.length) { alert('Connect Meta first.'); return; }
+    let total = 0;
+    for (const a of accts) {
+      status(`Syncing ${a.username || a.name}…`);
+      let rows = [];
+      if (a.platform === 'instagram') {
+        const media = await graphAll(`/${a.account_id}/media`, a.access_token, { fields: 'id,caption,media_type,media_product_type,permalink,thumbnail_url,media_url,timestamp,like_count,comments_count' });
+        for (const m of media.filter(m => m.media_type === 'VIDEO')) {
+          rows.push({ user_id: user.id, platform: 'instagram', account_id: a.account_id, post_id: m.id,
+            caption: m.caption || '', media_type: m.media_product_type || m.media_type, permalink: m.permalink,
+            thumbnail_url: m.thumbnail_url || m.media_url || '', posted_at: m.timestamp,
+            likes: m.like_count || 0, comments: m.comments_count || 0, ...(await igViews(m.id, a.access_token)),
+            stats_updated_at: new Date().toISOString() });
+        }
+      } else {
+        const vids = await graphAll(`/${a.account_id}/videos`, a.access_token, { fields: 'id,description,title,permalink_url,picture,created_time' });
+        for (const v of vids) {
+          rows.push({ user_id: user.id, platform: 'facebook', account_id: a.account_id, post_id: v.id,
+            caption: v.description || v.title || '', media_type: 'VIDEO',
+            permalink: v.permalink_url ? 'https://www.facebook.com' + v.permalink_url : '',
+            thumbnail_url: v.picture || '', posted_at: v.created_time, ...(await fbViews(v.id, a.access_token)),
+            stats_updated_at: new Date().toISOString() });
+        }
+      }
+      if (rows.length) {
+        const { error } = await db.from('meta_posts').upsert(rows, { onConflict: 'user_id,platform,post_id' });
+        if (error) throw error;
+      }
+      total += rows.length;
+    }
+    status(`Synced ${total} video${total === 1 ? '' : 's'} ✓`);
+    await render();
+  } catch (e) { status(''); alert('Sync failed: ' + e.message); }
+  finally { btn.disabled = false; }
+}
+
+// ── Display ──
+async function render() {
+  const { data: accts } = await db.from('meta_accounts').select('platform,name,username,avatar_url,follower_count').eq('user_id', user.id);
+  if (accts?.length) {
+    document.getElementById('accts').innerHTML = accts.map(a => `<div class="acct"><img src="${esc(a.avatar_url)}" alt=""><div><div>${esc(a.username || a.name)}</div><div class="p">${a.platform} · ${fmt(a.follower_count)} followers</div></div></div>`).join('');
+    document.getElementById('connectBtn').textContent = 'Reconnect';
+  }
+  let q = db.from('meta_posts').select('*').eq('user_id', user.id).order('posted_at', { ascending: false }).limit(2000);
+  if (filter !== 'all') q = q.eq('platform', filter);
+  const { data: posts } = await q;
+  document.getElementById('posts').innerHTML = posts?.length ? posts.map(p => `
+    <a class="post" href="${esc(p.permalink)}" target="_blank" rel="noopener">
+      <div class="th" style="background-image:url('${esc(p.thumbnail_url)}')"><span class="badge">${p.platform === 'instagram' ? 'IG' : 'FB'}</span></div>
+      <div class="meta"><div class="cap">${esc(p.caption) || '<i>No caption</i>'}</div>
+        <div class="stats"><span><b>${fmt(p.views)}</b> views</span><span>${p.posted_at ? new Date(p.posted_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}) : ''}</span></div></div>
+    </a>`).join('') : '<div class="empty">No videos yet — tap Sync videos.</div>';
+}
+document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
+  filter = b.dataset.f; document.querySelectorAll('[data-f]').forEach(x => x.classList.toggle('on', x === b)); render();
+});
+
+(async () => {
+  user = await requireMetaAuth(); if (!user) return;
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('error')) { status(''); alert('Facebook said: ' + (qs.get('error_description') || qs.get('error'))); history.replaceState(null,'',REDIRECT); }
+  else if (qs.get('code')) {
+    if (qs.get('state') !== sessionStorage.getItem('meta_oauth_state')) alert('Connection check failed — try again.');
+    else try { await finishConnect(qs.get('code')); await syncAll(); } catch (e) { status(''); alert('Connect failed: ' + e.message); }
+  }
+  await render();
+})();
+</script>
+</body>
+</html>
