@@ -3,49 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#EFEAE3">
+<meta name="theme-color" content="#1F1F1E">
 <title>Take24 Meta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Pinyon+Script&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#EFEAE3; --card:#FBF9F6; --line:rgba(94,74,62,.14);
-  --sage:#8E9C80; --sage-soft:#E3E8DC; --lav:#A89BBE; --lav-soft:#E9E4F1;
-  --brown:#5E4A3E; --taupe:#8A7466; --taupe-soft:#E6DDD4; --muted:#9A8C82; --ink:#3A302A;
+  /* Palette: rust #955B3B · tan #C4A083 · charcoal #373635 · black #1F1F1E */
+  --paper:#1F1F1E; --card:#2B2A29; --line:rgba(196,160,131,.16);
+  --sage:#955B3B; --sage-soft:#3A2E27; --lav:#C4A083; --lav-soft:#373635;
+  --brown:#E9DCCD; --taupe:#955B3B; --taupe-soft:#322D29; --muted:#A08D7C; --ink:#EDE3D8;
+  --cream:#F3EADF;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{height:100%;}
 body{min-height:100%;background:var(--paper);color:var(--ink);font-family:'Nunito Sans',sans-serif;font-size:13px;
   padding:26px;padding-top:max(26px,env(safe-area-inset-top));padding-bottom:max(26px,env(safe-area-inset-bottom));
-  background-image:radial-gradient(rgba(94,74,62,.035) 1px,transparent 1px);background-size:14px 14px;}
+  background-image:radial-gradient(rgba(196,160,131,.05) 1px,transparent 1px);background-size:14px 14px;}
 .board{max-width:1320px;margin:0 auto;display:grid;gap:18px;
   grid-template-columns:260px minmax(0,1fr) 250px;
   grid-template-areas:
    "side  top    right"
    "side  week   right"
    "side  mid    right";}
-.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 8px 28px rgba(94,74,62,.06);}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
 h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:var(--brown);text-align:center;margin-bottom:12px;letter-spacing:.01em;}
 .label{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
 
 /* ── left column ── */
 .side{grid-area:side;display:flex;flex-direction:column;gap:18px;}
 .year{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:54px;line-height:.9;color:var(--brown);padding-left:4px;}
-.cal{background:var(--taupe);color:#F6F0EA;border:none;}
+.cal{background:var(--taupe);color:var(--cream);border:none;}
 .cal .photo{height:150px;border-radius:14px;margin:-4px -4px 16px;}
 .cal-month{font-family:'Cormorant Garamond',serif;font-size:24px;text-align:center;margin-bottom:8px;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px 0;text-align:center;font-size:12px;}
 .cal-grid .dow{font-weight:800;font-size:10px;opacity:.7;padding-bottom:6px;border-bottom:1px solid rgba(246,240,234,.25);margin-bottom:4px;}
 .cal-grid .d{padding:4px 0;border-radius:50%;}
-.cal-grid .today{background:#F6F0EA;color:var(--taupe);font-weight:800;}
+.cal-grid .today{background:var(--cream);color:var(--taupe);font-weight:800;}
 .minis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .minis .photo{height:74px;border-radius:12px;}
 
 /* photo slots: tap to add your own image */
-.photo{position:relative;background:linear-gradient(135deg,var(--taupe-soft),var(--lav-soft));background-size:cover;background-position:center;cursor:pointer;overflow:hidden;}
-.photo:not(.has)::after{content:'+ photo';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--taupe);opacity:.7;}
-.cal .photo:not(.has)::after{color:#F6F0EA;}
+.photo{position:relative;background:linear-gradient(135deg,#3A2E27,#2B2A29);background-size:cover;background-position:center;cursor:pointer;overflow:hidden;}
+.photo:not(.has)::after{content:'+ photo';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--lav);opacity:.7;}
+.cal .photo:not(.has)::after{color:var(--cream);}
 
 /* ── top row ── */
 .top{grid-area:top;display:grid;grid-template-columns:1.1fr 1fr;gap:18px;}
@@ -53,28 +55,28 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 .hello h1 em{font-family:'Pinyon Script',cursive;font-style:normal;font-size:48px;color:var(--lav);}
 .hello p{color:var(--muted);margin-top:8px;}
 .hello .switch{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;}
-.btn{border:1px solid var(--line);background:#fff;color:var(--brown);border-radius:999px;padding:8px 14px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}
-.btn:hover{background:var(--sage-soft);}
-.quote{background:var(--sage);color:#F7F5F0;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;}
+.btn{border:1px solid var(--line);background:var(--lav-soft);color:var(--brown);border-radius:999px;padding:8px 14px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}
+.btn:hover{background:var(--sage);color:var(--cream);}
+.quote{background:var(--sage);color:var(--cream);border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;}
 .quote .q{font-family:'Pinyon Script',cursive;font-size:34px;line-height:1.2;}
 .quote .qsub{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;opacity:.85;margin-top:6px;}
-.quote button{position:absolute;right:14px;bottom:12px;background:none;border:none;color:#F7F5F0;opacity:.6;cursor:pointer;font-size:16px;}
+.quote button{position:absolute;right:14px;bottom:12px;background:none;border:none;color:var(--cream);opacity:.6;cursor:pointer;font-size:16px;}
 
 /* ── weekly schedule ── */
 .week{grid-area:week;}
 .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
 .day{border-radius:16px;background:var(--lav-soft);padding:10px;min-height:150px;display:flex;flex-direction:column;}
-.day.is-today{background:var(--sage-soft);outline:1.5px solid var(--sage);}
+.day.is-today{background:var(--sage-soft);outline:1.5px solid var(--lav);}
 .day .dname{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--brown);text-align:center;}
 .day .ddate{font-size:10px;color:var(--muted);text-align:center;margin-bottom:8px;}
-.day textarea{flex:1;width:100%;border:none;background:rgba(255,255,255,.55);border-radius:10px;padding:8px;resize:none;font:12px/1.45 'Nunito Sans',sans-serif;color:var(--ink);outline:none;}
-.day textarea:focus{background:#fff;}
+.day textarea{flex:1;width:100%;border:none;background:rgba(0,0,0,.22);border-radius:10px;padding:8px;resize:none;font:12px/1.45 'Nunito Sans',sans-serif;color:var(--ink);outline:none;}
+.day textarea:focus{background:rgba(0,0,0,.4);}
 
 /* ── lists ── */
 .mid{grid-area:mid;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
 .list ul{list-style:none;display:flex;flex-direction:column;gap:7px;min-height:40px;}
 .list li{display:flex;align-items:flex-start;gap:9px;line-height:1.35;}
-.list li input{margin-top:2px;accent-color:var(--sage);width:15px;height:15px;flex-shrink:0;cursor:pointer;}
+.list li input{margin-top:2px;accent-color:var(--lav);width:15px;height:15px;flex-shrink:0;cursor:pointer;}
 .list li.done span{text-decoration:line-through;color:var(--muted);}
 .list li .x{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;opacity:0;font-size:14px;}
 .list li:hover .x{opacity:1;}
@@ -161,12 +163,12 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
     <div class="card folders">
       <h2>Folders</h2>
       <div class="fgrid">
-        <a class="folder soon" style="--f:#A89BBE"><span class="ic"></span>Facebook</a>
-        <a class="folder soon" style="--f:#8E9C80"><span class="ic"></span>Instagram</a>
-        <a class="folder soon" style="--f:#8A7466"><span class="ic"></span>Links</a>
-        <a class="folder soon" style="--f:#B7A99A"><span class="ic"></span>Products</a>
-        <a class="folder soon" style="--f:#C4B7D6"><span class="ic"></span>Earnings</a>
-        <a class="folder" style="--f:#6F7D63" href="../index.html" onclick="switchToTikTok();return false;"><span class="ic"></span>TikTok</a>
+        <a class="folder soon" style="--f:#C4A083"><span class="ic"></span>Facebook</a>
+        <a class="folder soon" style="--f:#955B3B"><span class="ic"></span>Instagram</a>
+        <a class="folder soon" style="--f:#7A5A45"><span class="ic"></span>Links</a>
+        <a class="folder soon" style="--f:#A8876C"><span class="ic"></span>Products</a>
+        <a class="folder soon" style="--f:#5A4A3F"><span class="ic"></span>Earnings</a>
+        <a class="folder" style="--f:#C4A083" href="../index.html" onclick="switchToTikTok();return false;"><span class="ic"></span>TikTok</a>
       </div>
     </div>
     <div class="card goals">
