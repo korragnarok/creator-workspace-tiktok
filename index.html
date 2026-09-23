@@ -459,8 +459,12 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .tp-sold{font-family:'Noto Sans Mono',monospace;font-size:17px;font-weight:800;color:var(--tan);text-align:right;white-space:nowrap;}
 .tp-sold span{display:block;font-family:inherit;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);}
 /* Today — filming tiles (same controls, card layout like the Meta "This Week" days) */
-.today-title{font-family:'Cormorant Garamond',serif!important;font-size:26px!important;font-weight:400!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink);}
-.today-date{font-family:'Bad Script',cursive;font-size:17px;color:var(--tan);margin-left:6px;}
+.today-title{text-align:center;letter-spacing:0!important;text-transform:none!important;}
+.today-date{font-family:'Bad Script',cursive;font-size:26px;font-weight:400;color:var(--tan);}
+.board .stack:first-child .card-head{justify-content:center;position:relative;text-align:center;}
+.board .stack:first-child .card-head>div:first-child{flex:1;}
+.board .stack:first-child .card-head>div:last-child{position:absolute;right:0;top:0;}
+#sched-count-label{text-align:center;}
 .board .sched-list{max-height:none;}
 .board .sched-table-head{display:none;}
 .board .sched-list-inner{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px;}
@@ -479,6 +483,10 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .board .sched-row>.sched-status{order:3;align-self:stretch;text-align:center;}
 .board .sched-actions{order:4;justify-content:space-between;}
 .board .sched-bulk-cb{position:absolute;top:16px;right:16px;z-index:2;}
+.rec-head{grid-column:1/-1;text-align:center;font-size:12px;color:var(--text-muted);font-style:italic;margin-bottom:10px;}
+.rec-reason{order:2;font-size:11px;color:var(--tan);text-align:center;}
+.board .rec-row .rec-add{order:3;cursor:pointer;background:var(--rust);color:#fff;border:none;}
+.board .rec-row .rec-add:hover{filter:brightness(1.1);}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -570,7 +578,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
             <div class="card" style="min-height:0;">
               <div class="card-head">
                 <div>
-                  <div class="card-title today-title">Today <span class="today-date" id="todayDateLabel"></span></div>
+                  <div class="card-title today-title"><span class="today-date" id="todayDateLabel"></span></div>
                   <div style="font-size:11px;color:var(--text-muted);margin-top:2px;" id="sched-count-label">0 scripts planned</div>
                 </div>
                 <div style="display:flex;gap:6px;align-items:center;">
@@ -1056,7 +1064,7 @@ async function init() {
   await carryForwardUnfinishedQueue(user.id, todayStr);
 
   // Build account-scoped product query
-  let productQuery = db.from('products').select('id,name,brand,units_sold,image_url').eq('user_id', user.id);
+  let productQuery = db.from('products').select('id,name,brand,units_sold,image_url,status,notes').eq('user_id', user.id);
   if(activeAccountId){
     productQuery = productQuery.eq("tiktok_account_id", activeAccountId);
   }
@@ -1099,6 +1107,8 @@ async function init() {
   renderTodayContent();
   renderLineup(user.id);
   const productUnits=videoUnitsByProduct(products||[], videos||[], attributedSales||[]);
+  window._productUnits=productUnits;
+  if(!_todayQueue.length) renderTodayContent();   // refresh recommendations now that sales are loaded
   const topProducts=(products||[]).slice().sort((a,b)=>(productUnits.get(b.id)||0)-(productUnits.get(a.id)||0)).filter(p=>(productUnits.get(p.id)||0)>0).slice(0,3);
   if(topProducts.length){
     document.getElementById('top-products').className='top-product-list';
@@ -1400,6 +1410,52 @@ function dailyTodoLinkForQueueItem(item){
   if(item?.brand)params.set('brand',item.brand);
   return `daily-todo.html${params.toString()?`?${params.toString()}`:''}`;
 }
+// ── Nothing scheduled? Recommend products to film ─────────────────────────
+function renderFilmRecommendations(list){
+  const products=(_dashboardProducts||[]).filter(p=>p&&p.name&&!/inactive|archived/i.test(p.status||''));
+  if(!products.length) return false;
+  const units=window._productUnits||new Map();
+  const heroes=[...document.querySelectorAll('.core-pill')].map(el=>(el.dataset.value||'').toLowerCase()).filter(Boolean);
+  const lastFilmed=new Map();
+  (_dashboardVideos||[]).forEach(v=>{
+    const keys=[v.prod_id,(v.brand||'').toLowerCase()].filter(Boolean);
+    keys.forEach(k=>{ if(v.date&&(!lastFilmed.has(k)||v.date>lastFilmed.get(k))) lastFilmed.set(k,v.date); });
+  });
+  const today=new Date(); const daySeed=Number(localDateKey().replace(/-/g,''));
+  const scored=products.map((p,i)=>{
+    const sold=units.get(p.id)||0;
+    const last=lastFilmed.get(p.id)||lastFilmed.get((p.name||'').toLowerCase());
+    const daysSince=last?Math.floor((today-new Date(last+'T00:00:00'))/86400000):999;
+    const hero=heroes.some(h=>(p.brand||'').toLowerCase().includes(h)||(p.name||'').toLowerCase().includes(h));
+    const sample=/FREE_SAMPLE/.test(p.notes||'')&&!last;
+    let score=Math.min(sold,200)/4 + Math.min(daysSince,60)/2 + (hero?25:0) + (sample?35:0) + (p.image_url?5:0);
+    score+=((daySeed*31+i*17)%10);   // small daily shuffle so picks change day to day
+    const reason=sample?'Free sample — not filmed yet':!last?'Never filmed':daysSince>=14?`Last filmed ${daysSince} days ago`:sold>0?`${sold.toLocaleString()} sold`:hero?'Hero brand':'Worth another video';
+    return {p,score,reason};
+  }).sort((a,b)=>b.score-a.score).slice(0,4);
+  list.className='sched-list';
+  list.innerHTML=`<div class="rec-head">Nothing scheduled yet — here's what we'd film today</div>
+    <div class="sched-list-inner">${scored.map(({p,reason})=>`
+      <div class="sched-row rec-row">
+        <div class="sched-product-cell">
+          <img class="sched-thumb" src="${esc(p.image_url||'icons/default-product.png')}" alt="" onerror="this.src='icons/default-product.png'">
+          <div class="sched-body"><div class="sched-name">${esc(p.name)}</div><div class="sched-meta"><span class="sched-brand">${esc(p.brand||'')}</span></div></div>
+        </div>
+        <div class="rec-reason">${esc(reason)}</div>
+        <button class="sched-status not-started rec-add" type="button" onclick="addRecommendedToToday('${esc(p.id)}',this)">+ Add to today</button>
+      </div>`).join('')}</div>`;
+  return true;
+}
+async function addRecommendedToToday(prodId,btn){
+  const p=(_dashboardProducts||[]).find(x=>String(x.id)===String(prodId)); if(!p||!_dashboardUser) return;
+  btn.disabled=true; btn.textContent='Adding…';
+  const {data,error}=await db.from('queue').insert({user_id:_dashboardUser.id,date:localDateKey(),prod_id:p.id,name:p.name||'',brand:p.brand||'',notes:'',script:'',done:false,sort_order:_todayQueue.length})
+    .select('id,name,brand,notes,script,done,prod_id,sort_order').single();
+  if(error){ showToast(error.message,'error'); btn.disabled=false; btn.textContent='+ Add to today'; return; }
+  _todayQueue=[..._todayQueue,data];
+  renderTodayContent(); renderLineup(_dashboardUser.id);
+  showToast(`Added ${p.name} to today`);
+}
 function renderTodayContent(){
   const list=document.getElementById('sched-list');
   const progressWrap=document.getElementById('sched-progress-wrap');
@@ -1412,9 +1468,10 @@ function renderTodayContent(){
   setText('content-saved',`${total} saved`);
   setText('sched-count-label',`${total} script${total!==1?'s':''} planned`);
   if(!total){
+    if(progressWrap)progressWrap.style.display='none';
+    if(renderFilmRecommendations(list)) return;
     list.className='sched-empty';
     list.innerHTML='<strong>No content scheduled yet.</strong>Add a video idea to start planning today.';
-    if(progressWrap)progressWrap.style.display='none';
     return;
   }
   // Sort by scheduled time (items with time first, then no-time)
