@@ -1864,6 +1864,11 @@ async function syncFromConnectedTikTok(){
   if(btn){btn.disabled=true;btn.textContent='Syncing...';}
   try{
     await ensureProductOptions();
+    // Lock in the account being synced so imported rows are tagged with it,
+    // even if the user switches accounts before clicking Import.
+    const syncAccount=await getActiveAccount(user.id);
+    if(!syncAccount?.tiktok_open_id)throw new Error('Connect TikTok in Settings first.');
+    window._importAccountId=syncAccount.tiktok_open_id;
     const rawVideos=await fetchTikTokVideosFromAccount();
     const importedIdentities=await loadImportedTikTokIdentities();
     const allNormalized=uniqueTikTokVideos(rawVideos.map(normalizeOfficialTikTokVideo).filter(video=>video.caption||video.url));
@@ -1910,8 +1915,10 @@ async function importSelectedTikToks(){
   const selected=_importVideos.map((video,index)=>({video,index})).filter(item=>document.getElementById(`impCheck${item.index}`)?.checked);
   if(!selected.length){showToast('Choose at least one TikTok to import.','error');return;}
   const btn=document.getElementById('importSaveBtn');
+  const importAccountId=window._importAccountId||getActiveAccountId();
+  if(!importAccountId){showToast('No TikTok account selected — sync again.','error');return;}
   btn.disabled=true;btn.textContent='Importing...';
-  let imported=0;
+  let imported=0,skipped=0;
   try{
     for(const {video,index} of selected){
       const productId=document.getElementById(`impProduct${index}`)?.value||'';
@@ -1928,7 +1935,8 @@ async function importSelectedTikToks(){
         gmv:0,
         notes:importNotesForTikTok(video,product),
         link:video.url||'',
-        prod_id:product?.id||null
+        prod_id:product?.id||null,
+        tiktok_account_id:importAccountId
       };
       let result=await db.from('videos').insert(row);
       if(result.error&&/(posted_time|prod_id)/i.test(result.error.message||'')){
@@ -1937,10 +1945,12 @@ async function importSelectedTikToks(){
         if(/prod_id/i.test(result.error.message||''))delete fallback.prod_id;
         result=await db.from('videos').insert(fallback);
       }
+      // 23505 = unique violation: this video already exists, skip it instead of failing.
+      if(result.error&&result.error.code==='23505'){skipped++;continue;}
       if(result.error)throw result.error;
       imported++;
     }
-    showToast(`Imported ${imported} TikTok${imported===1?'':'s'}`);
+    showToast(`Imported ${imported} TikTok${imported===1?'':'s'}`+(skipped?` · ${skipped} already existed`:''));
     closeImportModal();
     await loadVideos(1);
   }catch(err){
@@ -2165,7 +2175,8 @@ async function saveVideo(){
   const campaignIds=Array.from(document.getElementById('fCampaign').selectedOptions||[]).map(opt=>opt.value).filter(Boolean);
   const previousVideo=window._editId?DATA.find(video=>video.id===window._editId):null;
   const notes=notesWithDealIds(document.getElementById('fNotes').value.trim(),campaignIds);
-  const selectedAccountId = document.getElementById('fTiktokAccount')?.value || getActiveAccountId() || '';
+  const selectedAccountId = document.getElementById('fTiktokAccount')?.value || getActiveAccountId() || null;
+  if(!selectedAccountId){showToast('Choose a TikTok account for this video.','error');return;}
   const row={user_id:user.id,title,brand:selectedProduct?.name||productName,date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,ctr:parseFloat(document.getElementById('fCtr').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes,link:document.getElementById('fLink').value.trim(),campaign_id:campaignIds[0]||null,prod_id:selectedProduct?.id||null,tiktok_account_id:selectedAccountId};
   let result=window._editId?await db.from('videos').update(row).eq('id',window._editId):await db.from('videos').insert(row);
   if(result.error&&/(posted_time|prod_id|ctr)/i.test(result.error.message||'')){
