@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Bad+Script&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=162"></script>
+<script src="theme-init.js?v=163"></script>
 <link rel="stylesheet" href="layout.css?v=145">
 <style>
 :root{--r:12px;}
@@ -400,18 +400,20 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 /* center column: existing sections, softened to match */
 .board .card,.board .stat-card,.board .level-feature{border-radius:20px;}
 .board .top-layout{grid-template-columns:1fr;margin-bottom:0;}
-.board .stats-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));}
+.board .stats-grid{grid-template-columns:1fr;gap:12px;}
+.b-left .stat-card{border-radius:18px;}
 .board .lower-grid{margin-bottom:0;}
 .board .hero-row{margin-bottom:0;}
 @media(max-width:1180px){.board{grid-template-columns:220px minmax(0,1fr);} .b-right{grid-column:1 / -1;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}}
 @media(max-width:768px){
-  .board{display:block;}
-  .b-left,.b-right{display:none;}            /* phone keeps its current layout + bottom tab bar */
-  .board .b-center{display:contents;}
+  .board{display:flex;flex-direction:column;gap:14px;}
+  .b-left,.board .b-center{display:contents;}   /* phone keeps its current order + bottom tab bar */
+  .b-word,.b-cal,#heroBrandsSlot,.b-right{display:none;}
+  .board .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=162"></script>
+<script src="supabase.js?v=163"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -428,20 +430,6 @@ select.sched-location-tag:focus{border-color:var(--rust);}
             <div class="b-cal-grid" id="bCalGrid"></div>
           </div>
           <div id="heroBrandsSlot"></div>
-        </aside>
-
-        <div class="b-col b-center">
-        <div class="hero-row">
-          <div>
-            <h1 class="welcome" id="welcomeTitle">welcome back</h1>
-            <p class="hero-sub">Let's <strong>create</strong>, plan, and stay consistent.</p>
-          </div>
-          <button type="button" class="profile-trigger hero-avatar-btn" style="background:none;border:none;cursor:pointer;padding:0;flex-shrink:0;" aria-label="Open profile menu">
-            <div class="avatar hero-avatar" id="profileAvatar"><img class="avatar-img" src="icons/users/avatar.png" alt=""></div>
-          </button>
-        </div>
-
-        <section class="top-layout">
           <div class="stats-grid mob-order-2">
             <div class="stat-card">
               <div class="stat-icon"><img src="icons/dusk/sales.png" data-theme-icon alt=""></div>
@@ -459,12 +447,26 @@ select.sched-location-tag:focus{border-color:var(--rust);}
               <div class="stat-icon gold"><img src="icons/dusk/video.png" data-theme-icon alt=""></div>
               <div class="stat-body"><div class="stat-label">Streak</div><div class="stat-value" id="s-streak">-</div><div class="stat-sub">days in a row</div></div>
             </div>
-            <a href="settings.html" class="stat-card" id="tiktokFollowerCard" style="text-decoration:none;color:inherit;">
+            <a href="settings.html" class="stat-card" id="tiktokFollowerCard" style="text-decoration:none;color:inherit;display:none;">
               <div class="stat-icon"><img src="icons/dusk/video.png" data-theme-icon alt=""></div>
               <div class="stat-body"><div class="stat-label">TikTok Followers</div><div class="stat-value" id="s-followers">—</div><div class="stat-sub" id="s-followers-sub">Connect TikTok in Settings</div></div>
             </a>
           </div>
 
+        </aside>
+
+        <div class="b-col b-center">
+        <div class="hero-row">
+          <div>
+            <h1 class="welcome" id="welcomeTitle">welcome back</h1>
+            <p class="hero-sub">Let's <strong>create</strong>, plan, and stay consistent.</p>
+          </div>
+          <button type="button" class="profile-trigger hero-avatar-btn" style="background:none;border:none;cursor:pointer;padding:0;flex-shrink:0;" aria-label="Open profile menu">
+            <div class="avatar hero-avatar" id="profileAvatar"><img class="avatar-img" src="icons/users/avatar.png" alt=""></div>
+          </button>
+        </div>
+
+        <section class="top-layout">
           <div class="level-feature mob-order-1">
             <div class="level-feature-head">
               <div class="level-feature-title">Level Ladder</div>
@@ -606,7 +608,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   </div>
 </div>
 
-<script src="layout.js?v=162"></script>
+<script src="layout.js?v=163"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
