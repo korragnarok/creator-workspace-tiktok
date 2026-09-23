@@ -201,7 +201,7 @@ async function render() {
   }
   document.getElementById('posts').innerHTML = posts.length ? posts.map(p => `
     <a class="post" href="${esc(p.permalink)}" target="_blank" rel="noopener">
-      <div class="th" style="background-image:url('${esc(p.thumbnail_url)}')"><span class="badge">${p.platform === 'instagram' ? 'IG' : 'FB'}</span></div>
+      <div class="th" style="background-image:url('${esc(p.thumbnail_url)}')"></div>
       <div class="meta"><div class="cap">${esc(p.caption) || '<i>No caption</i>'}</div>
         <div class="stats"><span><b>${fmt(p.views)}</b> views</span><span>${p.posted_at ? new Date(p.posted_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}) : ''}</span></div></div>
     </a>`).join('') : `<div class="empty">${ids.length ? 'No videos yet — tap Sync videos.' : 'Connect an account to see its videos.'}</div>`;
