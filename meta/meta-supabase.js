@@ -27,7 +27,9 @@ const META_WORKER_URL = 'https://take24-scout.kortnycall5.workers.dev';
 const GRAPH = 'https://graph.facebook.com/v23.0';
 const META_SCOPES = [
   'pages_show_list', 'pages_read_engagement', 'pages_read_user_content', 'read_insights',
-  'instagram_basic', 'instagram_manage_insights', 'business_management'
+  'business_management'
+  // Instagram comes later: add 'instagram_basic', 'instagram_manage_insights' back here
+  // once those permissions are enabled in the Meta app.
 ].join(',');
 
 async function graph(path, token, params = {}) {
