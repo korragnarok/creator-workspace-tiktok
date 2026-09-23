@@ -1299,12 +1299,45 @@ async function init() {
 
     if(saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product'; }
     if(dbErr) { showToast('Save failed: ' + dbErr.message, 'error'); return; }
+    // Newly marked as a free sample (new product, or checkbox just turned on) → add a Sample brand deal.
+    const wasFreeSample = /FREE_SAMPLE/.test(window._editingProductOriginal?.notes || '');
+    let addedDeal = false;
+    if(isFreeSample && !wasFreeSample) addedDeal = await addFreeSampleDeal(fields);
     let cascadeIssues = [];
     if(window._editId) cascadeIssues = await cascadeProductReferences(window._editId, window._editingProductOriginal, { id: window._editId, ...fields });
     if(cascadeIssues.length) console.warn('Some product references could not be updated', cascadeIssues);
-    showToast(window._editId ? (cascadeIssues.length ? 'Product saved, but some linked names may need refresh' : 'Product updated everywhere') : 'Product saved');
+    showToast((window._editId ? (cascadeIssues.length ? 'Product saved, but some linked names may need refresh' : 'Product updated everywhere') : 'Product saved') + (addedDeal ? ' · added to Brand Deals' : ''));
     window.closeModal(); renderProducts();
   };
+  // Creates a "Sample" brand deal for a free-sample product, unless one with the same name already exists.
+  async function addFreeSampleDeal(fields) {
+    try {
+      const { data: existing } = await db.from('brand_deals')
+        .select('id').eq('user_id', user.id).eq('type', 'sample').ilike('name', fields.name).limit(1);
+      if(existing?.length) return false;
+      const ymd = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      const d = new Date();
+      const today = ymd(d);
+      const dueDate = ymd(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 14)); // default: post within 2 weeks
+      const { error } = await db.from('brand_deals').insert({
+        user_id: user.id,
+        name: fields.name,
+        brand: fields.brand || '',
+        type: 'sample',
+        received: today,
+        due: dueDate,
+        done: 0,
+        needed: 1,
+        min_gmv: 0,
+        link: fields.link || '',
+        notes: 'Added automatically from Products (free sample).',
+        refundable: false,
+        status: 'not-started'
+      });
+      if(error) { console.warn('Could not add free sample deal', error); return false; }
+      return true;
+    } catch(e) { console.warn('Could not add free sample deal', e); return false; }
+  }
   window.deleteProduct = async function() {
     if(!confirm('Delete this product?')) return;
     await db.from('products').delete().eq('id', window._editId).eq('user_id', user.id);
