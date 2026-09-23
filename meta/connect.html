@@ -23,9 +23,11 @@ h1 em{font:28px 'Bad Script',cursive;color:var(--tan);}
 .accts{display:flex;gap:10px;flex-wrap:wrap;}
 .acct{display:flex;align-items:center;gap:10px;background:var(--char);border-radius:14px;padding:8px 12px;}
 .acct img{width:30px;height:30px;border-radius:50%;object-fit:cover;background:#444;}
+.acct{cursor:pointer;transition:opacity .15s,outline-color .15s;outline:1.5px solid transparent;}
+.acct.on{outline-color:var(--tan);}
+.acct.off{opacity:.45;}
+.acct.off:hover{opacity:.8;}
 .acct .p{font-size:10px;color:var(--tan);font-weight:800;text-transform:uppercase;letter-spacing:.1em;}
-.filters{display:flex;gap:8px;margin-bottom:14px;}
-.filters .btn.on{background:var(--tan);color:var(--paper);}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;}
 .post{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:var(--ink);display:block;}
 .post .th{aspect-ratio:9/13;background:#333 center/cover;position:relative;}
@@ -50,15 +52,11 @@ h1 em{font:28px 'Bad Script',cursive;color:var(--tan);}
   </header>
 
   <div class="card">
-    <div class="label">Connected accounts <span id="status"></span></div>
+    <div class="label">Connected accounts <span style="text-transform:none;letter-spacing:0;font-weight:600;">· tap one to view its videos</span> <span id="status"></span></div>
     <div class="accts" id="accts"><span class="empty" style="padding:0">Nothing connected yet — tap Connect Meta.</span></div>
   </div>
 
-  <div class="filters">
-    <button class="btn on" data-f="all">All</button>
-    <button class="btn" data-f="facebook">Facebook</button>
-    <button class="btn" data-f="instagram">Instagram</button>
-  </div>
+
   <div class="grid" id="posts"></div>
 </div>
 
@@ -66,7 +64,7 @@ h1 em{font:28px 'Bad Script',cursive;color:var(--tan);}
 <script src="meta-supabase.js?v=5"></script>
 <script>
 const REDIRECT = location.origin + location.pathname;
-let user, filter = 'all';
+let user;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n||0);
 const status = t => document.getElementById('status').textContent = t || '';
@@ -166,25 +164,39 @@ async function syncAll() {
 }
 
 // ── Display ──
+// One account is shown at a time. Saved on this device; defaults to The House of Ko (Facebook).
+function selectedAccountId(accts) {
+  let saved = null; try { saved = JSON.parse(localStorage.getItem('take24meta:visibleAccounts')); } catch {}
+  const id = Array.isArray(saved) ? saved[0] : null;
+  if (id && accts.some(a => a.account_id === id)) return id;
+  const hk = accts.filter(a => /house\s*of\s*ko/i.test(`${a.name} ${a.username}`));
+  return (hk.find(a => a.platform === 'facebook') || hk[0] || accts[0])?.account_id || null;
+}
+function selectAccount(id) {
+  try { localStorage.setItem('take24meta:visibleAccounts', JSON.stringify([id])); } catch {}
+  render();
+}
 async function render() {
-  const { data: accts } = await db.from('meta_accounts').select('platform,name,username,avatar_url,follower_count').eq('user_id', user.id);
+  const { data: accts } = await db.from('meta_accounts').select('account_id,platform,name,username,avatar_url,follower_count').eq('user_id', user.id);
+  window._accts = accts || [];
+  const selected = selectedAccountId(window._accts);
   if (accts?.length) {
-    document.getElementById('accts').innerHTML = accts.map(a => `<div class="acct"><img src="${esc(a.avatar_url)}" alt=""><div><div>${esc(a.username || a.name)}</div><div class="p">${a.platform} · ${fmt(a.follower_count)} followers</div></div></div>`).join('');
+    document.getElementById('accts').innerHTML = accts.map(a => `<div class="acct ${a.account_id === selected ? 'on' : 'off'}" onclick="selectAccount('${esc(a.account_id)}')"><img src="${esc(a.avatar_url)}" alt=""><div><div>${esc(a.username || a.name)}</div><div class="p">${a.platform} · ${fmt(a.follower_count)} followers</div></div></div>`).join('');
     document.getElementById('connectBtn').textContent = 'Reconnect';
   }
-  let q = db.from('meta_posts').select('*').eq('user_id', user.id).order('posted_at', { ascending: false }).limit(2000);
-  if (filter !== 'all') q = q.eq('platform', filter);
-  const { data: posts } = await q;
-  document.getElementById('posts').innerHTML = posts?.length ? posts.map(p => `
+  const ids = selected ? [selected] : [];
+  let posts = [];
+  if (ids.length) {
+    posts = (await db.from('meta_posts').select('*').eq('user_id', user.id).eq('account_id', selected).order('posted_at', { ascending: false }).limit(2000)).data || [];
+  }
+  document.getElementById('posts').innerHTML = posts.length ? posts.map(p => `
     <a class="post" href="${esc(p.permalink)}" target="_blank" rel="noopener">
       <div class="th" style="background-image:url('${esc(p.thumbnail_url)}')"><span class="badge">${p.platform === 'instagram' ? 'IG' : 'FB'}</span></div>
       <div class="meta"><div class="cap">${esc(p.caption) || '<i>No caption</i>'}</div>
         <div class="stats"><span><b>${fmt(p.views)}</b> views</span><span>${p.posted_at ? new Date(p.posted_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}) : ''}</span></div></div>
-    </a>`).join('') : '<div class="empty">No videos yet — tap Sync videos.</div>';
+    </a>`).join('') : `<div class="empty">${ids.length ? 'No videos yet — tap Sync videos.' : 'Connect an account to see its videos.'}</div>`;
 }
-document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
-  filter = b.dataset.f; document.querySelectorAll('[data-f]').forEach(x => x.classList.toggle('on', x === b)); render();
-});
+
 
 (async () => {
   user = await requireMetaAuth(); if (!user) return;

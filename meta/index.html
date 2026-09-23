@@ -314,7 +314,12 @@ renderTopVids();
 // Once videos are synced, Top Videos fills itself with your real top 3 by views.
 (async () => {
   const u = await requireMetaAuth(); if (!u) return;
-  const { data } = await db.from('meta_posts').select('permalink,thumbnail_url,views').eq('user_id', u.id).order('views', { ascending: false }).limit(3);
+  // Match the accounts shown on the Videos page (defaults to House of Ko).
+  const { data: accts } = await db.from('meta_accounts').select('account_id,name,username').eq('user_id', u.id);
+  let saved = null; try { saved = JSON.parse(localStorage.getItem('take24meta:visibleAccounts')); } catch {}
+  const ids = Array.isArray(saved) ? saved : (accts || []).filter(a => /house\s*of\s*ko/i.test(`${a.name} ${a.username}`)).map(a => a.account_id);
+  if (!ids.length) return;
+  const { data } = await db.from('meta_posts').select('permalink,thumbnail_url,views').eq('user_id', u.id).in('account_id', ids).order('views', { ascending: false }).limit(3);
   if (!data?.length) return;
   const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n||0);
   document.getElementById('topVids').innerHTML = data.map((x,i) => `<a class="vid" href="${esc(x.permalink)}" target="_blank" rel="noopener" style="background-image:url('${esc(x.thumbnail_url)}')"><span class="rank">${i+1}</span><span class="views">${fmt(x.views)} views</span></a>`).join('');
