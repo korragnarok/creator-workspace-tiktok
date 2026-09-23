@@ -449,6 +449,15 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .b-folder .ic{width:40px;height:40px;}
   .b-quote{min-height:0;padding:14px;}
 }
+/* Top Products — product photo, name, brand, units sold */
+.tp-row{display:flex;align-items:center;gap:12px;padding:8px;border:1px solid var(--border);border-radius:14px;background:var(--bg-lift);text-decoration:none;color:inherit;transition:border-color .15s;}
+.tp-row:hover{border-color:var(--rust);}
+.tp-img{width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--surface-2);}
+.tp-info{flex:1;min-width:0;}
+.tp-name{font-weight:700;color:var(--ink);font-size:13px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.tp-brand{font-size:11px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tp-sold{font-family:'Noto Sans Mono',monospace;font-size:17px;font-weight:800;color:var(--tan);text-align:right;white-space:nowrap;}
+.tp-sold span{display:block;font-family:inherit;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);}
 /* Level Ladder — compact vertical version in the right column */
 .b-right .level-feature{padding:14px;min-height:0;}
 .b-right .level-feature-head{margin-bottom:8px;justify-content:center;}
@@ -1052,8 +1061,11 @@ async function init() {
   const topProducts=(products||[]).slice().sort((a,b)=>(productUnits.get(b.id)||0)-(productUnits.get(a.id)||0)).filter(p=>(productUnits.get(p.id)||0)>0).slice(0,3);
   if(topProducts.length){
     document.getElementById('top-products').className='top-product-list';
-    const rankIcons=['icons/top/first.png','icons/top/second.png','icons/top/third.png'];
-    document.getElementById('top-products').innerHTML=topProducts.map((p,i)=>`<div class="top-product-row" onclick="window.location='products.html?search='+encodeURIComponent(p.name)" title="View in Products"><img class="top-product-rank" src="${rankIcons[i]}" alt="${i+1}"><div style="flex:1;min-width:0;overflow:hidden;"><div class="top-product-name">${p.name}</div><div class="top-product-brand">${p.brand||''}</div></div><div class="top-product-units">${(productUnits.get(p.id)||0).toLocaleString()}<span>sold</span></div></div>`).join('');
+    const escHtml=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    document.getElementById('top-products').innerHTML=topProducts.map(p=>{
+      const img=p.image_url?`<img class="tp-img" src="${escHtml(p.image_url)}" alt="" loading="lazy">`:`<div class="tp-img tp-img-empty"></div>`;
+      return `<a class="tp-row" href="products.html?search=${encodeURIComponent(p.name||'')}" title="View in Products">${img}<div class="tp-info"><div class="tp-name">${escHtml(p.name)}</div><div class="tp-brand">${escHtml(p.brand)}</div></div><div class="tp-sold">${(productUnits.get(p.id)||0).toLocaleString()}<span>sold</span></div></a>`;
+    }).join('');
     // Append View All after the list
     const viewAll = document.createElement('a');
     viewAll.href = 'products.html';
