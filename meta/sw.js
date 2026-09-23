@@ -1,5 +1,5 @@
 // ─── Take24 Meta Service Worker (scoped to /meta/) ─────────────────────────
-const CACHE = 'take24-meta-v3';
+const CACHE = 'take24-meta-v5';
 const PRECACHE = ['/meta/', '/meta/index.html', '/meta/meta-supabase.js'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting()));

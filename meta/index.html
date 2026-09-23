@@ -7,7 +7,7 @@
 <title>Take24 Meta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Pinyon+Script&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Bad+Script&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   /* Palette: rust #955B3B · tan #C4A083 · charcoal #373635 · black #1F1F1E */
@@ -39,10 +39,17 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 .cal-month{font-family:'Cormorant Garamond',serif;font-size:24px;text-align:center;margin-bottom:8px;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px 0;text-align:center;font-size:12px;}
 .cal-grid .dow{font-weight:800;font-size:10px;opacity:.7;padding-bottom:6px;border-bottom:1px solid rgba(246,240,234,.25);margin-bottom:4px;}
-.cal-grid .d{padding:4px 0;border-radius:50%;}
+.cal-grid .d{height:26px;display:flex;align-items:center;justify-content:center;}
+.cal-grid .today{width:26px;margin:0 auto;border-radius:50%;}
 .cal-grid .today{background:var(--cream);color:var(--taupe);font-weight:800;}
 .minis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.minis .photo{height:74px;border-radius:12px;}
+.topvids .label{margin:0 0 8px 4px;}
+.vid{position:relative;height:110px;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#3A2E27,#2B2A29) center/cover;cursor:pointer;display:block;text-decoration:none;}
+.vid .rank{position:absolute;top:6px;left:8px;font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.6);}
+.vid .views{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;background:linear-gradient(transparent,rgba(0,0,0,.7));color:var(--cream);font-size:10px;font-weight:800;text-align:center;}
+.vid .edit{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.5);color:var(--cream);font-size:11px;cursor:pointer;opacity:0;}
+.vid:hover .edit{opacity:1;}
+.vid.empty{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--lav);text-align:center;}
 
 /* photo slots: tap to add your own image */
 .photo{position:relative;background:linear-gradient(135deg,#3A2E27,#2B2A29);background-size:cover;background-position:center;cursor:pointer;overflow:hidden;}
@@ -52,13 +59,13 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 /* ── top row ── */
 .top{grid-area:top;display:grid;grid-template-columns:1.1fr 1fr;gap:18px;}
 .hello h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:40px;line-height:1.05;color:var(--brown);}
-.hello h1 em{font-family:'Pinyon Script',cursive;font-style:normal;font-size:48px;color:var(--lav);}
+.hello h1 em{font-family:'Bad Script',cursive;font-style:normal;font-size:38px;color:var(--lav);}
 .hello p{color:var(--muted);margin-top:8px;}
 .hello .switch{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;}
 .btn{border:1px solid var(--line);background:var(--lav-soft);color:var(--brown);border-radius:999px;padding:8px 14px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}
 .btn:hover{background:var(--sage);color:var(--cream);}
 .quote{background:var(--sage);color:var(--cream);border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;}
-.quote .q{font-family:'Pinyon Script',cursive;font-size:34px;line-height:1.2;}
+.quote .q{font-family:'Bad Script',cursive;font-size:28px;line-height:1.2;}
 .quote .qsub{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;opacity:.85;margin-top:6px;}
 .quote button{position:absolute;right:14px;bottom:12px;background:none;border:none;color:var(--cream);opacity:.6;cursor:pointer;font-size:16px;}
 
@@ -81,6 +88,10 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 .list li .x{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;opacity:0;font-size:14px;}
 .list li:hover .x{opacity:1;}
 .list .add{margin-top:12px;width:100%;border:none;border-bottom:1px dashed var(--line);background:none;padding:6px 2px;font:13px 'Nunito Sans',sans-serif;outline:none;color:var(--ink);}
+.store{display:flex;flex-direction:column;justify-content:center;text-decoration:none;color:var(--ink);background:var(--taupe-soft);transition:border-color .15s,transform .15s;}
+.store:hover{border-color:var(--lav);transform:translateY(-2px);}
+.store-body{text-align:center;font-family:'Bad Script',cursive;font-size:22px;color:var(--lav);}
+.store-body span{font-family:'Nunito Sans',sans-serif;}
 .list.lav{background:var(--lav-soft);} .list.sage{background:var(--sage-soft);} .list.taupe{background:var(--taupe-soft);}
 
 /* ── right column ── */
@@ -88,8 +99,9 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 .folders{background:var(--taupe-soft);}
 .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 6px;}
 .folder{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--brown);font-size:10.5px;font-weight:700;text-align:center;cursor:pointer;}
-.folder .ic{width:44px;height:36px;border-radius:6px 10px 10px 10px;position:relative;background:var(--f,var(--taupe));box-shadow:inset 0 -8px 0 rgba(0,0,0,.06);}
-.folder .ic::before{content:'';position:absolute;top:-6px;left:0;width:20px;height:8px;border-radius:5px 5px 0 0;background:var(--f,var(--taupe));}
+.folder .ic{width:48px;height:48px;object-fit:contain;display:block;}
+.folder .ic.fallback{width:44px;height:36px;margin:6px 0;border-radius:6px 10px 10px 10px;position:relative;background:var(--f,var(--taupe));}
+.folder .ic.fallback::before{content:'';position:absolute;top:-6px;left:0;width:20px;height:8px;border-radius:5px 5px 0 0;background:var(--f,var(--taupe));}
 .folder.soon{opacity:.55;cursor:default;}
 .goals .goal{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);}
 .goals .goal:last-child{border:none;}
@@ -120,10 +132,9 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
       <div class="cal-month" id="calMonth"></div>
       <div class="cal-grid" id="calGrid"></div>
     </div>
-    <div class="minis">
-      <div class="photo" data-photo="m1"></div>
-      <div class="photo" data-photo="m2"></div>
-      <div class="photo" data-photo="m3"></div>
+    <div class="topvids">
+      <div class="label">Top Videos</div>
+      <div class="minis" id="topVids"></div>
     </div>
   </aside>
 
@@ -155,7 +166,7 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
   <section class="mid">
     <div class="card list lav"  data-list="content"><h2>Content</h2><ul></ul><input class="add" placeholder="+ add a post idea"></div>
     <div class="card list sage" data-list="links"><h2>Links &amp; Deals</h2><ul></ul><input class="add" placeholder="+ add a link to post"></div>
-    <div class="card list taupe" data-list="admin"><h2>Admin</h2><ul></ul><input class="add" placeholder="+ add a task"></div>
+    <a class="card store" href="https://a.co/d/0aN0vMFu" target="_blank" rel="noopener"><h2>Amazon Storefront</h2><div class="store-body">Open my storefront <span>→</span></div></a>
   </section>
 
   <!-- RIGHT -->
@@ -163,12 +174,12 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
     <div class="card folders">
       <h2>Folders</h2>
       <div class="fgrid">
-        <a class="folder soon" style="--f:#C4A083"><span class="ic"></span>Facebook</a>
-        <a class="folder soon" style="--f:#955B3B"><span class="ic"></span>Instagram</a>
-        <a class="folder soon" style="--f:#7A5A45"><span class="ic"></span>Links</a>
-        <a class="folder soon" style="--f:#A8876C"><span class="ic"></span>Products</a>
-        <a class="folder soon" style="--f:#5A4A3F"><span class="ic"></span>Earnings</a>
-        <a class="folder" style="--f:#C4A083" href="../index.html" onclick="switchToTikTok();return false;"><span class="ic"></span>TikTok</a>
+        <a class="folder soon" style="--f:#C4A083"><img class="ic" src="folder.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">Facebook</a>
+        <a class="folder soon" style="--f:#955B3B"><img class="ic" src="folder.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">Instagram</a>
+        <a class="folder soon" style="--f:#7A5A45"><img class="ic" src="folder.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">Links</a>
+        <a class="folder soon" style="--f:#A8876C"><img class="ic" src="folder.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">Products</a>
+        <a class="folder soon" style="--f:#5A4A3F"><img class="ic" src="folder.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">Earnings</a>
+        <a class="folder" style="--f:#C4A083" href="../index.html" onclick="switchToTikTok();return false;"><img class="ic" src="folder.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">TikTok</a>
       </div>
     </div>
     <div class="card goals">
@@ -194,7 +205,7 @@ const now = new Date();
 const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
 // Header
-document.getElementById('year').textContent = now.getFullYear();
+document.getElementById('year').textContent = 'take 24';
 document.getElementById('todayLabel').textContent = now.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
 const h = now.getHours();
 document.getElementById('greet').innerHTML = `${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, <em>Kourtney</em>`;
@@ -271,6 +282,34 @@ document.getElementById('photoPicker').addEventListener('change',e=>{
   reader.readAsDataURL(file); e.target.value='';
 });
 paintPhotos();
+
+// Top videos — set manually for now; will fill in automatically once Facebook/Instagram sync is built.
+let editingVid=null;
+function renderTopVids(){
+  const v=load('topvids',[{},{},{}]);
+  document.getElementById('topVids').innerHTML=v.map((x,i)=>x.thumb
+    ? `<a class="vid" href="${esc(x.link||'#')}" target="_blank" rel="noopener" style="background-image:url(${x.thumb})">
+         <span class="rank">${i+1}</span>${x.views?`<span class="views">${esc(x.views)} views</span>`:''}
+         <button class="edit" onclick="event.preventDefault();event.stopPropagation();editTopVid(${i})" title="Change">✎</button></a>`
+    : `<div class="vid empty" onclick="editTopVid(${i})">+ video ${i+1}</div>`).join('');
+}
+function editTopVid(i){ editingVid=i; activeSlot=null; document.getElementById('photoPicker').click(); }
+document.getElementById('photoPicker').addEventListener('change',e=>{
+  if(editingVid===null) return;
+  const file=e.target.files[0], i=editingVid; editingVid=null; if(!file) return;
+  const img=new Image(), reader=new FileReader();
+  reader.onload=()=>{ img.onload=()=>{
+    const s=Math.min(1,400/Math.max(img.width,img.height)), c=document.createElement('canvas');
+    c.width=img.width*s; c.height=img.height*s; c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    const v=load('topvids',[{},{},{}]);
+    const link=prompt('Video link (optional):', v[i].link||'') || '';
+    const views=prompt('Views (optional, e.g. 12.4K):', v[i].views||'') || '';
+    v[i]={thumb:c.toDataURL('image/jpeg',0.8),link:link.trim(),views:views.trim()};
+    save('topvids',v); renderTopVids();
+  }; img.src=reader.result; };
+  reader.readAsDataURL(file); e.target.value='';
+},true);
+renderTopVids();
 
 requireMetaAuth();
 </script>
