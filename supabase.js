@@ -138,10 +138,36 @@ const THEMES = {
       '--shadow-sm':   '0 1px 4px rgba(1,51,40,0.08)',
       '--shadow-md':   '0 4px 20px rgba(1,51,40,0.12)',
     }
+  },
+  // Rust · tan · charcoal · black — matches the Meta side
+  espresso: {
+    label: 'Espresso',
+    swatch: ['#1F1F1E','#373635','#955B3B','#C4A083'],
+    vars: {
+      '--bg':          '#1F1F1E',
+      '--bg-lift':     '#262524',
+      '--surface':     '#2B2A29',
+      '--surface-2':   '#373635',
+      '--border':      'rgba(196,160,131,0.12)',
+      '--border-mid':  'rgba(196,160,131,0.20)',
+      '--text':        '#EDE3D8',
+      '--text-mid':    '#C4A083',
+      '--text-muted':  '#A08D7C',
+      '--ink':         '#F3EADF',
+      '--sage':        '#C4A083',
+      '--rose':        '#C4A083',
+      '--rust':        '#955B3B',
+      '--tan':         '#C4A083',
+      '--sand':        '#373635',
+      '--shadow-sm':   '0 1px 4px rgba(0,0,0,0.35)',
+      '--shadow-md':   '0 10px 30px rgba(0,0,0,0.35)',
+    }
   }
 };
+// Themes without their own icon folder borrow one.
+const THEME_ICON_FOLDER = { espresso: 'dusk' };
 
-const DEFAULT_THEME = 'grove';
+const DEFAULT_THEME = 'espresso';
 const DEFAULT_PROFILE_ICON = 'avatar';
 const THEME_ICON_NAMES = new Set(['home','todo','video','videos','hooks','products','scripts','sales','gmv','commissions','comission','comissions','commissins','move-up','move-down','duplicate','delete','workshop']);
 const THEME_ICON_FILES = {
@@ -298,7 +324,7 @@ function _themeIconSrc(themeKey, iconName) {
   const normalized = iconName === 'videos' ? 'video' : iconName;
   const aliases = THEME_ICON_FILES[themeKey] || {};
   const file = aliases[normalized] || `${normalized}.png`;
-  return `icons/${themeKey}/${file}`;
+  return `icons/${THEME_ICON_FOLDER[themeKey] || themeKey}/${file}`;
 }
 
 function applyThemeIcons(themeKey) {
@@ -913,9 +939,11 @@ async function initTheme(userId, prefs) {
   const metaTheme = _metadataTheme(user);
   const cachedTheme = _cachedTheme();
   const prefTheme = THEMES[prefs.theme] ? prefs.theme : '';
-  const themeKey = prefs?._isNewPrefs
+  let themeKey = prefs?._isNewPrefs
     ? (metaTheme || cachedTheme || prefTheme || DEFAULT_THEME)
     : (prefTheme || metaTheme || cachedTheme || DEFAULT_THEME);
+  let migrated = false; try { migrated = localStorage.getItem('take24:espressoSwitch') === '1'; } catch(e) {}
+  if (!migrated && themeKey === 'grove') { themeKey = 'espresso'; try { localStorage.setItem('take24:espressoSwitch','1'); } catch(e) {} }
   try { localStorage.setItem('creatorHub:theme', themeKey); } catch(e) {}
   applyTheme(themeKey);
   if (userId && prefs.theme !== themeKey) await saveUserPrefs(userId, { theme: themeKey });
