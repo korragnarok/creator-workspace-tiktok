@@ -27,6 +27,8 @@ h1 em{font:28px 'Bad Script',cursive;color:var(--tan);}
 .acct.on{outline-color:var(--tan);}
 .acct.off{opacity:.45;}
 .acct.off:hover{opacity:.8;}
+.more{background:none;border:1px dashed var(--line);color:var(--muted);border-radius:14px;padding:8px 14px;font:700 11px 'Nunito Sans',sans-serif;cursor:pointer;}
+.more:hover{color:var(--tan);border-color:var(--tan);}
 .acct .p{font-size:10px;color:var(--tan);font-weight:800;text-transform:uppercase;letter-spacing:.1em;}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;}
 .post{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:var(--ink);display:block;}
@@ -172,6 +174,10 @@ function selectedAccountId(accts) {
   const hk = accts.filter(a => /house\s*of\s*ko/i.test(`${a.name} ${a.username}`));
   return (hk.find(a => a.platform === 'facebook') || hk[0] || accts[0])?.account_id || null;
 }
+// Accounts listed up top. Only House of Ko for now; the rest stay connected behind "+ more".
+function isPinned(a) { return /house\s*of\s*ko/i.test(`${a.name} ${a.username}`); }
+let showAllAccounts = false;
+function toggleMoreAccounts() { showAllAccounts = !showAllAccounts; render(); }
 function selectAccount(id) {
   try { localStorage.setItem('take24meta:visibleAccounts', JSON.stringify([id])); } catch {}
   render();
@@ -181,7 +187,11 @@ async function render() {
   window._accts = accts || [];
   const selected = selectedAccountId(window._accts);
   if (accts?.length) {
-    document.getElementById('accts').innerHTML = accts.map(a => `<div class="acct ${a.account_id === selected ? 'on' : 'off'}" onclick="selectAccount('${esc(a.account_id)}')"><img src="${esc(a.avatar_url)}" alt=""><div><div>${esc(a.username || a.name)}</div><div class="p">${a.platform} · ${fmt(a.follower_count)} followers</div></div></div>`).join('');
+    const pinned = accts.filter(a => isPinned(a) || a.account_id === selected);
+    const others = accts.filter(a => !pinned.includes(a));
+    const list = showAllAccounts ? accts : pinned;
+    document.getElementById('accts').innerHTML = list.map(a => `<div class="acct ${a.account_id === selected ? 'on' : 'off'}" onclick="selectAccount('${esc(a.account_id)}')"><img src="${esc(a.avatar_url)}" alt=""><div><div>${esc(a.username || a.name)}</div><div class="p">${a.platform} · ${fmt(a.follower_count)} followers</div></div></div>`).join('')
+      + (others.length ? `<button class="more" onclick="toggleMoreAccounts()">${showAllAccounts ? 'Hide other accounts' : `+ ${others.length} more`}</button>` : '');
     document.getElementById('connectBtn').textContent = 'Reconnect';
   }
   const ids = selected ? [selected] : [];
