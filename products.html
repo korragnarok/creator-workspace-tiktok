@@ -596,6 +596,7 @@ window.importProduct = async function(index) {
   document.getElementById('fUnitsSold').value = '';
   document.getElementById('fStatus').value = 'active';
   document.getElementById('fNotes').value = importNotesForProduct(p);
+  document.getElementById('fFreeSample').checked = false;
   document.getElementById('deleteBtn').style.display = 'none';
   window._existingImgUrl = p.image_url || '';
   window._newImgFile = null;
