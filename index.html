@@ -1478,7 +1478,7 @@ async function addRecommendedToToday(prodId,btn){
 // ── Top 3 TikTok videos by views ──────────────────────────────────────────
 function renderTopVideos(){
   const el=document.getElementById('top-videos'); if(!el) return;
-  const noteVal=(notes,key)=>{ const line=String(notes||'').split('\n').find(l=>l.toLowerCase().startsWith(key.toLowerCase()+':')); return line?line.slice(key.length+1).trim():''; };
+  const noteVal=(notes,label)=>{ const e=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); const m=String(notes||'').match(new RegExp(`^${e}\\s*:\\s*(.*)$`,'im')); return m?m[1].trim():''; };
   const thumb=v=>String(v.thumbnail_url||v.cover_url||v.image_url||noteVal(v.notes,'TikTok thumbnail')||noteVal(v.notes,'Thumbnail')||'').trim();
   const fmtN=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n||0);
   const top=(_dashboardVideos||[]).filter(v=>(Number(v.views)||0)>0).sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0)).slice(0,3);
@@ -1487,10 +1487,26 @@ function renderTopVideos(){
   const prodImg=v=>{ const ps=_dashboardProducts||[]; const byId=v.prod_id&&ps.find(p=>p.id===v.prod_id);
     const key=String(v.brand||'').trim().toLowerCase(); const byName=key&&ps.find(p=>String(p.name||'').trim().toLowerCase()===key);
     return (byId||byName)?.image_url||''; };
-  el.innerHTML=top.map(v=>{ const t=thumb(v), fb=prodImg(v)||'icons/default-product.png';
+  el.innerHTML=top.map(v=>{ const t=thumb(v);
     return `<a class="tops-tile" href="${esc(v.link||'video-tracker.html')}" target="_blank" rel="noopener" title="${esc(v.title||'')}">
-    <div class="tops-img tops-vid"><img class="tops-vid-img" src="${esc(t||fb)}" alt="" loading="lazy" onerror="if(this.dataset.fb!=='1'){this.dataset.fb='1';this.src='${esc(fb)}';}"><span class="tops-num">${fmtN(Number(v.views))} views</span></div>
+    <div class="tops-img tops-vid"><img class="tops-vid-img" ${t?`src="${esc(t)}"`:''} data-vid="${esc(v.id)}" data-fb="${esc(prodImg(v)||'icons/default-product.png')}" alt="" onerror="refreshTopThumb(this)"><span class="tops-num">${fmtN(Number(v.views))} views</span></div>
     <div class="tops-name">${esc(v.title||v.brand||'Video')}</div><div class="tops-sub">${esc(v.brand||'')}</div></a>`; }).join('');
+  // Videos with no saved thumbnail: fetch a fresh one right away
+  el.querySelectorAll('img.tops-vid-img:not([src])').forEach(img=>refreshTopThumb(img));
+}
+// Same trick the Video Tracker uses: TikTok thumbnail links expire, so ask TikTok's
+// free oEmbed API for a fresh one. Falls back to the product photo if that fails.
+async function refreshTopThumb(img){
+  if(img.dataset.tried){ img.onerror=null; img.src=img.dataset.fb; return; }
+  img.dataset.tried='1';
+  const v=(_dashboardVideos||[]).find(x=>String(x.id)===img.dataset.vid);
+  const link=v?.link||'';
+  if(!/tiktok\.com/i.test(link)){ img.onerror=null; img.src=img.dataset.fb; return; }
+  try{
+    const d=await (await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(link)}`)).json();
+    if(!d?.thumbnail_url) throw new Error('none');
+    img.src=d.thumbnail_url;
+  }catch(e){ img.onerror=null; img.src=img.dataset.fb; }
 }
 function renderTodayContent(){
   const list=document.getElementById('sched-list');
