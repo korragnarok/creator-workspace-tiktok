@@ -118,10 +118,16 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 .mid>.card{min-width:0;}
 .top.stats{align-self:start;}
 .stat{align-self:start;}
+/* Top videos: two cards side by side (Facebook | Instagram) */
+.tv-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.tv-card{padding:14px 16px;}
+.tv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.tv-grid .vid{height:auto;aspect-ratio:3/4;}
+.tv-grid .muted-note{grid-column:1/-1;}
+/* Content ideas: small card in the left column */
+.ideas-side ul{max-height:150px;overflow-y:auto;}
 /* Content ideas: horizontal card, ideas flow across in columns */
 .ideas{grid-area:ideas;}
-.ideas ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 18px;}
-.ideas .add{max-width:420px;}
 /* stats row */
 .stats{grid-template-columns:repeat(4,1fr)!important;}
 .stat{padding:16px 18px;}
@@ -164,7 +170,7 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 .p-name{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--cream);}
 .p-sub{font-size:11px;color:var(--muted);margin-bottom:10px;}
 .p-btns{display:flex;flex-direction:column;gap:6px;}
-@media(max-width:700px){.stats{grid-template-columns:1fr 1fr!important;}}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr!important;}.tv-row{grid-template-columns:1fr;}}
 /* ── Desktop: fill one screen with a little breathing room ── */
 @media(min-width:1101px){
   body{padding:18px 24px;}
@@ -243,10 +249,7 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
       <div class="cal-month" id="calMonth"></div>
       <div class="cal-grid" id="calGrid"></div>
     </div>
-    <div class="topvids">
-      <div class="label">Top Videos</div>
-      <div class="minis" id="topVids"></div>
-    </div>
+    <div class="card list lav ideas-side" data-list="content"><h2>Content Ideas</h2><ul></ul><input class="add" placeholder="+ add a post idea"></div>
     <div class="card profile">
       <div class="p-name">Kourtney</div>
       <div class="p-sub">Meta workspace</div>
@@ -269,7 +272,10 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
   </section>
 
   <!-- CONTENT IDEAS (full width) -->
-  <section class="card list lav ideas" data-list="content"><h2>Content Ideas</h2><ul></ul><input class="add" placeholder="+ add a post idea"></section>
+  <section class="ideas tv-row">
+    <div class="card tv-card"><h2>Top Facebook Videos</h2><div class="tv-grid" id="tvFb"><div class="muted-note">Sync to see your top videos.</div></div></div>
+    <div class="card tv-card"><h2>Top Instagram Videos</h2><div class="tv-grid" id="tvIg"><div class="muted-note">Sync to see your top videos.</div></div></div>
+  </section>
 
   <!-- LISTS -->
   <section class="mid">
@@ -456,10 +462,11 @@ renderTopVids();
     const id = pick(plat); if (!id) return '';
     const { data } = await db.from('meta_posts').select('permalink,thumbnail_url,views').eq('user_id', u.id).eq('account_id', id).order('views', { ascending: false }).limit(3);
     if (!data?.length) return '';
-    return `<div class="tv-row-label">${label}</div>` + data.map((x,i) => `<a class="vid" href="${esc(x.permalink)}" target="_blank" rel="noopener" style="background-image:url('${esc(x.thumbnail_url)}')"><span class="rank">${i+1}</span><span class="views">${fmt(x.views)} views</span></a>`).join('');
+    return data.map((x,i) => `<a class="vid" href="${esc(x.permalink)}" target="_blank" rel="noopener" style="background-image:url('${esc(x.thumbnail_url)}')"><span class="rank">${i+1}</span><span class="views">${fmt(x.views)} views</span></a>`).join('');
   };
-  const html = (await row('facebook','Facebook')) + (await row('instagram','Instagram'));
-  if (html) document.getElementById('topVids').innerHTML = html;
+  const fbHtml = await row('facebook'), igHtml = await row('instagram');
+  if (fbHtml) document.getElementById('tvFb').innerHTML = fbHtml;
+  if (igHtml) document.getElementById('tvIg').innerHTML = igHtml;
 })();
 // ── Stats, recent posts, best time, streak (from synced Facebook + Instagram videos) ──
 (async () => {
