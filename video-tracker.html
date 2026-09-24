@@ -383,6 +383,7 @@ async function init() {
   window._user = user;
   await loadVideos();
   restoreTrackerState();
+  autoRefreshViewsIfStale();   // runs in the background; page is usable right away
   document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
   // Import overlay click does NOT close modal (user may have long import in progress)
   document.getElementById('modalOverlay').addEventListener('keydown', e => enterSaves(e, saveVideo));
@@ -1856,6 +1857,44 @@ async function fetchTikTokVideosFromAccount(){
   }
   return all;
 }
+// ── Keep view counts current ─────────────────────────────────────────────
+// Pulls every video from the connected TikTok account and updates the views on
+// videos already in the tracker (matched by TikTok video ID). Never creates rows.
+async function refreshTikTokViews(rawVideos, {quiet=false}={}){
+  const acct=await getActiveAccount(user.id);
+  if(!acct?.tiktok_open_id) return 0;
+  if(!rawVideos) rawVideos=await fetchTikTokVideosFromAccount();
+  const fresh=new Map();
+  rawVideos.map(normalizeOfficialTikTokVideo).forEach(v=>{
+    const id=tikTokVideoIdFromUrl(v.url)||String(v.raw?.id||'');
+    if(id) fresh.set(String(id),v);
+  });
+  const {data:rows}=await db.from('videos').select('id,link,views').eq('user_id',user.id).eq('tiktok_account_id',acct.tiktok_open_id).limit(5000);
+  const changes=[];
+  (rows||[]).forEach(r=>{
+    const id=tikTokVideoIdFromUrl(r.link); if(!id) return;
+    const v=fresh.get(String(id)); if(!v) return;
+    if((Number(v.views)||0)!==(Number(r.views)||0)) changes.push({id:r.id,views:Number(v.views)||0});
+  });
+  for(let i=0;i<changes.length;i+=20){
+    await Promise.all(changes.slice(i,i+20).map(c=>db.from('videos').update({views:c.views}).eq('id',c.id).eq('user_id',user.id)));
+  }
+  try{ localStorage.setItem('take24:viewsSynced:'+acct.tiktok_open_id,String(Date.now())); }catch(e){}
+  if(changes.length){
+    await loadVideos();
+    if(!quiet) showToast(`Updated views on ${changes.length} video${changes.length===1?'':'s'}`);
+  }else if(!quiet){ showToast('Views are already up to date'); }
+  return changes.length;
+}
+window.refreshTikTokViews=refreshTikTokViews;
+async function autoRefreshViewsIfStale(){
+  try{
+    const acct=await getActiveAccount(user.id); if(!acct?.access_token) return;
+    const last=Number(localStorage.getItem('take24:viewsSynced:'+acct.tiktok_open_id)||0);
+    if(Date.now()-last<6*60*60*1000) return;   // at most every 6 hours
+    await refreshTikTokViews(null,{quiet:true});
+  }catch(e){ console.warn('Auto view refresh skipped',e); }
+}
 async function syncFromConnectedTikTok(){
   const btn=document.getElementById('syncTikTokBtn');
   document.getElementById('importResults').innerHTML='';
@@ -1872,6 +1911,7 @@ async function syncFromConnectedTikTok(){
     if(!syncAccount?.tiktok_open_id)throw new Error('Connect TikTok in Settings first.');
     window._importAccountId=syncAccount.tiktok_open_id;
     const rawVideos=await fetchTikTokVideosFromAccount();
+    refreshTikTokViews(rawVideos,{quiet:true}).catch(e=>console.warn('View refresh failed',e));   // update views on videos you already have
     const importedIdentities=await loadImportedTikTokIdentities();
     const allNormalized=uniqueTikTokVideos(rawVideos.map(normalizeOfficialTikTokVideo).filter(video=>video.caption||video.url));
     const remainingNormalized=allNormalized.filter(video=>!isAlreadyImportedTikTok(video,importedIdentities));
