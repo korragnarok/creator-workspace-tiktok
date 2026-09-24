@@ -426,7 +426,16 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .b-left .stat-icon{width:36px;height:36px;}
   .b-left .stat-icon img{width:26px;height:26px;}
   .b-left .stat-value{font-size:19px;}
-  .b-left .stats-grid{gap:8px;}
+  .b-left .stats-grid{gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))!important;}   /* 2×2 so the column fits */
+  .b-left .stat-card{flex-direction:column;align-items:flex-start;gap:6px;padding:10px 12px;}
+  .b-left .stat-icon{width:30px;height:30px;}
+  .b-left .stat-icon img{width:20px;height:20px;}
+  .b-left .stat-label{font-size:8.5px;}
+  .b-left .stat-value{font-size:18px;}
+  .b-left .stat-sub{font-size:10.5px;line-height:1.25;}
+  .b-left .core-mini-list{gap:4px;}
+  .b-left .core-pill{padding:5px 10px;}
+  .b-left .core-sidebar-head{font-size:19px;}
   /* center: header + ladder stay put, schedule/chart/products fill the rest */
   .b-center{overflow:hidden;display:flex;flex-direction:column;}
   .b-center .hero-row{flex:0 0 auto;}
