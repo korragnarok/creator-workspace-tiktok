@@ -111,6 +111,12 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 .goals input{flex:1;border:none;background:none;font:13px 'Nunito Sans',sans-serif;color:var(--ink);outline:none;}
 .mood .photo{height:180px;border-radius:16px;}
 
+/* sizing fixes: long captions can't stretch the columns; stat cards stay compact */
+.board>*{min-width:0;}
+.mid{grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:start;}
+.mid>.card{min-width:0;}
+.top.stats{align-self:start;}
+.stat{align-self:start;}
 /* stats row */
 .stats{grid-template-columns:repeat(4,1fr)!important;}
 .stat{padding:16px 18px;}
