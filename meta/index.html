@@ -183,7 +183,6 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
   .p-btns .btn{flex:1;padding:8px 6px;font-size:10px;}
   .stat{padding:14px 18px;}
   .stat-val{font-size:34px;}
-  .day textarea{min-height:84px;}
   .fgrid{gap:12px 4px;}
   .goals .goal{padding:8px 0;}
   .rp-th{width:38px;height:48px;}
@@ -196,6 +195,23 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
   .mid{align-items:stretch!important;}
   .top.stats,.stat{align-self:stretch;}
 }
+/* This Week: taller day cards + popup editor */
+.day{cursor:pointer;min-height:190px!important;transition:transform .15s;}
+.day:hover{transform:translateY(-2px);}
+.day-note{flex:1;min-height:120px;background:rgba(0,0,0,.22);border-radius:10px;padding:8px;font-size:12px;line-height:1.45;color:var(--ink);white-space:pre-wrap;overflow:hidden;word-break:break-word;
+  -webkit-mask-image:linear-gradient(#000 80%,transparent);mask-image:linear-gradient(#000 80%,transparent);}
+.day-note.empty{color:var(--muted);}
+.day-modal{position:fixed;inset:0;z-index:500;background:rgba(10,8,7,.62);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px;}
+.day-modal.open{display:flex;}
+.day-modal-card{width:100%;max-width:560px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.55);}
+.dm-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.dm-title{font-family:'Cormorant Garamond',serif;font-size:32px;line-height:1;color:var(--cream);}
+.dm-date{font-family:'Bad Script',cursive;font-size:18px;color:var(--lav);margin-top:4px;}
+.dm-done{border:none;background:var(--sage);color:var(--cream);border-radius:999px;padding:9px 18px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
+.dm-done:hover{filter:brightness(1.1);}
+#dayModalText{width:100%;min-height:300px;resize:vertical;border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.25);color:var(--ink);padding:14px;font:14px/1.6 'Nunito Sans',sans-serif;outline:none;}
+#dayModalText:focus{border-color:var(--lav);}
+.dm-hint{font-size:11px;color:var(--muted);margin-top:8px;text-align:right;}
 @media(max-width:1100px){
   .board{grid-template-columns:1fr 1fr;grid-template-areas:"top top" "week week" "ideas ideas" "mid mid" "side right";}
 }
@@ -283,6 +299,13 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
   </aside>
 </div>
 
+<div class="day-modal" id="dayModal" role="dialog" aria-modal="true">
+  <div class="day-modal-card">
+    <div class="dm-head"><div><div class="dm-title" id="dayModalTitle"></div><div class="dm-date" id="dayModalDate"></div></div><button class="dm-done" id="dayModalDone">Done</button></div>
+    <textarea id="dayModalText" placeholder="What's the plan for today? Posts, links, reminders…"></textarea>
+    <div class="dm-hint">Saves as you type · Esc or tap outside to close</div>
+  </div>
+</div>
 <input type="file" id="photoPicker" accept="image/*" hidden>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -312,19 +335,36 @@ document.getElementById('year').innerHTML = '<img src="../logo.png" alt="Take24"
 })();
 
 
-// Week (Mon–Sun), notes saved per date
+// Week (Mon–Sun), notes saved per date. Tap a day to open it in a bigger editor.
 (function(){
   const start=new Date(now); start.setDate(now.getDate()-((now.getDay()+6)%7));
-  const notes=load('week',{});
   const grid=document.getElementById('weekGrid');
-  grid.innerHTML=[...Array(7)].map((_,i)=>{
-    const d=new Date(start); d.setDate(start.getDate()+i); const key=ymd(d);
-    return `<div class="day${key===ymd(now)?' is-today':''}">
-      <div class="dname">${d.toLocaleDateString(undefined,{weekday:'short'})}</div>
-      <div class="ddate">${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div>
-      <textarea data-date="${key}" placeholder="plans…">${esc(notes[key]||'')}</textarea></div>`;
-  }).join('');
-  grid.addEventListener('input',e=>{ if(e.target.dataset.date){ const n=load('week',{}); n[e.target.dataset.date]=e.target.value; save('week',n);} });
+  const days=[...Array(7)].map((_,i)=>{ const d=new Date(start); d.setDate(start.getDate()+i); return d; });
+  const render=()=>{
+    const notes=load('week',{});
+    grid.innerHTML=days.map(d=>{ const key=ymd(d), txt=notes[key]||'';
+      return `<div class="day${key===ymd(now)?' is-today':''}" data-date="${key}">
+        <div class="dname">${d.toLocaleDateString(undefined,{weekday:'short'})}</div>
+        <div class="ddate">${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div>
+        <div class="day-note${txt?'':' empty'}">${txt?esc(txt):'plans…'}</div></div>`; }).join('');
+  };
+  render();
+  const modal=document.getElementById('dayModal'), ta=document.getElementById('dayModalText');
+  let openKey=null;
+  const close=()=>{ if(!openKey) return; const n=load('week',{}); n[openKey]=ta.value; save('week',n); openKey=null; modal.classList.remove('open'); render(); };
+  grid.addEventListener('click',e=>{
+    const day=e.target.closest('.day'); if(!day) return;
+    openKey=day.dataset.date;
+    const d=new Date(openKey+'T00:00:00');
+    document.getElementById('dayModalTitle').textContent=d.toLocaleDateString(undefined,{weekday:'long'});
+    document.getElementById('dayModalDate').textContent=d.toLocaleDateString(undefined,{month:'long',day:'numeric'});
+    ta.value=load('week',{})[openKey]||'';
+    modal.classList.add('open'); setTimeout(()=>ta.focus(),50);
+  });
+  ta.addEventListener('input',()=>{ if(openKey){ const n=load('week',{}); n[openKey]=ta.value; save('week',n); } });
+  document.getElementById('dayModalDone').onclick=close;
+  modal.addEventListener('click',e=>{ if(e.target===modal) close(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') close(); });
 })();
 
 // Lists
