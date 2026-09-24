@@ -78,7 +78,83 @@
       </div>`;
   }
 
+  // ── New planner sidebar: wordmark, mini calendar, ombre folders, profile ──
+  const FOLDERS = [
+    ['daily-virals.html','Viral Feed'], ['daily-todo.html','Daily To Do'], ['video-tracker.html','Content Tracker'],
+    ['products.html','Products'], ['brand-deals.html','Brand Deals'], ['product-scout.html','Product Scout'],
+    ['scripts.html','Script Vault'], ['script-workshop.html','Script Workshop'], ['script-scout.html','Script Scout'],
+    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'], ['settings.html','Settings']
+  ];
+  function folderShade(i) {
+    const t = i / (FOLDERS.length - 1), a = [110,63,40], b = [222,196,170];
+    return `rgb(${a.map((c,k) => Math.round(c + (b[k]-c) * t)).join(',')})`;
+  }
+  function miniCalendar() {
+    const now = new Date(), y = now.getFullYear(), m = now.getMonth();
+    const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+    let cells = ['S','M','T','W','T','F','S'].map(d => `<div class="ls-dow">${d}</div>`).join('');
+    for (let i = 0; i < first; i++) cells += '<div></div>';
+    for (let d = 1; d <= days; d++) cells += `<div class="ls-d${d === now.getDate() ? ' ls-today' : ''}">${d}</div>`;
+    return `<div class="ls-cal"><div class="ls-month">${now.toLocaleDateString(undefined,{month:'long'})}</div><div class="ls-cal-grid">${cells}</div></div>`;
+  }
+  function folderGrid(page) {
+    return `<div class="ls-folders">${FOLDERS.map(([href,label],i) => `
+      <a class="ls-folder${href === page ? ' active' : ''}" href="${href}" style="--f:${folderShade(i)}">
+        <img class="ls-ic" src="icons/folder-${i+1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>'">
+        <span>${label}</span></a>`).join('')}</div>`;
+  }
+  function injectPlannerSidebarStyles() {
+    if (document.getElementById('planner-sidebar-css')) return;
+    if (!document.querySelector('link[href*="Cormorant+Garamond"]')) {
+      const f = document.createElement('link'); f.rel = 'stylesheet';
+      f.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap';
+      document.head.appendChild(f);
+    }
+    const st = document.createElement('style'); st.id = 'planner-sidebar-css';
+    st.textContent = `
+      @media (min-width:769px){
+        html body:not(.has-app-shell){padding-left:236px!important;}
+        html body .app-shell{grid-template-columns:236px minmax(0,1fr)!important;}
+        html body .desktop-sidebar.sidebar{width:236px!important;padding:18px 14px!important;align-items:stretch!important;gap:14px!important;overflow-y:auto;scrollbar-width:none;}
+        .desktop-sidebar.sidebar::-webkit-scrollbar{display:none;}
+      }
+      .ls-word{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:40px;line-height:1;color:var(--ink);text-decoration:none;padding-left:4px;display:block;}
+      .ls-cal{background:var(--rust);border-radius:20px;padding:12px 12px 10px;color:#fff;}
+      .ls-month{font-family:'Cormorant Garamond',serif;font-size:19px;text-align:center;margin-bottom:6px;}
+      .ls-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;gap:1px 0;}
+      .ls-dow{font-weight:800;font-size:9px;opacity:.75;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.25);margin-bottom:3px;}
+      .ls-d{height:21px;display:flex;align-items:center;justify-content:center;}
+      .ls-today{width:21px;margin:0 auto;border-radius:50%;background:#fff;color:var(--rust);font-weight:800;}
+      .ls-folders{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 2px;padding:14px 6px;border:1px solid var(--border-mid);border-radius:20px;background:var(--surface);}
+      .ls-folder{display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:9.5px;font-weight:700;text-align:center;line-height:1.15;}
+      .ls-folder:hover,.ls-folder.active{color:var(--ink);}
+      .ls-folder.active .ls-ic{outline:2px solid var(--tan);outline-offset:3px;border-radius:6px;}
+      .ls-ic{width:40px;height:40px;object-fit:contain;display:block;transition:transform .15s;}
+      .ls-folder:hover .ls-ic{transform:translateY(-2px);}
+      .ls-fallback{width:38px;height:30px;margin:6px 0 4px;border-radius:5px 9px 9px 9px;position:relative;background:var(--f);}
+      .ls-fallback::before{content:'';position:absolute;top:-5px;left:0;width:17px;height:7px;border-radius:4px 4px 0 0;background:var(--f);}
+      html body .desktop-sidebar.sidebar .side-profile{margin-top:auto!important;width:auto!important;height:auto!important;padding:10px!important;gap:10px!important;justify-content:flex-start!important;}
+      html body .desktop-sidebar.sidebar .side-profile .profile-name,html body .desktop-sidebar.sidebar .side-profile .profile-role{display:block!important;}
+    `;
+    document.head.appendChild(st);
+  }
+
   function sidebar(page) {
+    injectPlannerSidebarStyles();
+    return `
+      <aside class="desktop-sidebar sidebar" data-shared-layout="true">
+        <a href="index.html" class="ls-word" title="Home">take 24</a>
+        ${miniCalendar()}
+        ${folderGrid(page)}
+        ${page === 'index.html' ? coreSidebar() : ''}
+        <div class="side-profile">
+          <div class="avatar" id="profileAvatar"><img class="avatar-img" src="icons/users/avatar.png" alt=""></div>
+          <div><div class="profile-name" id="profileName">Creator</div><div class="profile-role">Creator</div></div>
+        </div>
+      </aside>`;
+  }
+
+  function oldSidebar(page) {
     const links = NAV_ITEMS.map(item => {
       const submenu = Array.isArray(item.children) && item.children.length
         ? `<div class="side-submenu" role="menu" aria-label="${item.label} menu">
