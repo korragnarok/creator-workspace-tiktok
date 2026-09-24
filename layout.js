@@ -112,6 +112,34 @@
     }
     const st = document.createElement('style'); st.id = 'planner-sidebar-css';
     st.textContent = `
+      /* ── phone layout ── */
+      .m-top{display:none;}
+      @media (max-width:768px){
+        html body .tab-bar,html body .mobile-more-sheet,html body .mobile-more-overlay{display:none!important;}
+        html body .page,html body .content{padding-top:12px!important;}
+        html body{padding-top:0!important;}
+        .m-top{display:block;padding:max(14px,env(safe-area-inset-top)) 14px 6px;}
+        .m-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+        .m-logo img{max-height:44px;max-width:150px;display:block;}
+        .m-avatar{width:42px;height:42px;border-radius:50%;overflow:hidden;border:2px solid var(--border-mid);padding:0;background:var(--sage);cursor:pointer;}
+        .m-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+        .m-top-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+        .m-top .ls-cal{padding:10px 8px;border-radius:18px;}
+        .m-top .ls-month{font-size:16px;margin-bottom:4px;}
+        .m-top .ls-cal-grid{font-size:10px;}
+        .m-top .ls-d{height:18px;}
+        .m-top .ls-today{width:18px;}
+        .m-top .ls-folders{grid-template-columns:repeat(4,1fr);gap:8px 2px;padding:10px 4px;border-radius:18px;align-content:center;}
+        .m-top .ls-folder{font-size:9px;gap:3px;}
+        .m-top .ls-ic{width:34px;height:34px;}
+        .m-top .ls-fallback{width:26px;height:21px;margin:4px 0 3px;}
+        .m-top .ls-fallback::before{width:12px;height:5px;top:-4px;}
+        .m-more-btn{background:none;border:0;cursor:pointer;padding:0;}
+        .m-more-ic{display:flex!important;align-items:center;justify-content:center;color:var(--cream,#fff);font-size:9px;letter-spacing:1px;}
+        .m-more{display:none;grid-column:1/-1;grid-template-columns:repeat(4,1fr);gap:8px 2px;padding-top:8px;margin-top:2px;border-top:1px solid var(--border-mid);}
+        .m-top.more-open .m-more{display:grid;}
+        .m-top.more-open .m-more-btn span:last-child{color:var(--ink);}
+      }
       /* subtle dot grid background, same as the Meta side */
       html body{background-image:radial-gradient(rgba(196,160,131,.05) 1px,transparent 1px);background-size:14px 14px;background-attachment:fixed;}
       @media (min-width:769px){
@@ -286,7 +314,43 @@
     document.body.insertAdjacentHTML('beforeend', mobileNav(page));
     document.body.insertAdjacentHTML('beforeend', mobileMoreSheet(page));
     initMobileMoreGestures();
+    renderMobileTop(page);
     if (typeof applyThemeIcons === 'function') applyThemeIcons(_cachedTheme?.() || DEFAULT_THEME);
+  }
+
+  // ── Phone layout: logo + profile, calendar, and folders at the top (replaces the tab bar) ──
+  // Phone folders: the 6 main pages, plus a "More" folder that opens the rest
+  const MOBILE_MAIN = ['video-tracker.html','products.html','brand-deals.html','script-workshop.html','sales-calendar.html','settings.html'];
+  function mobileFolders(page) {
+    const tile = ([href,label]) => { const i = FOLDERS.findIndex(f => f[0] === href);
+      return `<a class="ls-folder${href === page ? ' active' : ''}" href="${href}" style="--f:${folderShade(i)}">
+        <img class="ls-ic" src="icons/folder-${href === page ? 13 : i+1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>'"><span>${label}</span></a>`; };
+    const main = FOLDERS.filter(f => MOBILE_MAIN.includes(f[0])).sort((a,b) => MOBILE_MAIN.indexOf(a[0]) - MOBILE_MAIN.indexOf(b[0]));
+    const rest = FOLDERS.filter(f => !MOBILE_MAIN.includes(f[0]));
+    const moreActive = rest.some(f => f[0] === page);
+    return `<div class="ls-folders m-folders">${main.map(tile).join('')}
+      <button type="button" class="ls-folder m-more-btn${moreActive ? ' active' : ''}" onclick="this.closest('.m-top').classList.toggle('more-open')" style="--f:#3a2a22">
+        <span class="ls-ic ls-fallback m-more-ic">•••</span><span>More</span></button>
+      <div class="m-more">${rest.map(tile).join('')}</div></div>`;
+  }
+
+  function renderMobileTop(page) {
+    if (document.querySelector('.m-top')) return;
+    const el = document.createElement('div');
+    el.className = 'm-top'; el.dataset.sharedLayout = 'true';
+    el.innerHTML = `
+      <div class="m-top-row">
+        <a href="index.html" class="m-logo"><img src="logo.png" alt="Take24"></a>
+        <button type="button" class="m-avatar profile-trigger" aria-label="Account menu"><img id="mAvatarImg" src="icons/users/avatar.png" alt=""></button>
+      </div>
+      <div class="m-top-grid">${mobileFolders(page)}${miniCalendar()}</div>`;
+    const host = document.querySelector('.workspace') || document.querySelector('.page') || document.body;
+    host.insertBefore(el, host.firstElementChild);
+    // keep the phone avatar in sync with the real profile photo once it loads
+    const src = document.querySelector('#profileAvatar img');
+    const sync = () => { const img = document.querySelector('#profileAvatar img'); if (img?.src) document.getElementById('mAvatarImg').src = img.src; };
+    if (src) new MutationObserver(sync).observe(document.getElementById('profileAvatar'), { subtree: true, childList: true, attributes: true });
+    setTimeout(sync, 1500);
   }
 
   window.openMobileMoreSheet = openMobileMoreSheet;

@@ -532,6 +532,22 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .b-left .side-profile .profile-name{font-weight:700;color:var(--ink);line-height:1.15;}
 .b-left .side-profile .profile-role{font-size:12px;color:var(--text-muted);}
 @media(max-width:768px){.b-left .side-profile{display:none;}}
+/* ── Phone layout tweaks ── */
+@media(max-width:768px){
+  /* Level Ladder on the left, the 4 stat cards stacked beside it */
+  .board{display:grid!important;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:12px;}
+  .board>*,.board .b-left>*,.board .b-center>*,.board .b-right>*{grid-column:1/-1;}
+  .board .level-feature{grid-column:1!important;grid-row:1;align-self:start;}
+  .board .stats-grid{grid-column:2!important;grid-row:1;grid-template-columns:1fr!important;gap:10px;align-content:start;}
+  .board .stats-grid .stat-card{padding:12px;flex-direction:column;align-items:flex-start;gap:6px;}
+  .board .stats-grid .stat-value{font-size:22px;}
+  /* Top Products / Top Videos use the full width */
+  .tops-card{width:auto!important;}
+  .tops-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+  .tops-img{width:100%!important;height:auto!important;aspect-ratio:1/1;}
+  .tops-vid{aspect-ratio:3/4;}
+  #top-products.empty-box{width:auto;}
+}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -762,7 +778,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   </div>
 </div>
 
-<script src="layout.js?v=190"></script>
+<script src="layout.js?v=191"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
