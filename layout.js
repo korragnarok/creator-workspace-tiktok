@@ -112,6 +112,8 @@
     }
     const st = document.createElement('style'); st.id = 'planner-sidebar-css';
     st.textContent = `
+      /* subtle dot grid background, same as the Meta side */
+      html body{background-image:radial-gradient(rgba(196,160,131,.05) 1px,transparent 1px);background-size:14px 14px;background-attachment:fixed;}
       @media (min-width:769px){
         html body:not(.has-app-shell){padding-left:236px!important;}
         html body .app-shell{grid-template-columns:236px minmax(0,1fr)!important;}
