@@ -462,7 +462,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .tp-sold span{display:block;font-family:inherit;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);}
 /* Today — filming tiles (same controls, card layout like the Meta "This Week" days) */
 .today-title{text-align:center;letter-spacing:0!important;text-transform:none!important;}
-.today-date{font-family:'Bad Script',cursive;font-size:26px;font-weight:400;color:var(--tan);}
+.today-date{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--ink);}
 .board .stack:first-child .card-head{justify-content:center;position:relative;text-align:center;}
 .board .stack:first-child .card-head>div:first-child{flex:1;}
 .board .stack:first-child .card-head>div:last-child{position:absolute;right:0;top:0;}
@@ -756,17 +756,19 @@ select.sched-location-tag:focus{border-color:var(--rust);}
     ['daily-virals.html','Viral Feed'], ['daily-todo.html','Daily To Do'], ['video-tracker.html','Content Tracker'],
     ['products.html','Products'], ['brand-deals.html','Brand Deals'], ['product-scout.html','Product Scout'],
     ['scripts.html','Script Vault'], ['script-workshop.html','Script Workshop'], ['script-scout.html','Script Scout'],
-    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'], ['settings.html','Settings'],
-    ['meta/index.html','Switch to Meta']
+    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'], ['settings.html','Settings']
   ];
-  document.getElementById('bFolders').innerHTML = FOLDERS.map(([href, label]) =>
-    `<a class="b-folder" href="${href}"${href.startsWith('meta/') ? ` onclick="try{localStorage.setItem('take24:workspace','meta')}catch(e){}"` : ''}>
+  // Ombre: each folder a shade lighter than the one before (deep rust → soft tan)
+  const shade = i => { const t = FOLDERS.length > 1 ? i / (FOLDERS.length - 1) : 0, a = [110,63,40], b = [222,196,170];
+    return `rgb(${a.map((c,k) => Math.round(c + (b[k]-c) * t)).join(',')})`; };
+  document.getElementById('bFolders').innerHTML = FOLDERS.map(([href, label], i) =>
+    `<a class="b-folder" href="${href}" style="--f:${shade(i)}">
        <img class="ic" src="folder.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">${label}</a>`).join('');
 
 
   // Today's date on the filming card
   const tdl = document.getElementById('todayDateLabel');
-  if (tdl) tdl.textContent = now.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  if (tdl) tdl.textContent = 'Today';
 
   // Monthly Goals — saved on this device
   const gEl = document.getElementById('bGoals');
