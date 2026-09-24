@@ -425,7 +425,8 @@ paintPhotos();
 let editingVid=null;
 function renderTopVids(){
   const v=load('topvids',[{},{},{}]);
-  document.getElementById('topVids').innerHTML=v.map((x,i)=>x.thumb
+  const tvEl=document.getElementById('topVids'); if(!tvEl) return;   // old manual Top Videos slot (no longer on the page)
+  tvEl.innerHTML=v.map((x,i)=>x.thumb
     ? `<a class="vid" href="${esc(x.link||'#')}" target="_blank" rel="noopener" style="background-image:url(${x.thumb})">
          <span class="rank">${i+1}</span>${x.views?`<span class="views">${esc(x.views)} views</span>`:''}
          <button class="edit" onclick="event.preventDefault();event.stopPropagation();editTopVid(${i})" title="Change">✎</button></a>`
