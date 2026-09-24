@@ -118,7 +118,8 @@
         html body .desktop-sidebar.sidebar{width:236px!important;padding:18px 14px!important;align-items:stretch!important;gap:14px!important;overflow-y:auto;scrollbar-width:none;}
         .desktop-sidebar.sidebar::-webkit-scrollbar{display:none;}
       }
-      .ls-word{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:40px;line-height:1;color:var(--ink);text-decoration:none;padding-left:4px;display:block;}
+      .ls-word{display:block;padding:2px 4px;text-decoration:none;}
+      .ls-word img{max-width:170px;max-height:64px;width:auto;height:auto;display:block;}
       .ls-cal{background:var(--rust);border-radius:20px;padding:12px 12px 10px;color:#fff;}
       .ls-month{font-family:'Cormorant Garamond',serif;font-size:19px;text-align:center;margin-bottom:6px;}
       .ls-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;gap:1px 0;}
@@ -143,7 +144,7 @@
     injectPlannerSidebarStyles();
     return `
       <aside class="desktop-sidebar sidebar" data-shared-layout="true">
-        <a href="index.html" class="ls-word" title="Home">take 24</a>
+        <a href="index.html" class="ls-word" title="Home"><img src="logo.png" alt="Take24"></a>
         ${miniCalendar()}
         ${folderGrid(page)}
         ${page === 'index.html' ? coreSidebar() : ''}

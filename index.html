@@ -369,7 +369,8 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .b-col{display:flex;flex-direction:column;gap:18px;min-width:0;}
 .b-card{background:var(--surface);border:1px solid var(--border-mid);border-radius:22px;padding:18px;box-shadow:var(--shadow-md);}
 .b-title{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:var(--ink);text-align:center;margin-bottom:12px;}
-.b-word{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:54px;line-height:.9;color:var(--ink);padding-left:4px;}
+.b-word{display:block;padding:2px 4px;}
+.b-word img{max-width:190px;max-height:72px;width:auto;height:auto;display:block;}
 .b-cal{background:var(--rust);border:none;color:#fff;}
 .b-cal .b-title{color:#fff;}
 .b-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px 0;text-align:center;font-size:12px;}
@@ -413,7 +414,6 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .b-col{min-height:0;overflow-y:auto;scrollbar-width:none;gap:12px;}
   .b-col::-webkit-scrollbar{display:none;}
   /* left */
-  .b-word{font-size:40px;}
   .b-cal{padding:12px 14px;}
   .b-cal .b-title{font-size:18px;margin-bottom:6px;}
   .b-cal-grid{font-size:11px;gap:1px 0;}
@@ -561,7 +561,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=181"></script>
+<script src="supabase.js?v=185"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -572,7 +572,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
     <main class="content">
       <div class="main board">
         <aside class="b-col b-left">
-          <div class="b-word">take 24</div>
+          <a class="b-word" href="index.html"><img src="logo.png" alt="Take24"></a>
           <div class="b-card b-cal">
             <div class="b-title" id="bCalMonth"></div>
             <div class="b-cal-grid" id="bCalGrid"></div>
@@ -763,7 +763,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   </div>
 </div>
 
-<script src="layout.js?v=181"></script>
+<script src="layout.js?v=184"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
@@ -1163,7 +1163,9 @@ async function init() {
     salesQuery,
     productQuery,
     fetchDashboardVideos(user.id, activeAccountId),
-    db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr).order('sort_order'),
+    (activeAccountId
+      ? db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr).eq('tiktok_account_id', activeAccountId)
+      : db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order').eq('user_id', user.id).eq('date', todayStr)).order('sort_order'),
     fetchAttributedSales(user.id, activeAccountId)
   ]);
   _todayQueue=queue||[];
@@ -1523,7 +1525,7 @@ function renderFilmRecommendations(list){
 async function addRecommendedToToday(prodId,btn){
   const p=(_dashboardProducts||[]).find(x=>String(x.id)===String(prodId)); if(!p||!_dashboardUser) return;
   btn.disabled=true; btn.textContent='…';
-  const {data,error}=await db.from('queue').insert({user_id:_dashboardUser.id,date:localDateKey(),prod_id:p.id,name:p.name||'',brand:p.brand||'',notes:'',script:'',done:false,sort_order:_todayQueue.length})
+  const {data,error}=await db.from('queue').insert({user_id:_dashboardUser.id,tiktok_account_id:getActiveAccountId()||null,date:localDateKey(),prod_id:p.id,name:p.name||'',brand:p.brand||'',notes:'',script:'',done:false,sort_order:_todayQueue.length})
     .select('id,name,brand,notes,script,done,prod_id,sort_order').single();
   if(error){ showToast(error.message,'error'); btn.disabled=false; btn.textContent='+'; return; }
   _todayQueue=[..._todayQueue,data];
@@ -1803,6 +1805,7 @@ async function removeSchedItem(id){
       const restore={..._undoItem};
       const {data,error}=await db.from('queue').insert({
         user_id:_dashboardUser.id,
+        tiktok_account_id:getActiveAccountId()||null,
         date:localDateKey(),
         prod_id:restore.prod_id||null,
         name:restore.name||'',

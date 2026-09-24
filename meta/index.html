@@ -205,7 +205,7 @@ const now = new Date();
 const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
 // Header
-document.getElementById('year').textContent = 'take 24';
+document.getElementById('year').innerHTML = '<img src="../logo.png" alt="Take24" style="max-width:190px;max-height:72px;display:block;">';
 document.getElementById('todayLabel').textContent = now.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
 const h = now.getHours();
 document.getElementById('greet').innerHTML = `${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, <em>Kourtney</em>`;
