@@ -523,7 +523,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .w-day textarea:focus{background:rgba(0,0,0,.4);}
 @media(max-width:768px){.week-grid{grid-template-columns:repeat(7,120px);overflow-x:auto;}}
 /* Welcome banner hidden on desktop (phone keeps it for the profile menu) */
-@media(min-width:769px){.board .hero-row{display:none!important;}}
+.board .hero-row{display:none!important;}   /* phone uses the avatar in the top header now */
 /* Profile card moved into the left column */
 .b-left .side-profile{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border-mid);border-radius:18px;background:var(--surface);cursor:pointer;transition:border-color .15s;}
 .b-left .side-profile:hover{border-color:var(--rust);}
@@ -762,7 +762,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   </div>
 </div>
 
-<script src="layout.js?v=184"></script>
+<script src="layout.js?v=190"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
