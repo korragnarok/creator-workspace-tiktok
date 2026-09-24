@@ -488,8 +488,9 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .board .sched-bulk-cb{position:absolute;top:16px;right:16px;z-index:2;}
 .rec-head{grid-column:1/-1;text-align:center;font-size:12px;color:var(--text-muted);font-style:italic;margin-bottom:10px;}
 .rec-reason{order:2;font-size:11px;color:var(--tan);text-align:center;}
-.board .rec-row .rec-add{order:3;cursor:pointer;background:var(--rust);color:#fff;border:none;}
-.board .rec-row .rec-add:hover{filter:brightness(1.1);}
+.board .rec-row .rec-add{position:absolute;top:16px;right:16px;z-index:2;width:30px;height:30px;border-radius:50%;border:none;background:var(--rust);color:#fff;font-size:20px;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:0 0 2px;}
+.board .rec-row .rec-add:hover{transform:scale(1.08);filter:brightness(1.1);}
+.board .rec-row .rec-add:disabled{opacity:.6;cursor:wait;}
 /* Top Products + Top Videos card, with Monthly Goals beside it */
 .tops-row{display:grid;grid-template-columns:auto minmax(170px,1fr);gap:12px;align-items:start;min-height:0;}
 .tops-card{padding:12px!important;width:max-content;max-width:100%;}
@@ -1431,7 +1432,8 @@ function dailyTodoLinkForQueueItem(item){
 }
 // ── Nothing scheduled? Recommend products to film ─────────────────────────
 function renderFilmRecommendations(list){
-  const products=(_dashboardProducts||[]).filter(p=>p&&p.name&&!/inactive|archived/i.test(p.status||''));
+  // Only products that are active (or marked Promote Now) — never Shelved or Out of Stock (paused)
+  const products=(_dashboardProducts||[]).filter(p=>p&&p.name&&['active','promote'].includes(String(p.status||'active')));
   if(!products.length) return false;
   const units=window._productUnits||new Map();
   const heroes=[...document.querySelectorAll('.core-pill')].map(el=>(el.dataset.value||'').toLowerCase()).filter(Boolean);
@@ -1447,9 +1449,9 @@ function renderFilmRecommendations(list){
     const daysSince=last?Math.floor((today-new Date(last+'T00:00:00'))/86400000):999;
     const hero=heroes.some(h=>(p.brand||'').toLowerCase().includes(h)||(p.name||'').toLowerCase().includes(h));
     const sample=/FREE_SAMPLE/.test(p.notes||'')&&!last;
-    let score=Math.min(sold,200)/4 + Math.min(daysSince,60)/2 + (hero?25:0) + (sample?35:0) + (p.image_url?5:0);
+    let score=(p.status==='promote'?30:0) + Math.min(sold,200)/4 + Math.min(daysSince,60)/2 + (hero?25:0) + (sample?35:0) + (p.image_url?5:0);
     score+=((daySeed*31+i*17)%10);   // small daily shuffle so picks change day to day
-    const reason=sample?'Free sample — not filmed yet':!last?'Never filmed':daysSince>=14?`Last filmed ${daysSince} days ago`:sold>0?`${sold.toLocaleString()} sold`:hero?'Hero brand':'Worth another video';
+    const reason=p.status==='promote'?'Marked Promote Now':sample?'Free sample — not filmed yet':!last?'Never filmed':daysSince>=14?`Last filmed ${daysSince} days ago`:sold>0?`${sold.toLocaleString()} sold`:hero?'Hero brand':'Worth another video';
     return {p,score,reason};
   }).sort((a,b)=>b.score-a.score).slice(0,4);
   list.className='sched-list';
@@ -1461,16 +1463,16 @@ function renderFilmRecommendations(list){
           <div class="sched-body"><div class="sched-name">${esc(p.name)}</div><div class="sched-meta"><span class="sched-brand">${esc(p.brand||'')}</span></div></div>
         </div>
         <div class="rec-reason">${esc(reason)}</div>
-        <button class="sched-status not-started rec-add" type="button" onclick="addRecommendedToToday('${esc(p.id)}',this)">+ Add to today</button>
+        <button class="rec-add" type="button" onclick="addRecommendedToToday('${esc(p.id)}',this)" title="Add to today's list" aria-label="Add ${esc(p.name)} to today">+</button>
       </div>`).join('')}</div>`;
   return true;
 }
 async function addRecommendedToToday(prodId,btn){
   const p=(_dashboardProducts||[]).find(x=>String(x.id)===String(prodId)); if(!p||!_dashboardUser) return;
-  btn.disabled=true; btn.textContent='Adding…';
+  btn.disabled=true; btn.textContent='…';
   const {data,error}=await db.from('queue').insert({user_id:_dashboardUser.id,date:localDateKey(),prod_id:p.id,name:p.name||'',brand:p.brand||'',notes:'',script:'',done:false,sort_order:_todayQueue.length})
     .select('id,name,brand,notes,script,done,prod_id,sort_order').single();
-  if(error){ showToast(error.message,'error'); btn.disabled=false; btn.textContent='+ Add to today'; return; }
+  if(error){ showToast(error.message,'error'); btn.disabled=false; btn.textContent='+'; return; }
   _todayQueue=[..._todayQueue,data];
   renderTodayContent(); renderLineup(_dashboardUser.id);
   showToast(`Added ${p.name} to today`);
