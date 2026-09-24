@@ -233,6 +233,10 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 .watch-card .dm-date{text-decoration:none;font-size:15px;}
 .watch-frame{border-radius:16px;overflow:hidden;background:#000;height:min(72vh,680px);}
 .watch-frame iframe{width:100%;height:100%;border:0;display:block;background:#000;}
+.ideas-btn{display:block;text-decoration:none;color:var(--ink);text-align:center;transition:transform .15s,border-color .15s;}
+.ideas-btn:hover{transform:translateY(-2px);border-color:var(--lav);}
+.ib-count{font-size:12px;color:var(--muted);margin-top:-4px;}
+.ib-go{font-family:'Bad Script',cursive;font-size:19px;color:var(--lav);margin-top:6px;}
 @media(max-width:1100px){
   .board{grid-template-columns:1fr 1fr;grid-template-areas:"top top" "week week" "ideas ideas" "mid mid" "side right";}
 }
@@ -256,7 +260,7 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
       <div class="cal-month" id="calMonth"></div>
       <div class="cal-grid" id="calGrid"></div>
     </div>
-    <div class="card list lav ideas-side" data-list="content"><h2>Content Ideas</h2><ul></ul><input class="add" placeholder="+ add an idea or paste a video link"></div>
+    <a class="card ideas-btn" href="ideas.html"><h2>Content Ideas</h2><div class="ib-count" id="ideasCount"></div><div class="ib-go">Open ideas board →</div></a>
     <div class="card profile">
       <div class="p-name">Kourtney</div>
       <div class="p-sub">Meta workspace</div>
@@ -438,6 +442,11 @@ document.querySelectorAll('[data-list]').forEach(card=>{
 document.getElementById('watchModal').addEventListener('click',e=>{ if(e.target.id==='watchModal') closeWatch(); });
 document.getElementById('watchClose').onclick=closeWatch;
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeWatch(); });
+
+// Content Ideas button: show how many ideas are saved
+(function(){ const l=load('list:content',[]), el=document.getElementById('ideasCount'); if(!el) return;
+  const vids=l.filter(x=>x.link).length, open=l.filter(x=>!x.done).length;
+  el.textContent=l.length?`${open} to film · ${vids} video${vids===1?'':'s'} saved`:'No ideas yet'; })();
 
 // Goals
 (function(){
