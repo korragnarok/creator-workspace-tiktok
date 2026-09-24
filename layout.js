@@ -100,7 +100,7 @@
   function folderGrid(page) {
     return `<div class="ls-folders">${FOLDERS.map(([href,label],i) => `
       <a class="ls-folder${href === page ? ' active' : ''}" href="${href}" style="--f:${folderShade(i)}">
-        <img class="ls-ic" src="icons/folder-${i+1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>'">
+        <img class="ls-ic" src="icons/folder-${href === page ? 13 : i+1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>'">
         <span>${label}</span></a>`).join('')}</div>`;
   }
   function injectPlannerSidebarStyles() {
@@ -129,7 +129,8 @@
       .ls-folders{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 2px;padding:14px 6px;border:1px solid var(--border-mid);border-radius:20px;background:var(--surface);}
       .ls-folder{display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:9.5px;font-weight:700;text-align:center;line-height:1.15;}
       .ls-folder:hover,.ls-folder.active{color:var(--ink);}
-      .ls-folder.active .ls-ic{outline:2px solid var(--tan);outline-offset:3px;border-radius:6px;}
+      .ls-folder.active .ls-fallback{background:#111;}   /* until folder-13.png exists */
+      .ls-folder.active .ls-fallback::before{background:#111;}
       .ls-ic{width:40px;height:40px;object-fit:contain;display:block;transition:transform .15s;}
       .ls-folder:hover .ls-ic{transform:translateY(-2px);}
       .ls-fallback{width:38px;height:30px;margin:6px 0 4px;border-radius:5px 9px 9px 9px;position:relative;background:var(--f);}
