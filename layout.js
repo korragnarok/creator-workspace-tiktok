@@ -59,7 +59,7 @@
   }
 
   function iconImg(item, className = '') {
-    return `<img src="icons/dusk/${item.icon}.png" data-theme-icon${className ? ` class="${className}"` : ''} alt="">`;
+    return `<img src="icons/${item.icon}.png" data-theme-icon${className ? ` class="${className}"` : ''} alt="">`;
   }
 
   function coreSidebar() {

@@ -307,12 +307,13 @@ function applyTheme(themeKey) {
 function applyThemeImmediate() {
   let saved = DEFAULT_THEME;
   saved = _cachedTheme() || DEFAULT_THEME;
+  if (saved === 'grove') saved = 'espresso';
   applyTheme(saved);
 }
 applyThemeImmediate();
 
 function _themeIconNameFromSrc(src) {
-  const match = String(src || '').match(/(?:^|\/)icons\/(?:(dusk|warm|noir|forest)\/)?([^/?#]+)\.png(?:[?#].*)?$/i);
+  const match = String(src || '').match(/(?:^|\/)icons\/(?:(dusk|warm|noir|forest|grove|espresso)\/)?([^/?#]+)\.png(?:[?#].*)?$/i);
   if (!match) return '';
   const raw = match[2].toLowerCase();
   if (raw === 'videos') return 'video';
@@ -322,9 +323,9 @@ function _themeIconNameFromSrc(src) {
 
 function _themeIconSrc(themeKey, iconName) {
   const normalized = iconName === 'videos' ? 'video' : iconName;
-  const aliases = THEME_ICON_FILES[themeKey] || {};
+  const aliases = {};
   const file = aliases[normalized] || `${normalized}.png`;
-  return `icons/${THEME_ICON_FOLDER[themeKey] || themeKey}/${file}`;
+  return `icons/${file}`;   // one theme now — icons live directly in /icons
 }
 
 function applyThemeIcons(themeKey) {
@@ -942,8 +943,7 @@ async function initTheme(userId, prefs) {
   let themeKey = prefs?._isNewPrefs
     ? (metaTheme || cachedTheme || prefTheme || DEFAULT_THEME)
     : (prefTheme || metaTheme || cachedTheme || DEFAULT_THEME);
-  let migrated = false; try { migrated = localStorage.getItem('take24:espressoSwitch') === '1'; } catch(e) {}
-  if (!migrated && themeKey === 'grove') { themeKey = 'espresso'; try { localStorage.setItem('take24:espressoSwitch','1'); } catch(e) {} }
+  if (themeKey === 'grove') themeKey = 'espresso';   // Grove is retired — Espresso replaces it
   try { localStorage.setItem('creatorHub:theme', themeKey); } catch(e) {}
   applyTheme(themeKey);
   if (userId && prefs.theme !== themeKey) await saveUserPrefs(userId, { theme: themeKey });

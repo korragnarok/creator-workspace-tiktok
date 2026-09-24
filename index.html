@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Bad+Script&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=163"></script>
+<script src="theme-init.js?v=178"></script>
 <link rel="stylesheet" href="layout.css?v=145">
 <style>
 :root{--r:12px;}
@@ -539,7 +539,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=163"></script>
+<script src="supabase.js?v=178"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -558,23 +558,23 @@ select.sched-location-tag:focus{border-color:var(--rust);}
           <div id="heroBrandsSlot"></div>
           <div class="stats-grid mob-order-2">
             <div class="stat-card">
-              <div class="stat-icon"><img src="icons/dusk/sales.png" data-theme-icon alt=""></div>
+              <div class="stat-icon"><img src="icons/sales.png" data-theme-icon alt=""></div>
               <div class="stat-body"><div class="stat-label">Commission 30d</div><div class="stat-value" id="s-comm">-</div><div class="stat-sub">from all products</div></div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon sage"><img src="icons/dusk/gmv.png" data-theme-icon alt=""></div>
+              <div class="stat-icon sage"><img src="icons/gmv.png" data-theme-icon alt=""></div>
               <div class="stat-body"><div class="stat-label">GMV 30d</div><div class="stat-value" id="s-gmv">-</div><div class="stat-sub">across all products</div></div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon"><img src="icons/dusk/todo.png" data-theme-icon alt=""></div>
+              <div class="stat-icon"><img src="icons/todo.png" data-theme-icon alt=""></div>
               <div class="stat-body"><div class="stat-label">To Do</div><div class="stat-value" id="todo-count">0</div><div class="stat-sub" id="todo-sub">0 done today</div></div>
             </div>
             <div class="stat-card stat-card-streak">
-              <div class="stat-icon gold"><img src="icons/dusk/video.png" data-theme-icon alt=""></div>
+              <div class="stat-icon gold"><img src="icons/video.png" data-theme-icon alt=""></div>
               <div class="stat-body"><div class="stat-label">Streak</div><div class="stat-value" id="s-streak">-</div><div class="stat-sub">days in a row</div></div>
             </div>
             <a href="settings.html" class="stat-card" id="tiktokFollowerCard" style="text-decoration:none;color:inherit;display:none;">
-              <div class="stat-icon"><img src="icons/dusk/video.png" data-theme-icon alt=""></div>
+              <div class="stat-icon"><img src="icons/video.png" data-theme-icon alt=""></div>
               <div class="stat-body"><div class="stat-label">TikTok Followers</div><div class="stat-value" id="s-followers">—</div><div class="stat-sub" id="s-followers-sub">Connect TikTok in Settings</div></div>
             </a>
           </div>
@@ -737,7 +737,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   </div>
 </div>
 
-<script src="layout.js?v=163"></script>
+<script src="layout.js?v=178"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
@@ -763,7 +763,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
     return `rgb(${a.map((c,k) => Math.round(c + (b[k]-c) * t)).join(',')})`; };
   document.getElementById('bFolders').innerHTML = FOLDERS.map(([href, label], i) =>
     `<a class="b-folder" href="${href}" style="--f:${shade(i)}">
-       <img class="ic" src="folder-${i+1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">${label}</a>`).join('');
+       <img class="ic" src="icons/folder-${i+1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">${label}</a>`).join('');
 
 
   // Today's date on the filming card
