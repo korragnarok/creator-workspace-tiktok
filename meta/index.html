@@ -195,6 +195,14 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
   .mid{align-items:stretch!important;}
   .top.stats,.stat{align-self:stretch;}
 }
+/* Best Time card fills its space */
+.besttime{display:flex;flex-direction:column;}
+#bestTime{flex:1;display:flex;flex-direction:column;min-height:0;}
+#bestTime .bt-bars{flex:1;height:auto!important;min-height:110px;}
+.bt-bar span{max-height:calc(100% - 18px);}
+.bt-times{margin-top:14px;}
+.bt-t{padding:10px 4px;}
+.bt-t b{font-size:16px;}
 /* This Week: taller day cards + popup editor */
 .day{cursor:pointer;min-height:190px!important;transition:transform .15s;}
 .day:hover{transform:translateY(-2px);}
@@ -483,11 +491,12 @@ renderTopVids();
     const slots = [['Morning',h => h>=5&&h<12],['Afternoon',h => h>=12&&h<17],['Evening',h => h>=17&&h<22],['Late',h => h>=22||h<5]], bySlot = slots.map(() => []);
     P.forEach(p => { const d = new Date(p.posted_at), v = Number(p.views)||0; byDay[(d.getDay()+6)%7].push(v); bySlot[slots.findIndex(s => s[1](d.getHours()))].push(v); });
     const dayAvg = byDay.map(avg), slotAvg = bySlot.map(avg);
-    const bestD = dayAvg.indexOf(Math.max(...dayAvg)), bestS = slotAvg.indexOf(Math.max(...slotAvg));
+    const bestOf = (avgs, groups) => { let bi = -1; avgs.forEach((v,i) => { if (groups[i].length >= 3 && (bi < 0 || v > avgs[bi])) bi = i; }); return bi < 0 ? avgs.indexOf(Math.max(...avgs)) : bi; };
+    const bestD = bestOf(dayAvg, byDay), bestS = bestOf(slotAvg, bySlot);
     const mult = Math.max(dayAvg[bestD], slotAvg[bestS]) / overall, maxD = Math.max(...dayAvg) || 1;
     document.getElementById('bestTime').innerHTML = `
       <div class="bt-headline">${days[bestD]} ${slots[bestS][0].toLowerCase()} posts do best${mult >= 1.2 ? ` — about ${mult.toFixed(1)}× your average` : ''}</div>
-      <div class="bt-bars">${dayAvg.map((v,i) => `<div class="bt-bar${i===bestD?' best':''}" title="${days[i]}: ${fmtN(Math.round(v))} avg views (${byDay[i].length} posts)"><span style="height:${Math.max(4, v/maxD*70)}px"></span><small>${days[i][0]}</small></div>`).join('')}</div>
+      <div class="bt-bars">${dayAvg.map((v,i) => `<div class="bt-bar${i===bestD?' best':''}" title="${days[i]}: ${fmtN(Math.round(v))} avg views (${byDay[i].length} posts)"><span style="height:${Math.max(3, v/maxD*100)}%"></span><small>${days[i][0]}</small></div>`).join('')}</div>
       <div class="bt-times">${slots.map((s,i) => `<div class="bt-t${i===bestS?' best':''}" title="${bySlot[i].length} posts"><b>${fmtN(Math.round(slotAvg[i]))}</b>${s[0]}</div>`).join('')}</div>`;
   } else if (P.length) {
     document.getElementById('bestTime').innerHTML = '<div class="muted-note">A few more posts and this will show your best days and times.</div>';
