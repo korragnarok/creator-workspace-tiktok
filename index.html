@@ -763,7 +763,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
     return `rgb(${a.map((c,k) => Math.round(c + (b[k]-c) * t)).join(',')})`; };
   document.getElementById('bFolders').innerHTML = FOLDERS.map(([href, label], i) =>
     `<a class="b-folder" href="${href}" style="--f:${shade(i)}">
-       <img class="ic" src="folder.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">${label}</a>`).join('');
+       <img class="ic" src="folder-${i+1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">${label}</a>`).join('');
 
 
   // Today's date on the filming card
