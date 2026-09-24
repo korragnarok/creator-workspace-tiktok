@@ -226,6 +226,13 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 #dayModalText{width:100%;min-height:300px;resize:vertical;border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.25);color:var(--ink);padding:14px;font:14px/1.6 'Nunito Sans',sans-serif;outline:none;}
 #dayModalText:focus{border-color:var(--lav);}
 .dm-hint{font-size:11px;color:var(--muted);margin-top:8px;text-align:right;}
+.watch-btn{margin-left:8px;border:none;border-radius:999px;background:var(--sage);color:var(--cream);font:800 9.5px 'Nunito Sans',sans-serif;letter-spacing:.05em;padding:3px 9px;cursor:pointer;vertical-align:middle;}
+.watch-btn:hover{filter:brightness(1.12);}
+.watch-card{max-width:440px;}
+.watch-card .dm-title{font-size:24px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.watch-card .dm-date{text-decoration:none;font-size:15px;}
+.watch-frame{border-radius:16px;overflow:hidden;background:#000;height:min(72vh,680px);}
+.watch-frame iframe{width:100%;height:100%;border:0;display:block;background:#000;}
 @media(max-width:1100px){
   .board{grid-template-columns:1fr 1fr;grid-template-areas:"top top" "week week" "ideas ideas" "mid mid" "side right";}
 }
@@ -249,7 +256,7 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
       <div class="cal-month" id="calMonth"></div>
       <div class="cal-grid" id="calGrid"></div>
     </div>
-    <div class="card list lav ideas-side" data-list="content"><h2>Content Ideas</h2><ul></ul><input class="add" placeholder="+ add a post idea"></div>
+    <div class="card list lav ideas-side" data-list="content"><h2>Content Ideas</h2><ul></ul><input class="add" placeholder="+ add an idea or paste a video link"></div>
     <div class="card profile">
       <div class="p-name">Kourtney</div>
       <div class="p-sub">Meta workspace</div>
@@ -320,6 +327,12 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
     <div class="dm-hint">Saves as you type · Esc or tap outside to close</div>
   </div>
 </div>
+<div class="day-modal watch-modal" id="watchModal" role="dialog" aria-modal="true">
+  <div class="day-modal-card watch-card">
+    <div class="dm-head"><div><div class="dm-title" id="watchTitle"></div><a class="dm-date" id="watchOpen" href="#" target="_blank" rel="noopener">open original ↗</a></div><button class="dm-done" id="watchClose">Close</button></div>
+    <div class="watch-frame"><iframe id="watchFrame" src="about:blank" allow="autoplay; encrypted-media; picture-in-picture; clipboard-write" allowfullscreen loading="lazy"></iframe></div>
+  </div>
+</div>
 <input type="file" id="photoPicker" accept="image/*" hidden>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -381,12 +394,39 @@ document.getElementById('year').innerHTML = '<img src="../logo.png" alt="Take24"
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') close(); });
 })();
 
-// Lists
+// Lists (Content Ideas). Paste a video link — alone or with a note — to save it as a watchable idea.
+function platformOf(url){ const u=String(url||'');
+  if(/instagram\.com/i.test(u)) return 'Instagram'; if(/tiktok\.com/i.test(u)) return 'TikTok';
+  if(/facebook\.com|fb\.watch/i.test(u)) return 'Facebook'; if(/youtu\.?be/i.test(u)) return 'YouTube'; return 'Link'; }
+function embedUrl(url){
+  const u=String(url||'').trim(); let m;
+  if((m=u.match(/instagram\.com\/(?:[^\/]+\/)?(p|reel|reels|tv)\/([A-Za-z0-9_-]+)/i))) return `https://www.instagram.com/${m[1]==='reels'?'reel':m[1]}/${m[2]}/embed`;
+  if((m=u.match(/tiktok\.com\/.*\/video\/(\d+)/i))) return `https://www.tiktok.com/embed/v2/${m[1]}`;
+  if((m=u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i))) return `https://www.youtube.com/embed/${m[1]}`;
+  if(/facebook\.com|fb\.watch/i.test(u)) return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(u)}&show_text=false&width=400`;
+  return null;
+}
+function openWatch(url,title){
+  const src=embedUrl(url);
+  if(!src){ window.open(url,'_blank','noopener'); return; }   // e.g. short share links — open on the site instead
+  document.getElementById('watchTitle').textContent=title||platformOf(url);
+  document.getElementById('watchOpen').href=url;
+  document.getElementById('watchFrame').src=src;
+  document.getElementById('watchModal').classList.add('open');
+}
+function closeWatch(){ const m=document.getElementById('watchModal'); if(!m.classList.contains('open')) return; m.classList.remove('open'); document.getElementById('watchFrame').src='about:blank'; }
 document.querySelectorAll('[data-list]').forEach(card=>{
   const key='list:'+card.dataset.list, ul=card.querySelector('ul'), input=card.querySelector('.add');
-  const render=()=>{ ul.innerHTML=load(key,[]).map((t,i)=>`<li class="${t.done?'done':''}"><input type="checkbox" data-i="${i}" ${t.done?'checked':''}><span>${esc(t.text)}</span><button class="x" data-del="${i}">×</button></li>`).join(''); };
-  input.addEventListener('keydown',e=>{ if(e.key==='Enter'&&input.value.trim()){ const l=load(key,[]); l.push({text:input.value.trim(),done:false}); save(key,l); input.value=''; render(); } });
+  const render=()=>{ ul.innerHTML=load(key,[]).map((t,i)=>`<li class="${t.done?'done':''}"><input type="checkbox" data-i="${i}" ${t.done?'checked':''}><span>${esc(t.text)}${t.link?`<button class="watch-btn" data-watch="${i}" title="Watch here">▶ ${esc(platformOf(t.link))}</button>`:''}</span><button class="x" data-del="${i}">×</button></li>`).join(''); };
+  input.addEventListener('keydown',e=>{
+    if(e.key!=='Enter'||!input.value.trim()) return;
+    const raw=input.value.trim(), m=raw.match(/https?:\/\/\S+/i);
+    const link=m?m[0]:'', text=(m?raw.replace(m[0],'').trim():raw)||(link?`${platformOf(link)} video`:'');
+    const l=load(key,[]); l.push({text,done:false,...(link?{link}:{})}); save(key,l); input.value=''; render();
+  });
   ul.addEventListener('click',e=>{
+    const w=e.target.closest('[data-watch]');
+    if(w){ const it=load(key,[])[+w.dataset.watch]; if(it?.link) openWatch(it.link,it.text); return; }
     const l=load(key,[]);
     if(e.target.dataset.i!==undefined){ l[e.target.dataset.i].done=e.target.checked; }
     else if(e.target.dataset.del!==undefined){ l.splice(+e.target.dataset.del,1); }
@@ -395,6 +435,9 @@ document.querySelectorAll('[data-list]').forEach(card=>{
   });
   render();
 });
+document.getElementById('watchModal').addEventListener('click',e=>{ if(e.target.id==='watchModal') closeWatch(); });
+document.getElementById('watchClose').onclick=closeWatch;
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeWatch(); });
 
 // Goals
 (function(){
