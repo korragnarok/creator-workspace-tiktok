@@ -97,12 +97,16 @@ function embedUrl(url){
   if(/facebook\.com|fb\.watch/i.test(u)) return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(u)}&show_text=false&width=400`;
   return null;
 }
-// Thumbnails: YouTube is instant; TikTok via its public oEmbed. Instagram/Facebook don't offer
-// public thumbnails, so those get a styled cover (they still play in the popup).
+// Thumbnails: YouTube is instant; TikTok via its public oEmbed; Instagram/Facebook via Meta's
+// oEmbed through the worker. If one can't be fetched, the card keeps its styled cover.
 async function thumbFor(it){
   if(it.thumb) return it.thumb;
   const u=it.link; let m;
   if((m=u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i))) return `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg`;
+  if(/instagram\.com|facebook\.com|fb\.watch/i.test(u)){
+    // Meta's oEmbed needs the app secret, so it goes through your Cloudflare worker
+    try{ const d=await (await fetch(`${META_WORKER_URL}/?service=meta&action=oembed&url=${encodeURIComponent(u)}`)).json(); if(d?.thumbnail_url) return d.thumbnail_url; }catch(e){}
+  }
   if(/tiktok\.com/i.test(u)){
     try{ const d=await (await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(u)}`)).json(); if(d?.thumbnail_url) return d.thumbnail_url; }catch(e){}
   }
@@ -123,7 +127,7 @@ function render(){
   list.filter(it=>it.link).forEach(async it=>{
     const t=await thumbFor(it); if(!t) return;
     const el=document.querySelector(`[data-thumb="${it.i}"]`); if(el){ el.style.backgroundImage=`url('${t.replace(/'/g,'%27')}')`; el.classList.remove('ph'); }
-    if(!it.thumb && !/tiktok/i.test(it.link)){ const l=loadIdeas(); if(l[it.i]){ l[it.i].thumb=t; saveIdeas(l); } }
+    if(!it.thumb && /youtu/i.test(it.link)){ const l=loadIdeas(); if(l[it.i]){ l[it.i].thumb=t; saveIdeas(l); } }
   });
 }
 function addIdea(){
