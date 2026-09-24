@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1F1F1E">
+<title>Product Links — Take24 Meta</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Bad+Script&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#1F1F1E;--card:#2B2A29;--line:rgba(196,160,131,.16);--rust:#955B3B;--tan:#C4A083;--char:#373635;--ink:#EDE3D8;--muted:#A08D7C;--cream:#F3EADF;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font:13px 'Nunito Sans',sans-serif;padding:26px;padding-top:max(26px,env(safe-area-inset-top));
+  background-image:radial-gradient(rgba(196,160,131,.05) 1px,transparent 1px);background-size:14px 14px;background-attachment:fixed;}
+.wrap{max-width:1000px;margin:0 auto;}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+h1{font:300 40px 'Cormorant Garamond',serif;color:var(--cream);}
+h1 em{font:26px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
+.btn{border:1px solid var(--line);background:var(--char);color:var(--cream);border-radius:999px;padding:9px 16px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-block;}
+.btn:hover{background:var(--rust);}
+.btn.primary{background:var(--rust);}
+.search{width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 14px;color:var(--ink);font:14px 'Nunito Sans',sans-serif;outline:none;margin-bottom:16px;}
+.search:focus{border-color:var(--tan);}
+.list{display:flex;flex-direction:column;gap:12px;}
+.pcard{display:flex;align-items:center;gap:18px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 18px;box-shadow:0 8px 24px rgba(0,0,0,.3);}
+.pinfo{min-width:180px;flex:0 0 240px;}
+.pname{font-family:'Cormorant Garamond',serif;font-size:22px;line-height:1.15;color:var(--cream);}
+.pbrand{font-size:12px;color:var(--muted);margin-top:2px;}
+.badges{flex:1;display:flex;flex-wrap:wrap;gap:8px;}
+.badge{border:none;border-radius:999px;padding:8px 14px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.05em;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:transform .12s,filter .12s;color:#fff;background:var(--rust);}
+.badge:hover{transform:translateY(-1px);filter:brightness(1.12);}
+.badge.copied{background:#5E7A55!important;}
+.badge svg{width:12px;height:12px;opacity:.85;}
+.b-amazon{background:#C27A2C;} .b-mavely{background:#7A5AA6;} .b-ltk{background:#3F3F3F;border:1px solid var(--line);}
+.b-shopmy{background:#A0526B;} .b-walmart{background:#2E62A8;} .b-target{background:#B23B3B;} .b-tiktok{background:#2B2B2B;border:1px solid var(--line);}
+.pactions{display:flex;gap:4px;}
+.icon-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:6px;border-radius:8px;}
+.icon-btn:hover{color:var(--cream);background:var(--char);}
+.empty{color:var(--muted);text-align:center;padding:50px 20px;background:var(--card);border:1px dashed var(--line);border-radius:18px;}
+.empty b{display:block;font:24px 'Cormorant Garamond',serif;color:var(--cream);margin-bottom:6px;font-weight:400;}
+/* modal */
+.modal{position:fixed;inset:0;z-index:500;background:rgba(10,8,7,.62);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px;}
+.modal.open{display:flex;}
+.mcard{width:100%;max-width:520px;max-height:90vh;overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.55);}
+.mtitle{font:32px 'Cormorant Garamond',serif;color:var(--cream);margin-bottom:16px;}
+label{display:block;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--tan);margin:12px 0 6px;}
+input,select{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--ink);font:14px 'Nunito Sans',sans-serif;outline:none;}
+input:focus,select:focus{border-color:var(--tan);}
+select option{background:var(--card);}
+.lrow{display:grid;grid-template-columns:130px 1fr 34px;gap:8px;margin-bottom:8px;align-items:center;}
+.lrow .custom{grid-column:1/2;}
+.add-link{background:none;border:1px dashed var(--line);color:var(--tan);border-radius:12px;padding:9px;width:100%;font:700 12px 'Nunito Sans',sans-serif;cursor:pointer;margin-top:2px;}
+.add-link:hover{border-color:var(--tan);}
+.mfoot{display:flex;justify-content:space-between;gap:8px;margin-top:20px;}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--char);border:1px solid var(--line);color:var(--cream);padding:10px 18px;border-radius:999px;font-weight:700;opacity:0;transition:all .2s;pointer-events:none;z-index:600;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+@media(max-width:700px){.pcard{flex-direction:column;align-items:flex-start;}.pinfo{flex:none;}.lrow{grid-template-columns:1fr 34px;}.lrow select{grid-column:1/-1;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Product Links <em>copy &amp; paste</em></h1>
+    <div><a class="btn" href="index.html">← Dashboard</a> <button class="btn primary" onclick="openEditor()">+ Add Product</button></div>
+  </header>
+  <input class="search" id="search" placeholder="Search products or brands…" oninput="render()">
+  <div class="list" id="list"><div class="empty">Loading…</div></div>
+</div>
+
+<div class="modal" id="editor" role="dialog" aria-modal="true">
+  <div class="mcard">
+    <div class="mtitle" id="edTitle">Add Product</div>
+    <label>Product name</label><input id="edName" placeholder="e.g. Shark FlexStyle">
+    <label>Brand</label><input id="edBrand" placeholder="e.g. Shark Beauty">
+    <label>Links</label>
+    <div id="edLinks"></div>
+    <button class="add-link" type="button" onclick="addLinkRow()">+ add another link</button>
+    <div class="mfoot">
+      <button class="btn" id="edDelete" type="button" onclick="deleteProduct()" style="visibility:hidden">Delete</button>
+      <div><button class="btn" type="button" onclick="closeEditor()">Cancel</button> <button class="btn primary" type="button" onclick="saveProduct()">Save</button></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="meta-supabase.js?v=5"></script>
+<script>
+const STORES=['Amazon','Mavely','LTK','ShopMy','Walmart','Target','TikTok Shop'];
+let user, PRODUCTS=[], editingId=null;
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const cls=l=>'b-'+String(l||'').toLowerCase().replace(/\s*shop$/,'').replace(/[^a-z]/g,'');
+const copyIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1800);}
+
+async function load(){
+  const {data,error}=await db.from('link_products').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
+  if(error){document.getElementById('list').innerHTML=`<div class="empty"><b>Almost ready</b>Run meta-links.sql in Supabase to create the Product Links table.</div>`;return;}
+  PRODUCTS=data||[]; render();
+}
+function render(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const rows=PRODUCTS.filter(p=>!q||`${p.name} ${p.brand}`.toLowerCase().includes(q));
+  const el=document.getElementById('list');
+  if(!PRODUCTS.length){el.innerHTML='<div class="empty"><b>No products yet</b>Tap “+ Add Product” to save your first set of links.</div>';return;}
+  if(!rows.length){el.innerHTML='<div class="empty">No matches.</div>';return;}
+  el.innerHTML=rows.map(p=>`<div class="pcard">
+    <div class="pinfo"><div class="pname">${esc(p.name)}</div><div class="pbrand">${esc(p.brand)}</div></div>
+    <div class="badges">${(p.links||[]).filter(l=>l.url).map((l,i)=>`<button class="badge ${cls(l.label)}" onclick="copyLink(this,'${p.id}',${i})" title="Copy ${esc(l.label)} link">${copyIcon}${esc(l.label||'Link')}</button>`).join('')||'<span style="color:var(--muted)">No links yet</span>'}</div>
+    <div class="pactions"><button class="icon-btn" onclick="openEditor('${p.id}')" title="Edit">✎</button></div>
+  </div>`).join('');
+}
+async function copyLink(btn,id,i){
+  const p=PRODUCTS.find(x=>x.id===id), l=(p?.links||[]).filter(l=>l.url)[i]; if(!l) return;
+  try{await navigator.clipboard.writeText(l.url);}catch(e){const t=document.createElement('textarea');t.value=l.url;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();}
+  const old=btn.innerHTML; btn.classList.add('copied'); btn.innerHTML='✓ Copied';
+  setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML=old;},1200);
+  toast(`Copied ${l.label||'link'} for ${p.name}`);
+}
+
+// ── editor ──
+function linkRow(l={label:'Amazon',url:''}){
+  const known=STORES.includes(l.label);
+  const d=document.createElement('div'); d.className='lrow';
+  d.innerHTML=`<select>${STORES.map(s=>`<option ${s===l.label?'selected':''}>${s}</option>`).join('')}<option value="__other" ${!known?'selected':''}>Other…</option></select>
+    <input class="url" placeholder="https://…" value="${esc(l.url)}">
+    <button class="icon-btn" type="button" title="Remove link">✕</button>
+    <input class="custom" placeholder="Name this link" value="${known?'':esc(l.label)}" style="${known?'display:none':''}">`;
+  const sel=d.querySelector('select'), custom=d.querySelector('.custom');
+  sel.onchange=()=>{custom.style.display=sel.value==='__other'?'':'none'; if(sel.value==='__other') custom.focus();};
+  d.querySelector('.icon-btn').onclick=()=>{ d.remove(); if(!document.querySelector('#edLinks .lrow')) addLinkRow(); };
+  return d;
+}
+function addLinkRow(l){ const r=linkRow(l); document.getElementById('edLinks').appendChild(r); if(!l) r.querySelector('.url').focus(); }
+function openEditor(id){
+  editingId=id||null; const p=PRODUCTS.find(x=>x.id===id);
+  document.getElementById('edTitle').textContent=p?'Edit Product':'Add Product';
+  document.getElementById('edName').value=p?.name||''; document.getElementById('edBrand').value=p?.brand||'';
+  const box=document.getElementById('edLinks'); box.innerHTML='';
+  const links=(p?.links||[]).length?p.links:[{label:'Amazon',url:''}];
+  links.forEach(l=>box.appendChild(linkRow(l)));
+  document.getElementById('edDelete').style.visibility=p?'visible':'hidden';
+  document.getElementById('editor').classList.add('open');
+  setTimeout(()=>document.getElementById('edName').focus(),50);
+}
+function closeEditor(){document.getElementById('editor').classList.remove('open');editingId=null;}
+async function saveProduct(){
+  const name=document.getElementById('edName').value.trim();
+  if(!name){document.getElementById('edName').focus();return;}
+  const links=[...document.querySelectorAll('#edLinks .lrow')].map(r=>{
+    const sel=r.querySelector('select').value; const label=sel==='__other'?(r.querySelector('.custom').value.trim()||'Link'):sel;
+    let url=r.querySelector('.url').value.trim(); if(url&&!/^https?:\/\//i.test(url)) url='https://'+url;
+    return {label,url};
+  }).filter(l=>l.url);
+  const row={name,brand:document.getElementById('edBrand').value.trim(),links,updated_at:new Date().toISOString()};
+  const res=editingId
+    ? await db.from('link_products').update(row).eq('id',editingId).eq('user_id',user.id)
+    : await db.from('link_products').insert({...row,user_id:user.id});
+  if(res.error){toast('Save failed: '+res.error.message);return;}
+  closeEditor(); toast('Saved'); load();
+}
+async function deleteProduct(){
+  if(!editingId) return; const p=PRODUCTS.find(x=>x.id===editingId);
+  if(!confirm(`Delete ${p?.name||'this product'} and its links?`)) return;
+  const {error}=await db.from('link_products').delete().eq('id',editingId).eq('user_id',user.id);
+  if(error){toast('Delete failed: '+error.message);return;}
+  closeEditor(); toast('Deleted'); load();
+}
+document.getElementById('editor').addEventListener('click',e=>{if(e.target.id==='editor')closeEditor();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeEditor();
+  if(e.key==='Enter'&&document.getElementById('editor').classList.contains('open')&&e.target.tagName==='INPUT')saveProduct();
+});
+(async()=>{ user=await requireMetaAuth(); if(user) load(); })();
+</script>
+</body>
+</html>
