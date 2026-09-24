@@ -440,10 +440,12 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .lower-grid>.stack{min-height:0;height:100%;display:flex;flex-direction:column;gap:12px;}
   .lower-grid>.stack>.card{min-height:0;display:flex;flex-direction:column;}
   .lower-grid>.stack:first-child>.card{flex:1;}
-  #sched-list,#top-products{flex:1;min-height:0;overflow-y:auto;}
+  #sched-list{flex:1;min-height:0;overflow-y:auto;}
+  .chart-card{flex:1!important;display:flex;flex-direction:column;}
+  .chart-card .chart-wrap{flex:1;height:auto;min-height:70px;}
   .chart-card{flex:0 0 auto;}
   .chart-wrap{height:80px;}
-  .lower-grid>.stack:nth-child(2)>.card:last-child{flex:1;}
+  .tops-row{flex:0 0 auto;}
   /* right */
   .b-folders .fgrid{gap:10px 4px;}
   .b-folder .ic{width:40px;height:40px;}
@@ -488,6 +490,24 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .rec-reason{order:2;font-size:11px;color:var(--tan);text-align:center;}
 .board .rec-row .rec-add{order:3;cursor:pointer;background:var(--rust);color:#fff;border:none;}
 .board .rec-row .rec-add:hover{filter:brightness(1.1);}
+/* Top Products + Top Videos card, with Monthly Goals beside it */
+.tops-row{display:grid;grid-template-columns:auto minmax(170px,1fr);gap:12px;align-items:start;min-height:0;}
+.tops-card{padding:12px!important;width:max-content;max-width:100%;}
+.tops-label{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted);margin:0 0 6px 2px;}
+.tops-label:not(:first-child){margin-top:10px;}
+.tops-grid{display:grid;grid-template-columns:repeat(3,92px);gap:8px;}
+.tops-tile{display:block;text-decoration:none;color:inherit;min-width:0;}
+.tops-img{position:relative;width:92px;height:92px;border-radius:12px;background:var(--surface-2) center/cover no-repeat;border:1px solid var(--border-mid);transition:border-color .15s;}
+.tops-vid{height:120px;}
+.tops-tile:hover .tops-img{border-color:var(--tan);}
+.tops-num{position:absolute;left:4px;right:4px;bottom:4px;background:rgba(0,0,0,.62);color:#fff;border-radius:999px;font-size:9px;font-weight:800;text-align:center;padding:2px 4px;white-space:nowrap;}
+.tops-name{font-size:11px;font-weight:700;color:var(--ink);margin-top:5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tops-sub{font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tops-empty{grid-column:1/-1;font-size:12px;color:var(--text-muted);padding:10px 2px;}
+#top-products.empty-box{width:292px;}
+.b-goals{padding:14px!important;}
+.b-goals .b-title{font-size:20px;margin-bottom:6px;}
+@media(max-width:768px){.tops-row{grid-template-columns:1fr;}.tops-card{width:auto;}}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -635,9 +655,16 @@ select.sched-location-tag:focus{border-color:var(--rust);}
               </div>
               <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
             </div>
-            <div class="card mob-order-4">
-              <div class="card-head"><div class="card-title">Top Products Sold</div></div>
+            <div class="tops-row">
+            <div class="card mob-order-4 tops-card">
+              <div class="tops-label">Top Products</div>
               <div class="empty-box" id="top-products"><strong>No products saved yet.</strong>Add products you want to research or promote.</div>
+              <div class="tops-label">Top Videos</div>
+              <div class="tops-grid" id="top-videos"><div class="tops-empty">No video views yet.</div></div>
+            </div>
+            <div class="card b-goals">
+            <div class="b-title">Monthly Goals</div>
+            <div id="bGoals"></div>
             </div>
           </div>
         </section>
@@ -677,9 +704,6 @@ select.sched-location-tag:focus{border-color:var(--rust);}
               <button class="tier" type="button" onclick="showTierPopup('Diamond','$1,500,000+',this)" data-tier="Diamond" data-range="$1,500,000+" aria-label="Diamond range $1,500,000 and up"><img class="tier-icon" src="icons/levels/diamond.png" alt=""><div class="tier-name">Diamond</div><div class="tier-range">$1,500,000+</div></button>
             </div>
           </div>
-          <div class="b-card b-goals">
-            <div class="b-title">Monthly Goals</div>
-            <div id="bGoals"></div>
           </div>
         </aside>
       </div>
@@ -1109,22 +1133,15 @@ async function init() {
   renderLineup(user.id);
   const productUnits=videoUnitsByProduct(products||[], videos||[], attributedSales||[]);
   window._productUnits=productUnits;
+  renderTopVideos();
   if(!_todayQueue.length) renderTodayContent();   // refresh recommendations now that sales are loaded
   const topProducts=(products||[]).slice().sort((a,b)=>(productUnits.get(b.id)||0)-(productUnits.get(a.id)||0)).filter(p=>(productUnits.get(p.id)||0)>0).slice(0,3);
   if(topProducts.length){
-    document.getElementById('top-products').className='top-product-list';
+    document.getElementById('top-products').className='tops-grid';
     const escHtml=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    document.getElementById('top-products').innerHTML=topProducts.map(p=>{
-      const img=p.image_url?`<img class="tp-img" src="${escHtml(p.image_url)}" alt="" loading="lazy">`:`<div class="tp-img tp-img-empty"></div>`;
-      return `<a class="tp-row" href="products.html?search=${encodeURIComponent(p.name||'')}" title="View in Products">${img}<div class="tp-info"><div class="tp-name">${escHtml(p.name)}</div><div class="tp-brand">${escHtml(p.brand)}</div></div><div class="tp-sold">${(productUnits.get(p.id)||0).toLocaleString()}<span>sold</span></div></a>`;
-    }).join('');
-    // Append View All after the list
-    const viewAll = document.createElement('a');
-    viewAll.href = 'products.html';
-    viewAll.className = 'add-bar';
-    viewAll.style.marginTop = '10px';
-    viewAll.textContent = 'View All Products';
-    document.getElementById('top-products').after(viewAll);
+    document.getElementById('top-products').innerHTML=topProducts.map(p=>`<a class="tops-tile" href="products.html?search=${encodeURIComponent(p.name||'')}" title="${escHtml(p.name)} — ${escHtml(p.brand)}">
+      <div class="tops-img" style="background-image:url('${escHtml(p.image_url||'icons/default-product.png')}')"><span class="tops-num">${(productUnits.get(p.id)||0).toLocaleString()} sold</span></div>
+      <div class="tops-name">${escHtml(p.name)}</div><div class="tops-sub">${escHtml(p.brand)}</div></a>`).join('');
   }
 
   const y=today.getFullYear(), m=today.getMonth();
@@ -1456,6 +1473,18 @@ async function addRecommendedToToday(prodId,btn){
   _todayQueue=[..._todayQueue,data];
   renderTodayContent(); renderLineup(_dashboardUser.id);
   showToast(`Added ${p.name} to today`);
+}
+// ── Top 3 TikTok videos by views ──────────────────────────────────────────
+function renderTopVideos(){
+  const el=document.getElementById('top-videos'); if(!el) return;
+  const noteVal=(notes,key)=>{ const line=String(notes||'').split('\n').find(l=>l.toLowerCase().startsWith(key.toLowerCase()+':')); return line?line.slice(key.length+1).trim():''; };
+  const thumb=v=>String(v.thumbnail_url||v.cover_url||v.image_url||noteVal(v.notes,'TikTok thumbnail')||noteVal(v.notes,'Thumbnail')||'').trim();
+  const fmtN=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n||0);
+  const top=(_dashboardVideos||[]).filter(v=>(Number(v.views)||0)>0).sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0)).slice(0,3);
+  if(!top.length){ el.innerHTML='<div class="tops-empty">No video views yet.</div>'; return; }
+  el.innerHTML=top.map(v=>{ const t=thumb(v); return `<a class="tops-tile" href="${esc(v.link||'video-tracker.html')}" target="_blank" rel="noopener" title="${esc(v.title||'')}">
+    <div class="tops-img tops-vid" style="${t?`background-image:url('${esc(t)}')`:''}"><span class="tops-num">${fmtN(Number(v.views))} views</span></div>
+    <div class="tops-name">${esc(v.title||v.brand||'Video')}</div><div class="tops-sub">${esc(v.brand||'')}</div></a>`; }).join('');
 }
 function renderTodayContent(){
   const list=document.getElementById('sched-list');
