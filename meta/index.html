@@ -160,6 +160,45 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 .p-sub{font-size:11px;color:var(--muted);margin-bottom:10px;}
 .p-btns{display:flex;flex-direction:column;gap:6px;}
 @media(max-width:700px){.stats{grid-template-columns:1fr 1fr!important;}}
+/* ── Tightened desktop layout so the whole board fits on one screen ── */
+@media(min-width:1101px){
+  body{padding:14px 20px;}
+  .board{gap:14px;}
+  .side,.right{gap:14px;}
+  .card{padding:14px 16px;border-radius:20px;}
+  h2{font-size:20px;margin-bottom:8px;}
+  .year img{max-height:54px!important;}
+  .cal .photo{height:110px;margin-bottom:10px;}
+  .cal-month{font-size:20px;margin-bottom:4px;}
+  .cal-grid{font-size:11px;gap:1px 0;}
+  .cal-grid .dow{padding-bottom:4px;}
+  .cal-grid .d{height:21px;}
+  .cal-grid .today{width:21px;}
+  .topvids .label{margin-bottom:4px;}
+  .vid{height:84px;}
+  .profile{padding:12px;}
+  .p-name{font-size:20px;}
+  .p-sub{margin-bottom:8px;}
+  .p-btns{flex-direction:row;}
+  .p-btns .btn{flex:1;padding:7px 6px;font-size:10px;}
+  .stat{padding:12px 16px;}
+  .stat-val{font-size:30px;}
+  .day{min-height:0;padding:8px;}
+  .day textarea{min-height:64px;}
+  .week .week-grid{gap:8px;}
+  .fgrid{gap:8px 4px;}
+  .folder .ic{width:40px;height:40px;}
+  .goals .goal{padding:6px 0;}
+  .rp{padding:4px 6px;}
+  .rp-th{width:34px;height:44px;}
+  .recent-list{gap:4px;}
+  .bt-headline{font-size:17px;margin-bottom:8px;}
+  .bt-bars{height:70px;}
+  .streak-num span{font-size:42px;}
+  .streak-dots{margin:10px 0 8px;}
+  .week{align-self:start;}
+  .board{align-items:start;}
+}
 @media(max-width:1100px){
   .board{grid-template-columns:1fr 1fr;grid-template-areas:"top top" "week week" "mid mid" "side right";}
 }
@@ -396,7 +435,7 @@ renderTopVids();
   document.getElementById('stPosts').textContent = weekCount;
   // Recent posts
   const ago = d => { const m = Math.floor((now - new Date(d)) / 60000); return m < 60 ? m+'m ago' : m < 1440 ? Math.floor(m/60)+'h ago' : Math.floor(m/1440)+'d ago'; };
-  if (P.length) document.getElementById('recentPosts').innerHTML = P.slice(0, 5).map(p => `<a class="rp" href="${esc(p.permalink||'#')}" target="_blank" rel="noopener"><div class="rp-th" style="background-image:url('${esc(p.thumbnail_url||'')}')"></div><div class="rp-info"><div class="rp-cap">${esc(p.caption || 'No caption')}</div><div class="rp-meta"><b>${p.platform === 'instagram' ? 'Instagram' : 'Facebook'}</b> · ${ago(p.posted_at)}</div></div><div class="rp-views">${fmtN(p.views)}</div></a>`).join('');
+  if (P.length) document.getElementById('recentPosts').innerHTML = P.slice(0, 4).map(p => `<a class="rp" href="${esc(p.permalink||'#')}" target="_blank" rel="noopener"><div class="rp-th" style="background-image:url('${esc(p.thumbnail_url||'')}')"></div><div class="rp-info"><div class="rp-cap">${esc(p.caption || 'No caption')}</div><div class="rp-meta"><b>${p.platform === 'instagram' ? 'Instagram' : 'Facebook'}</b> · ${ago(p.posted_at)}</div></div><div class="rp-views">${fmtN(p.views)}</div></a>`).join('');
   // Best time to post — your own averages (needs a handful of posts)
   if (P.length >= 6) {
     const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
