@@ -441,8 +441,9 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .lower-grid>.stack>.card{min-height:0;display:flex;flex-direction:column;}
   .lower-grid>.stack:first-child>.card{flex:1;}
   #sched-list{flex:1;min-height:0;overflow-y:auto;}
-  .chart-card{flex:1!important;display:flex;flex-direction:column;}
-  .chart-card .chart-wrap{flex:1;height:auto;min-height:70px;}
+  .chart-card{flex:1 1 0!important;min-height:170px;display:flex;flex-direction:column;}
+  .chart-card .chart-wrap{flex:1;height:auto;min-height:60px;}
+  .b-week{flex:0 0 auto;}
   .chart-card{flex:0 0 auto;}
   .chart-wrap{height:80px;}
   .tops-row{flex:0 0 auto;}
@@ -510,6 +511,17 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .b-goals{padding:14px!important;}
 .b-goals .b-title{font-size:20px;margin-bottom:6px;}
 @media(max-width:768px){.tops-row{grid-template-columns:1fr;}.tops-card{width:auto;}}
+/* This Week — day cards like the Meta side */
+.b-week{padding:14px!important;}
+.b-week .b-title{font-size:22px;margin-bottom:10px;}
+.week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;}
+.w-day{border-radius:14px;background:var(--surface-2);padding:8px;display:flex;flex-direction:column;min-width:0;}
+.w-day.is-today{outline:1.5px solid var(--tan);background:color-mix(in srgb,var(--rust) 22%,var(--surface-2));}
+.w-name{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--ink);text-align:center;line-height:1.1;}
+.w-date{font-size:10px;color:var(--text-muted);text-align:center;margin-bottom:6px;}
+.w-day textarea{flex:1;width:100%;min-height:62px;border:none;border-radius:9px;background:rgba(0,0,0,.22);padding:6px;resize:none;font:11px/1.4 'IBM Plex Serif',serif;color:var(--text);outline:none;}
+.w-day textarea:focus{background:rgba(0,0,0,.4);}
+@media(max-width:768px){.week-grid{grid-template-columns:repeat(7,120px);overflow-x:auto;}}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -657,6 +669,10 @@ select.sched-location-tag:focus{border-color:var(--rust);}
               </div>
               <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
             </div>
+            <div class="card b-week">
+              <div class="b-title">This Week</div>
+              <div class="week-grid" id="bWeek"></div>
+            </div>
             <div class="tops-row">
             <div class="card mob-order-4 tops-card">
               <div class="tops-label">Top Products</div>
@@ -769,6 +785,18 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   // Today's date on the filming card
   const tdl = document.getElementById('todayDateLabel');
   if (tdl) tdl.textContent = 'Today';
+
+  // This Week — Mon–Sun notes, saved per date on this device
+  (function(){
+    const wEl = document.getElementById('bWeek'); if (!wEl) return;
+    const ymdK = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const start = new Date(now); start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    let notes = {}; try { notes = JSON.parse(localStorage.getItem('take24:week')) || {}; } catch(e) {}
+    const escW = v => String(v||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    wEl.innerHTML = [...Array(7)].map((_, i) => { const d = new Date(start); d.setDate(start.getDate() + i); const k = ymdK(d);
+      return `<div class="w-day${k === ymdK(now) ? ' is-today' : ''}"><div class="w-name">${d.toLocaleDateString(undefined,{weekday:'short'})}</div><div class="w-date">${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div><textarea data-date="${k}" placeholder="plans…">${escW(notes[k])}</textarea></div>`; }).join('');
+    wEl.addEventListener('input', e => { if (!e.target.dataset.date) return; notes[e.target.dataset.date] = e.target.value; try { localStorage.setItem('take24:week', JSON.stringify(notes)); } catch(err) {} });
+  })();
 
   // Monthly Goals — saved on this device
   const gEl = document.getElementById('bGoals');
