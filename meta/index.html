@@ -111,6 +111,49 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 .goals input{flex:1;border:none;background:none;font:13px 'Nunito Sans',sans-serif;color:var(--ink);outline:none;}
 .mood .photo{height:180px;border-radius:16px;}
 
+/* stats row */
+.stats{grid-template-columns:repeat(4,1fr)!important;}
+.stat{padding:16px 18px;}
+.stat-label{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lav);}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:38px;line-height:1.1;color:var(--cream);margin-top:4px;}
+.stat-sub{font-size:12px;color:var(--muted);}
+.muted-note{color:var(--muted);font-size:13px;text-align:center;padding:10px 4px;}
+.recent-list{display:flex;flex-direction:column;gap:8px;}
+.rp{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);padding:6px;border-radius:12px;transition:background .15s;}
+.rp:hover{background:var(--lav-soft);}
+.rp-th{width:42px;height:54px;border-radius:8px;background:#333 center/cover;flex-shrink:0;}
+.rp-info{flex:1;min-width:0;}
+.rp-cap{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rp-meta{font-size:10px;color:var(--muted);margin-top:2px;}
+.rp-meta b{color:var(--lav);}
+.rp-views{font-weight:800;color:var(--lav);font-size:13px;white-space:nowrap;}
+.bt-headline{font-family:'Bad Script',cursive;font-size:20px;color:var(--lav);text-align:center;line-height:1.3;margin-bottom:12px;}
+.bt-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:90px;}
+.bt-bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;}
+.bt-bar span{display:block;width:100%;border-radius:6px 6px 3px 3px;background:var(--lav-soft);min-height:4px;}
+.bt-bar.best span{background:var(--sage);}
+.bt-bar small{font-size:10px;color:var(--muted);}
+.bt-times{display:flex;justify-content:space-between;gap:6px;margin-top:12px;}
+.bt-t{flex:1;text-align:center;background:var(--lav-soft);border-radius:10px;padding:6px 2px;font-size:10px;color:var(--muted);}
+.bt-t b{display:block;font-size:13px;color:var(--ink);}
+.bt-t.best{background:var(--sage);color:var(--cream);}
+.bt-t.best b{color:var(--cream);}
+.streak{text-align:center;}
+.streak-num span{font-family:'Cormorant Garamond',serif;font-size:54px;line-height:1;color:var(--cream);}
+.streak-num small{display:block;font-size:12px;color:var(--muted);margin-top:2px;}
+.streak-dots{display:flex;justify-content:center;gap:6px;margin:14px 0 12px;}
+.streak-dots i{width:22px;height:22px;border-radius:50%;background:var(--lav-soft);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:9px;font-weight:800;color:var(--muted);}
+.streak-dots i.on{background:var(--sage);color:var(--cream);}
+.streak-goal{font-size:13px;color:var(--muted);}
+.streak-goal b{color:var(--cream);}
+.streak-goal input{width:44px;background:var(--lav-soft);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:2px 4px;font:13px 'Nunito Sans',sans-serif;text-align:center;}
+.streak-bar{height:6px;border-radius:99px;background:var(--lav-soft);margin-top:10px;overflow:hidden;}
+.streak-bar div{height:100%;width:0;background:var(--lav);border-radius:99px;transition:width .3s;}
+.profile{text-align:center;padding:16px;}
+.p-name{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--cream);}
+.p-sub{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.p-btns{display:flex;flex-direction:column;gap:6px;}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr!important;}}
 @media(max-width:1100px){
   .board{grid-template-columns:1fr 1fr;grid-template-areas:"top top" "week week" "mid mid" "side right";}
 }
@@ -138,24 +181,19 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
       <div class="label">Top Videos</div>
       <div class="minis" id="topVids"></div>
     </div>
+    <div class="card profile">
+      <div class="p-name">Kourtney</div>
+      <div class="p-sub">Meta workspace</div>
+      <div class="p-btns"><button class="btn" onclick="switchToTikTok()">Switch to TikTok</button><button class="btn" onclick="signOut()">Sign out</button></div>
+    </div>
   </aside>
 
   <!-- TOP -->
-  <section class="top">
-    <div class="card hello">
-      <div class="label" id="todayLabel"></div>
-      <h1 id="greet">Good morning, <em>Kourtney</em></h1>
-      <p>Facebook, Instagram &amp; affiliate links — all in one place.</p>
-      <div class="switch">
-        <button class="btn" onclick="switchToTikTok()">Switch to TikTok</button>
-        <button class="btn" onclick="signOut()">Sign out</button>
-      </div>
-    </div>
-    <div class="card quote">
-      <div class="q" id="quote"></div>
-      <div class="qsub" id="quoteSub"></div>
-      <button onclick="nextQuote()" title="New quote">↻</button>
-    </div>
+  <section class="top stats">
+    <div class="card stat"><div class="stat-label">Facebook followers</div><div class="stat-val" id="stFb">—</div><div class="stat-sub" id="stFbSub">The House of Ko</div></div>
+    <div class="card stat"><div class="stat-label">Instagram followers</div><div class="stat-val" id="stIg">—</div><div class="stat-sub" id="stIgSub">thehouseofkor</div></div>
+    <div class="card stat"><div class="stat-label">Views · last 30 days</div><div class="stat-val" id="stViews">—</div><div class="stat-sub">Facebook + Instagram</div></div>
+    <div class="card stat"><div class="stat-label">Posts this week</div><div class="stat-val" id="stPosts">—</div><div class="stat-sub">since Monday</div></div>
   </section>
 
   <!-- WEEK -->
@@ -167,8 +205,8 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
   <!-- LISTS -->
   <section class="mid">
     <div class="card list lav"  data-list="content"><h2>Content</h2><ul></ul><input class="add" placeholder="+ add a post idea"></div>
-    <div class="card list sage" data-list="links"><h2>Links &amp; Deals</h2><ul></ul><input class="add" placeholder="+ add a link to post"></div>
-    <a class="card store" href="https://a.co/d/0aN0vMFu" target="_blank" rel="noopener"><h2>Amazon Storefront</h2><div class="store-body">Open my storefront <span>→</span></div></a>
+    <div class="card recent"><h2>Recent Posts</h2><div id="recentPosts" class="recent-list"><div class="muted-note">Sync your videos to see recent posts.</div></div></div>
+    <div class="card besttime"><h2>Best Time to Post</h2><div id="bestTime"><div class="muted-note">Sync your videos to see when your posts do best.</div></div></div>
   </section>
 
   <!-- RIGHT -->
@@ -191,7 +229,13 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
       <h2>Monthly Goals</h2>
       <div id="goals"></div>
     </div>
-    <div class="card mood"><div class="photo" data-photo="mood"></div></div>
+    <div class="card streak">
+      <h2>Posting Streak</h2>
+      <div class="streak-num"><span id="streakDays">0</span><small>days in a row</small></div>
+      <div class="streak-dots" id="streakDots"></div>
+      <div class="streak-goal">This week: <b id="weekDone">0</b> / <input id="weekGoal" type="number" min="1" max="50"> posts</div>
+      <div class="streak-bar"><div id="weekBar"></div></div>
+    </div>
   </aside>
 </div>
 
@@ -211,9 +255,6 @@ const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-$
 
 // Header
 document.getElementById('year').innerHTML = '<img src="../logo.png" alt="Take24" style="max-width:190px;max-height:72px;display:block;">';
-document.getElementById('todayLabel').textContent = now.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-const h = now.getHours();
-document.getElementById('greet').innerHTML = `${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, <em>Kourtney</em>`;
 
 // Mini calendar
 (function(){
@@ -226,12 +267,6 @@ document.getElementById('greet').innerHTML = `${h<12?'Good morning':h<17?'Good a
   document.getElementById('calGrid').innerHTML=html;
 })();
 
-// Quotes
-const QUOTES=[['Just keep moving forward','one post at a time'],['Your energy attracts your reality',''],['Great. Act now.','done is better than perfect'],['Show up, even when it\u2019s small',''],['Consistency is the secret','not perfection']];
-let qi=load('quoteIdx',0);
-function showQuote(){const [q,s]=QUOTES[qi%QUOTES.length];document.getElementById('quote').textContent=q;document.getElementById('quoteSub').textContent=s;}
-function nextQuote(){qi=(qi+1)%QUOTES.length;save('quoteIdx',qi);showQuote();}
-showQuote();
 
 // Week (Mon–Sun), notes saved per date
 (function(){
@@ -334,6 +369,60 @@ renderTopVids();
   const html = (await row('facebook','Facebook')) + (await row('instagram','Instagram'));
   if (html) document.getElementById('topVids').innerHTML = html;
 })();
+// ── Stats, recent posts, best time, streak (from synced Facebook + Instagram videos) ──
+(async () => {
+  const u = await requireMetaAuth(); if (!u) return;
+  const { data: accts } = await db.from('meta_accounts').select('account_id,platform,name,username,follower_count').eq('user_id', u.id);
+  const pickA = plat => { const l = (accts||[]).filter(a => a.platform === plat); return l.find(a => /house\s*of\s*ko/i.test(`${a.name} ${a.username}`)) || l[0]; };
+  const fb = pickA('facebook'), ig = pickA('instagram');
+  const fmtN = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e4 ? Math.round(n/1e3)+'K' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n||0);
+  if (fb) { document.getElementById('stFb').textContent = fmtN(fb.follower_count); document.getElementById('stFbSub').textContent = fb.name || fb.username; }
+  if (ig) { document.getElementById('stIg').textContent = fmtN(ig.follower_count); document.getElementById('stIgSub').textContent = '@' + (ig.username || ig.name); }
+  const ids = [fb, ig].filter(Boolean).map(a => a.account_id);
+  if (!ids.length) return;
+  const { data: posts } = await db.from('meta_posts').select('platform,caption,permalink,thumbnail_url,posted_at,views').eq('user_id', u.id).in('account_id', ids).order('posted_at', { ascending: false }).limit(2000);
+  const P = (posts || []).filter(p => p.posted_at);
+  const DAY = 86400000, today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const v30 = P.filter(p => now - new Date(p.posted_at) <= 30*DAY).reduce((a, p) => a + (Number(p.views)||0), 0);
+  document.getElementById('stViews').textContent = fmtN(v30);
+  const monday = new Date(today0); monday.setDate(today0.getDate() - ((today0.getDay() + 6) % 7));
+  const weekCount = P.filter(p => new Date(p.posted_at) >= monday).length;
+  document.getElementById('stPosts').textContent = weekCount;
+  // Recent posts
+  const ago = d => { const m = Math.floor((now - new Date(d)) / 60000); return m < 60 ? m+'m ago' : m < 1440 ? Math.floor(m/60)+'h ago' : Math.floor(m/1440)+'d ago'; };
+  if (P.length) document.getElementById('recentPosts').innerHTML = P.slice(0, 5).map(p => `<a class="rp" href="${esc(p.permalink||'#')}" target="_blank" rel="noopener"><div class="rp-th" style="background-image:url('${esc(p.thumbnail_url||'')}')"></div><div class="rp-info"><div class="rp-cap">${esc(p.caption || 'No caption')}</div><div class="rp-meta"><b>${p.platform === 'instagram' ? 'Instagram' : 'Facebook'}</b> · ${ago(p.posted_at)}</div></div><div class="rp-views">${fmtN(p.views)}</div></a>`).join('');
+  // Best time to post — your own averages (needs a handful of posts)
+  if (P.length >= 6) {
+    const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+    const overall = avg(P.map(p => Number(p.views)||0)) || 1;
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], byDay = days.map(() => []);
+    const slots = [['Morning',h => h>=5&&h<12],['Afternoon',h => h>=12&&h<17],['Evening',h => h>=17&&h<22],['Late',h => h>=22||h<5]], bySlot = slots.map(() => []);
+    P.forEach(p => { const d = new Date(p.posted_at), v = Number(p.views)||0; byDay[(d.getDay()+6)%7].push(v); bySlot[slots.findIndex(s => s[1](d.getHours()))].push(v); });
+    const dayAvg = byDay.map(avg), slotAvg = bySlot.map(avg);
+    const bestD = dayAvg.indexOf(Math.max(...dayAvg)), bestS = slotAvg.indexOf(Math.max(...slotAvg));
+    const mult = Math.max(dayAvg[bestD], slotAvg[bestS]) / overall, maxD = Math.max(...dayAvg) || 1;
+    document.getElementById('bestTime').innerHTML = `
+      <div class="bt-headline">${days[bestD]} ${slots[bestS][0].toLowerCase()} posts do best${mult >= 1.2 ? ` — about ${mult.toFixed(1)}× your average` : ''}</div>
+      <div class="bt-bars">${dayAvg.map((v,i) => `<div class="bt-bar${i===bestD?' best':''}" title="${days[i]}: ${fmtN(Math.round(v))} avg views (${byDay[i].length} posts)"><span style="height:${Math.max(4, v/maxD*70)}px"></span><small>${days[i][0]}</small></div>`).join('')}</div>
+      <div class="bt-times">${slots.map((s,i) => `<div class="bt-t${i===bestS?' best':''}" title="${bySlot[i].length} posts"><b>${fmtN(Math.round(slotAvg[i]))}</b>${s[0]}</div>`).join('')}</div>`;
+  } else if (P.length) {
+    document.getElementById('bestTime').innerHTML = '<div class="muted-note">A few more posts and this will show your best days and times.</div>';
+  }
+  // Posting streak + weekly goal
+  const postedDays = new Set(P.map(p => ymd(new Date(p.posted_at))));
+  let streak = 0; const cur = new Date(today0);
+  if (!postedDays.has(ymd(cur))) cur.setDate(cur.getDate() - 1);   // today isn't over yet
+  while (postedDays.has(ymd(cur))) { streak++; cur.setDate(cur.getDate() - 1); }
+  document.getElementById('streakDays').textContent = streak;
+  document.getElementById('streakDots').innerHTML = [...Array(7)].map((_, i) => { const d = new Date(monday); d.setDate(monday.getDate()+i);
+    return `<i class="${postedDays.has(ymd(d)) ? 'on' : ''}" title="${d.toLocaleDateString(undefined,{weekday:'long'})}">${'MTWTFSS'[i]}</i>`; }).join('');
+  const goalEl = document.getElementById('weekGoal');
+  const paint = () => { const g = Math.max(1, Number(goalEl.value)||7); document.getElementById('weekDone').textContent = weekCount; document.getElementById('weekBar').style.width = Math.min(100, weekCount/g*100) + '%'; };
+  goalEl.value = load('postGoal', 7);
+  goalEl.addEventListener('input', () => { save('postGoal', Number(goalEl.value)||7); paint(); });
+  paint();
+})();
+
 </script>
 </body>
 </html>
