@@ -12,7 +12,7 @@
 <script src="theme-init.js?v=181"></script>
 <link rel="stylesheet" href="layout.css?v=144">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=181"></script>
+<script src="supabase.js?v=185"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Creator Hub">
@@ -675,13 +675,16 @@ async function refreshDay(btn){
 }
 
 // ─── DATA ─────────────────────────────────────────────────
-async function loadProducts(){const{data}=await db.from('products').select('id,name,brand,link,notes,status').eq('user_id',_user.id).order('name');ALL_PRODUCTS=(data||[]).filter(p=>p.status!=='paused'&&p.status!=='archived');}
+// To Do is kept separate per TikTok account, same as Products and Videos
+function _acct(){return (typeof getActiveAccountId==='function'&&getActiveAccountId())||null;}
+function _byAcct(q){const a=_acct();return a?q.eq('tiktok_account_id',a):q;}
+async function loadProducts(){const{data}=await _byAcct(db.from('products').select('id,name,brand,link,notes,status').eq('user_id',_user.id)).order('name');ALL_PRODUCTS=(data||[]).filter(p=>p.status!=='paused'&&p.status!=='archived');}
 async function loadHooks(){const{data}=await db.from('hooks').select('id,text,cat').eq('user_id',_user.id).order('cat');ALL_HOOKS=data||[];}
 async function loadScripts(){const{data}=await db.from('scripts').select('id,title,brand,script,notes').eq('user_id',_user.id).order('title');ALL_SCRIPTS=data||[];}
 
 async function loadQueue(){
   if(currentKey()===todayKey) await carryForwardUnfinishedQueue(_user.id, todayKey);
-  const{data}=await db.from('queue').select('*').eq('user_id',_user.id).eq('date',currentKey()).order('sort_order');
+  const{data}=await _byAcct(db.from('queue').select('*').eq('user_id',_user.id).eq('date',currentKey())).order('sort_order');
   const cardMap={};
   (data||[]).forEach(row=>{
     const key=row.prod_id||('_n_'+row.name);
@@ -693,7 +696,7 @@ async function loadQueue(){
 async function loadWeekQueue(){
   const start=dateKey(weekStart(currentDate));
   const end=dateKey(weekEnd(currentDate));
-  const {data,error}=await db.from('queue').select('*').eq('user_id',_user.id).gte('date',start).lte('date',end).order('date',{ascending:true}).order('sort_order',{ascending:true});
+  const {data,error}=await _byAcct(db.from('queue').select('*').eq('user_id',_user.id).gte('date',start).lte('date',end)).order('date',{ascending:true}).order('sort_order',{ascending:true});
   if(error){console.warn('Could not load weekly queue',error);WEEK_ITEMS=[];return;}
   WEEK_ITEMS=(data||[]).map(row=>({
     id:'w-'+row.id,
@@ -711,7 +714,7 @@ async function loadWeekQueue(){
 }
 
 async function saveQueueRow(card,take){
-  const payload={user_id:_user.id,date:currentKey(),prod_id:card.prodId||null,name:card.name,brand:card.brand||'',notes:take.hookText||'',script:take.script||'',inspiration_links:normalizeInspirationLinks(take.inspirationLinks),done:take.done||false,sort_order:take.sortOrder||0};
+  const payload={user_id:_user.id,tiktok_account_id:_acct(),date:currentKey(),prod_id:card.prodId||null,name:card.name,brand:card.brand||'',notes:take.hookText||'',script:take.script||'',inspiration_links:normalizeInspirationLinks(take.inspirationLinks),done:take.done||false,sort_order:take.sortOrder||0};
   const save = take.queueId
     ? () => db.from('queue').update(payload).eq('id',take.queueId)
     : () => db.from('queue').insert(payload).select('id').single();
@@ -1759,7 +1762,7 @@ async function addSelectedProducts(){
         const date=dateKey(addDays(firstDay,i));
         const order=orderByDate[date]||0;
         orderByDate[date]=order+1;
-        rows.push({user_id:_user.id,date,prod_id:p.id,name:p.name,brand:p.brand||'',notes:'',script:'',done:false,sort_order:order});
+        rows.push({user_id:_user.id,tiktok_account_id:_acct(),date,prod_id:p.id,name:p.name,brand:p.brand||'',notes:'',script:'',done:false,sort_order:order});
       }
     }
     if(rows.length){

@@ -62,6 +62,7 @@ function localDateKey(date = new Date()) {
 
 function queueCarryKey(row) {
   return [
+    row.tiktok_account_id || '',
     row.prod_id || '',
     String(row.name || '').trim().toLowerCase(),
     String(row.brand || '').trim().toLowerCase(),
@@ -73,14 +74,14 @@ function queueCarryKey(row) {
 async function carryForwardUnfinishedQueue(userId, targetDate = localDateKey()) {
   if (!userId || !targetDate) return 0;
   const { data: overdue, error } = await db.from('queue')
-    .select('id,prod_id,name,brand,notes,sort_order,done')
+    .select('id,prod_id,name,brand,notes,sort_order,done,tiktok_account_id')
     .eq('user_id', userId)
     .eq('done', false)
     .lt('date', targetDate);
   if (error || !overdue?.length) return 0;
 
   const { data: todayRows } = await db.from('queue')
-    .select('id,prod_id,name,brand,notes,sort_order,done')
+    .select('id,prod_id,name,brand,notes,sort_order,done,tiktok_account_id')
     .eq('user_id', userId)
     .eq('date', targetDate);
   const existing = new Map((todayRows || []).map(row => [queueCarryKey(row), row]));
