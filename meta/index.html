@@ -26,6 +26,7 @@ body{min-height:100%;background:var(--paper);color:var(--ink);font-family:'Nunit
   grid-template-areas:
    "side  top    right"
    "side  week   right"
+   "side  ideas  right"
    "side  mid    right";}
 .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
 h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:var(--brown);text-align:center;margin-bottom:12px;letter-spacing:.01em;}
@@ -113,10 +114,14 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 
 /* sizing fixes: long captions can't stretch the columns; stat cards stay compact */
 .board>*{min-width:0;}
-.mid{grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:start;}
+.mid{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:start;}
 .mid>.card{min-width:0;}
 .top.stats{align-self:start;}
 .stat{align-self:start;}
+/* Content ideas: horizontal card, ideas flow across in columns */
+.ideas{grid-area:ideas;}
+.ideas ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 18px;}
+.ideas .add{max-width:420px;}
 /* stats row */
 .stats{grid-template-columns:repeat(4,1fr)!important;}
 .stat{padding:16px 18px;}
@@ -163,7 +168,7 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 /* ── Desktop: fill one screen with a little breathing room ── */
 @media(min-width:1101px){
   body{padding:18px 24px;}
-  .board{gap:16px;min-height:calc(100vh - 36px);grid-template-rows:auto auto 1fr;align-items:stretch;}
+  .board{gap:16px;min-height:calc(100vh - 36px);grid-template-rows:auto auto auto 1fr;align-items:stretch;}
   .side,.right{gap:16px;}
   .card{padding:16px 18px;}
   h2{font-size:21px;margin-bottom:10px;}
@@ -192,13 +197,13 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
   .top.stats,.stat{align-self:stretch;}
 }
 @media(max-width:1100px){
-  .board{grid-template-columns:1fr 1fr;grid-template-areas:"top top" "week week" "mid mid" "side right";}
+  .board{grid-template-columns:1fr 1fr;grid-template-areas:"top top" "week week" "ideas ideas" "mid mid" "side right";}
 }
 @media(max-width:700px){
   body{padding:16px;}
-  .board{grid-template-columns:1fr;grid-template-areas:"top" "week" "mid" "right" "side";}
+  .board{grid-template-columns:1fr;grid-template-areas:"top" "week" "ideas" "mid" "right" "side";}
   .top{grid-template-columns:1fr;}
-  .mid{grid-template-columns:1fr;}
+  .mid{grid-template-columns:1fr!important;}
   .week-grid{grid-template-columns:repeat(7,150px);overflow-x:auto;padding-bottom:6px;}
 }
 </style>
@@ -239,9 +244,11 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
     <div class="week-grid" id="weekGrid"></div>
   </section>
 
+  <!-- CONTENT IDEAS (full width) -->
+  <section class="card list lav ideas" data-list="content"><h2>Content Ideas</h2><ul></ul><input class="add" placeholder="+ add a post idea"></section>
+
   <!-- LISTS -->
   <section class="mid">
-    <div class="card list lav"  data-list="content"><h2>Content</h2><ul></ul><input class="add" placeholder="+ add a post idea"></div>
     <div class="card recent"><h2>Recent Posts</h2><div id="recentPosts" class="recent-list"><div class="muted-note">Sync your videos to see recent posts.</div></div></div>
     <div class="card besttime"><h2>Best Time to Post</h2><div id="bestTime"><div class="muted-note">Sync your videos to see when your posts do best.</div></div></div>
   </section>
