@@ -44,6 +44,8 @@ h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:v
 .cal-grid .today{background:var(--cream);color:var(--taupe);font-weight:800;}
 .minis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .topvids .label{margin:0 0 8px 4px;}
+.tv-row-label{grid-column:1/-1;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:4px 0 -2px 2px;}
+.minis .tv-row-label:first-child{margin-top:0;}
 .vid{position:relative;height:110px;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#3A2E27,#2B2A29) center/cover;cursor:pointer;display:block;text-decoration:none;}
 .vid .rank{position:absolute;top:6px;left:8px;font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.6);}
 .vid .views{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;background:linear-gradient(transparent,rgba(0,0,0,.7));color:var(--cream);font-size:10px;font-weight:800;text-align:center;}
@@ -311,18 +313,23 @@ document.getElementById('photoPicker').addEventListener('change',e=>{
 },true);
 renderTopVids();
 
-// Once videos are synced, Top Videos fills itself with your real top 3 by views.
+// Once videos are synced, Top Videos shows two rows: top 3 on Facebook, top 3 on Instagram.
 (async () => {
   const u = await requireMetaAuth(); if (!u) return;
-  // Match the accounts shown on the Videos page (defaults to House of Ko).
-  const { data: accts } = await db.from('meta_accounts').select('account_id,name,username').eq('user_id', u.id);
-  let saved = null; try { saved = JSON.parse(localStorage.getItem('take24meta:visibleAccounts')); } catch {}
-  const ids = Array.isArray(saved) ? saved : (accts || []).filter(a => /house\s*of\s*ko/i.test(`${a.name} ${a.username}`)).map(a => a.account_id);
-  if (!ids.length) return;
-  const { data } = await db.from('meta_posts').select('permalink,thumbnail_url,views').eq('user_id', u.id).in('account_id', ids).order('views', { ascending: false }).limit(3);
-  if (!data?.length) return;
+  const { data: accts } = await db.from('meta_accounts').select('account_id,platform,name,username').eq('user_id', u.id);
+  if (!accts?.length) return;
+  // Use the House of Ko accounts for each platform (falls back to any account on that platform)
+  const pick = plat => { const list = accts.filter(a => a.platform === plat);
+    return (list.find(a => /house\s*of\s*ko/i.test(`${a.name} ${a.username}`)) || list[0])?.account_id; };
   const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n||0);
-  document.getElementById('topVids').innerHTML = data.map((x,i) => `<a class="vid" href="${esc(x.permalink)}" target="_blank" rel="noopener" style="background-image:url('${esc(x.thumbnail_url)}')"><span class="rank">${i+1}</span><span class="views">${fmt(x.views)} views</span></a>`).join('');
+  const row = async (plat, label) => {
+    const id = pick(plat); if (!id) return '';
+    const { data } = await db.from('meta_posts').select('permalink,thumbnail_url,views').eq('user_id', u.id).eq('account_id', id).order('views', { ascending: false }).limit(3);
+    if (!data?.length) return '';
+    return `<div class="tv-row-label">${label}</div>` + data.map((x,i) => `<a class="vid" href="${esc(x.permalink)}" target="_blank" rel="noopener" style="background-image:url('${esc(x.thumbnail_url)}')"><span class="rank">${i+1}</span><span class="views">${fmt(x.views)} views</span></a>`).join('');
+  };
+  const html = (await row('facebook','Facebook')) + (await row('instagram','Instagram'));
+  if (html) document.getElementById('topVids').innerHTML = html;
 })();
 </script>
 </body>
