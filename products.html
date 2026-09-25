@@ -201,6 +201,17 @@ tr.select-mode .tbl-action{display:none;}
 .all-acct-th{white-space:nowrap;text-align:center;}
 .all-acct-td{text-align:center;width:1%;}
 .all-acct-cb{width:18px;height:18px;accent-color:var(--rust);cursor:pointer;}
+/* merge picker */
+.mg-overlay{position:fixed;inset:0;z-index:700;background:rgba(10,8,7,.82);display:none;align-items:center;justify-content:center;padding:20px;}
+.mg-overlay.open{display:flex;}
+.mg-card{width:100%;max-width:520px;max-height:82vh;display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--border-mid);border-radius:20px;padding:20px;}
+.mg-title{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--ink);}
+.mg-sub{font-size:12px;color:var(--text-muted);line-height:1.45;}
+.mg-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
+.mg-row{display:flex;align-items:center;gap:10px;padding:7px;border:1px solid var(--border);border-radius:12px;background:var(--bg-lift);cursor:pointer;text-align:left;color:var(--ink);font:inherit;width:100%;}
+.mg-row:hover{border-color:var(--tan);}
+.mg-row img{width:40px;height:40px;border-radius:8px;object-fit:cover;background:var(--surface-2);flex-shrink:0;}
+.mg-row small{display:block;color:var(--text-muted);font-size:11px;}
 /* link badges */
 .pl-badges{display:flex;flex-wrap:wrap;gap:5px;max-width:230px;}
 .pl-badge{border:none;border-radius:999px;padding:4px 10px;font:800 10px 'Stack Sans Notch',sans-serif;letter-spacing:.04em;color:#fff;background:var(--rust);cursor:pointer;white-space:nowrap;transition:filter .12s,transform .12s;}
@@ -270,6 +281,15 @@ tr.select-mode .tbl-action{display:none;}
     </div>
   </div>
 </div>
+<div class="mg-overlay" id="mergeOverlay">
+  <div class="mg-card">
+    <div class="mg-title">Merge a duplicate</div>
+    <div class="mg-sub" id="mergeSub"></div>
+    <input class="form-input" id="mergeSearch" placeholder="Search your products…" oninput="renderMergeList()">
+    <div class="mg-list" id="mergeList"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px;"><button class="btn btn-ghost" type="button" onclick="closeMergePicker()">Cancel</button></div>
+  </div>
+</div>
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">&#x2715;</button>
@@ -311,7 +331,7 @@ tr.select-mode .tbl-action{display:none;}
       <div style="font-size:11px;color:var(--text-muted);margin-top:5px;margin-left:28px;">Mark this product as a gifted or PR sample.</div>
     </div>
     <div class="form-row"><label class="form-label">Talking Points / Notes</label><textarea class="form-input form-textarea" id="fNotes" placeholder="Key benefits, compliance notes, angles that work..."></textarea></div>
-    <div class="modal-actions"><button class="btn btn-primary" style="flex:1;" onclick="saveProduct()">Save Product</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn-danger" id="deleteBtn" style="display:none;" onclick="deleteProduct()">Delete</button></div>
+    <div class="modal-actions"><button class="btn btn-primary" style="flex:1;" onclick="saveProduct()">Save Product</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-ghost" id="mergeBtn" type="button" onclick="openMergePicker()" style="display:none;" title="Combine a duplicate into this product">Merge…</button><button class="btn-danger" id="deleteBtn" style="display:none;" onclick="deleteProduct()">Delete</button></div>
   </div>
 </div>
 <div class="modal-overlay" id="searchImportOverlay">
@@ -1375,6 +1395,7 @@ async function init() {
     document.getElementById('fNotes').value = String(p?.notes || '').replace(/\nFREE_SAMPLE|FREE_SAMPLE\n|FREE_SAMPLE/g, '').trim();
     document.getElementById('fFreeSample').checked = p?.notes ? /FREE_SAMPLE/.test(p.notes) : false;
     document.getElementById('deleteBtn').style.display = p ? '' : 'none';
+    document.getElementById('mergeBtn').style.display = p ? '' : 'none';
     // Links + all-accounts
     const lbox = document.getElementById('fLinks'); lbox.innerHTML = '';
     (Array.isArray(p?.links) ? p.links : []).forEach(l => lbox.appendChild(prodLinkRow(l)));
@@ -1469,6 +1490,57 @@ async function init() {
       return true;
     } catch(e) { console.warn('Could not add free sample deal', e); return false; }
   }
+  // ── Merge: fold a duplicate product into the one you're editing ──
+  let _mergeAll = [];
+  const _normName = v => String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  window.openMergePicker = async function(){
+    const keep = _allProducts.find(x => x.id === window._editId); if (!keep) return;
+    const { data } = await db.from('products').select('id,name,brand,image_url,link,links,tiktok_account_id').eq('user_id', user.id).neq('id', keep.id);
+    const words = _normName(keep.name).split(' ').filter(w => w.length > 2);
+    // likely duplicates first (shared words / same brand), then everything else
+    _mergeAll = (data || []).map(p => ({ p, score: words.filter(w => _normName(p.name).includes(w)).length * 2 + (_normName(p.brand) && _normName(p.brand) === _normName(keep.brand) ? 1 : 0) }))
+      .sort((a,b) => b.score - a.score || String(a.p.name).localeCompare(String(b.p.name)));
+    document.getElementById('mergeSub').innerHTML = `Pick the duplicate of <b>${esc(keep.name)}</b>. Its photo, links, and notes are copied into this product, its videos and to-dos move over, and then the duplicate is deleted.`;
+    document.getElementById('mergeSearch').value = '';
+    renderMergeList();
+    document.getElementById('mergeOverlay').classList.add('open');
+  };
+  window.closeMergePicker = () => document.getElementById('mergeOverlay').classList.remove('open');
+  window.renderMergeList = function(){
+    const q = _normName(document.getElementById('mergeSearch').value);
+    const rows = _mergeAll.filter(x => !q || _normName(`${x.p.name} ${x.p.brand}`).includes(q)).slice(0, 60);
+    document.getElementById('mergeList').innerHTML = rows.length ? rows.map(({p}) => `<button type="button" class="mg-row" onclick="mergeInto('${p.id}')"><img src="${escAttr(p.image_url||'icons/default-product.png')}" alt="" onerror="this.src='icons/default-product.png'"><div><div>${esc(p.name)}</div><small>${esc(p.brand||'')}${(Array.isArray(p.links)&&p.links.length)?' · '+p.links.length+' link'+(p.links.length>1?'s':''):''}${p.image_url?' · has photo':''}</small></div></button>`).join('') : '<div class="mg-sub" style="text-align:center;padding:16px">No products match.</div>';
+  };
+  window.mergeInto = async function(dupId){
+    const keep = (await db.from('products').select('*').eq('id', window._editId).single()).data;
+    const dup = (await db.from('products').select('*').eq('id', dupId).single()).data;
+    if (!keep || !dup) return;
+    if (!confirm(`Merge "${dup.name}" into "${keep.name}"?\n\nThe duplicate will be deleted after its details are copied over.`)) return;
+    const links = [...(Array.isArray(keep.links)?keep.links:[]), ...(Array.isArray(dup.links)?dup.links:[])];
+    const seen = new Set(), mergedLinks = links.filter(l => l && l.url && !seen.has(l.url) && seen.add(l.url));
+    const notes = [keep.notes, dup.notes].map(n => String(n||'').trim()).filter(Boolean);
+    const patch = {
+      brand: keep.brand || dup.brand || '',
+      image_url: keep.image_url || dup.image_url || '',
+      link: keep.link || dup.link || '',
+      links: mergedLinks,
+      tags: keep.tags || dup.tags || '',
+      notes: [...new Set(notes)].join('\n'),
+      units_sold: (Number(keep.units_sold)||0) + (Number(dup.units_sold)||0),
+      // if they were on different accounts, the merged product shows on both
+      tiktok_account_id: (keep.tiktok_account_id && dup.tiktok_account_id && keep.tiktok_account_id !== dup.tiktok_account_id) ? null : (keep.tiktok_account_id || dup.tiktok_account_id || null)
+    };
+    const { error } = await db.from('products').update(patch).eq('id', keep.id).eq('user_id', user.id);
+    if (error) { showToast('Merge failed: ' + error.message, 'error'); return; }
+    // move anything pointing at the duplicate
+    await db.from('videos').update({ prod_id: keep.id }).eq('prod_id', dup.id).eq('user_id', user.id);
+    await db.from('queue').update({ prod_id: keep.id }).eq('prod_id', dup.id).eq('user_id', user.id);
+    await db.from('products').delete().eq('id', dup.id).eq('user_id', user.id);
+    closeMergePicker(); window.closeModal();
+    showToast(`Merged into ${keep.name}`);
+    window.renderProducts();
+  };
+
   window.deleteProduct = async function() {
     if(!confirm('Delete this product?')) return;
     await db.from('products').delete().eq('id', window._editId).eq('user_id', user.id);
