@@ -260,7 +260,6 @@ tr.select-mode .tbl-action{display:none;}
           <th class="num sortable" data-sort="gmv" onclick="sortProducts('gmv')">GMV</th>
           <th>Features</th>
           <th>Links</th>
-          <th class="all-acct-th" title="Show on all TikTok accounts">All Accts</th>
           <th></th>
         </tr>
       </thead>
@@ -762,7 +761,7 @@ async function init() {
     }).sort(compareProducts);
     _visibleProductIds = filtered.map(p => p.id);
     const body = document.getElementById('prodBody');
-    if(!filtered.length){ body.innerHTML='<tr><td colspan="12"><div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div></td></tr>'; updateSortHeaders(); updateEditToolbar(); return; }
+    if(!filtered.length){ body.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-title">No products yet</div><div class="empty-sub">Add your first product above.</div></div></td></tr>'; updateSortHeaders(); updateEditToolbar(); return; }
     body.innerHTML = filtered.map(p => {
       const selected = _selectedProductIds.has(p.id);
       const inStock = productInStock(p);
@@ -783,7 +782,6 @@ async function init() {
         '<td class="num"><span class="gmv-value">'+(gmv?fmtMoney(gmv):'-')+'</span></td>'+
         '<td style="display:none"><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
         '<td>'+linkBadgesHtml(p)+'</td>'+
-        '<td class="all-acct-td" onclick="event.stopPropagation()"><input type="checkbox" class="all-acct-cb" title="Show on all TikTok accounts" '+(!p.tiktok_account_id?'checked':'')+' onchange="toggleAllAccounts(\''+p.id+'\',this)"></td>'+
         '<td><div class="tbl-actions"><button class="tbl-action" onclick="event.stopPropagation();makeContent(\''+p.id+'\')">Make Content</button><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button><button class="tbl-action" style="color:var(--sage)" onclick="event.stopPropagation();scoutProduct(\''+p.name+'\',\''+p.brand+'\')">Scout</button></div></td>'+
       '</tr>';
     }).join('');
