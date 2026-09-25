@@ -569,8 +569,13 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .board .sched-list-inner{display:flex!important;grid-template-columns:none!important;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;scrollbar-width:thin;}
 .board .sched-list-inner>.sched-row{flex:0 0 150px;scroll-snap-align:start;}
 .board .sched-thumb{aspect-ratio:4/3!important;}
-.board .rec-head{flex:0 0 100%;}
+.board .rec-head{flex:none;margin-bottom:8px;}
 .lower-grid>.stack:first-child>.card:first-child{flex:none!important;}
+/* left stack: Today, FB/IG top videos, then Best Time + Streak fill the rest */
+.lower-grid>.stack:first-child>.card{height:auto!important;flex:none!important;}
+.lower-grid>.stack:first-child>.bt-row{flex:1 1 auto;min-height:0;}
+.lower-grid>.stack:first-child{overflow-y:auto;scrollbar-width:none;}
+.lower-grid>.stack:first-child::-webkit-scrollbar{display:none;}
 #sched-list{flex:none!important;max-height:none!important;overflow:visible!important;}
 /* FB + IG top videos */
 .social-tops{padding:12px 14px!important;flex:none!important;}
