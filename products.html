@@ -176,6 +176,27 @@ tr.select-mode .tbl-action{display:none;}
   .si-result-card{align-items:flex-start;}
   .si-name{white-space:normal;}
 }
+/* ── Desktop: table fits the card (no side scrolling) ── */
+@media(min-width:769px){
+  .product-bank{display:block;width:100%!important;min-width:0!important;}
+  .product-bank table{width:100%!important;min-width:0!important;table-layout:auto;}
+  .product-bank th,.product-bank td{padding-left:10px!important;padding-right:10px!important;}
+  /* the hidden Features column: hide its header too so Links lines up */
+  .product-bank th:nth-child(9){display:none;}
+  /* skinny number columns */
+  .product-bank th:nth-child(6),.product-bank td:nth-child(6),
+  .product-bank th:nth-child(7),.product-bank td:nth-child(7),
+  .product-bank th:nth-child(8),.product-bank td:nth-child(8){width:1%;white-space:nowrap;}
+  .product-bank th:nth-child(7){font-size:0;}
+  .product-bank th:nth-child(7)::after{content:'Videos';font-size:10px;}
+  .product-bank th:nth-child(1),.product-bank td:nth-child(1){width:1%;}
+  .product-bank td:nth-child(2){min-width:170px;}
+  .product-bank td:nth-child(3){min-width:90px;}
+  .product-bank th:nth-child(4),.product-bank td:nth-child(4),
+  .product-bank th:nth-child(5),.product-bank td:nth-child(5){width:1%;white-space:nowrap;}
+  .pl-badges{max-width:180px;}
+  .tbl-actions{flex-wrap:wrap;justify-content:flex-end;}
+}
 /* link badges */
 .pl-badges{display:flex;flex-wrap:wrap;gap:5px;max-width:230px;}
 .pl-badge{border:none;border-radius:999px;padding:4px 10px;font:800 10px 'Stack Sans Notch',sans-serif;letter-spacing:.04em;color:#fff;background:var(--rust);cursor:pointer;white-space:nowrap;transition:filter .12s,transform .12s;}
