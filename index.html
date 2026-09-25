@@ -565,6 +565,44 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .ideas-btn .b-title{font-size:20px;margin-bottom:4px;}
 .ib-count{font-size:12px;color:var(--text-muted);}
 .ib-go{font-family:'Bad Script',cursive;font-size:18px;color:var(--tan);margin-top:6px;}
+/* ── Today: a short strip that scrolls side to side ── */
+.board .sched-list-inner{display:flex!important;grid-template-columns:none!important;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;scrollbar-width:thin;}
+.board .sched-list-inner>.sched-row{flex:0 0 150px;scroll-snap-align:start;}
+.board .sched-thumb{aspect-ratio:4/3!important;}
+.board .rec-head{flex:0 0 100%;}
+.lower-grid>.stack:first-child>.card:first-child{flex:none!important;}
+#sched-list{flex:none!important;max-height:none!important;overflow:visible!important;}
+/* FB + IG top videos */
+.social-tops{padding:12px 14px!important;flex:none!important;}
+.st-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:6px;}
+.st-row .tops-tile .tops-img{width:100%;height:auto;aspect-ratio:3/4;}
+/* Best time + streak side by side */
+.bt-row{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;flex:1;min-height:0;}
+.bt-row .card{padding:12px 14px!important;height:auto!important;display:flex;flex-direction:column;}
+.bt-row .b-title{font-size:19px;margin-bottom:6px;}
+.bt-headline{font-family:'Bad Script',cursive;font-size:16px;color:var(--tan);text-align:center;line-height:1.3;margin-bottom:8px;}
+#bestTime{flex:1;display:flex;flex-direction:column;min-height:0;}
+.bt-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;align-items:end;flex:1;min-height:60px;}
+.bt-bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;}
+.bt-bar span{display:block;width:100%;border-radius:5px 5px 2px 2px;background:var(--surface-2);min-height:3px;max-height:calc(100% - 16px);}
+.bt-bar.best span{background:var(--rust);}
+.bt-bar small{font-size:9px;color:var(--text-muted);}
+.bt-times{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px;}
+.bt-t{text-align:center;background:var(--surface-2);border-radius:8px;padding:5px 2px;font-size:9px;color:var(--text-muted);}
+.bt-t b{display:block;font-size:12px;color:var(--ink);}
+.bt-t.best{background:var(--rust);color:#fff;} .bt-t.best b{color:#fff;}
+.streak{text-align:center;}
+.streak-num span{font-family:'Cormorant Garamond',serif;font-size:40px;line-height:1;color:var(--ink);}
+.streak-num small{display:block;font-size:10px;color:var(--text-muted);}
+.streak-dots{display:flex;justify-content:center;gap:4px;margin:8px 0;}
+.streak-dots i{width:19px;height:19px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:8px;font-weight:800;color:var(--text-muted);}
+.streak-dots i.on{background:var(--rust);color:#fff;}
+.streak-goal{font-size:11px;color:var(--text-muted);}
+.streak-goal b{color:var(--ink);}
+.streak-goal input{width:40px;background:var(--surface-2);border:1px solid var(--border-mid);border-radius:6px;color:var(--ink);padding:1px 3px;font-size:11px;text-align:center;}
+.streak-bar{height:5px;border-radius:99px;background:var(--surface-2);margin-top:8px;overflow:hidden;}
+.streak-bar div{height:100%;width:0;background:var(--tan);border-radius:99px;transition:width .3s;}
+@media(max-width:768px){.bt-row{grid-template-columns:1fr;}}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -687,6 +725,22 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                   <option value="other">Other</option>
                 </select>
                 <button class="mini-action" style="color:var(--rust);" onclick="toggleBulkEdit()">Done</button>
+              </div>
+            </div>
+            <div class="card social-tops">
+              <div class="tops-label">Top Facebook Videos</div>
+              <div class="st-row" id="stFb"><div class="tops-empty">Connect Facebook in Settings to see these.</div></div>
+              <div class="tops-label">Top Instagram Videos</div>
+              <div class="st-row" id="stIg"><div class="tops-empty">Connect Instagram in Settings to see these.</div></div>
+            </div>
+            <div class="bt-row">
+              <div class="card besttime"><div class="b-title">Best Time to Post</div><div id="bestTime"><div class="tops-empty" style="text-align:center">Loading…</div></div></div>
+              <div class="card streak">
+                <div class="b-title">Posting Streak</div>
+                <div class="streak-num"><span id="streakDays">0</span><small>days in a row · all platforms</small></div>
+                <div class="streak-dots" id="streakDots"></div>
+                <div class="streak-goal">This week: <b id="weekDone">0</b> / <input id="weekGoal" type="number" min="1" max="99"> posts</div>
+                <div class="streak-bar"><div id="weekBar"></div></div>
               </div>
             </div>
           </div>
@@ -1235,6 +1289,7 @@ async function init() {
   const productUnits=videoUnitsByProduct(products||[], videos||[], attributedSales||[]);
   window._productUnits=productUnits;
   renderTopVideos();
+  renderSocialCards();
   if(!_todayQueue.length) renderTodayContent();   // refresh recommendations now that sales are loaded
   const topProducts=(products||[]).slice().sort((a,b)=>(productUnits.get(b.id)||0)-(productUnits.get(a.id)||0)).filter(p=>(productUnits.get(p.id)||0)>0).slice(0,3);
   if(topProducts.length){
@@ -1608,6 +1663,53 @@ async function refreshTopThumb(img){
     if(!d?.thumbnail_url) throw new Error('none');
     img.src=d.thumbnail_url;
   }catch(e){ img.onerror=null; img.src=img.dataset.fb; }
+}
+// ── Facebook/Instagram top videos, Best Time to Post, Posting Streak ───────────
+async function renderSocialCards(){
+  const u=_dashboardUser; if(!u) return;
+  const fmtN=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n||0);
+  let accts=[], posts=[];
+  try{ accts=(await db.from('meta_accounts').select('account_id,platform,name,username').eq('user_id',u.id)).data||[]; }catch(e){}
+  const pick=pl=>{ const l=accts.filter(a=>a.platform===pl); return l.find(a=>/house\s*of\s*ko/i.test(`${a.name} ${a.username}`))||l[0]; };
+  const fb=pick('facebook'), ig=pick('instagram'), ids=[fb,ig].filter(Boolean).map(a=>a.account_id);
+  if(ids.length){ try{ posts=(await db.from('meta_posts').select('account_id,platform,permalink,thumbnail_url,views,posted_at').eq('user_id',u.id).in('account_id',ids).limit(3000)).data||[]; }catch(e){} }
+  const row=(el,acc)=>{ if(!acc) return; const top=posts.filter(p=>p.account_id===acc.account_id).sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,3);
+    document.getElementById(el).innerHTML=top.length?top.map(p=>`<a class="tops-tile" href="${esc(p.permalink)}" target="_blank" rel="noopener"><div class="tops-img" style="background-image:url('${esc(p.thumbnail_url)}')"><span class="tops-num">${fmtN(p.views)} views</span></div></a>`).join(''):'<div class="tops-empty">No videos synced yet.</div>'; };
+  row('stFb',fb); row('stIg',ig);
+  // Every post across TikTok (this account) + Facebook + Instagram
+  const all=[
+    ...(_dashboardVideos||[]).filter(v=>v.date).map(v=>({d:new Date(v.date+'T'+(v.posted_time||'12:00')),views:Number(v.views)||0,hasTime:!!v.posted_time})),
+    ...posts.filter(p=>p.posted_at).map(p=>({d:new Date(p.posted_at),views:Number(p.views)||0,hasTime:true}))
+  ];
+  const now=new Date(), today0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const ymdL=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  // Best time: needs a few posts; a day/slot needs 3+ posts to be called "best"
+  const bt=document.getElementById('bestTime');
+  if(all.length>=6){
+    const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0, overall=avg(all.map(p=>p.views))||1;
+    const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], byDay=days.map(()=>[]);
+    const slots=[['Morning',h=>h>=5&&h<12],['Afternoon',h=>h>=12&&h<17],['Evening',h=>h>=17&&h<22],['Late',h=>h>=22||h<5]], bySlot=slots.map(()=>[]);
+    all.forEach(p=>{ byDay[(p.d.getDay()+6)%7].push(p.views); if(p.hasTime) bySlot[slots.findIndex(s=>s[1](p.d.getHours()))].push(p.views); });
+    const dA=byDay.map(avg), sA=bySlot.map(avg);
+    const best=(A,G)=>{ let bi=-1; A.forEach((v,i)=>{ if(G[i].length>=3&&(bi<0||v>A[bi])) bi=i; }); return bi<0?A.indexOf(Math.max(...A)):bi; };
+    const bD=best(dA,byDay), bS=best(sA,bySlot), mult=Math.max(dA[bD],sA[bS])/overall, maxD=Math.max(...dA)||1;
+    bt.innerHTML=`<div class="bt-headline">${days[bD]} ${slots[bS][0].toLowerCase()} posts do best${mult>=1.2?` — ${mult.toFixed(1)}× your average`:''}</div>
+      <div class="bt-bars">${dA.map((v,i)=>`<div class="bt-bar${i===bD?' best':''}" title="${days[i]}: ${fmtN(Math.round(v))} avg views (${byDay[i].length} posts)"><span style="height:${Math.max(3,v/maxD*100)}%"></span><small>${days[i][0]}</small></div>`).join('')}</div>
+      <div class="bt-times">${slots.map((s,i)=>`<div class="bt-t${i===bS?' best':''}"><b>${fmtN(Math.round(sA[i]))}</b>${s[0]}</div>`).join('')}</div>`;
+  } else bt.innerHTML='<div class="tops-empty" style="text-align:center">A few more posts and this will show your best days and times.</div>';
+  // Streak + weekly goal
+  const posted=new Set(all.map(p=>ymdL(p.d)));
+  let streak=0; const cur=new Date(today0); if(!posted.has(ymdL(cur))) cur.setDate(cur.getDate()-1);
+  while(posted.has(ymdL(cur))){ streak++; cur.setDate(cur.getDate()-1); }
+  document.getElementById('streakDays').textContent=streak;
+  const monday=new Date(today0); monday.setDate(today0.getDate()-((today0.getDay()+6)%7));
+  document.getElementById('streakDots').innerHTML=[...Array(7)].map((_,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return `<i class="${posted.has(ymdL(d))?'on':''}">${'MTWTFSS'[i]}</i>`; }).join('');
+  const weekCount=all.filter(p=>p.d>=monday).length, goalEl=document.getElementById('weekGoal');
+  let g=35; try{ g=Number(localStorage.getItem('take24:postGoal'))||35; }catch(e){}
+  goalEl.value=g;
+  const paint=()=>{ const gv=Math.max(1,Number(goalEl.value)||35); document.getElementById('weekDone').textContent=weekCount; document.getElementById('weekBar').style.width=Math.min(100,weekCount/gv*100)+'%'; };
+  goalEl.oninput=()=>{ try{ localStorage.setItem('take24:postGoal',goalEl.value); }catch(e){} paint(); };
+  paint();
 }
 function renderTodayContent(){
   const list=document.getElementById('sched-list');
