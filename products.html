@@ -842,19 +842,33 @@ async function init() {
     const noLink = _allProducts.filter(p => !String(p.image_url||'').trim() && !/tiktok|tokopedia/i.test(String(p.link||''))).length;
     if (!todo.length) { showToast(noLink ? `No TikTok Shop links to look up — ${noLink} product${noLink===1?'':'s'} without photos have no TikTok Shop link` : 'Every product already has a photo'); return; }
     if (!confirm(`Look up photos for ${todo.length} product${todo.length===1?'':'s'} on TikTok Shop?`)) return;
-    btn.disabled = true; let found = 0;
+    btn.disabled = true; let found = 0, lastErr = '';
+    // Finds the first product photo anywhere in the lookup response, whatever shape it comes back in
+    const findImg = (o, depth = 0) => {
+      if (!o || depth > 7) return '';
+      if (typeof o === 'string') return /^https?:\/\/\S+/i.test(o) && /(ibyteimg|tiktokcdn|byteimg|muscdn|\.(jpe?g|png|webp)(\?|$))/i.test(o) && !/avatar|logo|icon/i.test(o) ? o : '';
+      if (Array.isArray(o)) { for (const x of o) { const f = findImg(x, depth + 1); if (f) return f; } return ''; }
+      if (typeof o === 'object') {
+        const pri = ['images','image','main_images','cover','img','url_list','thumb_url_list','product_base','product_info','product','data'];
+        for (const k of pri) if (k in o) { const f = findImg(o[k], depth + 1); if (f) return f; }
+        for (const k in o) if (!pri.includes(k) && !/shop|seller|author|avatar|logo/i.test(k)) { const f = findImg(o[k], depth + 1); if (f) return f; }
+      }
+      return '';
+    };
     for (let i = 0; i < todo.length; i++) {
       const p = todo[i]; btn.textContent = `Looking up ${i+1}/${todo.length}…`;
       try {
-        const d = await enrichImportProduct({ link: p.link, name: p.name, brand: p.brand, image_url: '' });
-        if (d?.image_url) {
-          const { error } = await db.from('products').update({ image_url: d.image_url }).eq('id', p.id).eq('user_id', user.id);
-          if (!error) { p.image_url = d.image_url; found++; }
-        }
-      } catch (e) {}
+        const res = await fetch(`${SCOUT_WORKER_URL}?endpoint=tiktok/product&url=${encodeURIComponent(p.link)}&region=US`);
+        const text = await res.text(); let data = {}; try { data = JSON.parse(text); } catch (e) {}
+        if (!res.ok) { lastErr = data?.message || data?.error || `lookup error ${res.status}`; console.warn('Photo lookup failed', p.name, res.status, text.slice(0, 300)); continue; }
+        const img = findImg(data);
+        if (!img) { lastErr = 'no photo in the lookup result'; console.warn('No photo found for', p.name, data); continue; }
+        const { error } = await db.from('products').update({ image_url: img }).eq('id', p.id).eq('user_id', user.id);
+        if (!error) { p.image_url = img; found++; }
+      } catch (e) { lastErr = e.message; }
     }
     btn.disabled = false; btn.textContent = 'Get Missing Photos';
-    showToast(`Added ${found} photo${found===1?'':'s'}` + (todo.length - found ? ` · ${todo.length - found} couldn't be found` : '') + (noLink ? ` · ${noLink} have no TikTok Shop link` : ''));
+    showToast(`Added ${found} photo${found===1?'':'s'}` + (todo.length - found ? ` · ${todo.length - found} not found${lastErr ? ' (' + lastErr + ')' : ''}` : ''), found ? 'success' : 'error');
     window.renderProducts();
   };
   window.copyProdLink = async function(btn){
