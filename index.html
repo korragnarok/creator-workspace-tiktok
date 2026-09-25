@@ -585,7 +585,8 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 /* FB + IG top videos */
 .social-tops{padding:12px 14px!important;flex:none!important;}
 .st-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:6px;}
-.st-row .tops-tile .tops-img{width:100%;height:auto;aspect-ratio:3/4;}
+.st-row .tops-tile .tops-img{width:100%;height:auto;aspect-ratio:4/5;}
+.st-plat{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.62);color:#fff;border-radius:999px;padding:2px 7px;font-size:8.5px;font-weight:800;letter-spacing:.05em;}
 /* Best time + streak side by side */
 .bt-row{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;flex:1;min-height:0;}
 .bt-row .card{padding:12px 14px!important;height:auto!important;display:flex;flex-direction:column;}
@@ -738,10 +739,8 @@ select.sched-location-tag:focus{border-color:var(--rust);}
               </div>
             </div>
             <div class="card social-tops">
-              <div class="tops-label">Top Facebook Videos</div>
-              <div class="st-row" id="stFb"><div class="tops-empty">Connect Facebook in Settings to see these.</div></div>
-              <div class="tops-label">Top Instagram Videos</div>
-              <div class="st-row" id="stIg"><div class="tops-empty">Connect Instagram in Settings to see these.</div></div>
+              <div class="tops-label">Top Videos · All Platforms</div>
+              <div class="st-row" id="stAll"><div class="tops-empty">Loading…</div></div>
             </div>
             <div class="bt-row">
               <div class="card besttime"><div class="b-title">Best Time to Post</div><div id="bestTime"><div class="tops-empty" style="text-align:center">Loading…</div></div></div>
@@ -1684,9 +1683,14 @@ async function renderSocialCards(){
   const pick=pl=>{ const l=accts.filter(a=>a.platform===pl); return l.find(a=>/house\s*of\s*ko/i.test(`${a.name} ${a.username}`))||l[0]; };
   const fb=pick('facebook'), ig=pick('instagram'), ids=[fb,ig].filter(Boolean).map(a=>a.account_id);
   if(ids.length){ try{ posts=(await db.from('meta_posts').select('account_id,platform,permalink,thumbnail_url,views,posted_at').eq('user_id',u.id).in('account_id',ids).limit(3000)).data||[]; }catch(e){} }
-  const row=(el,acc)=>{ if(!acc) return; const top=posts.filter(p=>p.account_id===acc.account_id).sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,3);
-    document.getElementById(el).innerHTML=top.length?top.map(p=>`<a class="tops-tile" href="${esc(p.permalink)}" target="_blank" rel="noopener"><div class="tops-img" style="background-image:url('${esc(p.thumbnail_url)}')"><span class="tops-num">${fmtN(p.views)} views</span></div></a>`).join(''):'<div class="tops-empty">No videos synced yet.</div>'; };
-  row('stFb',fb); row('stIg',ig);
+  // One row: the 3 most-viewed videos across TikTok (this account), Facebook and Instagram
+  const noteVal=(n,k)=>{ const m=String(n||'').match(new RegExp('^'+k+'\\s*:\\s*(.*)$','im')); return m?m[1].trim():''; };
+  const ttThumb=v=>String(v.thumbnail_url||v.cover_url||v.image_url||noteVal(v.notes,'TikTok thumbnail')||noteVal(v.notes,'Thumbnail')||'').trim();
+  const pool=[
+    ...(_dashboardVideos||[]).map(v=>({plat:'TikTok',views:Number(v.views)||0,link:v.link,thumb:ttThumb(v),id:v.id})),
+    ...posts.map(p=>({plat:p.platform==='instagram'?'Instagram':'Facebook',views:Number(p.views)||0,link:p.permalink,thumb:p.thumbnail_url}))
+  ].filter(x=>x.views>0).sort((a,b)=>b.views-a.views).slice(0,3);
+  document.getElementById('stAll').innerHTML=pool.length?pool.map(x=>`<a class="tops-tile" href="${esc(x.link||'#')}" target="_blank" rel="noopener"><div class="tops-img" style="background-image:url('${esc(x.thumb)}')"><span class="st-plat">${x.plat}</span><span class="tops-num">${fmtN(x.views)} views</span></div></a>`).join(''):'<div class="tops-empty">No video views yet.</div>';
   // Every post across TikTok (this account) + Facebook + Instagram
   const all=[
     ...(_dashboardVideos||[]).filter(v=>v.date).map(v=>({d:new Date(v.date+'T'+(v.posted_time||'12:00')),views:Number(v.views)||0,hasTime:!!v.posted_time})),
