@@ -621,6 +621,24 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .streak-bar{height:5px;border-radius:99px;background:var(--surface-2);margin-top:8px;overflow:hidden;}
 .streak-bar div{height:100%;width:0;background:var(--tan);border-radius:99px;transition:width .3s;}
 @media(max-width:768px){.bt-row{grid-template-columns:1fr;}}
+/* ── Home v2: Meta side + TikTok side ── */
+.b-left .stats-grid{display:none!important;}          /* replaced by the TikTok Stats card */
+.left-goals{display:flex;flex-direction:column;gap:12px;}
+.tt-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.tt-head .b-title{margin:0!important;text-align:left;}
+.tt-tabs{display:flex;gap:4px;flex-wrap:wrap;}
+.tt-tab{border:1px solid var(--border-mid);background:transparent;color:var(--text-muted);border-radius:999px;padding:3px 9px;font:800 9.5px 'Stack Sans Notch',sans-serif;letter-spacing:.04em;cursor:pointer;}
+.tt-tab:hover{color:var(--ink);border-color:var(--tan);}
+.tt-tab.on{background:var(--rust);border-color:var(--rust);color:#fff;}
+.tt-row2,.meta-row{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;flex:none!important;}
+.tt-row2 .card,.meta-row .card{padding:12px 14px!important;height:auto!important;}
+.tt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.tt-stat{background:var(--surface-2);border-radius:12px;padding:8px 10px;}
+.tt-l{font:800 8.5px 'Stack Sans Notch',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tan);}
+.tt-v{font-family:'Noto Sans Mono',monospace;font-size:19px;font-weight:800;color:var(--ink);margin-top:2px;}
+.tops-card .b-title{font-size:19px;}
+.lower-grid>.stack:last-child{overflow-y:auto;scrollbar-width:none;}
+@media(max-width:768px){.tt-row2,.meta-row{grid-template-columns:1fr;}}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -650,7 +668,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=200"></script>
+<script src="supabase.js?v=209"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -667,6 +685,13 @@ select.sched-location-tag:focus{border-color:var(--rust);}
             <div class="b-cal-grid" id="bCalGrid"></div>
           </div>
           <div id="heroBrandsSlot"></div>
+            <div class="goals-col left-goals">
+            <div class="card b-goals">
+            <div class="b-title">Monthly Goals</div>
+            <div id="bGoals"></div>
+            </div>
+            <a class="card ideas-btn" href="ideas.html"><div class="b-title">Content Ideas</div><div class="ib-count" id="ideasCount"></div><div class="ib-go">Open ideas board →</div></a>
+            </div>
           <div class="stats-grid mob-order-2">
             <div class="stat-card">
               <div class="stat-icon"><img src="icons/sales.png" data-theme-icon alt=""></div>
@@ -746,14 +771,21 @@ select.sched-location-tag:focus{border-color:var(--rust);}
               </div>
             </div>
             <div class="card social-tops">
-              <div class="tops-label">Top Videos · All Platforms</div>
+              <div class="tops-label">Top Videos · Facebook &amp; Instagram</div>
               <div class="st-row" id="stAll"><div class="tops-empty">Loading…</div></div>
             </div>
-            <div class="bt-row">
-              <div class="card besttime"><div class="b-title">Best Time to Post</div><div id="bestTime"><div class="tops-empty" style="text-align:center">Loading…</div></div></div>
+            <div class="bt-row meta-row">
+              <div class="card meta-stats">
+                <div class="b-title">Meta Stats</div>
+                <div class="tt-grid">
+                  <div class="tt-stat"><div class="tt-l">Facebook followers</div><div class="tt-v" id="mFb">-</div></div>
+                  <div class="tt-stat"><div class="tt-l">Instagram followers</div><div class="tt-v" id="mIg">-</div></div>
+                  <div class="tt-stat" style="grid-column:1/-1"><div class="tt-l">Views · last 30 days</div><div class="tt-v" id="mViews30">-</div></div>
+                </div>
+              </div>
               <div class="card streak">
                 <div class="b-title">Posting Streak</div>
-                <div class="streak-num"><span id="streakDays">0</span><small>days in a row · all platforms</small></div>
+                <div class="streak-num"><span id="streakDays">0</span><small>days in a row on Facebook/Instagram</small></div>
                 <div class="streak-dots" id="streakDots"></div>
                 <div class="streak-goal">This week: <b id="weekDone">0</b> / <input id="weekGoal" type="number" min="1" max="99"> posts</div>
                 <div class="streak-bar"><div id="weekBar"></div></div>
@@ -773,7 +805,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                     <button class="chart-pill" onclick="setChartRange('week')">This Week</button>
                   </div>
                 </div>
-                <a class="mini-action" href="sales-calendar.html">Calendar</a>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;"><div class="tt-tabs" data-card="chart"></div><a class="mini-action" href="sales-calendar.html">Calendar</a></div>
               </div>
               <div class="chart-metrics">
                 <div class="metric"><span class="metric-dot"></span><div><div class="metric-value" id="m-comm">-</div><div class="metric-label">total commission</div></div></div>
@@ -781,25 +813,30 @@ select.sched-location-tag:focus{border-color:var(--rust);}
               </div>
               <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
             </div>
-            <div class="card b-week">
-              <div class="b-title">This Week</div>
-              <div class="week-grid" id="bWeek"></div>
+            <div class="tt-row2">
+              <div class="card tt-stats">
+                <div class="tt-head"><div class="b-title">TikTok Stats</div><div class="tt-tabs" data-card="stats"></div></div>
+                <div class="tt-grid">
+                  <div class="tt-stat"><div class="tt-l">Commission · 30d</div><div class="tt-v" id="ttComm">-</div></div>
+                  <div class="tt-stat"><div class="tt-l">GMV · 30d</div><div class="tt-v" id="ttGmv">-</div></div>
+                  <div class="tt-stat"><div class="tt-l">To Do today</div><div class="tt-v" id="ttTodo">-</div></div>
+                  <div class="tt-stat"><div class="tt-l">Followers</div><div class="tt-v" id="ttFol">-</div></div>
+                </div>
+              </div>
+              <div class="card tt-streak streak">
+                <div class="tt-head"><div class="b-title">Posting Streak</div><div class="tt-tabs" data-card="streak"></div></div>
+                <div class="streak-num"><span id="ttStreak">0</span><small>days in a row on TikTok</small></div>
+                <div class="streak-dots" id="ttDots"></div>
+                <div class="streak-goal">This week: <b id="ttWeek">0</b> posts</div>
+              </div>
             </div>
-            <div class="tops-row">
             <div class="card mob-order-4 tops-card">
-              <div class="tops-label">Top Products</div>
-              <div class="empty-box" id="top-products"><strong>No products saved yet.</strong>Add products you want to research or promote.</div>
+              <div class="tt-head"><div class="b-title">Top Videos &amp; Best Sellers</div><div class="tt-tabs" data-card="tops"></div></div>
               <div class="tops-label">Top Videos</div>
               <div class="tops-grid" id="top-videos"><div class="tops-empty">No video views yet.</div></div>
+              <div class="tops-label">Best Selling Products</div>
+              <div class="empty-box" id="top-products"><strong>No sales yet.</strong>Top products show up once sales are logged.</div>
             </div>
-            <div class="goals-col">
-            <div class="card b-goals">
-            <div class="b-title">Monthly Goals</div>
-            <div id="bGoals"></div>
-            </div>
-            <a class="card ideas-btn" href="ideas.html"><div class="b-title">Content Ideas</div><div class="ib-count" id="ideasCount"></div><div class="ib-go">Open ideas board →</div></a>
-            </div>
-          </div>
         </section>
 
         <!-- Today's Lineup strip -->
@@ -869,7 +906,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 </div>
 
 <script src="planner-sync.js?v=198"></script>
-<script src="layout.js?v=200"></script>
+<script src="layout.js?v=209"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
@@ -901,7 +938,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 
   // Today's date on the filming card
   const tdl = document.getElementById('todayDateLabel');
-  if (tdl) tdl.textContent = 'Today';
+  if (tdl) tdl.textContent = "Today's Content";
 
   // This Week — Mon–Sun notes, synced through Supabase
   (async function(){
@@ -1243,7 +1280,8 @@ async function init() {
 
   // Get active TikTok account and scope all data to it
   const activeAccount = await getActiveAccount(user.id);
-  const activeAccountId = activeAccount?.tiktok_open_id || null;
+  // Home combines both TikTok accounts; the TikTok cards pick an account with their own tabs
+  const activeAccountId = null;
 
   initTikTokFollowerCard(user.id, activeAccount);
   const heroSub = document.querySelector('.hero-sub');
@@ -1259,7 +1297,7 @@ async function init() {
   await carryForwardUnfinishedQueue(user.id, todayStr);
 
   // Build account-scoped product query
-  let productQuery = db.from('products').select('id,name,brand,units_sold,image_url,status,notes').eq('user_id', user.id);
+  let productQuery = db.from('products').select('id,name,brand,units_sold,image_url,status,notes,tiktok_account_id').eq('user_id', user.id);
   if(activeAccountId){
     productQuery = productQuery.or(`tiktok_account_id.eq.${activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);   // + products shared with all accounts
   }
@@ -1341,6 +1379,7 @@ async function init() {
   const streak = calcStreak(_dashboardVideos, todayStr, _streakGoal);
   setText('s-streak', fmtStreak(streak));
 
+  ttInitCards(user);
   renderSalesChart(labels,commData,gmvData);
 }
 
@@ -1641,7 +1680,7 @@ function renderFilmRecommendations(list){
 async function addRecommendedToToday(prodId,btn){
   const p=(_dashboardProducts||[]).find(x=>String(x.id)===String(prodId)); if(!p||!_dashboardUser) return;
   btn.disabled=true; btn.textContent='…';
-  const {data,error}=await db.from('queue').insert({user_id:_dashboardUser.id,tiktok_account_id:getActiveAccountId()||null,date:localDateKey(),prod_id:p.id,name:p.name||'',brand:p.brand||'',notes:'',script:'',done:false,sort_order:_todayQueue.length})
+  const {data,error}=await db.from('queue').insert({user_id:_dashboardUser.id,tiktok_account_id:p.tiktok_account_id||getActiveAccountId()||null,date:localDateKey(),prod_id:p.id,name:p.name||'',brand:p.brand||'',notes:'',script:'',done:false,sort_order:_todayQueue.length})
     .select('id,name,brand,notes,script,done,prod_id,sort_order').single();
   if(error){ showToast(error.message,'error'); btn.disabled=false; btn.textContent='+'; return; }
   _todayQueue=[..._todayQueue,data];
@@ -1649,12 +1688,12 @@ async function addRecommendedToToday(prodId,btn){
   showToast(`Added ${p.name} to today`);
 }
 // ── Top 3 TikTok videos by views ──────────────────────────────────────────
-function renderTopVideos(){
+function renderTopVideos(list){
   const el=document.getElementById('top-videos'); if(!el) return;
   const noteVal=(notes,label)=>{ const e=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); const m=String(notes||'').match(new RegExp(`^${e}\\s*:\\s*(.*)$`,'im')); return m?m[1].trim():''; };
   const thumb=v=>String(v.thumbnail_url||v.cover_url||v.image_url||noteVal(v.notes,'TikTok thumbnail')||noteVal(v.notes,'Thumbnail')||'').trim();
   const fmtN=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n||0);
-  const top=(_dashboardVideos||[]).filter(v=>(Number(v.views)||0)>0).sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0)).slice(0,3);
+  const top=(list||_dashboardVideos||[]).filter(v=>(Number(v.views)||0)>0).sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0)).slice(0,3);
   if(!top.length){ el.innerHTML='<div class="tops-empty">No video views yet.</div>'; return; }
   // TikTok thumbnail links expire after a while, so fall back to the linked product's photo.
   const prodImg=v=>{ const ps=_dashboardProducts||[]; const byId=v.prod_id&&ps.find(p=>p.id===v.prod_id);
@@ -1690,17 +1729,15 @@ async function renderSocialCards(){
   const pick=pl=>{ const l=accts.filter(a=>a.platform===pl); return l.find(a=>/house\s*of\s*ko/i.test(`${a.name} ${a.username}`))||l[0]; };
   const fb=pick('facebook'), ig=pick('instagram'), ids=[fb,ig].filter(Boolean).map(a=>a.account_id);
   if(ids.length){ try{ posts=(await db.from('meta_posts').select('account_id,platform,permalink,thumbnail_url,views,posted_at').eq('user_id',u.id).in('account_id',ids).limit(3000)).data||[]; }catch(e){} }
-  // One row: the 3 most-viewed videos across TikTok (this account), Facebook and Instagram
-  const noteVal=(n,k)=>{ const m=String(n||'').match(new RegExp('^'+k+'\\s*:\\s*(.*)$','im')); return m?m[1].trim():''; };
-  const ttThumb=v=>String(v.thumbnail_url||v.cover_url||v.image_url||noteVal(v.notes,'TikTok thumbnail')||noteVal(v.notes,'Thumbnail')||'').trim();
-  const pool=[
-    ...(_dashboardVideos||[]).map(v=>({plat:'TikTok',views:Number(v.views)||0,link:v.link,thumb:ttThumb(v),id:v.id})),
-    ...posts.map(p=>({plat:p.platform==='instagram'?'Instagram':'Facebook',views:Number(p.views)||0,link:p.permalink,thumb:p.thumbnail_url}))
-  ].filter(x=>x.views>0).sort((a,b)=>b.views-a.views).slice(0,3);
-  document.getElementById('stAll').innerHTML=pool.length?pool.map(x=>`<a class="tops-tile" href="${esc(x.link||'#')}" target="_blank" rel="noopener"><div class="tops-img" style="background-image:url('${esc(x.thumb)}')"><span class="st-plat">${x.plat}</span><span class="tops-num">${fmtN(x.views)} views</span></div></a>`).join(''):'<div class="tops-empty">No video views yet.</div>';
+  // Top 3 across Facebook + Instagram
+  const pool=posts.map(p=>({plat:p.platform==='instagram'?'Instagram':'Facebook',views:Number(p.views)||0,link:p.permalink,thumb:p.thumbnail_url})).filter(x=>x.views>0).sort((a,b)=>b.views-a.views).slice(0,3);
+  document.getElementById('stAll').innerHTML=pool.length?pool.map(x=>`<a class="tops-tile" href="${esc(x.link||'#')}" target="_blank" rel="noopener"><div class="tops-img" style="background-image:url('${esc(x.thumb)}')"><span class="st-plat">${x.plat}</span><span class="tops-num">${fmtN(x.views)} views</span></div></a>`).join(''):'<div class="tops-empty">Connect Facebook &amp; Instagram in Settings to see these.</div>';
+  // Meta stats
+  try{ const fa=(await db.from('meta_accounts').select('account_id,follower_count').eq('user_id',u.id)).data||[]; const fol=id=>(fa.find(a=>a.account_id===id)?.follower_count)||0;
+    if(fb) document.getElementById('mFb').textContent=fmtN(fol(fb.account_id)); if(ig) document.getElementById('mIg').textContent=fmtN(fol(ig.account_id)); }catch(e){}
+  document.getElementById('mViews30').textContent=fmtN(posts.filter(p=>p.posted_at&&(Date.now()-new Date(p.posted_at))<=30*864e5).reduce((a,p)=>a+(Number(p.views)||0),0));
   // Every post across TikTok (this account) + Facebook + Instagram
   const all=[
-    ...(_dashboardVideos||[]).filter(v=>v.date).map(v=>({d:new Date(v.date+'T'+(v.posted_time||'12:00')),views:Number(v.views)||0,hasTime:!!v.posted_time})),
     ...posts.filter(p=>p.posted_at).map(p=>({d:new Date(p.posted_at),views:Number(p.views)||0,hasTime:true}))
   ];
   const now=new Date(), today0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -1732,6 +1769,70 @@ async function renderSocialCards(){
   const paint=()=>{ const gv=Math.max(1,Number(goalEl.value)||35); document.getElementById('weekDone').textContent=weekCount; document.getElementById('weekBar').style.width=Math.min(100,weekCount/gv*100)+'%'; };
   goalEl.oninput=()=>{ try{ localStorage.setItem('take24:postGoal',goalEl.value); }catch(e){} paint(); };
   paint();
+}
+// ── TikTok cards: each has its own account tabs (graph, stats, streak, tops, level ladder) ──
+const TT={accts:[],cache:{},user:null};
+function ttSel(card){ let v=null; try{ v=localStorage.getItem('take24:cardAcct:'+card); }catch(e){}
+  return TT.accts.some(a=>a.tiktok_open_id===v)?v:(getActiveAccountId()&&TT.accts.some(a=>a.tiktok_open_id===getActiveAccountId())?getActiveAccountId():TT.accts[0]?.tiktok_open_id); }
+function ttData(id){
+  if(TT.cache[id]) return TT.cache[id];
+  const u=TT.user, t=new Date(), since=new Date(t); since.setDate(t.getDate()-29);
+  const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const monthStart=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-01`;
+  TT.cache[id]=(async()=>{
+    const [{data:sales},{data:month},videos,{data:products},attributed,{data:queue}]=await Promise.all([
+      db.from('sales').select('date,gmv,comm,units').eq('user_id',u.id).eq('tiktok_account_id',id).gte('date',ymd(since)).order('date'),
+      db.from('sales').select('gmv').eq('user_id',u.id).eq('tiktok_account_id',id).gte('date',monthStart),
+      fetchDashboardVideos(u.id,id),
+      db.from('products').select('id,name,brand,units_sold,image_url,status,notes').eq('user_id',u.id).or(`tiktok_account_id.eq.${id},tiktok_account_id.is.null,tiktok_account_id.eq.`),
+      fetchAttributedSales(u.id,id),
+      db.from('queue').select('done').eq('user_id',u.id).eq('tiktok_account_id',id).eq('date',ymd(t))
+    ]);
+    return {sales:sales||[],monthGmv:(month||[]).reduce((a,r)=>a+(parseFloat(r.gmv)||0),0),videos:videos||[],products:products||[],attributed:attributed||[],queue:queue||[]};
+  })();
+  return TT.cache[id];
+}
+const TT_RENDER={
+  async chart(id){ const d=await ttData(id); window._allSalesRows=d.sales; setChartRange(window._chartRange||'30d'); },
+  async stats(id){ const d=await ttData(id), a=TT.accts.find(x=>x.tiktok_open_id===id);
+    setText('ttComm',fmtMoney(d.sales.reduce((s,r)=>s+(parseFloat(r.comm)||0),0)));
+    setText('ttGmv',fmtMoney(d.sales.reduce((s,r)=>s+(parseFloat(r.gmv)||0),0)));
+    setText('ttTodo',String(d.queue.filter(q=>!q.done).length));
+    const f=Number(a?.follower_count)||0; setText('ttFol',f>=1e4?Math.round(f/1e3)+'K':f>=1e3?(f/1e3).toFixed(1)+'K':String(f)); },
+  async streak(id){ const d=await ttData(id), todayStr=localDateKey();
+    setText('ttStreak',String(calcStreak(d.videos,todayStr,1)));
+    const t=new Date(), mon=new Date(t.getFullYear(),t.getMonth(),t.getDate()); mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+    const keys=new Set(d.videos.map(videoDateKey)); let wk=0;
+    document.getElementById('ttDots').innerHTML=[...Array(7)].map((_,i)=>{ const x=new Date(mon); x.setDate(mon.getDate()+i); const k=`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; return `<i class="${keys.has(k)?'on':''}">${'MTWTFSS'[i]}</i>`; }).join('');
+    d.videos.forEach(v=>{ const k=videoDateKey(v); if(k&&dateFromKey(k)>=mon) wk++; }); setText('ttWeek',String(wk)); },
+  async tops(id){ const d=await ttData(id);
+    renderTopVideos(d.videos);
+    const units=videoUnitsByProduct(d.products,d.videos,d.attributed);
+    const top=d.products.slice().sort((a,b)=>(units.get(b.id)||0)-(units.get(a.id)||0)).filter(p=>(units.get(p.id)||0)>0).slice(0,3);
+    const el=document.getElementById('top-products');
+    if(!top.length){ el.className='empty-box'; el.innerHTML='<strong>No sales yet.</strong>Top products show up once sales are logged.'; return; }
+    el.className='tops-grid';
+    el.innerHTML=top.map(p=>`<a class="tops-tile" href="products.html?search=${encodeURIComponent(p.name||'')}"><div class="tops-img" style="background-image:url('${esc(p.image_url||'icons/default-product.png')}')"><span class="tops-num">${(units.get(p.id)||0).toLocaleString()} sold</span></div><div class="tops-name">${esc(p.name)}</div><div class="tops-sub">${esc(p.brand)}</div></a>`).join(''); },
+  async ladder(id){ const d=await ttData(id), g=d.monthGmv; let li=0; for(let i=LEVELS.length-1;i>=0;i--){ if(g>=LEVELS[i].min){li=i;break;} }
+    const lvl=LEVELS[li], nx=LEVELS[li+1];
+    document.getElementById('lc-icon').src=`icons/levels/${lvl.icon}.png`;
+    document.querySelectorAll('.tier').forEach(t=>t.classList.toggle('current',t.dataset.tier===lvl.name));
+    setText('lc-cta', nx?`${fmtMoney(nx.min-g)} more in GMV to reach ${nx.name}.`:'Top tier reached. Keep creating and tracking your wins.');
+    renderMiniLadder(li,g); }
+};
+async function ttInitCards(user){
+  TT.user=user;
+  const {data}=await db.from('tiktok_accounts').select('tiktok_open_id,display_name,username,follower_count').eq('user_id',user.id).order('created_at');
+  TT.accts=data||[]; if(!TT.accts.length) return;
+  // Level Ladder gets tabs in its header too
+  const lh=document.querySelector('.b-right .level-feature-head');
+  if(lh&&!lh.querySelector('.tt-tabs')) lh.insertAdjacentHTML('beforeend','<div class="tt-tabs" data-card="ladder"></div>');
+  document.querySelectorAll('.tt-tabs[data-card]').forEach(box=>{
+    const card=box.dataset.card;
+    const paint=()=>{ const sel=ttSel(card); box.innerHTML=TT.accts.length>1?TT.accts.map(a=>`<button type="button" class="tt-tab${a.tiktok_open_id===sel?' on':''}" data-acct="${a.tiktok_open_id}">@${esc(a.display_name||a.username||'account')}</button>`).join(''):''; TT_RENDER[card]?.(sel); };
+    box.onclick=e=>{ const b=e.target.closest('[data-acct]'); if(!b) return; try{ localStorage.setItem('take24:cardAcct:'+card,b.dataset.acct); }catch(err){} paint(); };
+    paint();
+  });
 }
 function renderTodayContent(){
   const list=document.getElementById('sched-list');

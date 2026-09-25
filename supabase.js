@@ -785,6 +785,27 @@ async function saveCore5Modal() {
 
 const ACTIVE_ACCOUNT_KEY = 'take24:active_tiktok_account';
 
+// ── Account tabs for pages (Products, Content Tracker, Sales Log) ──
+// Renders "House of Ko | Cozy Ko" pills into `el`; clicking one switches the page's account.
+async function renderAccountTabs(el, userId) {
+  if (!el) return;
+  const { data } = await db.from('tiktok_accounts').select('tiktok_open_id,display_name,username').eq('user_id', userId).order('created_at', { ascending: true });
+  if (!data?.length) { el.innerHTML = ''; return; }
+  let active = getActiveAccountId();
+  if (!data.some(a => a.tiktok_open_id === active)) { active = data[0].tiktok_open_id; setActiveAccountId(active); }
+  if (!document.getElementById('acct-tabs-css')) {
+    const st = document.createElement('style'); st.id = 'acct-tabs-css';
+    st.textContent = `.acct-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px;}
+      .acct-tab{border:1px solid var(--border-mid);background:var(--surface);color:var(--text-mid);border-radius:999px;padding:7px 14px;font:800 11px 'Stack Sans Notch',sans-serif;letter-spacing:.05em;cursor:pointer;}
+      .acct-tab:hover{color:var(--ink);border-color:var(--tan);}
+      .acct-tab.active{background:var(--rust);border-color:var(--rust);color:#fff;}`;
+    document.head.appendChild(st);
+  }
+  el.className = 'acct-tabs';
+  el.innerHTML = data.map(a => `<button type="button" class="acct-tab${a.tiktok_open_id === active ? ' active' : ''}" data-acct="${a.tiktok_open_id}">@${a.display_name || a.username || 'account'}</button>`).join('');
+  el.onclick = e => { const b = e.target.closest('[data-acct]'); if (!b || b.dataset.acct === active) return; setActiveAccountId(b.dataset.acct); location.reload(); };
+}
+
 function getActiveAccountId() {
   try { return localStorage.getItem(ACTIVE_ACCOUNT_KEY) || null; } catch(e) { return null; }
 }
@@ -847,6 +868,9 @@ function initProfilePopover(userId) {
   async function renderAccountSwitcher() {
     const section = document.getElementById('_popAccountsSection');
     if (!section) return;
+    section.innerHTML = ''; if (!getActiveAccountId()) { const { data: f } = await db.from('tiktok_accounts').select('tiktok_open_id').eq('user_id', userId).order('created_at').limit(1); if (f?.[0]) setActiveAccountId(f[0].tiktok_open_id); }
+    return;   // account switching now happens with tabs on each page
+    // eslint-disable-next-line no-unreachable
     const { data, error } = await db
       .from('tiktok_accounts')
       .select('tiktok_open_id, display_name, avatar_url, username')
