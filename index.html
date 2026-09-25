@@ -566,8 +566,13 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .ib-count{font-size:12px;color:var(--text-muted);}
 .ib-go{font-family:'Bad Script',cursive;font-size:18px;color:var(--tan);margin-top:6px;}
 /* ── Today: a short strip that scrolls side to side ── */
-.board .sched-list-inner{display:flex!important;grid-template-columns:none!important;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;scrollbar-width:thin;}
-.board .sched-list-inner>.sched-row{flex:0 0 150px;scroll-snap-align:start;}
+.board .sched-list-inner{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;grid-template-columns:none!important;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;scrollbar-width:thin;}
+.board .sched-list-inner>.sched-row{flex:0 0 140px!important;width:140px;max-width:140px;scroll-snap-align:start;padding:8px!important;gap:5px!important;}
+.board .sched-list-inner .sched-thumb{width:100%!important;height:92px!important;aspect-ratio:auto!important;}
+.board .sched-list-inner .sched-name{font-size:12px!important;-webkit-line-clamp:2;}
+.board .sched-list-inner .sched-brand,.board .sched-list-inner .rec-reason{font-size:10px!important;}
+.board .sched-list-inner .sched-type-cell,.board .sched-list-inner .sched-location-cell{display:none;}   /* keep tiles short — full details on Daily To Do */
+.board .sched-list-inner .rec-add{top:12px!important;right:12px!important;width:26px!important;height:26px!important;font-size:17px!important;}
 .board .sched-thumb{aspect-ratio:4/3!important;}
 .board .rec-head{flex:none;margin-bottom:8px;}
 .lower-grid>.stack:first-child>.card:first-child{flex:none!important;}
