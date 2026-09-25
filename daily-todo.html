@@ -678,7 +678,7 @@ async function refreshDay(btn){
 // To Do is kept separate per TikTok account, same as Products and Videos
 function _acct(){return (typeof getActiveAccountId==='function'&&getActiveAccountId())||null;}
 function _byAcct(q){const a=_acct();return a?q.eq('tiktok_account_id',a):q;}
-async function loadProducts(){const{data}=await _byAcct(db.from('products').select('id,name,brand,link,notes,status').eq('user_id',_user.id)).order('name');ALL_PRODUCTS=(data||[]).filter(p=>p.status!=='paused'&&p.status!=='archived');}
+async function loadProducts(){const a=_acct();let pq=db.from('products').select('id,name,brand,link,notes,status').eq('user_id',_user.id);if(a)pq=pq.or(`tiktok_account_id.eq.${a},tiktok_account_id.is.null,tiktok_account_id.eq.`);const{data}=await (pq).order('name');ALL_PRODUCTS=(data||[]).filter(p=>p.status!=='paused'&&p.status!=='archived');}
 async function loadHooks(){const{data}=await db.from('hooks').select('id,text,cat').eq('user_id',_user.id).order('cat');ALL_HOOKS=data||[];}
 async function loadScripts(){const{data}=await db.from('scripts').select('id,title,brand,script,notes').eq('user_id',_user.id).order('title');ALL_SCRIPTS=data||[];}
 

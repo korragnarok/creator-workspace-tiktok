@@ -176,6 +176,17 @@ tr.select-mode .tbl-action{display:none;}
   .si-result-card{align-items:flex-start;}
   .si-name{white-space:normal;}
 }
+/* link badges */
+.pl-badges{display:flex;flex-wrap:wrap;gap:5px;max-width:230px;}
+.pl-badge{border:none;border-radius:999px;padding:4px 10px;font:800 10px 'Stack Sans Notch',sans-serif;letter-spacing:.04em;color:#fff;background:var(--rust);cursor:pointer;white-space:nowrap;transition:filter .12s,transform .12s;}
+.pl-badge:hover{filter:brightness(1.12);transform:translateY(-1px);}
+.pl-badge.copied{background:#5E7A55!important;}
+.pl-amazon{background:#C27A2C;} .pl-mavely{background:#7A5AA6;} .pl-ltk{background:#3F3F3F;} .pl-shopmy{background:#A0526B;}
+.pl-walmart{background:#2E62A8;} .pl-target{background:#B23B3B;} .pl-tiktok{background:#2B2B2B;border:1px solid var(--border-mid);}
+.pl-row{display:grid;grid-template-columns:130px 1fr 34px;gap:8px;margin-bottom:8px;align-items:center;}
+.pl-x{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;}
+.pl-x:hover{color:var(--ink);}
+.pl-add{background:none;border:1px dashed var(--border-mid);color:var(--tan);border-radius:10px;padding:8px;width:100%;font:700 12px 'Stack Sans Notch',sans-serif;cursor:pointer;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=181"></script>
@@ -222,7 +233,7 @@ tr.select-mode .tbl-action{display:none;}
           <th class="num sortable" data-sort="videos" onclick="sortProducts('videos')">Videos Posted</th>
           <th class="num sortable" data-sort="gmv" onclick="sortProducts('gmv')">GMV</th>
           <th>Features</th>
-          <th>Link</th>
+          <th>Links</th>
           <th></th>
         </tr>
       </thead>
@@ -253,6 +264,15 @@ tr.select-mode .tbl-action{display:none;}
     <div class="form-row"><label class="form-label">Brand</label><input type="text" class="form-input" id="fBrand" placeholder="e.g. PetLab Co."></div>
     <div class="form-row"><label class="form-label">Tags (comma separated)</label><input type="text" class="form-input" id="fTags" placeholder="e.g. pet, dental, supplement"></div>
     <div class="form-row"><label class="form-label">TikTok Shop Link</label><input type="url" class="form-input" id="fLink" placeholder="https://..."></div>
+    <div class="form-row"><label class="form-label">Other Links <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text-muted);">(tap-to-copy badges)</span></label>
+      <div id="fLinks"></div>
+      <button type="button" class="pl-add" onclick="addProdLinkRow()">+ add a link</button>
+    </div>
+    <div class="form-row" style="margin-bottom:14px;"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <input type="checkbox" id="fAllAccounts" style="width:18px;height:18px;accent-color:var(--rust);cursor:pointer;flex-shrink:0;">
+      <span style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mid);">Show on all TikTok accounts</span></label>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:5px;margin-left:28px;">For products you promote everywhere, or that aren't on TikTok (Amazon-only, etc.).</div>
+    </div>
     <div class="form-row"><label class="form-label">Units Sold</label><input type="number" class="form-input" id="fUnitsSold" placeholder="0" min="0" step="1"></div>
     <div class="form-row"><label class="form-label">Stock</label><select class="form-input" id="fStatus"><option value="active">In Stock</option><option value="shelved">Shelved</option><option value="paused">Out of Stock</option><option value="promote">Promote Now</option></select></div>
     <div class="form-row" style="margin-bottom:18px;">
@@ -694,7 +714,8 @@ async function init() {
   async function renderProducts() {
     const q = document.getElementById('searchBox').value.toLowerCase();
     let prodQuery = db.from('products').select('*').eq('user_id', user.id);
-    if (activeAccountId) prodQuery = prodQuery.eq('tiktok_account_id', activeAccountId);
+    // this account's products, plus products shared with all accounts (no account set)
+    if (activeAccountId) prodQuery = prodQuery.or(`tiktok_account_id.eq.${activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
     const { data: prods } = await prodQuery.order('created_at', {ascending: false});
     _allProducts = prods || [];
     _videoCountsByProduct = await loadVideoCounts(_allProducts);
@@ -734,7 +755,7 @@ async function init() {
         '<td class="num"><span class="sold-value">'+videoCount.toLocaleString()+'</span></td>'+
         '<td class="num"><span class="gmv-value">'+(gmv?fmtMoney(gmv):'-')+'</span></td>'+
         '<td style="display:none"><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
-        '<td>'+(link?'<a class="shop-link" href="'+escAttr(link)+'" target="_blank" rel="noopener">Shop ↗</a>':'-')+'</td>'+
+        '<td>'+linkBadgesHtml(p)+'</td>'+
         '<td><div class="tbl-actions"><button class="tbl-action" onclick="event.stopPropagation();makeContent(\''+p.id+'\')">Make Content</button><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button><button class="tbl-action" style="color:var(--sage)" onclick="event.stopPropagation();scoutProduct(\''+p.name+'\',\''+p.brand+'\')">Scout</button></div></td>'+
       '</tr>';
     }).join('');
@@ -743,6 +764,44 @@ async function init() {
   }
 
   window.renderProducts = renderProducts;
+  // ── Link badges: tap to copy ────────────────────────────────────────
+  const LINK_STORES = ['Amazon','Mavely','LTK','ShopMy','Walmart','Target','TikTok Shop'];
+  function storeClass(l){ return 'pl-'+String(l||'').toLowerCase().replace(/\s*shop$/,'').replace(/[^a-z]/g,''); }
+  function linkBadgesHtml(p){
+    const all = [];
+    const tt = String(p.link||'').trim(); if (tt) all.push({label:'TikTok Shop', url: tt});
+    (Array.isArray(p.links) ? p.links : []).forEach(l => { if (l && l.url) all.push(l); });
+    if (!all.length) return '-';
+    return '<div class="pl-badges">'+all.map(l => '<button type="button" class="pl-badge '+storeClass(l.label)+'" data-url="'+escAttr(l.url)+'" data-label="'+escAttr(l.label||'Link')+'" onclick="event.stopPropagation();copyProdLink(this)" title="Copy '+escAttr(l.label||'link')+' link">'+esc(l.label||'Link')+'</button>').join('')+'</div>';
+  }
+  window.copyProdLink = async function(btn){
+    const url = btn.dataset.url;
+    try { await navigator.clipboard.writeText(url); } catch(e) { const t=document.createElement('textarea'); t.value=url; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+    const old = btn.textContent; btn.classList.add('copied'); btn.textContent = '✓ Copied';
+    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = old; }, 1100);
+    showToast(`Copied ${btn.dataset.label} link`);
+  };
+  function prodLinkRow(l = {label:'Amazon', url:''}){
+    const known = LINK_STORES.includes(l.label);
+    const d = document.createElement('div'); d.className = 'pl-row';
+    d.innerHTML = '<select class="form-input">'+LINK_STORES.map(s=>'<option'+(s===l.label?' selected':'')+'>'+s+'</option>').join('')+'<option value="__other"'+(!known?' selected':'')+'>Other…</option></select>'+
+      '<input class="form-input pl-url" placeholder="https://…" value="'+escAttr(l.url||'')+'">'+
+      '<button type="button" class="pl-x" title="Remove">✕</button>'+
+      '<input class="form-input pl-custom" placeholder="Name this link" value="'+(known?'':escAttr(l.label||''))+'" style="'+(known?'display:none':'')+'">';
+    const sel = d.querySelector('select'), custom = d.querySelector('.pl-custom');
+    sel.onchange = () => { custom.style.display = sel.value==='__other' ? '' : 'none'; };
+    d.querySelector('.pl-x').onclick = () => d.remove();
+    return d;
+  }
+  window.addProdLinkRow = function(){ const r = prodLinkRow(); document.getElementById('fLinks').appendChild(r); r.querySelector('.pl-url').focus(); };
+  function readProdLinks(){
+    return [...document.querySelectorAll('#fLinks .pl-row')].map(r => {
+      const v = r.querySelector('select').value, label = v==='__other' ? (r.querySelector('.pl-custom').value.trim()||'Link') : v;
+      let url = r.querySelector('.pl-url').value.trim(); if (url && !/^https?:\/\//i.test(url)) url = 'https://'+url;
+      return {label, url};
+    }).filter(l => l.url);
+  }
+
   function esc(s) {
     return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
@@ -1253,6 +1312,10 @@ async function init() {
     document.getElementById('fNotes').value = String(p?.notes || '').replace(/\nFREE_SAMPLE|FREE_SAMPLE\n|FREE_SAMPLE/g, '').trim();
     document.getElementById('fFreeSample').checked = p?.notes ? /FREE_SAMPLE/.test(p.notes) : false;
     document.getElementById('deleteBtn').style.display = p ? '' : 'none';
+    // Links + all-accounts
+    const lbox = document.getElementById('fLinks'); lbox.innerHTML = '';
+    (Array.isArray(p?.links) ? p.links : []).forEach(l => lbox.appendChild(prodLinkRow(l)));
+    document.getElementById('fAllAccounts').checked = !!p && !p.tiktok_account_id;
     // Image
     window._existingImgUrl = p?.image_url || '';
     window._newImgFile = null;
@@ -1292,7 +1355,7 @@ async function init() {
     notesVal = notesVal.replace(/\nFREE_SAMPLE|FREE_SAMPLE\n|FREE_SAMPLE/g, '').trim();
     if(isFreeSample) notesVal = notesVal ? notesVal + '\nFREE_SAMPLE' : 'FREE_SAMPLE';
 
-    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: notesVal, image_url, tiktok_account_id: activeAccountId || '' };
+    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: notesVal, image_url, links: readProdLinks(), tiktok_account_id: document.getElementById('fAllAccounts').checked ? null : (activeAccountId || null) };
     const { error: dbErr } = window._editId
       ? await db.from('products').update(fields).eq('id', window._editId).eq('user_id', user.id)
       : await db.from('products').insert({ user_id: user.id, ...fields });

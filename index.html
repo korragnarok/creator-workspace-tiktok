@@ -1187,7 +1187,7 @@ async function init() {
   // Build account-scoped product query
   let productQuery = db.from('products').select('id,name,brand,units_sold,image_url,status,notes').eq('user_id', user.id);
   if(activeAccountId){
-    productQuery = productQuery.eq("tiktok_account_id", activeAccountId);
+    productQuery = productQuery.or(`tiktok_account_id.eq.${activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);   // + products shared with all accounts
   }
   productQuery = productQuery.order('created_at', { ascending:false });
 
