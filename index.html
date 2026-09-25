@@ -798,6 +798,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   </div>
 </div>
 
+<script src="planner-sync.js?v=198"></script>
 <script src="layout.js?v=195"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
@@ -831,30 +832,32 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   const tdl = document.getElementById('todayDateLabel');
   if (tdl) tdl.textContent = 'Today';
 
-  // This Week — Mon–Sun notes, saved per date on this device
-  (function(){
+  // This Week — Mon–Sun notes, synced through Supabase
+  (async function(){
     const wEl = document.getElementById('bWeek'); if (!wEl) return;
     const ymdK = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const start = new Date(now); start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-    let notes = {}; try { notes = JSON.parse(localStorage.getItem('take24:week')) || {}; } catch(e) {}
+    const notes = { ...(await plannerGet('week', {})) };
     const escW = v => String(v||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     wEl.innerHTML = [...Array(7)].map((_, i) => { const d = new Date(start); d.setDate(start.getDate() + i); const k = ymdK(d);
       return `<div class="w-day${k === ymdK(now) ? ' is-today' : ''}"><div class="w-name">${d.toLocaleDateString(undefined,{weekday:'short'})}</div><div class="w-date">${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div><textarea data-date="${k}" placeholder="plans…">${escW(notes[k])}</textarea></div>`; }).join('');
-    wEl.addEventListener('input', e => { if (!e.target.dataset.date) return; notes[e.target.dataset.date] = e.target.value; try { localStorage.setItem('take24:week', JSON.stringify(notes)); } catch(err) {} });
+    wEl.addEventListener('input', e => { if (!e.target.dataset.date) return; notes[e.target.dataset.date] = e.target.value; plannerSet('week', notes); });
   })();
 
   // Content Ideas button: how many saved
-  (function(){ let l=[]; try { l = JSON.parse(localStorage.getItem('take24:ideas')) || []; } catch(e) {}
+  (async function(){ const l = await plannerGet('ideas', []);
     const el = document.getElementById('ideasCount'); if (!el) return;
     const vids = l.filter(x => x.link).length, open = l.filter(x => !x.done).length;
     el.textContent = l.length ? `${open} to film · ${vids} video${vids===1?'':'s'} saved` : 'No ideas yet'; })();
 
-  // Monthly Goals — saved on this device
-  const gEl = document.getElementById('bGoals');
-  let goals = ['','']; try { goals = (JSON.parse(localStorage.getItem('take24:goals')) || goals).slice(0,2); while (goals.length < 2) goals.push(''); } catch(e) {}
-  const escG = v => String(v||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  gEl.innerHTML = goals.map((g,i) => `<div class="goal"><span class="num">${i+1}</span><input data-g="${i}" value="${escG(g)}" placeholder="goal for this month"></div>`).join('');
-  gEl.addEventListener('input', e => { goals[e.target.dataset.g] = e.target.value; try { localStorage.setItem('take24:goals', JSON.stringify(goals)); } catch(err) {} });
+  // Monthly Goals — synced through Supabase
+  (async function(){
+    const gEl = document.getElementById('bGoals'); if (!gEl) return;
+    const goals = [...(await plannerGet('goals', ['','']))].slice(0,2); while (goals.length < 2) goals.push('');
+    const escG = v => String(v||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    gEl.innerHTML = goals.map((g,i) => `<div class="goal"><span class="num">${i+1}</span><input data-g="${i}" value="${escG(g)}" placeholder="goal for this month"></div>`).join('');
+    gEl.addEventListener('input', e => { goals[e.target.dataset.g] = e.target.value; plannerSet('goals', goals); });
+  })();
 
   // Hero Brands: move the existing widget (same inputs, edit button, and data) out of the hidden sidebar
   function moveHeroBrands(){

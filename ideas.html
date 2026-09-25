@@ -79,13 +79,16 @@ h1 em{font:26px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=193"></script>
+<script src="planner-sync.js?v=198"></script>
 <script src="layout.js?v=193"></script>
 <script>
 // Same saved list as the dashboard card (stored on this device)
 const KEY='take24:ideas';   // TikTok side keeps its own ideas (separate from Meta)
 const META_WORKER_URL='https://take24-scout.kortnycall5.workers.dev';
-const loadIdeas=()=>{ try{ return JSON.parse(localStorage.getItem(KEY))||[]; }catch(e){ return []; } };
-const saveIdeas=l=>{ try{ localStorage.setItem(KEY,JSON.stringify(l)); }catch(e){} };
+// Synced through Supabase (planner-sync.js) — same list on phone and computer
+let IDEAS=[];
+const loadIdeas=()=>JSON.parse(JSON.stringify(IDEAS));
+const saveIdeas=l=>{ IDEAS=l; plannerSet('ideas',l); };
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 let filter='all';
 
@@ -152,7 +155,7 @@ document.getElementById('watchModal').addEventListener('click',e=>{ if(e.target.
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeWatch(); });
 document.getElementById('addInput').addEventListener('keydown',e=>{ if(e.key==='Enter') addIdea(); });
 document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ filter=b.dataset.f; document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b)); render(); });
-(async()=>{ const {data:{session}}=await db.auth.getSession(); if(!session){ location.href='auth.html'; return; } render();
+(async()=>{ const {data:{session}}=await db.auth.getSession(); if(!session){ location.href='auth.html'; return; } IDEAS=await plannerGet('ideas',[]); render();
   try{ const prefs=await loadUserPrefs(session.user.id); await initTheme(session.user.id,prefs); await initDisplayName(session.user,prefs); initProfilePopover(session.user.id);}catch(e){} })();
 </script>
 </body>
