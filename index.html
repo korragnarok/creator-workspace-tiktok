@@ -639,6 +639,19 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .tops-card .b-title{font-size:19px;}
 .lower-grid>.stack:last-child{overflow-y:auto;scrollbar-width:none;}
 @media(max-width:768px){.tt-row2,.meta-row{grid-template-columns:1fr;}}
+/* Top Videos & Best Sellers: full width, one short row (videos | best sellers) */
+.lower-grid>.stack>.tops-card{width:auto!important;max-width:none!important;display:grid;grid-template-columns:1fr 1fr;gap:4px 18px;align-content:start;}
+.tops-card>.tt-head{grid-column:1/-1;}
+.tops-card>.tl-vid{grid-column:1;grid-row:2;}
+.tops-card>#top-videos{grid-column:1;grid-row:3;}
+.tops-card>.tl-prod{grid-column:2;grid-row:2;margin-top:0!important;}
+.tops-card>#top-products{grid-column:2;grid-row:3;width:auto!important;}
+.tops-card .tops-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+.tops-card .tops-img{width:100%!important;height:auto!important;aspect-ratio:1/1;}
+.tops-card .tops-vid{aspect-ratio:1/1!important;}
+/* keep the Commission/GMV graph from being squashed */
+.lower-grid>.stack>.chart-card{min-height:230px!important;flex:1 1 auto!important;}
+@media(max-width:768px){.lower-grid>.stack>.tops-card{grid-template-columns:1fr;}.tops-card>*{grid-column:1!important;grid-row:auto!important;}}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -832,9 +845,9 @@ select.sched-location-tag:focus{border-color:var(--rust);}
             </div>
             <div class="card mob-order-4 tops-card">
               <div class="tt-head"><div class="b-title">Top Videos &amp; Best Sellers</div><div class="tt-tabs" data-card="tops"></div></div>
-              <div class="tops-label">Top Videos</div>
+              <div class="tops-label tl-vid">Top Videos</div>
               <div class="tops-grid" id="top-videos"><div class="tops-empty">No video views yet.</div></div>
-              <div class="tops-label">Best Selling Products</div>
+              <div class="tops-label tl-prod">Best Selling Products</div>
               <div class="empty-box" id="top-products"><strong>No sales yet.</strong>Top products show up once sales are logged.</div>
             </div>
         </section>
@@ -1744,7 +1757,7 @@ async function renderSocialCards(){
   const ymdL=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   // Best time: needs a few posts; a day/slot needs 3+ posts to be called "best"
   const bt=document.getElementById('bestTime');
-  if(all.length>=6){
+  if(bt&&all.length>=6){
     const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0, overall=avg(all.map(p=>p.views))||1;
     const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], byDay=days.map(()=>[]);
     const slots=[['Morning',h=>h>=5&&h<12],['Afternoon',h=>h>=12&&h<17],['Evening',h=>h>=17&&h<22],['Late',h=>h>=22||h<5]], bySlot=slots.map(()=>[]);
@@ -1755,7 +1768,7 @@ async function renderSocialCards(){
     bt.innerHTML=`<div class="bt-headline">${days[bD]} ${slots[bS][0].toLowerCase()} posts do best${mult>=1.2?` — ${mult.toFixed(1)}× your average`:''}</div>
       <div class="bt-bars">${dA.map((v,i)=>`<div class="bt-bar${i===bD?' best':''}" title="${days[i]}: ${fmtN(Math.round(v))} avg views (${byDay[i].length} posts)"><span style="height:${Math.max(3,v/maxD*100)}%"></span><small>${days[i][0]}</small></div>`).join('')}</div>
       <div class="bt-times">${slots.map((s,i)=>`<div class="bt-t${i===bS?' best':''}"><b>${fmtN(Math.round(sA[i]))}</b>${s[0]}</div>`).join('')}</div>`;
-  } else bt.innerHTML='<div class="tops-empty" style="text-align:center">A few more posts and this will show your best days and times.</div>';
+  } else if(bt) bt.innerHTML='<div class="tops-empty" style="text-align:center">A few more posts and this will show your best days and times.</div>';
   // Streak + weekly goal
   const posted=new Set(all.map(p=>ymdL(p.d)));
   let streak=0; const cur=new Date(today0); if(!posted.has(ymdL(cur))) cur.setDate(cur.getDate()-1);
