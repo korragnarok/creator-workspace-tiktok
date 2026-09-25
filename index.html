@@ -661,9 +661,13 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .b-cal-head .b-title{margin:0!important;}
 .b-cal-arrow{background:none;border:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;opacity:.75;padding:0 6px;}
 .b-cal-arrow:hover{opacity:1;}
-.b-cal-grid .d.sale{width:26px;margin:0 auto;border-radius:50%;background:#1a1716;color:#fff;font-weight:700;}
+.b-cal-grid .d.sale{width:26px;margin:0 auto;border-radius:50%;background:#4A2B1E;color:#fff;font-weight:700;}
 .b-cal-grid .d.sale.today{box-shadow:0 0 0 2px #fff;}
 @media(min-width:1181px){.b-cal-grid .d.sale{width:21px;}}
+/* TikTok section: one tab bar switches every TikTok card */
+.tt-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:none;padding:0 4px;}
+.tt-sec-title{font:800 11px 'Stack Sans Notch',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--tan);}
+.tt-section-head .tt-tab{padding:5px 12px;font-size:11px;}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -820,6 +824,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 
           <!-- Col 2: Chart + Top Products stacked -->
           <div class="stack mob-order-6">
+            <div class="tt-section-head"><div class="tt-sec-title">TikTok</div><div class="tt-tabs" data-card="all"></div></div>
             <div class="card chart-card">
               <div class="chart-top">
                 <div>
@@ -830,7 +835,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                     <button class="chart-pill" onclick="setChartRange('week')">This Week</button>
                   </div>
                 </div>
-                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;"><div class="tt-tabs" data-card="chart"></div></div>
+                
               </div>
               <div class="chart-metrics">
                 <div class="metric"><span class="metric-dot"></span><div><div class="metric-value" id="m-comm">-</div><div class="metric-label">total commission</div></div></div>
@@ -840,7 +845,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
             </div>
             <div class="tt-row2">
               <div class="card tt-stats">
-                <div class="tt-head"><div class="b-title">TikTok Stats</div><div class="tt-tabs" data-card="stats"></div></div>
+                <div class="tt-head"><div class="b-title">TikTok Stats</div></div>
                 <div class="tt-grid">
                   <div class="tt-stat"><div class="tt-l">Commission · 30d</div><div class="tt-v" id="ttComm">-</div></div>
                   <div class="tt-stat"><div class="tt-l">GMV · 30d</div><div class="tt-v" id="ttGmv">-</div></div>
@@ -849,14 +854,14 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                 </div>
               </div>
               <div class="card tt-streak streak">
-                <div class="tt-head"><div class="b-title">Posting Streak</div><div class="tt-tabs" data-card="streak"></div></div>
+                <div class="tt-head"><div class="b-title">Posting Streak</div></div>
                 <div class="streak-num"><span id="ttStreak">0</span><small>days in a row on TikTok</small></div>
                 <div class="streak-dots" id="ttDots"></div>
                 <div class="streak-goal">This week: <b id="ttWeek">0</b> posts</div>
               </div>
             </div>
             <div class="card mob-order-4 tops-card">
-              <div class="tt-head"><div class="b-title">Top Videos &amp; Best Sellers</div><div class="tt-tabs" data-card="tops"></div></div>
+              <div class="tt-head"><div class="b-title">Top Videos &amp; Best Sellers</div></div>
               <div class="tops-label tl-vid">Top Videos</div>
               <div class="tops-grid" id="top-videos"><div class="tops-empty">No video views yet.</div></div>
               <div class="tops-label tl-prod">Best Selling Products</div>
@@ -1872,15 +1877,12 @@ async function ttInitCards(user){
   TT.user=user;
   const {data}=await db.from('tiktok_accounts').select('tiktok_open_id,display_name,username,follower_count').eq('user_id',user.id).order('created_at');
   TT.accts=data||[]; if(!TT.accts.length) return;
-  // Level Ladder gets tabs in its header too
-  const lh=document.querySelector('.b-right .level-feature-head');
-  if(lh&&!lh.querySelector('.tt-tabs')) lh.insertAdjacentHTML('beforeend','<div class="tt-tabs" data-card="ladder"></div>');
-  document.querySelectorAll('.tt-tabs[data-card]').forEach(box=>{
-    const card=box.dataset.card;
-    const paint=()=>{ const sel=ttSel(card); box.innerHTML=TT.accts.length>1?TT.accts.map(a=>`<button type="button" class="tt-tab${a.tiktok_open_id===sel?' on':''}" data-acct="${a.tiktok_open_id}">@${esc(a.display_name||a.username||'account')}</button>`).join(''):''; TT_RENDER[card]?.(sel); };
-    box.onclick=e=>{ const b=e.target.closest('[data-acct]'); if(!b) return; try{ localStorage.setItem('take24:cardAcct:'+card,b.dataset.acct); }catch(err){} paint(); };
-    paint();
-  });
+  const box=document.querySelector('.tt-tabs[data-card="all"]'); if(!box) return;
+  const paint=()=>{ const sel=ttSel('all');
+    box.innerHTML=TT.accts.length>1?TT.accts.map(a=>`<button type="button" class="tt-tab${a.tiktok_open_id===sel?' on':''}" data-acct="${a.tiktok_open_id}">@${esc(a.display_name||a.username||'account')}</button>`).join(''):'';
+    Object.values(TT_RENDER).forEach(fn=>fn(sel)); };
+  box.onclick=e=>{ const b=e.target.closest('[data-acct]'); if(!b) return; try{ localStorage.setItem('take24:cardAcct:all',b.dataset.acct); }catch(err){} paint(); };
+  paint();
 }
 function renderTodayContent(){
   const list=document.getElementById('sched-list');
