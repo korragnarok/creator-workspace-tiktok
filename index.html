@@ -668,6 +668,23 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .tt-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:none;padding:0 4px;}
 .tt-sec-title{font:800 11px 'Stack Sans Notch',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--tan);}
 .tt-section-head .tt-tab{padding:5px 12px;font-size:11px;}
+/* Add Product popup */
+.ap-modal{position:fixed;inset:0;z-index:600;background:rgba(10,8,7,.8);display:none;align-items:center;justify-content:center;padding:20px;}
+.ap-modal.open{display:flex;}
+.ap-card{width:100%;max-width:520px;max-height:82vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border-mid);border-radius:22px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.55);}
+.ap-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.ap-title{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--ink);}
+.ap-close{background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;}
+.ap-search{width:100%;background:var(--bg);border:1px solid var(--border-mid);border-radius:12px;padding:10px 12px;color:var(--ink);font:14px 'IBM Plex Serif',serif;outline:none;margin-bottom:10px;}
+.ap-search:focus{border-color:var(--tan);}
+.ap-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
+.ap-row{display:flex;align-items:center;gap:12px;padding:7px;border-radius:12px;border:1px solid var(--border);background:var(--bg-lift);}
+.ap-row img{width:44px;height:44px;border-radius:9px;object-fit:cover;background:var(--surface-2);flex-shrink:0;}
+.ap-info{flex:1;min-width:0;}
+.ap-name{font-weight:700;color:var(--ink);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ap-brand{font-size:11px;color:var(--text-muted);}
+.ap-add{width:32px;height:32px;border-radius:50%;border:none;background:var(--rust);color:#fff;font-size:20px;line-height:1;cursor:pointer;flex-shrink:0;}
+.ap-add:disabled{background:var(--surface-2);color:var(--text-muted);cursor:default;font-size:14px;}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -696,6 +713,13 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .board .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
 }
 </style>
+<div class="ap-modal" id="apModal" role="dialog" aria-modal="true">
+  <div class="ap-card">
+    <div class="ap-head"><div class="ap-title">Add to Today</div><button type="button" class="ap-close" onclick="closeAddProduct()">✕</button></div>
+    <input class="ap-search" id="apSearch" placeholder="Search products or brands…" oninput="renderAddProduct()">
+    <div class="ap-list" id="apList"></div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=209"></script>
 </head>
@@ -778,8 +802,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                 <div class="sched-progress-bar"><div class="sched-progress-fill" id="sched-progress-fill" style="width:0%"></div></div>
               </div>
               <div style="display:flex;gap:6px;margin-top:10px;">
-                <a class="add-bar" href="daily-todo.html" style="flex:1;margin-top:0;">+ Add Script</a>
-                <button class="add-bar" type="button" id="bulkEditBtn" onclick="toggleBulkEdit()" style="flex:1;margin-top:0;background:var(--surface);color:var(--text-mid);border:1px solid var(--border-mid);">Bulk Edit</button>
+                <button class="add-bar" type="button" onclick="openAddProduct()" style="flex:1;margin-top:0;">+ Add Product</button>
               </div>
               <div id="bulkEditBar" style="display:none;margin-top:8px;padding:10px 12px;border:1px solid var(--border-mid);border-radius:10px;background:var(--surface);display:none;gap:8px;flex-wrap:wrap;align-items:center;">
                 <span id="bulkSelCount" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.08em;color:var(--text-muted);flex:1;">0 selected</span>
@@ -1881,6 +1904,23 @@ async function ttInitCards(user){
   box.onclick=e=>{ const b=e.target.closest('[data-acct]'); if(!b) return; try{ localStorage.setItem('take24:cardAcct:all',b.dataset.acct); }catch(err){} paint(); };
   paint();
 }
+// ── + Add Product: pick from all your products and add straight to today ──
+function openAddProduct(){ document.getElementById('apSearch').value=''; renderAddProduct(); document.getElementById('apModal').classList.add('open'); setTimeout(()=>document.getElementById('apSearch').focus(),50); }
+function closeAddProduct(){ document.getElementById('apModal').classList.remove('open'); }
+function renderAddProduct(){
+  const q=document.getElementById('apSearch').value.trim().toLowerCase();
+  const inToday=new Set((_todayQueue||[]).map(x=>String(x.prod_id)));
+  const list=(_dashboardProducts||[]).filter(p=>p&&p.name&&String(p.status||'active')!=='shelved')
+    .filter(p=>!q||`${p.name} ${p.brand||''}`.toLowerCase().includes(q))
+    .sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const el=document.getElementById('apList');
+  el.innerHTML=list.length?list.map(p=>{ const added=inToday.has(String(p.id));
+    return `<div class="ap-row"><img src="${esc(p.image_url||'icons/default-product.png')}" alt="" onerror="this.src='icons/default-product.png'"><div class="ap-info"><div class="ap-name">${esc(p.name)}</div><div class="ap-brand">${esc(p.brand||'')}</div></div><button type="button" class="ap-add" ${added?'disabled':''} onclick="addFromPicker('${esc(p.id)}',this)" title="${added?'Already on today':'Add to today'}">${added?'✓':'+'}</button></div>`; }).join('')
+    :'<div class="tops-empty" style="text-align:center;padding:20px">No products match.</div>';
+}
+async function addFromPicker(id,btn){ await addRecommendedToToday(id,btn); if(btn&&(_todayQueue||[]).some(x=>String(x.prod_id)===String(id))){ btn.disabled=true; btn.textContent='✓'; } }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAddProduct(); });
+document.addEventListener('click',e=>{ if(e.target.id==='apModal') closeAddProduct(); });
 function renderTodayContent(){
   const list=document.getElementById('sched-list');
   const progressWrap=document.getElementById('sched-progress-wrap');
