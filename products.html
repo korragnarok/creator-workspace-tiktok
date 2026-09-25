@@ -1355,7 +1355,12 @@ async function init() {
     notesVal = notesVal.replace(/\nFREE_SAMPLE|FREE_SAMPLE\n|FREE_SAMPLE/g, '').trim();
     if(isFreeSample) notesVal = notesVal ? notesVal + '\nFREE_SAMPLE' : 'FREE_SAMPLE';
 
-    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: notesVal, image_url, links: readProdLinks(), tiktok_account_id: document.getElementById('fAllAccounts').checked ? null : (activeAccountId || null) };
+    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: notesVal, image_url, links: readProdLinks(), tiktok_account_id: (() => {
+      if (document.getElementById('fAllAccounts').checked) return null;
+      // editing keeps the product on its own account; new products (or ones leaving "all accounts") go to the account you're viewing
+      const orig = window._editingProductOriginal?.tiktok_account_id;
+      return (window._editId && orig) ? orig : (activeAccountId || null);
+    })() };
     const { error: dbErr } = window._editId
       ? await db.from('products').update(fields).eq('id', window._editId).eq('user_id', user.id)
       : await db.from('products').insert({ user_id: user.id, ...fields });

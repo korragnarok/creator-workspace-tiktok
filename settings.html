@@ -153,6 +153,14 @@ body{overflow-x:hidden;}
     <div class="form-hint" style="margin-top:10px;">Connect multiple accounts — each syncs its own video stats and analytics.</div>
   </div>
 
+  <!-- Facebook + Instagram -->
+  <div class="settings-section">
+    <div class="section-title">Facebook &amp; Instagram</div>
+    <div id="metaAccountsList" class="tiktok-accounts-list"><div class="tiktok-empty">Loading connected accounts…</div></div>
+    <button type="button" class="btn btn-primary" id="metaConnectBtn" onclick="metaConnectStart()" style="background:#1877F2;color:#fff;border:none;">Connect Facebook &amp; Instagram</button>
+    <div class="form-hint" style="margin-top:10px;">Connects your Facebook Pages and any Instagram accounts linked to them. Their videos show up as tabs in the Content Tracker.</div>
+  </div>
+
   <!-- Change Password -->
   <div class="settings-section">
     <div class="section-title">Change Password</div>
@@ -185,7 +193,8 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=181"></script>
+<script src="meta-api.js?v=197"></script>
+<script src="layout.js?v=197"></script>
 <script>
 let _user = null, _prefs = null;
 
@@ -435,8 +444,37 @@ async function renderTikTokAccountsList() {
   accounts.forEach(account => list.appendChild(renderTikTokAccountCard(account)));
 }
 
+async function renderMetaAccountsList() {
+  const list = document.getElementById('metaAccountsList'); if (!list || !_user) return;
+  const { data } = await db.from('meta_accounts').select('platform,name,username,avatar_url,follower_count,connected_at').eq('user_id', _user.id).order('platform');
+  if (!data?.length) { list.innerHTML = '<div class="tiktok-empty">No Facebook or Instagram accounts connected yet.</div>'; return; }
+  document.getElementById('metaConnectBtn').textContent = 'Reconnect / add accounts';
+  const e = v => String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  list.innerHTML = data.map(a => `<div class="tiktok-account-card"><div class="tiktok-account-left">
+    <div class="tiktok-account-avatar">${a.avatar_url ? `<img src="${e(a.avatar_url)}" alt="">` : (a.platform === 'instagram' ? 'IG' : 'f')}</div>
+    <div><div class="tiktok-account-name">${a.platform === 'instagram' ? '@' : ''}${e(a.username || a.name)}</div>
+    <div class="tiktok-account-sub">${a.platform === 'instagram' ? 'Instagram' : 'Facebook Page'} · ${(a.follower_count || 0).toLocaleString()} followers</div></div></div></div>`).join('');
+}
+
 async function checkTikTokOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
+  // Facebook/Instagram come back here too — their "state" starts with meta_
+  if ((params.get('state') || '').startsWith('meta_')) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    if (params.get('error')) showToast('Facebook connection cancelled', 'error');
+    else if (params.get('state') !== sessionStorage.getItem('meta_oauth_state')) showToast('Connection check failed — try again', 'error');
+    else {
+      try { showToast('Connecting Facebook & Instagram…');
+        const n = await metaFinishConnect(_user.id, params.get('code'));
+        showToast(`Connected ${n} account${n === 1 ? '' : 's'} — syncing videos…`);
+        metaSyncAll(_user.id).then(t => showToast(`Synced ${t} Facebook/Instagram videos ✓`)).catch(err => showToast('Sync failed: ' + err.message, 'error'));
+      } catch (err) { showToast('Connect failed: ' + err.message, 'error'); }
+    }
+    await renderMetaAccountsList();
+    await renderTikTokAccountsList();
+    return;
+  }
+  renderMetaAccountsList();
   const code = params.get('code');
   const errorParam = params.get('error');
 

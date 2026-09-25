@@ -207,6 +207,23 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 @media(max-width:768px){.view-toggle{width:100%;justify-content:space-between}.view-btn{flex:1}.video-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.video-card-title{font-size:15px}.import-search-row{grid-template-columns:1fr}.import-results{grid-template-columns:1fr;max-height:58vh}.import-video-card{grid-template-columns:78px 1fr}.import-thumb{width:78px}}
 .filter-bar-sep{width:1px;height:20px;background:var(--border-mid);margin:0 4px;flex-shrink:0;}
 .sort-pill.sort-active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+/* Platform tabs (TikTok / Facebook / Instagram) */
+.platform-tabs{display:flex;gap:6px;margin:-10px 0 22px;border-bottom:1px solid var(--border-mid);}
+.ptab{border:0;background:none;padding:10px 18px;font:800 12px 'Stack Sans Notch',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.ptab:hover{color:var(--ink);}
+.ptab.active{color:var(--rust);border-bottom-color:var(--rust);}
+.meta-accts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.macct{display:flex;align-items:center;gap:8px;border:1px solid var(--border-mid);background:var(--surface);border-radius:999px;padding:5px 12px 5px 5px;cursor:pointer;color:var(--text-mid);font:700 12px 'Stack Sans Notch',sans-serif;opacity:.55;}
+.macct img{width:26px;height:26px;border-radius:50%;object-fit:cover;background:var(--surface-2);}
+.macct.on{opacity:1;border-color:var(--tan);color:var(--ink);}
+.mcard{display:block;text-decoration:none;color:inherit;border:1px solid var(--border-mid);border-radius:16px;overflow:hidden;background:var(--surface);transition:transform .15s,border-color .15s;}
+.mcard:hover{transform:translateY(-2px);border-color:var(--tan);}
+.mcard-th{aspect-ratio:9/13;background:var(--surface-2) center/cover no-repeat;}
+.mcard-b{padding:10px 12px;}
+.mcard-cap{font-size:12px;line-height:1.35;height:32px;overflow:hidden;color:var(--ink);}
+.mcard-st{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text-muted);}
+.mcard-st b{color:var(--tan);}
+.meta-status{text-align:center;color:var(--text-muted);font-size:13px;padding:18px;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=181"></script>
@@ -219,8 +236,31 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="header-actions">
       <button class="btn btn-ghost" id="editVideosBtn" onclick="toggleVideoEditMode()">Edit Videos</button>
       <button class="btn btn-ghost" id="syncTikTokBtn" onclick="syncFromConnectedTikTok()">⟳ Sync from TikTok</button>
+      <button class="btn btn-ghost" id="syncMetaBtn" onclick="syncMetaTab()" style="display:none;">⟳ Sync Facebook &amp; Instagram</button>
     </div>
   </div>
+  <div class="platform-tabs" role="tablist">
+    <button class="ptab active" data-tab="tiktok" onclick="setPlatformTab('tiktok')">TikTok</button>
+    <button class="ptab" data-tab="facebook" onclick="setPlatformTab('facebook')">Facebook</button>
+    <button class="ptab" data-tab="instagram" onclick="setPlatformTab('instagram')">Instagram</button>
+  </div>
+  <div id="metaPane" style="display:none;">
+    <div class="meta-accts" id="metaAccts"></div>
+    <div class="stat-row">
+      <div class="scard"><div class="scard-label">Videos</div><div class="scard-val sage" id="mTotal">-</div><div class="scard-sub">synced</div></div>
+      <div class="scard"><div class="scard-label">Total Views</div><div class="scard-val" id="mViews">-</div><div class="scard-sub">all videos</div></div>
+      <div class="scard"><div class="scard-label">Avg Views</div><div class="scard-val" id="mAvg">-</div><div class="scard-sub">per video</div></div>
+      <div class="scard"><div class="scard-label">This Month</div><div class="scard-val accent" id="mMonth">-</div><div class="scard-sub">videos posted</div></div>
+    </div>
+    <div class="filter-bar">
+      <button class="pill active" data-ms="date" onclick="setMetaSort('date')">Newest</button>
+      <button class="pill" data-ms="views" onclick="setMetaSort('views')">Most Views</button>
+      <input type="text" class="search-box" id="metaSearch" placeholder="Search captions..." oninput="renderMetaPane()">
+    </div>
+    <div class="video-grid-card open"><div class="video-grid" id="metaGrid"></div></div>
+    <div class="meta-status" id="metaStatus"></div>
+  </div>
+  <div id="ttPane">
   <div class="stat-row">
     <div class="scard"><div class="scard-label">Total Videos</div><div class="scard-val sage" id="sTotal">-</div><div class="scard-sub">all time</div></div>
     <div class="scard"><div class="scard-label">Total GMV</div><div class="scard-val" id="sGmv">-</div><div class="scard-sub" id="sGmvSub">-</div></div>
@@ -268,6 +308,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     </table>
   </div>
   <div class="pagination"><span id="pageInfo"></span><div class="page-btns" id="pageBtns"></div></div>
+  </div><!-- /ttPane -->
 </div>
 <div class="modal-overlay" id="importOverlay">
   <div class="modal import-modal">
@@ -315,6 +356,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
   </div>
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
+<script src="meta-api.js?v=197"></script>
 <script src="layout.js?v=181"></script>
 <script>
 const PAGE_SIZE=25;
@@ -384,6 +426,9 @@ async function init() {
   await loadVideos();
   restoreTrackerState();
   autoRefreshViewsIfStale();   // runs in the background; page is usable right away
+  // Facebook/Instagram: reopen the last tab, and refresh their views every 6+ hours in the background
+  try{ const t=localStorage.getItem('take24:trackerTab'); if(t&&t!=='tiktok') setPlatformTab(t); }catch(e){}
+  try{ const last=Number(localStorage.getItem('take24meta:lastSync')||0); if(Date.now()-last>6*60*60*1000) syncMetaTab(true); }catch(e){}
   document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
   // Import overlay click does NOT close modal (user may have long import in progress)
   document.getElementById('modalOverlay').addEventListener('keydown', e => enterSaves(e, saveVideo));
@@ -1894,6 +1939,47 @@ async function autoRefreshViewsIfStale(){
     if(Date.now()-last<6*60*60*1000) return;   // at most every 6 hours
     await refreshTikTokViews(null,{quiet:true});
   }catch(e){ console.warn('Auto view refresh skipped',e); }
+}
+// ── Facebook / Instagram tabs ─────────────────────────────────────────────
+let _ptab='tiktok', _metaAccts=null, _metaSel={}, _metaSort='date';
+function setPlatformTab(tab){
+  _ptab=tab; try{localStorage.setItem('take24:trackerTab',tab);}catch(e){}
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  const tt=tab==='tiktok';
+  document.getElementById('ttPane').style.display=tt?'':'none';
+  document.getElementById('metaPane').style.display=tt?'none':'';
+  document.getElementById('syncTikTokBtn').style.display=tt?'':'none';
+  document.getElementById('editVideosBtn').style.display=tt?'':'none';
+  document.getElementById('syncMetaBtn').style.display=tt?'none':'';
+  if(!tt) renderMetaPane();
+}
+function setMetaSort(k){ _metaSort=k; document.querySelectorAll('[data-ms]').forEach(b=>b.classList.toggle('active',b.dataset.ms===k)); renderMetaPane(); }
+async function renderMetaPane(){
+  const plat=_ptab, grid=document.getElementById('metaGrid'), st=document.getElementById('metaStatus');
+  if(!_metaAccts){ const {data}=await db.from('meta_accounts').select('account_id,platform,name,username,avatar_url').eq('user_id',user.id); _metaAccts=data||[]; }
+  const accts=_metaAccts.filter(a=>a.platform===plat);
+  const chips=document.getElementById('metaAccts');
+  if(!accts.length){ chips.innerHTML=''; grid.innerHTML=''; st.innerHTML=`No ${plat==='instagram'?'Instagram':'Facebook'} account connected yet. <a href="settings.html" style="color:var(--rust)">Connect in Settings →</a>`; ['mTotal','mViews','mAvg','mMonth'].forEach(id=>document.getElementById(id).textContent='-'); return; }
+  if(!_metaSel[plat]||!accts.some(a=>a.account_id===_metaSel[plat])) _metaSel[plat]=(metaDefaultAccount(_metaAccts,plat)||accts[0]).account_id;
+  const e=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  chips.innerHTML=accts.length>1?accts.map(a=>`<button class="macct${a.account_id===_metaSel[plat]?' on':''}" onclick="_metaSel['${plat}']='${e(a.account_id)}';renderMetaPane()"><img src="${e(a.avatar_url)}" alt="">${plat==='instagram'?'@':''}${e(a.username||a.name)}</button>`).join(''):'';
+  const {data:posts}=await db.from('meta_posts').select('caption,permalink,thumbnail_url,posted_at,views').eq('user_id',user.id).eq('account_id',_metaSel[plat]).order(_metaSort==='views'?'views':'posted_at',{ascending:false}).limit(2000);
+  const q=(document.getElementById('metaSearch').value||'').toLowerCase();
+  const P=(posts||[]).filter(p=>!q||String(p.caption||'').toLowerCase().includes(q));
+  const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n||0);
+  const all=posts||[], tv=all.reduce((a,p)=>a+(Number(p.views)||0),0), now=new Date();
+  document.getElementById('mTotal').textContent=all.length;
+  document.getElementById('mViews').textContent=fmt(tv);
+  document.getElementById('mAvg').textContent=all.length?fmt(Math.round(tv/all.length)):'-';
+  document.getElementById('mMonth').textContent=all.filter(p=>{const d=new Date(p.posted_at);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).length;
+  st.textContent=all.length?'':'No videos synced yet — tap “Sync Facebook & Instagram”.';
+  grid.innerHTML=P.map(p=>`<a class="mcard" href="${e(p.permalink)}" target="_blank" rel="noopener"><div class="mcard-th" style="background-image:url('${e(p.thumbnail_url)}')"></div><div class="mcard-b"><div class="mcard-cap">${e(p.caption)||'<i>No caption</i>'}</div><div class="mcard-st"><span><b>${fmt(p.views)}</b> views</span><span>${p.posted_at?new Date(p.posted_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}):''}</span></div></div></a>`).join('');
+}
+async function syncMetaTab(quiet){
+  const btn=document.getElementById('syncMetaBtn'), st=document.getElementById('metaStatus'); btn.disabled=true;
+  try{ const n=await metaSyncAll(user.id,t=>{ if(!quiet) st.textContent=t; }); if(!quiet) showToast(`Synced ${n} Facebook/Instagram videos`); _metaAccts=null; if(_ptab!=='tiktok') renderMetaPane(); }
+  catch(err){ if(!quiet) showToast(err.message,'error'); }
+  finally{ btn.disabled=false; if(!quiet&&st.textContent.startsWith('Syncing')) st.textContent=''; }
 }
 async function syncFromConnectedTikTok(){
   const btn=document.getElementById('syncTikTokBtn');
