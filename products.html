@@ -224,6 +224,7 @@ tr.select-mode .tbl-action{display:none;}
     <div><div class="page-eyebrow">Your Catalog</div><div class="page-title">Products <em>DB</em></div><p class="page-sub">Add products you promote with talking points, links, and status.</p></div>
     <div class="header-actions">
       <button class="btn btn-ghost" id="editProductsBtn" onclick="toggleEditMode()">Edit Products</button>
+      <button class="btn btn-ghost" id="grabImgBtn" onclick="grabMissingImages()" title="Find photos on TikTok Shop for products that don't have one">Get Missing Photos</button>
       <button class="btn btn-ghost" onclick="openSearchImport()">Search &amp; Import</button>
       <button class="btn btn-primary" onclick="openModal()">+ Add Product</button>
     </div>
@@ -813,6 +814,28 @@ async function init() {
     if (error) { cb.checked = !cb.checked; showToast('Could not update: ' + error.message, 'error'); return; }
     const p = _allProducts.find(x => x.id === id); if (p) p.tiktok_account_id = val;
     showToast(cb.checked ? 'Now shows on all accounts' : 'Now only on this account');
+  };
+  // ── Get Missing Photos: looks up each product's TikTok Shop link and saves its photo ──
+  window.grabMissingImages = async function(){
+    const btn = document.getElementById('grabImgBtn');
+    const todo = _allProducts.filter(p => !String(p.image_url||'').trim() && /tiktok|tokopedia/i.test(String(p.link||'')));
+    const noLink = _allProducts.filter(p => !String(p.image_url||'').trim() && !/tiktok|tokopedia/i.test(String(p.link||''))).length;
+    if (!todo.length) { showToast(noLink ? `No TikTok Shop links to look up — ${noLink} product${noLink===1?'':'s'} without photos have no TikTok Shop link` : 'Every product already has a photo'); return; }
+    if (!confirm(`Look up photos for ${todo.length} product${todo.length===1?'':'s'} on TikTok Shop?`)) return;
+    btn.disabled = true; let found = 0;
+    for (let i = 0; i < todo.length; i++) {
+      const p = todo[i]; btn.textContent = `Looking up ${i+1}/${todo.length}…`;
+      try {
+        const d = await enrichImportProduct({ link: p.link, name: p.name, brand: p.brand, image_url: '' });
+        if (d?.image_url) {
+          const { error } = await db.from('products').update({ image_url: d.image_url }).eq('id', p.id).eq('user_id', user.id);
+          if (!error) { p.image_url = d.image_url; found++; }
+        }
+      } catch (e) {}
+    }
+    btn.disabled = false; btn.textContent = 'Get Missing Photos';
+    showToast(`Added ${found} photo${found===1?'':'s'}` + (todo.length - found ? ` · ${todo.length - found} couldn't be found` : '') + (noLink ? ` · ${noLink} have no TikTok Shop link` : ''));
+    window.renderProducts();
   };
   window.copyProdLink = async function(btn){
     const url = btn.dataset.url;
