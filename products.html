@@ -183,6 +183,7 @@ tr.select-mode .tbl-action{display:none;}
 .pl-badge.copied{background:#5E7A55!important;}
 .pl-amazon{background:#C27A2C;} .pl-mavely{background:#7A5AA6;} .pl-ltk{background:#3F3F3F;} .pl-shopmy{background:#A0526B;}
 .pl-walmart{background:#2E62A8;} .pl-target{background:#B23B3B;} .pl-tiktok{background:#2B2B2B;border:1px solid var(--border-mid);}
+.pl-ttvideo{background:#1c1c1c;border:1px solid #25F4EE;color:#fff;}
 .pl-row{display:grid;grid-template-columns:130px 1fr 34px;gap:8px;margin-bottom:8px;align-items:center;}
 .pl-x{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;}
 .pl-x:hover{color:var(--ink);}
@@ -765,8 +766,9 @@ async function init() {
 
   window.renderProducts = renderProducts;
   // ── Link badges: tap to copy ────────────────────────────────────────
-  const LINK_STORES = ['Amazon','Mavely','LTK','ShopMy','Walmart','Target','TikTok Shop'];
-  function storeClass(l){ return 'pl-'+String(l||'').toLowerCase().replace(/\s*shop$/,'').replace(/[^a-z]/g,''); }
+  // The TikTok Shop product link has its own field above; links to your TikTok videos go here as "TikTok Video"
+  const LINK_STORES = ['Amazon','Mavely','LTK','ShopMy','Walmart','Target','TikTok Video'];
+  function storeClass(l){ const k=String(l||'').toLowerCase(); if(k==='tiktok video') return 'pl-ttvideo'; return 'pl-'+k.replace(/\s*shop$/,'').replace(/[^a-z]/g,''); }
   function linkBadgesHtml(p){
     const all = [];
     const tt = String(p.link||'').trim(); if (tt) all.push({label:'TikTok Shop', url: tt});
