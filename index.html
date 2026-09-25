@@ -645,6 +645,10 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .tops-card>.tl-vid{grid-column:1;grid-row:2;}
 .tops-card>#top-videos{grid-column:1;grid-row:3;}
 .tops-card>.tl-prod{grid-column:2;grid-row:2;margin-top:0!important;}
+.tops-card>.tl-vid,.tops-card>.tl-prod{margin:0 0 6px 2px!important;align-self:end;}
+.tops-card .tops-grid{row-gap:10px!important;}
+.tops-card .tops-name{font-size:10.5px;}
+.tops-card .tops-sub{display:none;}   /* keeps the 2 rows compact */
 .tops-card>#top-products{grid-column:2;grid-row:3;width:auto!important;}
 .tops-card .tops-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
 .tops-card .tops-img{width:100%!important;height:auto!important;aspect-ratio:1/1;}
@@ -652,6 +656,14 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 /* keep the Commission/GMV graph from being squashed */
 .lower-grid>.stack>.chart-card{min-height:230px!important;flex:1 1 auto!important;}
 @media(max-width:768px){.lower-grid>.stack>.tops-card{grid-template-columns:1fr;}.tops-card>*{grid-column:1!important;grid-row:auto!important;}}
+/* Home calendar: arrows + sale days */
+.b-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.b-cal-head .b-title{margin:0!important;}
+.b-cal-arrow{background:none;border:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;opacity:.75;padding:0 6px;}
+.b-cal-arrow:hover{opacity:1;}
+.b-cal-grid .d.sale{width:26px;margin:0 auto;border-radius:50%;background:#1a1716;color:#fff;font-weight:700;}
+.b-cal-grid .d.sale.today{box-shadow:0 0 0 2px #fff;}
+@media(min-width:1181px){.b-cal-grid .d.sale{width:21px;}}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -694,7 +706,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
         <aside class="b-col b-left">
           <a class="b-word" href="index.html"><img src="logo.png" alt="Take24"></a>
           <div class="b-card b-cal">
-            <div class="b-title" id="bCalMonth"></div>
+            <div class="b-cal-head"><button type="button" class="b-cal-arrow" onclick="bCalShift(-1)" aria-label="Previous month">‹</button><div class="b-title" id="bCalMonth"></div><button type="button" class="b-cal-arrow" onclick="bCalShift(1)" aria-label="Next month">›</button></div>
             <div class="b-cal-grid" id="bCalGrid"></div>
           </div>
           <div id="heroBrandsSlot"></div>
@@ -818,7 +830,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                     <button class="chart-pill" onclick="setChartRange('week')">This Week</button>
                   </div>
                 </div>
-                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;"><div class="tt-tabs" data-card="chart"></div><a class="mini-action" href="sales-calendar.html">Calendar</a></div>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;"><div class="tt-tabs" data-card="chart"></div></div>
               </div>
               <div class="chart-metrics">
                 <div class="metric"><span class="metric-dot"></span><div><div class="metric-value" id="m-comm">-</div><div class="metric-label">total commission</div></div></div>
@@ -924,14 +936,37 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
   const now = new Date();
-  // Mini calendar
-  const y = now.getFullYear(), m = now.getMonth();
-  document.getElementById('bCalMonth').textContent = now.toLocaleDateString(undefined, { month: 'long' });
-  const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
-  let html = ['S','M','T','W','T','F','S'].map(d => `<div class="dow">${d}</div>`).join('');
-  for (let i = 0; i < first; i++) html += '<div></div>';
-  for (let d = 1; d <= days; d++) html += `<div class="d${d === now.getDate() ? ' today' : ''}">${d}</div>`;
-  document.getElementById('bCalGrid').innerHTML = html;
+  // Mini calendar — arrows change month; days with logged sales get a black circle
+  let calOffset = 0; const salesDays = {};
+  async function loadSaleDays(y, m) {
+    const key = `${y}-${m}`; if (salesDays[key]) return salesDays[key];
+    const pad = n => String(n).padStart(2, '0'), last = new Date(y, m + 1, 0).getDate();
+    const set = new Set();
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if (session) {
+        const { data } = await db.from('sales').select('date,units,gmv').eq('user_id', session.user.id)
+          .gte('date', `${y}-${pad(m + 1)}-01`).lte('date', `${y}-${pad(m + 1)}-${pad(last)}`);
+        (data || []).forEach(r => { if ((Number(r.units) || 0) > 0 || (parseFloat(r.gmv) || 0) > 0) set.add(Number(String(r.date).slice(8, 10))); });
+      }
+    } catch (e) {}
+    return (salesDays[key] = set);
+  }
+  async function renderBCal() {
+    const base = new Date(now.getFullYear(), now.getMonth() + calOffset, 1), y = base.getFullYear(), m = base.getMonth();
+    document.getElementById('bCalMonth').textContent = base.toLocaleDateString(undefined, { month: 'long', ...(y !== now.getFullYear() ? { year: 'numeric' } : {}) });
+    const first = base.getDay(), days = new Date(y, m + 1, 0).getDate(), isThisMonth = calOffset === 0;
+    const draw = sales => {
+      let html = ['S','M','T','W','T','F','S'].map(d => `<div class="dow">${d}</div>`).join('');
+      for (let i = 0; i < first; i++) html += '<div></div>';
+      for (let d = 1; d <= days; d++) html += `<div class="d${isThisMonth && d === now.getDate() ? ' today' : ''}${sales && sales.has(d) ? ' sale' : ''}" ${sales && sales.has(d) ? 'title="Sales logged"' : ''}>${d}</div>`;
+      document.getElementById('bCalGrid').innerHTML = html;
+    };
+    draw(null);                           // draw right away, then add sale circles once loaded
+    draw(await loadSaleDays(y, m));
+  }
+  window.bCalShift = step => { calOffset += step; renderBCal(); };
+  renderBCal();
 
   // Folders — every page from the old sidebar. Drop your own folder.png in the main folder to change the icon.
   const FOLDERS = [
@@ -1359,7 +1394,7 @@ async function init() {
   renderTopVideos();
   renderSocialCards();
   if(!_todayQueue.length) renderTodayContent();   // refresh recommendations now that sales are loaded
-  const topProducts=(products||[]).slice().sort((a,b)=>(productUnits.get(b.id)||0)-(productUnits.get(a.id)||0)).filter(p=>(productUnits.get(p.id)||0)>0).slice(0,3);
+  const topProducts=(products||[]).slice().sort((a,b)=>(productUnits.get(b.id)||0)-(productUnits.get(a.id)||0)).filter(p=>(productUnits.get(p.id)||0)>0).slice(0,6);
   if(topProducts.length){
     document.getElementById('top-products').className='tops-grid';
     const escHtml=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -1706,7 +1741,7 @@ function renderTopVideos(list){
   const noteVal=(notes,label)=>{ const e=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); const m=String(notes||'').match(new RegExp(`^${e}\\s*:\\s*(.*)$`,'im')); return m?m[1].trim():''; };
   const thumb=v=>String(v.thumbnail_url||v.cover_url||v.image_url||noteVal(v.notes,'TikTok thumbnail')||noteVal(v.notes,'Thumbnail')||'').trim();
   const fmtN=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n||0);
-  const top=(list||_dashboardVideos||[]).filter(v=>(Number(v.views)||0)>0).sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0)).slice(0,3);
+  const top=(list||_dashboardVideos||[]).filter(v=>(Number(v.views)||0)>0).sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0)).slice(0,6);
   if(!top.length){ el.innerHTML='<div class="tops-empty">No video views yet.</div>'; return; }
   // TikTok thumbnail links expire after a while, so fall back to the linked product's photo.
   const prodImg=v=>{ const ps=_dashboardProducts||[]; const byId=v.prod_id&&ps.find(p=>p.id===v.prod_id);
@@ -1821,7 +1856,7 @@ const TT_RENDER={
   async tops(id){ const d=await ttData(id);
     renderTopVideos(d.videos);
     const units=videoUnitsByProduct(d.products,d.videos,d.attributed);
-    const top=d.products.slice().sort((a,b)=>(units.get(b.id)||0)-(units.get(a.id)||0)).filter(p=>(units.get(p.id)||0)>0).slice(0,3);
+    const top=d.products.slice().sort((a,b)=>(units.get(b.id)||0)-(units.get(a.id)||0)).filter(p=>(units.get(p.id)||0)>0).slice(0,6);
     const el=document.getElementById('top-products');
     if(!top.length){ el.className='empty-box'; el.innerHTML='<strong>No sales yet.</strong>Top products show up once sales are logged.'; return; }
     el.className='tops-grid';
