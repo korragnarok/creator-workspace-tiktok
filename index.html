@@ -557,6 +557,14 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   #top-products.empty-box{width:auto;}
   .chart-card .chart-wrap{height:160px!important;flex:none!important;}
 }
+/* Monthly Goals (2) + Content Ideas button stacked beside Top Products/Videos */
+.goals-col{display:flex;flex-direction:column;gap:12px;min-width:0;}
+.goals-col .card{height:auto!important;}
+.ideas-btn{display:block;text-decoration:none;color:var(--ink);text-align:center;padding:14px!important;transition:transform .15s,border-color .15s;}
+.ideas-btn:hover{transform:translateY(-2px);border-color:var(--tan);}
+.ideas-btn .b-title{font-size:20px;margin-bottom:4px;}
+.ib-count{font-size:12px;color:var(--text-muted);}
+.ib-go{font-family:'Bad Script',cursive;font-size:18px;color:var(--tan);margin-top:6px;}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -714,9 +722,12 @@ select.sched-location-tag:focus{border-color:var(--rust);}
               <div class="tops-label">Top Videos</div>
               <div class="tops-grid" id="top-videos"><div class="tops-empty">No video views yet.</div></div>
             </div>
+            <div class="goals-col">
             <div class="card b-goals">
             <div class="b-title">Monthly Goals</div>
             <div id="bGoals"></div>
+            </div>
+            <a class="card ideas-btn" href="ideas.html"><div class="b-title">Content Ideas</div><div class="ib-count" id="ideasCount"></div><div class="ib-go">Open ideas board →</div></a>
             </div>
           </div>
         </section>
@@ -832,9 +843,15 @@ select.sched-location-tag:focus{border-color:var(--rust);}
     wEl.addEventListener('input', e => { if (!e.target.dataset.date) return; notes[e.target.dataset.date] = e.target.value; try { localStorage.setItem('take24:week', JSON.stringify(notes)); } catch(err) {} });
   })();
 
+  // Content Ideas button: how many saved
+  (function(){ let l=[]; try { l = JSON.parse(localStorage.getItem('take24:ideas')) || []; } catch(e) {}
+    const el = document.getElementById('ideasCount'); if (!el) return;
+    const vids = l.filter(x => x.link).length, open = l.filter(x => !x.done).length;
+    el.textContent = l.length ? `${open} to film · ${vids} video${vids===1?'':'s'} saved` : 'No ideas yet'; })();
+
   // Monthly Goals — saved on this device
   const gEl = document.getElementById('bGoals');
-  let goals = ['','','','']; try { goals = JSON.parse(localStorage.getItem('take24:goals')) || goals; } catch(e) {}
+  let goals = ['','']; try { goals = (JSON.parse(localStorage.getItem('take24:goals')) || goals).slice(0,2); while (goals.length < 2) goals.push(''); } catch(e) {}
   const escG = v => String(v||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   gEl.innerHTML = goals.map((g,i) => `<div class="goal"><span class="num">${i+1}</span><input data-g="${i}" value="${escG(g)}" placeholder="goal for this month"></div>`).join('');
   gEl.addEventListener('input', e => { goals[e.target.dataset.g] = e.target.value; try { localStorage.setItem('take24:goals', JSON.stringify(goals)); } catch(err) {} });
