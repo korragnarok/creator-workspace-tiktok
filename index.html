@@ -632,7 +632,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=185"></script>
+<script src="supabase.js?v=200"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -853,7 +853,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 </div>
 
 <script src="planner-sync.js?v=198"></script>
-<script src="layout.js?v=195"></script>
+<script src="layout.js?v=200"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
@@ -872,14 +872,15 @@ select.sched-location-tag:focus{border-color:var(--rust);}
     ['daily-todo.html','Daily To Do'], ['video-tracker.html','Content Tracker'],
     ['products.html','Products'], ['brand-deals.html','Brand Deals'], ['product-scout.html','Product Scout'],
     ['scripts.html','Script Vault'], ['script-workshop.html','Script Workshop'], ['script-scout.html','Script Scout'],
-    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'], ['settings.html','Settings']
+    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'], ['settings.html','Settings'],
+    ['https://a.co/d/0aN0vMFu','Storefront'], ['https://affiliate-program.amazon.com/home','Associates']
   ];
   // Ombre: each folder a shade lighter than the one before (deep rust → soft tan)
   const shade = i => { const t = FOLDERS.length > 1 ? i / (FOLDERS.length - 1) : 0, a = [110,63,40], b = [222,196,170];
     return `rgb(${a.map((c,k) => Math.round(c + (b[k]-c) * t)).join(',')})`; };
   document.getElementById('bFolders').innerHTML = FOLDERS.map(([href, label], i) =>
-    `<a class="b-folder" href="${href}" style="--f:${shade(i)}">
-       <img class="ic" src="icons/folder-${i+1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">${label}</a>`).join('');
+    `<a class="b-folder" href="${href}"${/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : ''} style="--f:${shade(i)}">
+       <img class="ic" src="icons/folder-${i + 1 >= 13 ? i + 2 : i + 1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">${label}</a>`).join('');
 
 
   // Today's date on the filming card

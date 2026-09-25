@@ -91,12 +91,12 @@ const AUTH_REDIRECT_URL = window.location.href.split('?')[0].split('#')[0];
 
 // If already logged in, go home
 db.auth.getSession().then(({ data: { session } }) => {
-  if (session) window.location.href = 'choose.html?ask=1';
+  if (session) window.location.href = 'index.html';
 });
 
 // Handle magic link callback
 db.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN' && session) window.location.href = 'choose.html?ask=1';
+  if (event === 'SIGNED_IN' && session) window.location.href = 'index.html';
 });
 
 function setTab(tab) {
@@ -121,7 +121,7 @@ async function signIn() {
   btn.disabled = true; btn.textContent = 'Signing in...';
   const { error } = await db.auth.signInWithPassword({ email, password: pass });
   if (error) { showMsg(error.message, 'error'); btn.disabled = false; btn.textContent = 'Sign In'; }
-  else window.location.href = 'choose.html?ask=1';
+  else window.location.href = 'index.html';
 }
 
 async function signUp() {

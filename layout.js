@@ -81,8 +81,12 @@
     ['daily-todo.html','Daily To Do'], ['video-tracker.html','Content Tracker'],
     ['products.html','Products'], ['brand-deals.html','Brand Deals'], ['product-scout.html','Product Scout'],
     ['scripts.html','Script Vault'], ['script-workshop.html','Script Workshop'], ['script-scout.html','Script Scout'],
-    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'], ['settings.html','Settings']
+    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'], ['settings.html','Settings'],
+    ['https://a.co/d/0aN0vMFu','Storefront'], ['https://affiliate-program.amazon.com/home','Associates']
   ];
+  // folder image number: 1, 2, 3… but skips 13 (that's the black "you are here" folder)
+  const folderNum = i => (i + 1 >= 13 ? i + 2 : i + 1);
+  const extAttr = href => /^https?:/.test(href) ? ' target="_blank" rel="noopener"' : '';
   function folderShade(i) {
     const t = i / (FOLDERS.length - 1), a = [110,63,40], b = [222,196,170];
     return `rgb(${a.map((c,k) => Math.round(c + (b[k]-c) * t)).join(',')})`;
@@ -97,8 +101,8 @@
   }
   function folderGrid(page) {
     return `<div class="ls-folders">${FOLDERS.map(([href,label],i) => `
-      <a class="ls-folder${href === page ? ' active' : ''}" href="${href}" style="--f:${folderShade(i)}">
-        <img class="ls-ic" src="icons/folder-${href === page ? 13 : i+1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>'">
+      <a class="ls-folder${href === page ? ' active' : ''}" href="${href}"${extAttr(href)} style="--f:${folderShade(i)}">
+        <img class="ls-ic" src="icons/folder-${href === page ? 13 : folderNum(i)}.png" alt="" onerror="this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>'">
         <span>${label}</span></a>`).join('')}</div>`;
   }
   function injectPlannerSidebarStyles() {
@@ -321,8 +325,8 @@
   const MOBILE_MAIN = ['video-tracker.html','products.html','brand-deals.html','script-workshop.html','sales-calendar.html','settings.html'];
   function mobileFolders(page) {
     const tile = ([href,label]) => { const i = FOLDERS.findIndex(f => f[0] === href);
-      return `<a class="ls-folder${href === page ? ' active' : ''}" href="${href}" style="--f:${folderShade(i)}">
-        <img class="ls-ic" src="icons/folder-${href === page ? 13 : i+1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>'"><span>${label}</span></a>`; };
+      return `<a class="ls-folder${href === page ? ' active' : ''}" href="${href}"${extAttr(href)} style="--f:${folderShade(i)}">
+        <img class="ls-ic" src="icons/folder-${href === page ? 13 : folderNum(i)}.png" alt="" onerror="this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>'"><span>${label}</span></a>`; };
     const main = FOLDERS.filter(f => MOBILE_MAIN.includes(f[0])).sort((a,b) => MOBILE_MAIN.indexOf(a[0]) - MOBILE_MAIN.indexOf(b[0]));
     const rest = FOLDERS.filter(f => !MOBILE_MAIN.includes(f[0]));
     const moreActive = rest.some(f => f[0] === page);
