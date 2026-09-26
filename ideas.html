@@ -76,12 +76,6 @@ body.watching{background-image:none!important;}
     <input type="file" id="imgPick" accept="image/*" hidden onchange="addImage(this)">
   </div>
   <div class="cat-tabs" id="catTabs"></div>
-  <div class="filters">
-    <button class="btn on" data-f="all">All</button>
-    <button class="btn" data-f="video">Videos</button>
-    <button class="btn" data-f="text">Notes</button>
-    <button class="btn" data-f="image">Images</button>
-  </div>
   <div class="grid" id="grid"></div>
 </div>
 
@@ -193,7 +187,7 @@ function render(){
   const kind=it=>it.link?'video':it.img?'image':'text';
   const list=all.filter(it=>activeCat==='all'||it.cat===activeCat).filter(it=>filter==='all'||kind(it)===filter).reverse();
   const g=document.getElementById('grid');
-  if(!list.length){ g.innerHTML=`<div class="empty"><b>${all.length?'Nothing here':'No ideas yet'}</b>${all.length?'Try another filter.':'Type an idea above, or paste a link to a video you want to remember.'}</div>`; return; }
+  if(!list.length){ g.innerHTML=`<div class="empty"><b>${all.length?'Nothing here':'No ideas yet'}</b>${all.length?'Nothing in this tab yet.':'Type an idea above, or paste a link to a video you want to remember.'}</div>`; return; }
   g.innerHTML=list.map(it=>{
     const move=CATS.length?`<select class="mv" title="Move to tab" onclick="event.stopPropagation()" onchange="moveIdea(${it.i},this.value)"><option value="">No tab</option>${CATS.map(c=>`<option ${it.cat===c?'selected':''} value="${esc(c)}">${esc(c)}</option>`).join('')}</select>`:'';
     const acts=`<div class="acts"><label onclick="event.stopPropagation()"><input type="checkbox" ${it.done?'checked':''} onchange="toggleDone(${it.i},this.checked)"> filmed</label>${move}<button class="del" title="Delete" onclick="event.stopPropagation();delIdea(${it.i})">×</button></div>`;
@@ -227,7 +221,7 @@ function closeWatch(){ document.body.classList.remove('watching'); document.getE
 document.getElementById('watchModal').addEventListener('click',e=>{ if(e.target.id==='watchModal') closeWatch(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeWatch(); });
 document.getElementById('addInput').addEventListener('keydown',e=>{ if(e.key==='Enter') addIdea(); });
-document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ filter=b.dataset.f; document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b)); render(); });
+
 (async()=>{ const {data:{session}}=await db.auth.getSession(); if(!session){ location.href='auth.html'; return; } IDEAS=await plannerGet('ideas',[]); CATS=[...(await plannerGet('ideaCats',[]))]; renderTabs(); render();
   try{ const prefs=await loadUserPrefs(session.user.id); await initTheme(session.user.id,prefs); await initDisplayName(session.user,prefs); initProfilePopover(session.user.id);}catch(e){} })();
 </script>
