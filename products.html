@@ -218,6 +218,7 @@ tr.select-mode .tbl-action{display:none;}
 .pl-badge:hover{filter:brightness(1.12);transform:translateY(-1px);}
 .pl-badge.copied{background:#5E7A55!important;}
 .pl-amazon{background:#C27A2C;} .pl-mavely{background:#7A5AA6;} .pl-ltk{background:#3F3F3F;} .pl-shopmy{background:#A0526B;}
+.pl-missing{opacity:.55;border-style:dashed!important;}
 .pl-walmart{background:#2E62A8;} .pl-target{background:#B23B3B;} .pl-tiktok{background:#2B2B2B;border:1px solid var(--border-mid);}
 .pl-ttvideo{background:#1c1c1c;border:1px solid #25F4EE;color:#fff;}
 .pl-row{display:grid;grid-template-columns:130px 1fr 34px;gap:8px;margin-bottom:8px;align-items:center;}
@@ -279,6 +280,14 @@ tr.select-mode .tbl-action{display:none;}
       <tbody id="prodBody"><tr><td colspan="10"><div class="empty">Loading...</div></td></tr></tbody>
     </table>
     </div>
+  </div>
+</div>
+<div class="mg-overlay" id="ttlOverlay" onclick="if(event.target===this)closeTikTokLink()">
+  <div class="mg-card">
+    <div class="mg-title">TikTok Shop Link</div>
+    <div class="mg-sub" id="ttlName"></div>
+    <input class="form-input" id="ttlInput" placeholder="Paste your commission link…" onkeydown="if(event.key==='Enter')saveTikTokLink();if(event.key==='Escape')closeTikTokLink();">
+    <div style="display:flex;justify-content:flex-end;gap:8px;"><button class="btn btn-ghost" type="button" onclick="closeTikTokLink()">Cancel</button><button class="btn btn-primary" type="button" onclick="saveTikTokLink()">Save</button></div>
   </div>
 </div>
 <div class="mg-overlay" id="mergeOverlay">
@@ -729,6 +738,7 @@ function restoreProductsState() {
 window.addEventListener('pagehide', saveProductsState);
 window.addEventListener('beforeunload', saveProductsState);
 
+const EDIT_TT_LINK_MODE = true;   // TEMPORARY ← set to false to go back to tap-to-copy TikTok Shop badges
 let _stockFilter = 'active';
 let _allProducts = [];
 let _coreNames = [];
@@ -815,14 +825,36 @@ async function init() {
   window.renderProducts = renderProducts;
   // ── Link badges: tap to copy ────────────────────────────────────────
   // The TikTok Shop product link has its own field above; links to your TikTok videos go here as "TikTok Video"
+  window.editTikTokLink = function(id){
+    const p = _allProducts.find(x => x.id === id); if (!p) return;
+    document.getElementById('ttlName').textContent = p.name;
+    const inp = document.getElementById('ttlInput'); inp.value = p.link || '';
+    document.getElementById('ttlOverlay').dataset.id = id;
+    document.getElementById('ttlOverlay').classList.add('open');
+    setTimeout(() => { inp.focus(); inp.select(); }, 50);
+  };
+  window.closeTikTokLink = () => document.getElementById('ttlOverlay').classList.remove('open');
+  window.saveTikTokLink = async function(){
+    const ov = document.getElementById('ttlOverlay'), id = ov.dataset.id;
+    let url = document.getElementById('ttlInput').value.trim();
+    if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+    const { error } = await db.from('products').update({ link: url }).eq('id', id).eq('user_id', user.id);
+    if (error) { showToast('Could not save: ' + error.message, 'error'); return; }
+    const p = _allProducts.find(x => x.id === id); if (p) p.link = url;
+    closeTikTokLink(); showToast('TikTok Shop link saved'); window.renderProducts();
+  };
   const LINK_STORES = ['Amazon','Mavely','LTK','ShopMy','Walmart','Target','TikTok Video'];
   function storeClass(l){ const k=String(l||'').toLowerCase(); if(k==='tiktok video') return 'pl-ttvideo'; return 'pl-'+k.replace(/\s*shop$/,'').replace(/[^a-z]/g,''); }
   function linkBadgesHtml(p){
     const all = [];
-    const tt = String(p.link||'').trim(); if (tt) all.push({label:'TikTok Shop', url: tt});
+    const tt = String(p.link||'').trim();
     (Array.isArray(p.links) ? p.links : []).forEach(l => { if (l && l.url) all.push(l); });
-    if (!all.length) return '-';
-    return '<div class="pl-badges">'+all.map(l => '<button type="button" class="pl-badge '+storeClass(l.label)+'" data-url="'+escAttr(l.url)+'" data-label="'+escAttr(l.label||'Link')+'" onclick="event.stopPropagation();copyProdLink(this)" title="Copy '+escAttr(l.label||'link')+' link">'+esc(l.label||'Link')+'</button>').join('')+'</div>';
+    // TEMPORARY: the TikTok Shop badge opens an editor (to swap in commission links) instead of copying
+    const ttBadge = EDIT_TT_LINK_MODE
+      ? '<button type="button" class="pl-badge pl-tiktok'+(tt?'':' pl-missing')+'" onclick="event.stopPropagation();editTikTokLink(\''+p.id+'\')" title="Edit TikTok Shop link">'+(tt?'✎ TikTok Shop':'+ TikTok Shop')+'</button>'
+      : (tt ? '<button type="button" class="pl-badge pl-tiktok" data-url="'+escAttr(tt)+'" data-label="TikTok Shop" onclick="event.stopPropagation();copyProdLink(this)" title="Copy TikTok Shop link">TikTok Shop</button>' : '');
+    if (!all.length && !ttBadge) return '-';
+    return '<div class="pl-badges">'+ttBadge+all.map(l => '<button type="button" class="pl-badge '+storeClass(l.label)+'" data-url="'+escAttr(l.url)+'" data-label="'+escAttr(l.label||'Link')+'" onclick="event.stopPropagation();copyProdLink(this)" title="Copy '+escAttr(l.label||'link')+' link">'+esc(l.label||'Link')+'</button>').join('')+'</div>';
   }
   // Temporary column: tick = shows on every TikTok account; untick = belongs to the account you're viewing
   window.toggleAllAccounts = async function(id, cb){
