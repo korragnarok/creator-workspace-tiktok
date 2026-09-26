@@ -61,6 +61,13 @@ body.watching{background-image:none!important;}
 .ctab-new{border-style:dashed;color:var(--tan);}
 .ctab-edit{padding:8px 11px;}
 .mv{max-width:92px;background:var(--char);border:1px solid var(--line);border-radius:6px;color:var(--muted);font-size:10px;padding:2px 3px;}
+/* every idea card is the same square */
+.grid{align-items:stretch;}
+.icard{aspect-ratio:1/1;display:flex;flex-direction:column;min-height:0!important;}
+.icard .thumb{flex:1 1 auto;aspect-ratio:auto!important;min-height:0!important;}
+.icard.video .t,.icard.image .t{flex:none;padding:8px 12px 38px!important;height:auto;-webkit-line-clamp:1;}
+.icard.text{padding:18px 16px 40px!important;}
+.icard.text .t{flex:1;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:7;}
 </style>
 </head>
 <body>
