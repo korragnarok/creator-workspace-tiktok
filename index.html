@@ -687,6 +687,18 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .ap-add:disabled{background:var(--surface-2);color:var(--text-muted);cursor:default;font-size:14px;}
 /* Filming times removed from the Today tiles */
 .board .sched-time-cell,.sched-table-head .sched-time-col{display:none!important;}
+/* Today's Lineup section removed (Today's Content already shows it) */
+.lineup-section{display:none!important;}
+/* Phone: Monthly Goals + Content Ideas side by side */
+@media(max-width:768px){
+  .left-goals{flex-direction:row!important;gap:10px;align-items:stretch;}
+  .left-goals>*{flex:1 1 0;min-width:0;}
+  .left-goals .b-goals .b-title,.left-goals .ideas-btn .b-title{font-size:18px!important;}
+  .left-goals .b-goals input{font-size:12px;}
+  .left-goals .ib-count{font-size:11px;}
+  .left-goals .ib-go{font-size:15px;}
+  .board .level-feature{width:auto!important;max-width:none!important;}
+}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
