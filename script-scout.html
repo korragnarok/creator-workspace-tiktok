@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=181"></script>
+<script src="theme-init.js?v=227"></script>
 <link rel="stylesheet" href="layout.css?v=144">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -147,10 +147,10 @@ button,input,textarea,select{font:inherit;}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=181"></script>
-<script src="theme-init.js?v=181"></script>
+<script src="supabase.js?v=227"></script>
+<script src="theme-init.js?v=227"></script>
 <script src="gemini-ai.js?v=143"></script>
-<script src="layout.js?v=181"></script>
+<script src="layout.js?v=227"></script>
 
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -216,7 +216,8 @@ function restoreCache() {
 }
 function checkKeys() {
   const key = (localStorage.getItem(SCRAPE_KEY_STORAGE) || '').trim();
-  document.getElementById('keyNotice').style.display = key ? 'none' : 'flex';
+  // The key lives in the Cloudflare worker now, so there's nothing to add here — never show the old notice
+  document.getElementById('keyNotice').style.display = 'none';
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -486,7 +487,7 @@ async function transcribeVideo(index) {
     try {
       await transcribeWithGemini(v, videoUrl);
     } catch(e2) {
-      showTranscriptError('Transcription failed: ' + (err.message || 'Unknown error') + '. Make sure you have a Gemini key in Settings.');
+      showTranscriptError('Transcription failed: ' + (err.message || 'Unknown error') + '. Please try again in a moment.');
     }
   } finally {
     if (btn) { btn.classList.remove('loading'); btn.classList.add('done'); btn.textContent = '✓ Done'; }
