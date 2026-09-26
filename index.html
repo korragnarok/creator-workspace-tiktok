@@ -1043,7 +1043,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   (async function(){ const l = await plannerGet('ideas', []);
     const el = document.getElementById('ideasCount'); if (!el) return;
     const vids = l.filter(x => x.link).length, open = l.filter(x => !x.done).length;
-    el.textContent = l.length ? `${open} to film · ${vids} video${vids===1?'':'s'} saved` : 'No ideas yet'; })();
+    el.textContent = l.length ? `${l.length} idea${l.length===1?'':'s'} · ${vids} video${vids===1?'':'s'}` : 'No ideas yet'; })();
 
   // Monthly Goals — synced through Supabase
   (async function(){

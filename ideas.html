@@ -190,11 +190,11 @@ function render(){
   if(!list.length){ g.innerHTML=`<div class="empty"><b>${all.length?'Nothing here':'No ideas yet'}</b>${all.length?'Nothing in this tab yet.':'Type an idea above, or paste a link to a video you want to remember.'}</div>`; return; }
   g.innerHTML=list.map(it=>{
     const move=CATS.length?`<select class="mv" title="Move to tab" onclick="event.stopPropagation()" onchange="moveIdea(${it.i},this.value)"><option value="">No tab</option>${CATS.map(c=>`<option ${it.cat===c?'selected':''} value="${esc(c)}">${esc(c)}</option>`).join('')}</select>`:'';
-    const acts=`<div class="acts"><label onclick="event.stopPropagation()"><input type="checkbox" ${it.done?'checked':''} onchange="toggleDone(${it.i},this.checked)"> filmed</label>${move}<button class="del" title="Delete" onclick="event.stopPropagation();delIdea(${it.i})">×</button></div>`;
-    if(it.img) return `<div class="icard image${it.done?' done':''}" onclick="window.open('${esc(it.img)}','_blank')"><div class="thumb" style="background-image:url('${esc(it.img).replace(/'/g,'%27')}');aspect-ratio:auto;min-height:180px"></div>${it.text?`<div class="t">${esc(it.text)}</div>`:'<div class="t" style="padding-bottom:40px"></div>'}${acts}</div>`;
-    if(!it.link) return `<div class="icard text${it.done?' done':''}"><div class="t">${esc(it.text)}</div>${acts}</div>`;
+    const acts=`<div class="acts"><span></span>${move}<button class="del" title="Delete" onclick="event.stopPropagation();delIdea(${it.i})">×</button></div>`;
+    if(it.img) return `<div class="icard image" onclick="window.open('${esc(it.img)}','_blank')"><div class="thumb" style="background-image:url('${esc(it.img).replace(/'/g,'%27')}');aspect-ratio:auto;min-height:180px"></div>${it.text?`<div class="t">${esc(it.text)}</div>`:'<div class="t" style="padding-bottom:40px"></div>'}${acts}</div>`;
+    if(!it.link) return `<div class="icard text"><div class="t">${esc(it.text)}</div>${acts}</div>`;
     const known=it.thumb||THUMBS[it.link]||'';
-    return `<div class="icard video${it.done?' done':''}" onclick="openWatch(${it.i})"><div class="thumb${known?'':' ph'}" data-thumb="${it.i}"${known?` style="background-image:url('${known.replace(/'/g,'%27')}')"`:''}><span class="plat">${esc(platformOf(it.link))}</span><span class="play">▶</span></div><div class="t">${esc(it.text)}</div>${acts}</div>`;
+    return `<div class="icard video" onclick="openWatch(${it.i})"><div class="thumb${known?'':' ph'}" data-thumb="${it.i}"${known?` style="background-image:url('${known.replace(/'/g,'%27')}')"`:''}><span class="plat">${esc(platformOf(it.link))}</span><span class="play">▶</span></div><div class="t">${esc(it.text)}</div>${acts}</div>`;
   }).join('');
   // fill in thumbnails as they load, and remember them
   list.filter(it=>it.link&&!it.thumb&&!(it.link in THUMBS)).forEach(async it=>{
