@@ -6,6 +6,7 @@ const PLANNER_LOCAL = {
   ideas: ['take24:ideas', 'take24meta:list:content'],
   week:  ['take24:week', 'take24meta:week'],
   goals: ['take24:goals', 'take24meta:goals'],
+  ideaCats: ['take24:ideaCats'],   // Content Ideas tabs
 };
 const _plannerCache = {};
 function _readLocal(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } }
