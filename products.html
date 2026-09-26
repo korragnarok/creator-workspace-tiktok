@@ -1301,7 +1301,6 @@ async function init() {
     }
     if(existing.data?.length) {
       showToast('Already on today\'s to-do list');
-      window.location.href = dailyTodoUrl;
       return;
     }
     const orderLookup = await db.from('queue')
@@ -1315,6 +1314,7 @@ async function init() {
       : (Number(orderLookup.data?.[0]?.sort_order) || 0) + 1;
     const { error } = await db.from('queue').insert({
       user_id: user.id,
+      tiktok_account_id: product.tiktok_account_id || activeAccountId || null,
       date: today,
       prod_id: product.id,
       name: product.name || 'Untitled product',
@@ -1328,8 +1328,7 @@ async function init() {
       showToast(error.message, 'error');
       return;
     }
-    showToast('Added to today\'s to-do list');
-    window.location.href = dailyTodoUrl;
+    showToast(`Added ${product.name} to today`);   // stays on Products
   };
   window.viewProductVideos = function(id) {
     const product = _allProducts.find(p => p.id === id);
