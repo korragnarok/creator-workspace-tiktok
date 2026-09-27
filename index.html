@@ -734,6 +734,24 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .tc-prod .tag{flex-shrink:0;align-self:flex-start;font:800 9px 'Stack Sans Notch',sans-serif;letter-spacing:.06em;text-transform:uppercase;background:var(--rust);color:#fff;border-radius:999px;padding:3px 8px;}
 .tc-wait{text-align:center;color:var(--text-muted);padding:50px 10px;}
 @media(max-width:768px){.tc-grid{grid-template-columns:1fr;}}
+/* Today tiles: tap for script popup */
+.board .sched-row.tile-click{cursor:pointer;}
+.board .sched-row.tile-click:hover{border-color:var(--tan)!important;}
+.board .sched-row .sched-status,.board .sched-row .sched-actions{display:none!important;}
+.tile-x{position:absolute;top:14px;right:14px;z-index:2;width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:11px;cursor:pointer;opacity:0;transition:opacity .15s;}
+.sched-row:hover .tile-x{opacity:1;}
+@media(hover:none){.tile-x{opacity:.8;}}
+.tp-card{max-width:620px;}
+.tp-l{display:block;font:800 10px 'Stack Sans Notch',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--tan);margin-bottom:6px;}
+#tpScript{width:100%;min-height:200px;resize:vertical;background:var(--bg);border:1px solid var(--border-mid);border-radius:12px;padding:12px;color:var(--ink);font:14px/1.6 'IBM Plex Serif',serif;outline:none;}
+#tpScript:focus,.tp-search:focus{border-color:var(--tan);}
+.tp-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.tp-save{width:auto;margin:0;padding:10px 22px;}
+.tp-search{width:100%;background:var(--bg);border:1px solid var(--border-mid);border-radius:10px;padding:9px 12px;color:var(--ink);font:13px 'IBM Plex Serif',serif;outline:none;margin-bottom:8px;}
+.tp-vault{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;}
+.tp-s{text-align:left;border:1px solid var(--border);background:var(--bg-lift);border-radius:10px;padding:9px 12px;cursor:pointer;color:var(--ink);font:inherit;}
+.tp-s:hover{border-color:var(--tan);}
+.tp-s b{display:block;font-size:13px;} .tp-s small{display:block;color:var(--text-muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -762,6 +780,17 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .board .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
 }
 </style>
+<div class="tc-modal" id="tpModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeTilePop()">
+  <div class="tc-card tp-card">
+    <div class="tc-head"><div><h2 id="tpName"></h2><small id="tpBrand"></small></div><div class="tc-btns"><button class="tc-btn" onclick="closeTilePop()">Close</button></div></div>
+    <label class="tp-l">Your script</label>
+    <textarea id="tpScript" placeholder="Type your script here…"></textarea>
+    <div class="tp-row"><button class="tc-btn" id="tpDone" onclick="toggleTileDone()">Mark as filmed</button><div style="flex:1"></div><button class="add-bar tp-save" onclick="saveTilePop()">Save script</button></div>
+    <label class="tp-l" style="margin-top:16px">Or add one from your Script Vault</label>
+    <input id="tpSearch" class="tp-search" placeholder="Search scripts…" oninput="renderVaultPick()">
+    <div id="tpVault" class="tp-vault"></div>
+  </div>
+</div>
 <div class="tc-modal" id="tcModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeTikTokTips()">
   <div class="tc-card">
     <div class="tc-head"><div><h2 id="tcTitle">TikTok Coach</h2><small id="tcMeta"></small></div><div class="tc-btns"><button class="tc-btn" onclick="COACH_MODE==='meta'?runMetaTips():runTikTokTips()">↻ Refresh</button><button class="tc-btn" onclick="closeTikTokTips()">Close</button></div></div>
@@ -1009,7 +1038,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 </div>
 
 <script src="planner-sync.js?v=238"></script>
-<script src="layout.js?v=243"></script>
+<script src="layout.js?v=245"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
@@ -1049,7 +1078,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   // Folders — every page from the old sidebar. Drop your own folder.png in the main folder to change the icon.
   // [page, label, folder image number] — image numbers stay fixed so your folder pictures never shuffle
   const FOLDERS = [
-    ['daily-todo.html','Daily To Do',1], ['video-tracker.html','Content Tracker',2],
+    ['video-tracker.html','Content Tracker',2],
     ['products.html','Products',3], ['brand-deals.html','Brand Deals',4],
     ['scripts.html','Script Vault',6], ['sales-calendar.html','Sales Log',10],
     ['https://a.co/d/0aN0vMFu','Storefront',11], ['https://affiliate-program.amazon.com/home','Associates',12],
@@ -2112,6 +2141,47 @@ function renderMetaTips(t,at){
       <div class="tc-sec wide"><h3>Habits to change</h3><ul>${li(t.habits)}</ul></div>
     </div>`;
 }
+// ── Tap a Today tile: write your own script or pull one from the Script Vault ──
+let TP_ID=null, VAULT=null;
+async function openTilePop(id){
+  const q=(_todayQueue||[]).find(x=>String(x.id)===String(id)); if(!q) return;
+  TP_ID=id;
+  document.getElementById('tpName').textContent=q.name||'Product';
+  document.getElementById('tpBrand').textContent=q.brand||'';
+  document.getElementById('tpScript').value=q.script||'';
+  document.getElementById('tpDone').textContent=q.done?'✓ Filmed':'Mark as filmed';
+  document.getElementById('tpSearch').value='';
+  document.getElementById('tpModal').classList.add('open');
+  if(!VAULT){ document.getElementById('tpVault').innerHTML='<div class="tops-empty">Loading your scripts…</div>';
+    try{ VAULT=(await db.from('scripts').select('id,title,brand,script').eq('user_id',_dashboardUser.id).order('created_at',{ascending:false})).data||[]; }catch(e){ VAULT=[]; } }
+  renderVaultPick();
+}
+function closeTilePop(){ document.getElementById('tpModal').classList.remove('open'); TP_ID=null; }
+function renderVaultPick(){
+  const q=(_todayQueue||[]).find(x=>String(x.id)===String(TP_ID)); if(!q) return;
+  const term=document.getElementById('tpSearch').value.trim().toLowerCase();
+  const key=[q.name,q.brand].filter(Boolean).map(v=>String(v).toLowerCase());
+  const rel=sc=>{ const hay=`${sc.title} ${sc.brand}`.toLowerCase(); return key.some(k=>k&&(hay.includes(k)||k.includes(String(sc.brand||'').toLowerCase()||'§'))); };
+  let list=(VAULT||[]).filter(sc=>!term||`${sc.title} ${sc.brand} ${sc.script}`.toLowerCase().includes(term));
+  list=[...list.filter(rel),...list.filter(sc=>!rel(sc))].slice(0,60);   // this product's scripts first
+  document.getElementById('tpVault').innerHTML=list.length?list.map(sc=>`<button type="button" class="tp-s" onclick="useVaultScript('${sc.id}')"><b>${esc(sc.title||'Untitled')}</b><small>${esc(sc.brand||'')}${sc.brand?' · ':''}${esc(String(sc.script||'').slice(0,90))}</small></button>`).join(''):'<div class="tops-empty">No scripts found.</div>';
+}
+function useVaultScript(id){ const sc=(VAULT||[]).find(x=>String(x.id)===String(id)); if(!sc) return; document.getElementById('tpScript').value=sc.script||''; document.getElementById('tpScript').focus(); }
+async function saveTilePop(){
+  const q=(_todayQueue||[]).find(x=>String(x.id)===String(TP_ID)); if(!q) return;
+  const script=document.getElementById('tpScript').value;
+  const {error}=await db.from('queue').update({script}).eq('id',q.id).eq('user_id',_dashboardUser.id);
+  if(error){ showToast('Could not save: '+error.message,'error'); return; }
+  q.script=script; showToast('Script saved'); closeTilePop(); renderTodayContent();
+}
+async function toggleTileDone(){
+  const q=(_todayQueue||[]).find(x=>String(x.id)===String(TP_ID)); if(!q) return;
+  const done=!q.done;
+  const {error}=await db.from('queue').update({done}).eq('id',q.id).eq('user_id',_dashboardUser.id);
+  if(error){ showToast('Could not update: '+error.message,'error'); return; }
+  q.done=done; document.getElementById('tpDone').textContent=done?'✓ Filmed':'Mark as filmed'; renderTodayContent();
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&TP_ID) closeTilePop(); });
 function renderTodayContent(){
   const list=document.getElementById('sched-list');
   const progressWrap=document.getElementById('sched-progress-wrap');
@@ -2160,7 +2230,7 @@ function renderTodayContent(){
     const isDupe=nameCounts[nameKey]>1;
     nameCounters[nameKey]=(nameCounters[nameKey]||0)+1;
     const scriptLabel=isDupe?`<span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);margin-left:6px;">Script ${nameCounters[nameKey]}</span>`:'';
-    return`<div class="sched-row${q.done?' done':''}" id="srow-${q.id}">
+    return`<div class="sched-row tile-click${q.done?' done':''}" id="srow-${q.id}" onclick="openTilePop('${q.id}')" title="Tap to write or add a script">
       <input type="checkbox" class="sched-bulk-cb" id="cb-${q.id}" data-id="${q.id}" onchange="updateBulkCount()" style="display:none;margin-right:4px;accent-color:var(--rust);width:16px;height:16px;cursor:pointer;flex-shrink:0;">
       <div class="sched-time-cell">
         <span class="sched-time${rawTime?'':' no-time'}" onclick="openTimePopover('${q.id}',this)" title="Set time">${esc(timeLabel)}</span>
@@ -2175,12 +2245,7 @@ function renderTodayContent(){
       </div>
       ${schedTypeSelectHtml(q,typeTag)}
       ${locationTag}
-      <button class="sched-status ${statusClass}" onclick="cycleSchedStatus('${q.id}')">${statusLabel}</button>
-      <div class="sched-actions">
-        <button class="sched-script-link" type="button" onclick="openDashboardScriptModal('${q.id}')">View Script</button>
-        <a class="sched-open-link" href="${esc(dailyLink)}">Open</a>
-        <button class="sched-remove" onclick="removeSchedItem('${q.id}')" title="Remove">✕</button>
-      </div>
+      <button class="tile-x" onclick="event.stopPropagation();removeSchedItem('${q.id}')" title="Remove from today">✕</button>
     </div>`;
   }).join('');
   list.innerHTML=`<div class="sched-list-inner">
