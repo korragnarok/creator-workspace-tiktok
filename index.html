@@ -753,6 +753,15 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .tp-s:hover{border-color:var(--tan);}
 .tp-s b{display:block;font-size:13px;} .tp-s small{display:block;color:var(--text-muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #heroBrandsSlot{display:none!important;}   /* Hero Brands now live on the Products page */
+.tile-count{font-size:10px;color:var(--tan);margin-top:2px;}
+.tp-take{border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:10px;background:var(--bg-lift);}
+.tp-take.active{border-color:var(--tan);}
+.tp-take-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.tp-take-head .tp-l{flex:1;}
+.tp-done{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:5px;cursor:pointer;}
+.tp-done input{accent-color:var(--rust);}
+.tp-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;}
+.tp-take textarea{width:100%;min-height:130px;resize:vertical;background:var(--bg);border:1px solid var(--border-mid);border-radius:10px;padding:10px;color:var(--ink);font:14px/1.6 'IBM Plex Serif',serif;outline:none;}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -784,10 +793,9 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 <div class="tc-modal" id="tpModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeTilePop()">
   <div class="tc-card tp-card">
     <div class="tc-head"><div><h2 id="tpName"></h2><small id="tpBrand"></small></div><div class="tc-btns"><button class="tc-btn" onclick="closeTilePop()">Close</button></div></div>
-    <label class="tp-l">Your script</label>
-    <textarea id="tpScript" placeholder="Type your script here…"></textarea>
-    <div class="tp-row"><button class="tc-btn" id="tpDone" onclick="toggleTileDone()">Mark as filmed</button><div style="flex:1"></div><button class="add-bar tp-save" onclick="saveTilePop()">Save script</button></div>
-    <label class="tp-l" style="margin-top:16px">Or add one from your Script Vault</label>
+    <div id="tpList"></div>
+    <div class="tp-row"><button class="tc-btn" onclick="addTileScript()">+ Add another script</button><div style="flex:1"></div><button class="add-bar tp-save" onclick="saveTilePop()">Save</button></div>
+    <label class="tp-l" style="margin-top:16px">Add from your Script Vault <span id="tpTarget" style="text-transform:none;letter-spacing:0;color:var(--text-muted)"></span></label>
     <input id="tpSearch" class="tp-search" placeholder="Search scripts…" oninput="renderVaultPick()">
     <div id="tpVault" class="tp-vault"></div>
   </div>
@@ -2142,45 +2150,73 @@ function renderMetaTips(t,at){
       <div class="tc-sec wide"><h3>Habits to change</h3><ul>${li(t.habits)}</ul></div>
     </div>`;
 }
-// ── Tap a Today tile: write your own script or pull one from the Script Vault ──
-let TP_ID=null, VAULT=null;
+// ── Tap a Today tile: one or more scripts for that product (type your own or pull from the Script Vault) ──
+let TP_ID=null, TP_ITEMS=[], TP_ACTIVE=0, VAULT=null;
+function groupFor(id){ const q=(_todayQueue||[]).find(x=>String(x.id)===String(id)); if(!q) return [];
+  const k=String(q.prod_id||q.name||q.id).toLowerCase(); return (_todayQueue||[]).filter(x=>String(x.prod_id||x.name||x.id).toLowerCase()===k); }
 async function openTilePop(id){
-  const q=(_todayQueue||[]).find(x=>String(x.id)===String(id)); if(!q) return;
-  TP_ID=id;
-  document.getElementById('tpName').textContent=q.name||'Product';
-  document.getElementById('tpBrand').textContent=q.brand||'';
-  document.getElementById('tpScript').value=q.script||'';
-  document.getElementById('tpDone').textContent=q.done?'✓ Filmed':'Mark as filmed';
+  const items=groupFor(id); if(!items.length) return;
+  TP_ID=id; TP_ITEMS=items.map(x=>({id:x.id,script:x.script||'',done:!!x.done})); TP_ACTIVE=0;
+  document.getElementById('tpName').textContent=items[0].name||'Product';
+  document.getElementById('tpBrand').textContent=items[0].brand||'';
   document.getElementById('tpSearch').value='';
+  renderTileList();
   document.getElementById('tpModal').classList.add('open');
   if(!VAULT){ document.getElementById('tpVault').innerHTML='<div class="tops-empty">Loading your scripts…</div>';
     try{ VAULT=(await db.from('scripts').select('id,title,brand,script').eq('user_id',_dashboardUser.id).order('created_at',{ascending:false})).data||[]; }catch(e){ VAULT=[]; } }
   renderVaultPick();
 }
+function renderTileList(){
+  document.getElementById('tpList').innerHTML=TP_ITEMS.map((t,i)=>`<div class="tp-take${i===TP_ACTIVE?' active':''}">
+    <div class="tp-take-head"><span class="tp-l" style="margin:0">Script ${i+1}</span>
+      <label class="tp-done"><input type="checkbox" ${t.done?'checked':''} onchange="TP_ITEMS[${i}].done=this.checked"> filmed</label>
+      ${TP_ITEMS.length>1?`<button class="tp-del" title="Delete this script" onclick="deleteTileScript(${i})">✕</button>`:''}</div>
+    <textarea placeholder="Type your script here…" onfocus="setTpActive(${i})" oninput="TP_ITEMS[${i}].script=this.value">${esc(t.script)}</textarea></div>`).join('');
+  document.getElementById('tpTarget').textContent=TP_ITEMS.length>1?`· goes into Script ${TP_ACTIVE+1}`:'';
+}
+function setTpActive(i){ if(TP_ACTIVE===i) return; TP_ACTIVE=i; document.querySelectorAll('.tp-take').forEach((el,k)=>el.classList.toggle('active',k===i)); document.getElementById('tpTarget').textContent=TP_ITEMS.length>1?`· goes into Script ${i+1}`:''; }
 function closeTilePop(){ document.getElementById('tpModal').classList.remove('open'); TP_ID=null; }
 function renderVaultPick(){
-  const q=(_todayQueue||[]).find(x=>String(x.id)===String(TP_ID)); if(!q) return;
+  const first=groupFor(TP_ID)[0]; if(!first) return;
   const term=document.getElementById('tpSearch').value.trim().toLowerCase();
-  const key=[q.name,q.brand].filter(Boolean).map(v=>String(v).toLowerCase());
-  const rel=sc=>{ const hay=`${sc.title} ${sc.brand}`.toLowerCase(); return key.some(k=>k&&(hay.includes(k)||k.includes(String(sc.brand||'').toLowerCase()||'§'))); };
+  const key=[first.name,first.brand].filter(Boolean).map(v=>String(v).toLowerCase());
+  const rel=sc=>{ const hay=`${sc.title} ${sc.brand}`.toLowerCase(); return key.some(k=>k&&hay.includes(k)); };
   let list=(VAULT||[]).filter(sc=>!term||`${sc.title} ${sc.brand} ${sc.script}`.toLowerCase().includes(term));
-  list=[...list.filter(rel),...list.filter(sc=>!rel(sc))].slice(0,60);   // this product's scripts first
+  list=[...list.filter(rel),...list.filter(sc=>!rel(sc))].slice(0,60);
   document.getElementById('tpVault').innerHTML=list.length?list.map(sc=>`<button type="button" class="tp-s" onclick="useVaultScript('${sc.id}')"><b>${esc(sc.title||'Untitled')}</b><small>${esc(sc.brand||'')}${sc.brand?' · ':''}${esc(String(sc.script||'').slice(0,90))}</small></button>`).join(''):'<div class="tops-empty">No scripts found.</div>';
 }
-function useVaultScript(id){ const sc=(VAULT||[]).find(x=>String(x.id)===String(id)); if(!sc) return; document.getElementById('tpScript').value=sc.script||''; document.getElementById('tpScript').focus(); }
-async function saveTilePop(){
-  const q=(_todayQueue||[]).find(x=>String(x.id)===String(TP_ID)); if(!q) return;
-  const script=document.getElementById('tpScript').value;
-  const {error}=await db.from('queue').update({script}).eq('id',q.id).eq('user_id',_dashboardUser.id);
-  if(error){ showToast('Could not save: '+error.message,'error'); return; }
-  q.script=script; showToast('Script saved'); closeTilePop(); renderTodayContent();
+function useVaultScript(id){ const sc=(VAULT||[]).find(x=>String(x.id)===String(id)); if(!sc) return;
+  TP_ITEMS[TP_ACTIVE].script=sc.script||''; renderTileList(); document.querySelectorAll('.tp-take textarea')[TP_ACTIVE]?.focus(); }
+async function addTileScript(){
+  const first=groupFor(TP_ID)[0]; if(!first) return;
+  const {data,error}=await db.from('queue').insert({user_id:_dashboardUser.id,tiktok_account_id:first.tiktok_account_id||getActiveAccountId()||null,date:localDateKey(),prod_id:first.prod_id||null,name:first.name||'',brand:first.brand||'',notes:'',script:'',done:false,sort_order:_todayQueue.length})
+    .select('id,name,brand,notes,script,done,prod_id,sort_order,tiktok_account_id').single();
+  if(error){ showToast(error.message,'error'); return; }
+  _todayQueue=[..._todayQueue,data]; TP_ITEMS.push({id:data.id,script:'',done:false}); TP_ACTIVE=TP_ITEMS.length-1;
+  renderTileList(); document.querySelectorAll('.tp-take textarea')[TP_ACTIVE]?.focus(); renderTodayContent();
 }
-async function toggleTileDone(){
-  const q=(_todayQueue||[]).find(x=>String(x.id)===String(TP_ID)); if(!q) return;
-  const done=!q.done;
-  const {error}=await db.from('queue').update({done}).eq('id',q.id).eq('user_id',_dashboardUser.id);
-  if(error){ showToast('Could not update: '+error.message,'error'); return; }
-  q.done=done; document.getElementById('tpDone').textContent=done?'✓ Filmed':'Mark as filmed'; renderTodayContent();
+async function deleteTileScript(i){
+  if(!confirm(`Delete Script ${i+1}?`)) return;
+  const t=TP_ITEMS[i]; const {error}=await db.from('queue').delete().eq('id',t.id).eq('user_id',_dashboardUser.id);
+  if(error){ showToast(error.message,'error'); return; }
+  _todayQueue=_todayQueue.filter(x=>String(x.id)!==String(t.id)); TP_ITEMS.splice(i,1); TP_ACTIVE=0;
+  if(String(TP_ID)===String(t.id)) TP_ID=TP_ITEMS[0]?.id;
+  renderTileList(); renderTodayContent();
+}
+async function saveTilePop(){
+  for(const t of TP_ITEMS){
+    const q=_todayQueue.find(x=>String(x.id)===String(t.id)); if(!q) continue;
+    if((q.script||'')===t.script && !!q.done===t.done) continue;
+    const {error}=await db.from('queue').update({script:t.script,done:t.done}).eq('id',t.id).eq('user_id',_dashboardUser.id);
+    if(error){ showToast('Could not save: '+error.message,'error'); return; }
+    q.script=t.script; q.done=t.done;
+  }
+  showToast('Saved'); closeTilePop(); renderTodayContent();
+}
+async function removeProductFromToday(id){
+  const items=groupFor(id); if(!items.length) return;
+  if(items.length>1&&!confirm(`Remove ${items[0].name} and its ${items.length} scripts from today?`)) return;
+  for(const x of items) await removeSchedItem(x.id);
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&TP_ID) closeTilePop(); });
 function renderTodayContent(){
@@ -2213,7 +2249,11 @@ function renderTodayContent(){
   const nameCounts={};
   sorted.forEach(q=>{ const k=(q.name||'').trim().toLowerCase(); nameCounts[k]=(nameCounts[k]||0)+1; });
   const nameCounters={};
-  const rows=sorted.map(q=>{
+  // one tile per product; its scripts (takes) are grouped inside
+  const groups=[], gmap={};
+  sorted.forEach(q=>{ const k=String(q.prod_id||q.name||q.id).toLowerCase(); if(!gmap[k]){ gmap[k]={q,items:[]}; groups.push(gmap[k]); } gmap[k].items.push(q); });
+  const rows=groups.map(({q,items})=>{
+    const allDone=items.every(x=>x.done), nScripts=items.filter(x=>String(x.script||'').trim()).length;
     const rawTime=parseSchedTime(q.notes);
     const timeLabel=rawTime?fmtSchedTime(rawTime):'+ time';
     const cleanLine=String(q.notes||'').split('\n').find(l=>l.trim()&&!/^SCHED_TIME:/i.test(l)&&!/^STATUS:/i.test(l)&&!/^LOCATION:/i.test(l)&&!/^TYPE:/i.test(l)&&!/^ON_SCREEN_TEXT:/i.test(l)&&!/^SEO_STRATEGY:/i.test(l)&&!/^CAPTION:/i.test(l)&&!/^HASHTAGS:/i.test(l)&&!/^SUPPLIES_HAVE:/i.test(l)&&!/^SUPPLIES_NEED:/i.test(l))||'';
@@ -2231,7 +2271,7 @@ function renderTodayContent(){
     const isDupe=nameCounts[nameKey]>1;
     nameCounters[nameKey]=(nameCounters[nameKey]||0)+1;
     const scriptLabel=isDupe?`<span style="font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--rust);margin-left:6px;">Script ${nameCounters[nameKey]}</span>`:'';
-    return`<div class="sched-row tile-click${q.done?' done':''}" id="srow-${q.id}" onclick="openTilePop('${q.id}')" title="Tap to write or add a script">
+    return`<div class="sched-row tile-click${allDone?' done':''}" id="srow-${q.id}" onclick="openTilePop('${q.id}')" title="Tap to write or add scripts">
       <input type="checkbox" class="sched-bulk-cb" id="cb-${q.id}" data-id="${q.id}" onchange="updateBulkCount()" style="display:none;margin-right:4px;accent-color:var(--rust);width:16px;height:16px;cursor:pointer;flex-shrink:0;">
       <div class="sched-time-cell">
         <span class="sched-time${rawTime?'':' no-time'}" onclick="openTimePopover('${q.id}',this)" title="Set time">${esc(timeLabel)}</span>
@@ -2240,13 +2280,14 @@ function renderTodayContent(){
       <div class="sched-product-cell">
         <img class="sched-thumb" src="${esc(productImg)}" alt="" onerror="this.src='icons/default-product.png'">
         <div class="sched-body">
-          <div class="sched-name">${esc(q.name)}${scriptLabel}</div>
+          <div class="sched-name">${esc(q.name)}</div>
+          <div class="tile-count">${items.length>1?`${items.length} scripts`:(nScripts?'1 script':'No script yet')}${items.length>1&&items.some(x=>x.done)?` · ${items.filter(x=>x.done).length} filmed`:''}</div>
           ${brandMeta}
         </div>
       </div>
       ${schedTypeSelectHtml(q,typeTag)}
       ${locationTag}
-      <button class="tile-x" onclick="event.stopPropagation();removeSchedItem('${q.id}')" title="Remove from today">✕</button>
+      <button class="tile-x" onclick="event.stopPropagation();removeProductFromToday('${q.id}')" title="Remove from today">✕</button>
     </div>`;
   }).join('');
   list.innerHTML=`<div class="sched-list-inner">
