@@ -81,8 +81,9 @@
     ['daily-todo.html','Daily To Do'], ['video-tracker.html','Content Tracker'],
     ['products.html','Products'], ['brand-deals.html','Brand Deals'], ['product-scout.html','Product Scout'],
     ['scripts.html','Script Vault'], ['script-workshop.html','Script Workshop'], ['script-scout.html','Script Scout'],
-    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'], ['settings.html','Settings'],
-    ['https://a.co/d/0aN0vMFu','Storefront'], ['https://affiliate-program.amazon.com/home','Associates']
+    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'],
+    ['https://a.co/d/0aN0vMFu','Storefront'], ['https://affiliate-program.amazon.com/home','Associates'],
+    ['video-feedback.html','Video Feedback'], ['settings.html','Settings']
   ];
   // folder image number: 1, 2, 3… but skips 13 (that's the black "you are here" folder)
   const folderNum = i => (i + 1 >= 13 ? i + 2 : i + 1);
@@ -102,7 +103,7 @@
   function folderGrid(page) {
     return `<div class="ls-folders">${FOLDERS.map(([href,label],i) => `
       <a class="ls-folder${href === page ? ' active' : ''}" href="${href}"${extAttr(href)} style="--f:${folderShade(i)}">
-        <img class="ls-ic" src="icons/folder-${href === page ? 13 : folderNum(i)}.png" alt="" onerror="this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>'">
+        <img class="ls-ic" src="icons/folder-${href === page ? 13 : folderNum(i)}.png" alt="" onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src='icons/folder-12.png';}else{this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>';}">
         <span>${label}</span></a>`).join('')}</div>`;
   }
   function injectPlannerSidebarStyles() {
@@ -326,7 +327,7 @@
   function mobileFolders(page) {
     const tile = ([href,label]) => { const i = FOLDERS.findIndex(f => f[0] === href);
       return `<a class="ls-folder${href === page ? ' active' : ''}" href="${href}"${extAttr(href)} style="--f:${folderShade(i)}">
-        <img class="ls-ic" src="icons/folder-${href === page ? 13 : folderNum(i)}.png" alt="" onerror="this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>'"><span>${label}</span></a>`; };
+        <img class="ls-ic" src="icons/folder-${href === page ? 13 : folderNum(i)}.png" alt="" onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src='icons/folder-12.png';}else{this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>';}"><span>${label}</span></a>`; };
     const main = FOLDERS.filter(f => MOBILE_MAIN.includes(f[0])).sort((a,b) => MOBILE_MAIN.indexOf(a[0]) - MOBILE_MAIN.indexOf(b[0]));
     const rest = FOLDERS.filter(f => !MOBILE_MAIN.includes(f[0]));
     const moreActive = rest.some(f => f[0] === page);

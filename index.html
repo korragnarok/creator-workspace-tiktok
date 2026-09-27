@@ -970,7 +970,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 </div>
 
 <script src="planner-sync.js?v=228"></script>
-<script src="layout.js?v=209"></script>
+<script src="layout.js?v=235"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
@@ -1012,15 +1012,16 @@ select.sched-location-tag:focus{border-color:var(--rust);}
     ['daily-todo.html','Daily To Do'], ['video-tracker.html','Content Tracker'],
     ['products.html','Products'], ['brand-deals.html','Brand Deals'], ['product-scout.html','Product Scout'],
     ['scripts.html','Script Vault'], ['script-workshop.html','Script Workshop'], ['script-scout.html','Script Scout'],
-    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'], ['settings.html','Settings'],
-    ['https://a.co/d/0aN0vMFu','Storefront'], ['https://affiliate-program.amazon.com/home','Associates']
+    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'],
+    ['https://a.co/d/0aN0vMFu','Storefront'], ['https://affiliate-program.amazon.com/home','Associates'],
+    ['video-feedback.html','Video Feedback'], ['settings.html','Settings']
   ];
   // Ombre: each folder a shade lighter than the one before (deep rust → soft tan)
   const shade = i => { const t = FOLDERS.length > 1 ? i / (FOLDERS.length - 1) : 0, a = [110,63,40], b = [222,196,170];
     return `rgb(${a.map((c,k) => Math.round(c + (b[k]-c) * t)).join(',')})`; };
   document.getElementById('bFolders').innerHTML = FOLDERS.map(([href, label], i) =>
     `<a class="b-folder" href="${href}"${/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : ''} style="--f:${shade(i)}">
-       <img class="ic" src="icons/folder-${i + 1 >= 13 ? i + 2 : i + 1}.png" alt="" onerror="this.outerHTML='<span class=&quot;ic fallback&quot;></span>'">${label}</a>`).join('');
+       <img class="ic" src="icons/folder-${i + 1 >= 13 ? i + 2 : i + 1}.png" alt="" onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src='icons/folder-12.png';}else{this.outerHTML='<span class=&quot;ic fallback&quot;></span>';}">${label}</a>`).join('');
 
 
   // Today's date on the filming card

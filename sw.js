@@ -1,5 +1,5 @@
 // ─── Creator Hub Service Worker ───────────────────────────────────────────────
-const CACHE = 'creator-hub-v233';
+const CACHE = 'creator-hub-v236';
 
 // Core files to cache for offline shell
 const PRECACHE = [
@@ -20,6 +20,7 @@ const PRECACHE = [
   '/ideas.html',
   '/meta-api.js',
   '/planner-sync.js',
+  '/video-feedback.html',
   '/ctas.html',
   '/theme-init.js',
   '/supabase.js',

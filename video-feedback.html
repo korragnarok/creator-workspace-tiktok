@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Video Feedback — Take24</title>
+<script src="theme-init.js?v=235"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Bad+Script&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font:14px 'Nunito Sans',sans-serif;padding:26px;padding-top:max(26px,env(safe-area-inset-top));}
+.wrap{max-width:1180px;margin:0 auto;}
+h1{font:300 40px 'Cormorant Garamond',serif;color:var(--ink);}
+h1 em{font:26px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
+.sub{color:var(--text-muted);margin:4px 0 20px;}
+.layout{display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:18px;align-items:start;}
+.card{background:var(--surface);border:1px solid var(--border-mid);border-radius:20px;padding:18px;box-shadow:var(--shadow-md);}
+.drop{border:2px dashed var(--border-mid);border-radius:16px;padding:26px 14px;text-align:center;cursor:pointer;color:var(--text-muted);transition:border-color .15s,background .15s;}
+.drop:hover,.drop.over{border-color:var(--tan);background:var(--bg-lift);}
+.drop b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px;}
+video{width:100%;max-height:460px;border-radius:14px;background:#000;display:none;margin-top:12px;}
+label{display:block;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--tan);margin:14px 0 6px;}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--border-mid);border-radius:12px;padding:10px 12px;color:var(--ink);font:14px 'Nunito Sans',sans-serif;outline:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--tan);}
+textarea{resize:vertical;min-height:60px;}
+.or{text-align:center;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin:12px 0 8px;}
+.btn{width:100%;margin-top:16px;border:none;border-radius:999px;padding:13px;background:var(--rust);color:#fff;font:800 12px 'Nunito Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
+.btn:disabled{opacity:.55;cursor:wait;}
+.status{margin-top:10px;font-size:12px;color:var(--tan);text-align:center;min-height:16px;}
+.empty{color:var(--text-muted);text-align:center;padding:60px 20px;}
+.empty b{display:block;font:26px 'Cormorant Garamond',serif;color:var(--ink);font-weight:400;margin-bottom:6px;}
+.score-row{display:flex;align-items:center;gap:18px;margin-bottom:16px;}
+.score{width:86px;height:86px;border-radius:50%;background:var(--rust);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;font:300 34px 'Cormorant Garamond',serif;line-height:1;}
+.score small{font:800 9px 'Nunito Sans',sans-serif;letter-spacing:.1em;opacity:.8;margin-top:2px;}
+.summary{font-size:15px;line-height:1.55;color:var(--ink);}
+.fixes{background:var(--bg-lift);border:1px solid var(--border-mid);border-radius:16px;padding:14px 16px;margin-bottom:14px;}
+.fixes h3,.sec h3{font:400 21px 'Cormorant Garamond',serif;color:var(--ink);margin-bottom:8px;}
+.fixes ol{padding-left:20px;display:flex;flex-direction:column;gap:6px;line-height:1.5;}
+.secs{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.sec{background:var(--bg-lift);border:1px solid var(--border);border-radius:16px;padding:14px;}
+.sec .rt{float:right;font:800 11px 'Nunito Sans',sans-serif;color:#fff;background:var(--rust);border-radius:999px;padding:2px 9px;}
+.sec p{font-size:13px;line-height:1.5;margin-bottom:6px;}
+.sec .good{color:var(--text-mid);} .sec .try{color:var(--ink);}
+.sec .good::before{content:'✓ ';color:var(--tan);font-weight:800;} .sec .try::before{content:'→ ';color:var(--rust);font-weight:800;}
+.ts{display:inline-block;background:var(--surface-2);border-radius:6px;padding:1px 6px;font-size:11px;font-weight:800;margin-right:4px;color:var(--tan);cursor:pointer;}
+.flag{background:rgba(178,59,59,.14);border:1px solid rgba(178,59,59,.4);border-radius:12px;padding:10px 12px;margin-bottom:14px;font-size:13px;line-height:1.5;}
+.caption{white-space:pre-wrap;background:var(--bg);border:1px solid var(--border-mid);border-radius:12px;padding:10px 12px;font-size:13px;margin-top:6px;}
+.copy{margin-top:6px;background:none;border:1px solid var(--border-mid);color:var(--tan);border-radius:999px;padding:5px 12px;font:800 10px 'Nunito Sans',sans-serif;cursor:pointer;}
+@media(max-width:860px){.layout{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Video Feedback <em>powered by Gemini</em></h1>
+  <p class="sub">Upload a video before you post it and get honest notes on the hook, pacing, product shots and call to action.</p>
+  <div class="layout">
+    <div class="card">
+      <div class="drop" id="drop" onclick="document.getElementById('file').click()">
+        <b>Drop a video here</b>or tap to choose one · up to about 90 MB
+      </div>
+      <input type="file" id="file" accept="video/*" hidden>
+      <div class="or">or paste a TikTok link</div>
+      <input id="ttLink" placeholder="https://www.tiktok.com/@you/video/…" oninput="onLink()">
+      <video id="preview" controls playsinline></video>
+      <label>What is it for?</label>
+      <select id="goal">
+        <option value="tiktok-shop">TikTok Shop — sell the product</option>
+        <option value="views">Views & reach</option>
+        <option value="brand-deal">Brand deal / sponsored</option>
+        <option value="reels">Instagram / Facebook Reel</option>
+      </select>
+      <label>Product (optional)</label>
+      <input id="product" placeholder="e.g. Shark FlexStyle" list="prodList">
+      <datalist id="prodList"></datalist>
+      <label>Anything to focus on? (optional)</label>
+      <textarea id="focus" placeholder="e.g. Is my hook strong enough? Is it too long?"></textarea>
+      <button class="btn" id="goBtn" onclick="analyze()" disabled>Get feedback</button>
+      <div class="status" id="status"></div>
+    </div>
+    <div class="card" id="results"><div class="empty"><b>No feedback yet</b>Choose a video on the left, then tap “Get feedback”. It usually takes 20–60 seconds.</div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=235"></script>
+<script src="layout.js?v=235"></script>
+<script>
+const WORKER = 'https://take24-scout.kortnycall5.workers.dev';
+const MAX_MB = 90;
+let VIDEO = null, LINK = '';
+function onLink(){
+  LINK = document.getElementById('ttLink').value.trim();
+  const ok = /tiktok\.com\//i.test(LINK);
+  if (ok) { VIDEO = null; const v = document.getElementById('preview'); v.removeAttribute('src'); v.style.display = 'none'; document.getElementById('drop').innerHTML = '<b>Drop a video here</b>or tap to choose one · up to about 90 MB'; }
+  document.getElementById('goBtn').disabled = !(ok || VIDEO);
+}
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const setStatus = t => document.getElementById('status').textContent = t || '';
+
+function pick(file){
+  if (!file) return;
+  if (!/^video\//.test(file.type)) { alert('Please choose a video file.'); return; }
+  if (file.size > MAX_MB * 1024 * 1024) { alert(`That video is ${(file.size/1048576).toFixed(0)} MB — please use one under ${MAX_MB} MB (export at 1080p or lower).`); return; }
+  VIDEO = file; LINK = ''; document.getElementById('ttLink').value = '';
+  const v = document.getElementById('preview'); v.src = URL.createObjectURL(file); v.style.display = 'block';
+  document.getElementById('drop').innerHTML = `<b>${esc(file.name)}</b>${(file.size/1048576).toFixed(1)} MB · tap to change`;
+  document.getElementById('goBtn').disabled = false;
+}
+document.getElementById('file').onchange = e => pick(e.target.files[0]);
+const drop = document.getElementById('drop');
+['dragover','dragenter'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => pick(e.dataTransfer.files[0]));
+
+const SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    score: { type: 'INTEGER', description: 'Overall 1-10' },
+    summary: { type: 'STRING' },
+    top_fixes: { type: 'ARRAY', items: { type: 'STRING' } },
+    sections: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
+      name: { type: 'STRING' }, rating: { type: 'INTEGER' },
+      working: { type: 'ARRAY', items: { type: 'STRING' } },
+      improve: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['name','rating','working','improve'] } },
+    compliance_flags: { type: 'ARRAY', items: { type: 'STRING' } },
+    caption: { type: 'STRING' },
+    hashtags: { type: 'ARRAY', items: { type: 'STRING' } }
+  },
+  required: ['score','summary','top_fixes','sections','compliance_flags','caption','hashtags']
+};
+
+function buildPrompt(){
+  const goal = document.getElementById('goal').selectedOptions[0].textContent;
+  const product = document.getElementById('product').value.trim();
+  const focus = document.getElementById('focus').value.trim();
+  return `You are an experienced short-form video coach for a TikTok Shop affiliate creator. Watch the whole video (visuals, on-screen text, voiceover, music, pacing) and give specific, honest, practical feedback.
+Goal of this video: ${goal}.${product ? `\nProduct: ${product}.` : ''}${focus ? `\nThe creator especially wants to know: ${focus}` : ''}
+
+Rules:
+- Be concrete and refer to moments with timestamps like [0:03] whenever possible.
+- Be encouraging but honest; don't pad with generic advice.
+- Sections to cover (use exactly these names): "Hook (first 3 seconds)", "Pacing & length", "On-screen text & captions", "Voice & audio", "Product showcase", "Call to action".
+- Each section: rating 1-10, 1-3 things that are working, 1-3 specific improvements.
+- top_fixes: the 3 changes that would help this video most, most important first.
+- compliance_flags: anything that could break TikTok Shop content rules (e.g. unverifiable claims, medical/health claims, before/after promises, off-platform links, misleading pricing). Empty list if none.
+- caption: a ready-to-post caption in the creator's voice (casual, not salesy), plus hashtags separately (5-8, no '#' duplicates).`;
+}
+
+async function analyze(){
+  if (!VIDEO && !LINK) return;
+  const btn = document.getElementById('goBtn'); btn.disabled = true;
+  try {
+    setStatus(LINK ? 'Getting the video from TikTok…' : 'Uploading video…');
+    const up = LINK
+      ? await fetch(`${WORKER}/?service=gemini-upload&url=${encodeURIComponent(LINK)}`, { method: 'POST' })
+      : await fetch(`${WORKER}/?service=gemini-upload`, { method: 'POST', headers: { 'Content-Type': VIDEO.type || 'video/mp4' }, body: VIDEO });
+    const f = await up.json().catch(() => ({}));
+    if (!up.ok || !f.uri) throw new Error(f.error || `Upload failed (${up.status})`);
+    setStatus('Watching your video…');
+    const res = await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ file_data: { mime_type: f.mime_type, file_uri: f.uri } }, { text: buildPrompt() }] }],
+        generationConfig: { responseMimeType: 'application/json', responseSchema: SCHEMA, temperature: 0.4 }
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error?.message || `Gemini error (${res.status})`);
+    const text = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+    const fb = JSON.parse(text.replace(/```json|```/g, '').trim());
+    render(fb); setStatus('');
+    try { localStorage.setItem('take24:lastFeedback', JSON.stringify({ at: Date.now(), name: VIDEO ? VIDEO.name : LINK, fb })); } catch (e) {}
+  } catch (e) {
+    setStatus(''); document.getElementById('results').innerHTML = `<div class="empty"><b>Something went wrong</b>${esc(e.message)}</div>`;
+  } finally { btn.disabled = false; }
+}
+
+// timestamps like [0:03] become buttons that jump the preview to that moment
+function stamps(t){ return esc(t).replace(/\[(\d{1,2}):(\d{2})\]/g, (m, a, b) => `<span class="ts" onclick="seek(${Number(a)*60+Number(b)})">${a}:${b}</span>`); }
+function seek(s){ const v = document.getElementById('preview'); if (v.getAttribute('src')) { v.currentTime = s; v.play(); v.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
+
+function render(fb, name){
+  const tags = (fb.hashtags || []).map(h => '#' + String(h).replace(/^#/, '')).join(' ');
+  document.getElementById('results').innerHTML = `
+    ${name ? `<div class="sub" style="margin-top:0">Last feedback · ${esc(name)}</div>` : ''}
+    <div class="score-row"><div class="score">${Number(fb.score) || '–'}<small>/ 10</small></div><div class="summary">${stamps(fb.summary)}</div></div>
+    ${(fb.compliance_flags || []).length ? `<div class="flag"><b>Heads up — TikTok Shop rules:</b><br>${fb.compliance_flags.map(stamps).join('<br>')}</div>` : ''}
+    <div class="fixes"><h3>Top fixes</h3><ol>${(fb.top_fixes || []).map(x => `<li>${stamps(x)}</li>`).join('')}</ol></div>
+    <div class="secs">${(fb.sections || []).map(s => `<div class="sec"><span class="rt">${Number(s.rating) || '–'}/10</span><h3>${esc(s.name)}</h3>
+      ${(s.working || []).map(x => `<p class="good">${stamps(x)}</p>`).join('')}${(s.improve || []).map(x => `<p class="try">${stamps(x)}</p>`).join('')}</div>`).join('')}</div>
+    <div class="sec" style="margin-top:12px"><h3>Suggested caption</h3><div class="caption" id="capText">${esc(fb.caption)}${tags ? '\n\n' + esc(tags) : ''}</div>
+      <button class="copy" onclick="navigator.clipboard.writeText(document.getElementById('capText').innerText);this.textContent='✓ Copied'">Copy caption</button></div>`;
+}
+
+(async () => {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { location.href = 'auth.html'; return; }
+  try { const prefs = await loadUserPrefs(session.user.id); await initTheme(session.user.id, prefs); await initDisplayName(session.user, prefs); initProfilePopover(session.user.id); } catch (e) {}
+  // product suggestions
+  try { const { data } = await db.from('products').select('name').eq('user_id', session.user.id).order('name');
+    document.getElementById('prodList').innerHTML = (data || []).map(p => `<option value="${esc(p.name)}">`).join(''); } catch (e) {}
+  // show the last result so it isn't lost on refresh
+  try { const last = JSON.parse(localStorage.getItem('take24:lastFeedback')); if (last?.fb) render(last.fb, last.name); } catch (e) {}
+})();
+</script>
+</body>
+</html>
