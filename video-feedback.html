@@ -68,6 +68,15 @@ textarea{resize:vertical;min-height:60px;}
 .cmp th{font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tan);}
 .cmp .n{text-align:center;font-weight:800;color:var(--ink);white-space:nowrap;}
 .up{color:#7FA56B;} .down{color:#C0645A;}
+.hookcard{background:var(--bg-lift);border:2px solid var(--rust);border-radius:16px;padding:14px 16px;margin-bottom:14px;}
+.hk-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.hk-top h3{font:400 22px 'Cormorant Garamond',serif;color:var(--ink);flex:1;}
+.hk-top .rt{font:800 11px 'Nunito Sans',sans-serif;color:#fff;background:var(--rust);border-radius:999px;padding:3px 10px;}
+.hk-v{font:800 11px 'Nunito Sans',sans-serif;border-radius:999px;padding:3px 10px;background:var(--surface-2);color:var(--ink);}
+.hk-yes{background:#5E7A55;color:#fff;} .hk-no{background:#8E3B34;color:#fff;} .hk-maybe{background:#9A7A3A;color:#fff;}
+.hk-steps{padding-left:18px;font-size:13px;line-height:1.5;margin-bottom:8px;color:var(--text-mid);}
+.hk-why{font-size:13px;line-height:1.5;color:var(--ink);margin-bottom:8px;}
+.hk-alt{font-size:13px;line-height:1.5;} .hk-alt ol{padding-left:20px;margin-top:4px;display:flex;flex-direction:column;gap:4px;}
 </style>
 </head>
 <body>
@@ -83,6 +92,14 @@ textarea{resize:vertical;min-height:60px;}
       <div class="or">or paste a TikTok link</div>
       <input id="ttLink" placeholder="https://www.tiktok.com/@you/video/…" oninput="onLink()">
       <video id="preview" controls playsinline></video>
+      <label>What's the audio?</label>
+      <select id="audio">
+        <option value="voiceover">My voiceover about the product</option>
+        <option value="voiceover-music">My voiceover + background music</option>
+        <option value="talking">Me talking on camera</option>
+        <option value="trending">Trending sound / song only (no voiceover)</option>
+        <option value="text-music">Text on screen + music</option>
+      </select>
       <label>What is it for?</label>
       <select id="goal">
         <option value="tiktok-shop">TikTok Shop — sell the product</option>
@@ -148,6 +165,13 @@ const SCHEMA = {
   properties: {
     score: { type: 'INTEGER', description: 'Overall 1-10' },
     summary: { type: 'STRING' },
+    hook: { type: 'OBJECT', properties: {
+      score: { type: 'INTEGER' },
+      verdict: { type: 'STRING', description: 'Would it stop the scroll? Yes / Maybe / No' },
+      what_happens: { type: 'ARRAY', items: { type: 'STRING' }, description: 'Second-by-second: what the viewer sees, reads and hears in 0:00-0:03' },
+      why: { type: 'STRING' },
+      alternatives: { type: 'ARRAY', items: { type: 'STRING' }, description: '3 stronger opening ideas (visual + on-screen text)' } },
+      required: ['score','verdict','what_happens','why','alternatives'] },
     top_fixes: { type: 'ARRAY', items: { type: 'STRING' } },
     sections: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
       name: { type: 'STRING' }, rating: { type: 'INTEGER' },
@@ -157,24 +181,44 @@ const SCHEMA = {
     caption: { type: 'STRING' },
     hashtags: { type: 'ARRAY', items: { type: 'STRING' } }
   },
-  required: ['score','summary','top_fixes','sections','compliance_flags','caption','hashtags']
+  required: ['score','summary','hook','top_fixes','sections','compliance_flags','caption','hashtags']
 };
 
+
+const AUDIO_NOTES = {
+  'voiceover': 'The audio is the creator\'s OWN VOICEOVER talking about the product (no song). Judge the voiceover: clarity, energy, whether it sounds genuine, and whether the words and visuals match.',
+  'voiceover-music': 'The audio is the creator\'s OWN VOICEOVER with background music underneath. Judge the voiceover (clarity, energy, authenticity) and whether the music level supports it without drowning it out. Do NOT treat song lyrics as things the creator said.',
+  'talking': 'The creator is TALKING ON CAMERA. Judge delivery, eye contact, energy and whether it feels natural.',
+  'trending': 'The audio is a TRENDING SOUND / SONG ONLY — there is NO voiceover. Any singing or speaking in the audio is part of the song, NOT the creator. Never critique the lyrics or treat them as a voiceover. Instead judge how well the visuals and cuts sync to the sound, whether the sound fits the vibe, and whether the ON-SCREEN TEXT carries the message.',
+  'text-music': 'The audio is MUSIC ONLY with the message told through ON-SCREEN TEXT. Any singing in the audio is the song, not the creator. Judge the text (readability, length, timing on screen) and how well the visuals sync to the music.'
+};
 function buildPrompt(){
+  try{ localStorage.setItem('take24:fbAudio', document.getElementById('audio').value); }catch(e){}
   const goal = document.getElementById('goal').selectedOptions[0].textContent;
+  const audio = document.getElementById('audio').value;
   const product = document.getElementById('product').value.trim();
   const focus = document.getElementById('focus').value.trim();
-  return `You are an experienced short-form video coach for a TikTok Shop affiliate creator. Watch the whole video (visuals, on-screen text, voiceover, music, pacing) and give specific, honest, practical feedback.
-Goal of this video: ${goal}.${product ? `\nProduct: ${product}.` : ''}${focus ? `\nThe creator especially wants to know: ${focus}` : ''}
+  const audioSection = { 'voiceover':'Voiceover', 'voiceover-music':'Voiceover & music', 'talking':'Delivery (talking on camera)', 'trending':'Sound & sync', 'text-music':'Sound & sync' }[audio];
+  return `You are an experienced short-form video coach for a TikTok Shop affiliate creator. Watch the whole video (visuals, on-screen text, audio, pacing) and give specific, honest, practical feedback.
+Goal of this video: ${goal}.${product ? `\nProduct: ${product}.` : ''}
+AUDIO: ${AUDIO_NOTES[audio]}${focus ? `\nThe creator especially wants to know: ${focus}` : ''}
+
+THE HOOK (0:00–0:03) MATTERS MOST. Study the first 3 seconds frame by frame:
+- what_happens: second by second, what the viewer sees, reads and hears.
+- verdict: would a scrolling viewer stop? Answer "Yes", "Maybe" or "No".
+- why: the honest reason (is there movement, curiosity, a problem, a surprising visual, readable text in the first second?).
+- alternatives: 3 specific stronger openings for THIS video (what to show + the on-screen text), not generic advice.
+- score the hook 1–10 strictly.
+
+URGENCY & DESIRE (instead of a "click the link" call to action): viewers already know to tap the shopping cart, so do NOT recommend saying "click the link" or "tap the orange cart". Judge whether the video makes someone WANT the product NOW: urgency (deal, limited stock, seasonal/"before it sells out"), a clear problem → solution, the payoff shown, FOMO, social proof, and a strong emotional reason to buy today. Suggest specific ways to create that urgency and desire.
 
 Rules:
-- Be concrete and refer to moments with timestamps like [0:03] whenever possible.
-- Be encouraging but honest; don't pad with generic advice.
-- Sections to cover (use exactly these names): "Hook (first 3 seconds)", "Pacing & length", "On-screen text & captions", "Voice & audio", "Product showcase", "Call to action".
-- Each section: rating 1-10, 1-3 things that are working, 1-3 specific improvements.
+- Refer to moments with timestamps like [0:03] whenever possible.
+- Encouraging but honest; no generic padding.
+- sections (use exactly these names): "Pacing & length", "On-screen text & captions", "${audioSection}", "Product showcase", "Urgency & desire". Each: rating 1–10, 1–3 things working, 1–3 specific improvements. Do not repeat the hook here.
 - top_fixes: the 3 changes that would help this video most, most important first.
-- compliance_flags: anything that could break TikTok Shop content rules (e.g. unverifiable claims, medical/health claims, before/after promises, off-platform links, misleading pricing). Empty list if none.
-- caption: a ready-to-post caption in the creator's voice (casual, not salesy), plus hashtags separately (5-8, no '#' duplicates).`;
+- compliance_flags: anything that could break TikTok Shop content rules (unverifiable/medical/health claims, before-after promises, off-platform links, misleading pricing). Empty list if none.
+- caption: a ready-to-post caption in the creator's voice (casual, not salesy); hashtags separately (5–8).`;
 }
 
 async function analyze(){
@@ -223,6 +267,10 @@ function render(fb, name, fresh){
     </div>
     <div class="score-row"><div class="score">${Number(fb.score) || '–'}<small>/ 10</small></div><div class="summary">${stamps(fb.summary)}</div></div>
     ${(fb.compliance_flags || []).length ? `<div class="flag"><b>Heads up — TikTok Shop rules:</b><br>${fb.compliance_flags.map(stamps).join('<br>')}</div>` : ''}
+    ${fb.hook ? `<div class="hookcard"><div class="hk-top"><h3>The Hook · first 3 seconds</h3><span class="hk-v hk-${String(fb.hook.verdict||'').toLowerCase().replace(/[^a-z]/g,'')}">${esc(fb.hook.verdict||'')}</span><span class="rt">${Number(fb.hook.score)||'–'}/10</span></div>
+      <ul class="hk-steps">${(fb.hook.what_happens||[]).map(x=>`<li>${stamps(x)}</li>`).join('')}</ul>
+      <p class="hk-why">${stamps(fb.hook.why||'')}</p>
+      ${(fb.hook.alternatives||[]).length?`<div class="hk-alt"><b>Try opening with:</b><ol>${fb.hook.alternatives.map(x=>`<li>${stamps(x)}</li>`).join('')}</ol></div>`:''}</div>` : ''}
     <div class="fixes"><h3>Top fixes</h3><ol>${(fb.top_fixes || []).map(x => `<li>${stamps(x)}</li>`).join('')}</ol></div>
     <div class="secs">${(fb.sections || []).map(s => `<div class="sec"><span class="rt">${Number(s.rating) || '–'}/10</span><h3>${esc(s.name)}</h3>
       ${(s.working || []).map(x => `<p class="good">${stamps(x)}</p>`).join('')}${(s.improve || []).map(x => `<p class="try">${stamps(x)}</p>`).join('')}</div>`).join('')}</div>
@@ -254,6 +302,7 @@ function compareSelected(){
   const lbl=h=>esc(h.product||h.name||'Video')+'<br><small style="color:var(--text-muted)">'+new Date(h.at).toLocaleDateString()+'</small>';
   document.getElementById('results').innerHTML=`<h3 style="font:400 26px 'Cormorant Garamond',serif;color:var(--ink);margin-bottom:10px">Compare</h3>
     <table class="cmp"><tr><th></th><th>${lbl(a)}</th><th>${lbl(b)}</th><th>Change</th></tr>
+    <tr><td><b>Hook (0–3s)</b></td><td class="n">${a.fb.hook?.score??'–'}</td><td class="n">${b.fb.hook?.score??'–'}</td><td class="n">${diff(a.fb.hook?.score,b.fb.hook?.score)}</td></tr>
     <tr><td><b>Overall</b></td><td class="n">${a.fb.score}/10</td><td class="n">${b.fb.score}/10</td><td class="n">${diff(a.fb.score,b.fb.score)}</td></tr>
     ${secs.map(n=>`<tr><td>${esc(n)}</td><td class="n">${r(a,n)??'–'}</td><td class="n">${r(b,n)??'–'}</td><td class="n">${diff(r(a,n),r(b,n))}</td></tr>`).join('')}
     <tr><td><b>Top fixes</b></td><td>${(a.fb.top_fixes||[]).map(esc).join('<br><br>')}</td><td>${(b.fb.top_fixes||[]).map(esc).join('<br><br>')}</td><td></td></tr></table>`;
@@ -286,6 +335,7 @@ async function sendToScripts(btn){
   // product suggestions
   try { const { data } = await db.from('products').select('name').eq('user_id', session.user.id).order('name');
     document.getElementById('prodList').innerHTML = (data || []).map(p => `<option value="${esc(p.name)}">`).join(''); } catch (e) {}
+  try { const a = localStorage.getItem('take24:fbAudio'); if (a) document.getElementById('audio').value = a; } catch (e) {}
   try { HIST = [...((await plannerGet('feedback', [])) || [])]; } catch (e) { console.warn('History load failed', e); HIST = []; }
   // first time: bring over the last result saved on this device
   try { const last = JSON.parse(localStorage.getItem('take24:lastFeedback')); if (last?.fb && !HIST.some(h => h.at === last.at)) { HIST.unshift({ at: last.at || Date.now(), name: last.name, fb: last.fb }); plannerSet('feedback', HIST, true); } } catch (e) {}
