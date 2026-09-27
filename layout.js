@@ -198,7 +198,7 @@
         ${miniCalendar()}
         ${folderGrid(page)}
         ${ideasCard(page)}
-        ${page === 'index.html' ? coreSidebar() : ''}
+        ${page === 'products.html' ? coreSidebar() : ''}
         <div class="side-profile">
           <div class="avatar" id="profileAvatar"><img class="avatar-img" src="icons/users/avatar.png" alt=""></div>
           <div><div class="profile-name" id="profileName">Creator</div><div class="profile-role">Creator</div></div>
