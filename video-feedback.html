@@ -48,6 +48,26 @@ textarea{resize:vertical;min-height:60px;}
 .caption{white-space:pre-wrap;background:var(--bg);border:1px solid var(--border-mid);border-radius:12px;padding:10px 12px;font-size:13px;margin-top:6px;}
 .copy{margin-top:6px;background:none;border:1px solid var(--border-mid);color:var(--tan);border-radius:999px;padding:5px 12px;font:800 10px 'Nunito Sans',sans-serif;cursor:pointer;}
 @media(max-width:860px){.layout{grid-template-columns:1fr;}}
+.right-col{display:flex;flex-direction:column;gap:18px;min-width:0;}
+.hist-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.hist-head h3{font:400 22px 'Cormorant Garamond',serif;color:var(--ink);}
+.hist{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;}
+.hrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:12px;background:var(--bg-lift);cursor:pointer;}
+.hrow:hover,.hrow.on{border-color:var(--tan);}
+.hrow input{accent-color:var(--rust);width:16px;height:16px;flex-shrink:0;}
+.hs{width:34px;height:34px;border-radius:50%;background:var(--rust);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;}
+.hi{flex:1;min-width:0;} .hi b{display:block;color:var(--ink);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .hi small{color:var(--text-muted);font-size:11px;}
+.hdel{background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;}
+.trend{display:flex;align-items:flex-end;gap:4px;height:46px;margin-bottom:10px;}
+.trend i{flex:1;max-width:22px;background:var(--surface-2);border-radius:4px 4px 2px 2px;}
+.trend i.hi-s{background:var(--rust);}
+.actions-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.actions-row .copy{margin:0;}
+.cmp{width:100%;border-collapse:collapse;font-size:13px;}
+.cmp th,.cmp td{padding:8px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;}
+.cmp th{font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tan);}
+.cmp .n{text-align:center;font-weight:800;color:var(--ink);white-space:nowrap;}
+.up{color:#7FA56B;} .down{color:#C0645A;}
 </style>
 </head>
 <body>
@@ -78,12 +98,20 @@ textarea{resize:vertical;min-height:60px;}
       <button class="btn" id="goBtn" onclick="analyze()" disabled>Get feedback</button>
       <div class="status" id="status"></div>
     </div>
+    <div class="right-col">
     <div class="card" id="results"><div class="empty"><b>No feedback yet</b>Choose a video on the left, then tap “Get feedback”. It usually takes 20–60 seconds.</div></div>
+    <div class="card" id="historyCard">
+      <div class="hist-head"><h3>History</h3><button class="copy" id="cmpBtn" onclick="compareSelected()" disabled>Compare 2</button></div>
+      <div class="trend" id="trend"></div>
+      <div class="hist" id="hist"><div class="sub">Your past feedback shows up here.</div></div>
+    </div>
+    </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=235"></script>
+<script src="planner-sync.js?v=237"></script>
 <script src="layout.js?v=235"></script>
 <script>
 const WORKER = 'https://take24-scout.kortnycall5.workers.dev';
@@ -169,7 +197,8 @@ async function analyze(){
     if (!res.ok) throw new Error(data?.error?.message || `Gemini error (${res.status})`);
     const text = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
     const fb = JSON.parse(text.replace(/```json|```/g, '').trim());
-    render(fb); setStatus('');
+    render(fb, null, true); setStatus('');
+    await addHistory({ at: Date.now(), name: VIDEO ? VIDEO.name : LINK, link: LINK || '', product: document.getElementById('product').value.trim(), fb });
     try { localStorage.setItem('take24:lastFeedback', JSON.stringify({ at: Date.now(), name: VIDEO ? VIDEO.name : LINK, fb })); } catch (e) {}
   } catch (e) {
     setStatus(''); document.getElementById('results').innerHTML = `<div class="empty"><b>Something went wrong</b>${esc(e.message)}</div>`;
@@ -180,10 +209,16 @@ async function analyze(){
 function stamps(t){ return esc(t).replace(/\[(\d{1,2}):(\d{2})\]/g, (m, a, b) => `<span class="ts" onclick="seek(${Number(a)*60+Number(b)})">${a}:${b}</span>`); }
 function seek(s){ const v = document.getElementById('preview'); if (v.getAttribute('src')) { v.currentTime = s; v.play(); v.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
 
-function render(fb, name){
+let CURRENT=null;
+function render(fb, name, fresh){
+  CURRENT=fb;
   const tags = (fb.hashtags || []).map(h => '#' + String(h).replace(/^#/, '')).join(' ');
   document.getElementById('results').innerHTML = `
     ${name ? `<div class="sub" style="margin-top:0">Last feedback · ${esc(name)}</div>` : ''}
+    <div class="actions-row">
+      <button class="copy" onclick="sendToIdeas(this)">+ Save fixes to Content Ideas</button>
+      <button class="copy" onclick="sendToScripts(this)">+ Save caption to Script Vault</button>
+    </div>
     <div class="score-row"><div class="score">${Number(fb.score) || '–'}<small>/ 10</small></div><div class="summary">${stamps(fb.summary)}</div></div>
     ${(fb.compliance_flags || []).length ? `<div class="flag"><b>Heads up — TikTok Shop rules:</b><br>${fb.compliance_flags.map(stamps).join('<br>')}</div>` : ''}
     <div class="fixes"><h3>Top fixes</h3><ol>${(fb.top_fixes || []).map(x => `<li>${stamps(x)}</li>`).join('')}</ol></div>
@@ -193,6 +228,55 @@ function render(fb, name){
       <button class="copy" onclick="navigator.clipboard.writeText(document.getElementById('capText').innerText);this.textContent='✓ Copied'">Copy caption</button></div>`;
 }
 
+// ── History (synced) ──
+let HIST=[], SEL=[];
+async function addHistory(entry){ HIST=[entry,...HIST].slice(0,50); plannerSet('feedback',HIST,true); renderHistory(); }
+function renderHistory(){
+  const el=document.getElementById('hist');
+  if(!HIST.length){ el.innerHTML='<div class="sub">Your past feedback shows up here.</div>'; document.getElementById('trend').innerHTML=''; return; }
+  el.innerHTML=HIST.map((h,i)=>`<div class="hrow${SEL.includes(i)?' on':''}" onclick="openHistory(${i})"><input type="checkbox" title="Select to compare" ${SEL.includes(i)?'checked':''} onclick="event.stopPropagation();toggleSel(${i})"><div class="hs">${Number(h.fb?.score)||'–'}</div><div class="hi"><b>${esc(h.product||h.name||'Video')}</b><small>${new Date(h.at).toLocaleDateString(undefined,{month:'short',day:'numeric'})}${h.product&&h.name?' · '+esc(h.name).slice(0,40):''}</small></div><button class="hdel" title="Remove" onclick="event.stopPropagation();delHistory(${i})">×</button></div>`).join('');
+  // score trend, oldest → newest
+  const last=HIST.slice(0,20).reverse(), top=Math.max(...last.map(h=>Number(h.fb?.score)||0),1);
+  document.getElementById('trend').innerHTML=last.map((h,i)=>`<i class="${i===last.length-1?'hi-s':''}" title="${Number(h.fb?.score)||0}/10" style="height:${Math.max(8,(Number(h.fb?.score)||0)/10*100)}%"></i>`).join('');
+  document.getElementById('cmpBtn').disabled=SEL.length!==2;
+}
+function toggleSel(i){ SEL=SEL.includes(i)?SEL.filter(x=>x!==i):[...SEL,i].slice(-2); renderHistory(); }
+function openHistory(i){ const h=HIST[i]; if(h) { render(h.fb, h.product||h.name); window.scrollTo({top:0,behavior:'smooth'}); } }
+function delHistory(i){ if(!confirm('Remove this feedback from your history?')) return; HIST.splice(i,1); SEL=[]; plannerSet('feedback',HIST,true); renderHistory(); }
+function compareSelected(){
+  if(SEL.length!==2) return;
+  const [a,b]=SEL.map(i=>HIST[i]).sort((x,y)=>x.at-y.at);   // older first
+  const secs=[...new Set([...(a.fb.sections||[]),...(b.fb.sections||[])].map(s=>s.name))];
+  const r=(h,n)=>(h.fb.sections||[]).find(s=>s.name===n)?.rating;
+  const diff=(x,y)=>{ if(x==null||y==null) return ''; const d=y-x; return d>0?`<span class="up">▲ ${d}</span>`:d<0?`<span class="down">▼ ${-d}</span>`:'='; };
+  const lbl=h=>esc(h.product||h.name||'Video')+'<br><small style="color:var(--text-muted)">'+new Date(h.at).toLocaleDateString()+'</small>';
+  document.getElementById('results').innerHTML=`<h3 style="font:400 26px 'Cormorant Garamond',serif;color:var(--ink);margin-bottom:10px">Compare</h3>
+    <table class="cmp"><tr><th></th><th>${lbl(a)}</th><th>${lbl(b)}</th><th>Change</th></tr>
+    <tr><td><b>Overall</b></td><td class="n">${a.fb.score}/10</td><td class="n">${b.fb.score}/10</td><td class="n">${diff(a.fb.score,b.fb.score)}</td></tr>
+    ${secs.map(n=>`<tr><td>${esc(n)}</td><td class="n">${r(a,n)??'–'}</td><td class="n">${r(b,n)??'–'}</td><td class="n">${diff(r(a,n),r(b,n))}</td></tr>`).join('')}
+    <tr><td><b>Top fixes</b></td><td>${(a.fb.top_fixes||[]).map(esc).join('<br><br>')}</td><td>${(b.fb.top_fixes||[]).map(esc).join('<br><br>')}</td><td></td></tr></table>`;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── Send to Content Ideas / Script Vault ──
+async function sendToIdeas(btn){
+  if(!CURRENT) return;
+  const ideas=[...(await plannerGet('ideas',[]))];
+  const label=document.getElementById('product').value.trim()||'last video';
+  ideas.push({ text:`Fixes for ${label}:\n`+(CURRENT.top_fixes||[]).map((f,i)=>`${i+1}. ${f}`).join('\n'), done:false, ...(LINK?{link:LINK}:{}) });
+  plannerSet('ideas',ideas,true); btn.textContent='✓ Saved to Content Ideas'; btn.disabled=true;
+}
+async function sendToScripts(btn){
+  if(!CURRENT) return;
+  const { data:{ session } }=await db.auth.getSession(); if(!session) return;
+  const product=document.getElementById('product').value.trim();
+  const tags=(CURRENT.hashtags||[]).map(h=>'#'+String(h).replace(/^#/,'')).join(' ');
+  const { error }=await db.from('scripts').insert({ user_id:session.user.id, title:(product||'Video')+' — caption', brand:product, cat:'review',
+    script:CURRENT.caption||'', notes:[tags?`Hashtags:\n${tags}`:'', (CURRENT.top_fixes||[]).length?`Video feedback fixes:\n${CURRENT.top_fixes.join('\n')}`:''].filter(Boolean).join('\n\n') });
+  if(error){ alert('Could not save: '+error.message); return; }
+  btn.textContent='✓ Saved to Script Vault'; btn.disabled=true;
+}
+
 (async () => {
   const { data: { session } } = await db.auth.getSession();
   if (!session) { location.href = 'auth.html'; return; }
@@ -200,8 +284,11 @@ function render(fb, name){
   // product suggestions
   try { const { data } = await db.from('products').select('name').eq('user_id', session.user.id).order('name');
     document.getElementById('prodList').innerHTML = (data || []).map(p => `<option value="${esc(p.name)}">`).join(''); } catch (e) {}
-  // show the last result so it isn't lost on refresh
-  try { const last = JSON.parse(localStorage.getItem('take24:lastFeedback')); if (last?.fb) render(last.fb, last.name); } catch (e) {}
+  HIST = [...(await plannerGet('feedback', []))];
+  // first time: bring over the last result saved on this device
+  try { const last = JSON.parse(localStorage.getItem('take24:lastFeedback')); if (last?.fb && !HIST.some(h => h.at === last.at)) { HIST.unshift({ at: last.at || Date.now(), name: last.name, fb: last.fb }); plannerSet('feedback', HIST, true); } } catch (e) {}
+  renderHistory();
+  if (HIST[0]) render(HIST[0].fb, HIST[0].product || HIST[0].name);
 })();
 </script>
 </body>
