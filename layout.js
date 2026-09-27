@@ -100,6 +100,12 @@
     for (let d = 1; d <= days; d++) cells += `<div class="ls-d${d === now.getDate() ? ' ls-today' : ''}">${d}</div>`;
     return `<div class="ls-cal"><div class="ls-month">${now.toLocaleDateString(undefined,{month:'long'})}</div><div class="ls-cal-grid">${cells}</div></div>`;
   }
+  // Content Ideas shortcut, shown on every page
+  function ideasCard(page) {
+    let n = 0; try { n = (JSON.parse(localStorage.getItem('take24:ideas')) || []).length; } catch (e) {}
+    return `<a class="ls-ideas${page === 'ideas.html' ? ' active' : ''}" href="ideas.html">
+      <span class="ls-ideas-t">Content Ideas</span><span class="ls-ideas-n">${n ? n + ' saved' : 'Open board'}</span><span class="ls-ideas-go">→</span></a>`;
+  }
   function folderGrid(page) {
     return `<div class="ls-folders">${FOLDERS.map(([href,label],i) => `
       <a class="ls-folder${href === page ? ' active' : ''}" href="${href}"${extAttr(href)} style="--f:${folderShade(i)}">
@@ -112,6 +118,11 @@
       const f = document.createElement('link'); f.rel = 'stylesheet';
       f.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap';
       document.head.appendChild(f);
+    }
+    if (!document.querySelector('link[href*="Bad+Script"]')) {
+      const f2 = document.createElement('link'); f2.rel = 'stylesheet';
+      f2.href = 'https://fonts.googleapis.com/css2?family=Bad+Script&display=swap';
+      document.head.appendChild(f2);
     }
     const st = document.createElement('style'); st.id = 'planner-sidebar-css';
     st.textContent = `
@@ -159,6 +170,11 @@
       .ls-dow{font-weight:800;font-size:9px;opacity:.75;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.25);margin-bottom:3px;}
       .ls-d{height:21px;display:flex;align-items:center;justify-content:center;}
       .ls-today{width:21px;margin:0 auto;border-radius:50%;background:#fff;color:var(--rust);font-weight:800;}
+      .ls-ideas{display:grid;grid-template-columns:1fr auto;align-items:center;gap:0 8px;padding:12px 14px;border:1px solid var(--border-mid);border-radius:18px;background:var(--surface);text-decoration:none;transition:border-color .15s;}
+      .ls-ideas:hover,.ls-ideas.active{border-color:var(--tan);}
+      .ls-ideas-t{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--ink);}
+      .ls-ideas-n{grid-row:2;font-size:11px;color:var(--text-muted);}
+      .ls-ideas-go{grid-row:1/3;grid-column:2;font-family:'Bad Script',cursive;font-size:20px;color:var(--tan);}
       .ls-folders{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 2px;padding:14px 6px;border:1px solid var(--border-mid);border-radius:20px;background:var(--surface);}
       .ls-folder{display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:9.5px;font-weight:700;text-align:center;line-height:1.15;}
       .ls-folder:hover,.ls-folder.active{color:var(--ink);}
@@ -181,6 +197,7 @@
         <a href="index.html" class="ls-word" title="Home"><img src="logo.png" alt="Take24"></a>
         ${miniCalendar()}
         ${folderGrid(page)}
+        ${ideasCard(page)}
         ${page === 'index.html' ? coreSidebar() : ''}
         <div class="side-profile">
           <div class="avatar" id="profileAvatar"><img class="avatar-img" src="icons/users/avatar.png" alt=""></div>
@@ -346,7 +363,7 @@
         <a href="index.html" class="m-logo"><img src="logo.png" alt="Take24"></a>
         <button type="button" class="m-avatar profile-trigger" aria-label="Account menu"><img id="mAvatarImg" src="icons/users/avatar.png" alt=""></button>
       </div>
-      <div class="m-top-grid">${mobileFolders(page)}${miniCalendar()}</div>`;
+      <div class="m-top-grid">${mobileFolders(page)}${ideasCard(page)}${miniCalendar()}</div>`;
     const host = document.querySelector('.workspace') || document.querySelector('.page') || document.body;
     host.insertBefore(el, host.firstElementChild);
     // keep the phone avatar in sync with the real profile photo once it loads
