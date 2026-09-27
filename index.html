@@ -762,6 +762,27 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .tp-done input{accent-color:var(--rust);}
 .tp-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;}
 .tp-take textarea{width:100%;min-height:130px;resize:vertical;background:var(--bg);border:1px solid var(--border-mid);border-radius:10px;padding:10px;color:var(--ink);font:14px/1.6 'IBM Plex Serif',serif;outline:none;}
+.bd-card{max-width:860px;}
+.bd-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.bd-fields label{display:flex;flex-direction:column;gap:5px;font:800 10px 'Stack Sans Notch',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);}
+.bd-fields .wide{grid-column:1/-1;}
+.bd-fields input,.bd-fields select{background:var(--bg);border:1px solid var(--border-mid);border-radius:10px;padding:9px 11px;color:var(--ink);font:14px 'IBM Plex Serif',serif;text-transform:none;letter-spacing:0;outline:none;}
+.bd-styles{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:12px;font-size:13px;color:var(--text-mid);}
+.bd-styles span{font:800 10px 'Stack Sans Notch',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);}
+.bd-styles label{display:flex;align-items:center;gap:5px;cursor:pointer;}
+.bd-styles input{accent-color:var(--rust);}
+.bd-prod{display:grid;grid-template-columns:70px 1fr auto;gap:12px;border:1px solid var(--border);background:var(--bg-lift);border-radius:16px;padding:12px;margin-top:12px;}
+.bd-prod img{width:70px;height:70px;border-radius:12px;object-fit:cover;background:var(--surface-2);}
+.bd-prod h4{font:700 15px 'IBM Plex Serif',serif;color:var(--ink);}
+.bd-prod .why{font-size:12px;color:var(--text-muted);margin:2px 0 6px;}
+.bd-takes{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.bd-take{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 10px;font-size:12px;line-height:1.45;}
+.bd-take .st{font:800 9px 'Stack Sans Notch',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--rust);border-radius:999px;padding:2px 8px;display:inline-block;margin-bottom:5px;}
+.bd-take b{color:var(--ink);}
+.bd-x{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;align-self:start;}
+.bd-foot{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap;}
+.bd-tips{margin-top:12px;font-size:13px;line-height:1.5;color:var(--text-mid);}
+@media(max-width:768px){.bd-takes{grid-template-columns:1fr;}.bd-fields{grid-template-columns:1fr;}}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -798,6 +819,28 @@ select.sched-location-tag:focus{border-color:var(--rust);}
     <label class="tp-l" style="margin-top:16px">Add from your Script Vault <span id="tpTarget" style="text-transform:none;letter-spacing:0;color:var(--text-muted)"></span></label>
     <input id="tpSearch" class="tp-search" placeholder="Search scripts…" oninput="renderVaultPick()">
     <div id="tpVault" class="tp-vault"></div>
+  </div>
+</div>
+<div class="tc-modal" id="bdModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeBatch()">
+  <div class="tc-card bd-card">
+    <div class="tc-head"><div><h2>Batch Film Day</h2><small id="bdMeta"></small></div><div class="tc-btns"><button class="tc-btn" onclick="closeBatch()">Close</button></div></div>
+    <div class="bd-form" id="bdForm">
+      <div class="bd-fields">
+        <label>Film day<input type="date" id="bdDate"></label>
+        <label>How many products<select id="bdCount"><option>5</option><option selected>6</option><option>7</option></select></label>
+        <label class="wide">Anything to focus on? (optional)<input id="bdFocus" placeholder="e.g. free samples first, cozy fall vibe, Kitsch products"></label>
+      </div>
+      <div class="bd-styles"><span>Styles to use:</span>
+        <label><input type="checkbox" value="B-roll" checked> B-roll</label>
+        <label><input type="checkbox" value="Talking head" checked> Talking head</label>
+        <label><input type="checkbox" value="Aesthetic" checked> Aesthetic</label>
+        <label><input type="checkbox" value="Voiceover demo"> Voiceover demo</label>
+        <label><input type="checkbox" value="Problem → solution"> Problem → solution</label>
+        <label><input type="checkbox" value="Trending sound + text"> Trending sound + text</label>
+      </div>
+      <button class="add-bar" style="margin-top:12px" onclick="runBatch()">✦ Plan my batch day</button>
+    </div>
+    <div id="bdBody"></div>
   </div>
 </div>
 <div class="tc-modal" id="tcModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeTikTokTips()">
@@ -968,10 +1011,10 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                   <div class="tt-stat"><div class="tt-l">Followers</div><div class="tt-v" id="ttFol">-</div></div>
                 </div>
               </div>
-              <button type="button" class="card tt-tips" onclick="openTikTokTips()">
-                <div class="b-title">TikTok Coach</div>
-                <div class="tips-sub">Gemini looks at your videos, views &amp; sales and tells you what to film next and which products to push.</div>
-                <div class="tips-go" id="tipsGo">Get my tips →</div>
+              <button type="button" class="card tt-tips" onclick="openBatch()">
+                <div class="b-title">Batch Film Day</div>
+                <div class="tips-sub">Gemini picks 5–7 products from your samples &amp; stock and plans 3 different takes for each.</div>
+                <div class="tips-go">Plan a batch day →</div>
               </button>
             </div>
             <div class="card mob-order-4 tops-card">
@@ -2219,6 +2262,82 @@ async function removeProductFromToday(id){
   for(const x of items) await removeSchedItem(x.id);
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&TP_ID) closeTilePop(); });
+// ── Batch Film Day: Gemini picks products and plans 3 takes each, then adds them to your to-do ──
+const BD_SCHEMA={type:'OBJECT',properties:{
+  summary:{type:'STRING'},
+  products:{type:'ARRAY',items:{type:'OBJECT',properties:{
+    product:{type:'STRING',description:'Exact product name from the list'},
+    why:{type:'STRING'},
+    takes:{type:'ARRAY',items:{type:'OBJECT',properties:{style:{type:'STRING'},angle:{type:'STRING'},hook:{type:'STRING'},shots:{type:'STRING'},on_screen_text:{type:'STRING'}},required:['style','angle','hook','shots','on_screen_text']}}},
+    required:['product','why','takes']}},
+  setup_tips:{type:'ARRAY',items:{type:'STRING'}}},
+  required:['summary','products','setup_tips']};
+let BD_PLAN=null, BD_PRODUCTS=[];
+function openBatch(){
+  const d=new Date(); d.setDate(d.getDate()+1);
+  const el=document.getElementById('bdDate'); if(!el.value) el.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const acct=TT.accts.find(a=>a.tiktok_open_id===ttSel('all'));
+  document.getElementById('bdMeta').textContent=acct?'@'+(acct.display_name||acct.username):'';
+  document.getElementById('bdModal').classList.add('open');
+}
+function closeBatch(){ document.getElementById('bdModal').classList.remove('open'); }
+async function runBatch(){
+  const id=ttSel('all'); if(!id) return;
+  const count=Number(document.getElementById('bdCount').value)||6, focus=document.getElementById('bdFocus').value.trim();
+  const styles=[...document.querySelectorAll('.bd-styles input:checked')].map(x=>x.value);
+  if(!styles.length){ alert('Pick at least one style.'); return; }
+  const body=document.getElementById('bdBody');
+  body.innerHTML='<div class="tc-wait">Picking products and planning your takes…<br>This takes about 20–40 seconds.</div>';
+  try{
+    const d=await ttData(id);
+    const units=videoUnitsByProduct(d.products,d.videos,d.attributed);
+    const lastFilmed=new Map(), filmCount=new Map();
+    d.videos.forEach(v=>{ const k=v.prod_id; if(!k) return; filmCount.set(k,(filmCount.get(k)||0)+1); if(v.date&&(!lastFilmed.has(k)||v.date>lastFilmed.get(k))) lastFilmed.set(k,v.date); });
+    BD_PRODUCTS=d.products.filter(p=>['active','promote'].includes(String(p.status||'active')));
+    const prods=BD_PRODUCTS.map(p=>({name:p.name,brand:p.brand||'',free_sample:/FREE_SAMPLE/.test(p.notes||''),promote:p.status==='promote',sold:units.get(p.id)||0,videos_made:filmCount.get(p.id)||0,last_filmed:lastFilmed.get(p.id)||'never'})).slice(0,220);
+    const prompt=`You are planning a BATCH FILMING DAY for a TikTok Shop affiliate creator. Pick exactly ${count} products from the list and plan 3 DIFFERENT takes for each, so one filming session produces ${count*3} videos.
+
+How to pick (in order): free samples not filmed yet (brands expect videos), products marked "promote", products that sold before but haven't been filmed recently, then good in-stock products rarely filmed. Mix brands and categories so the day isn't repetitive. Only use exact product names from the list.
+Styles to use for the takes: ${styles.join(', ')}. Each product's 3 takes must be different styles/angles (e.g. one ${styles[0]}${styles[1]?', one '+styles[1]:''}${styles[2]?', one '+styles[2]:''}).
+${focus?`Creator's focus: ${focus}
+`:''}For each take: style, angle (the story/idea), hook (first 3 seconds: what to show + say/text), shots (specific shot list: angles, close-ups, B-roll, props, location), on_screen_text. No "click the link" CTAs.
+setup_tips: 3–5 tips to batch efficiently (group by location/lighting, outfits, order to film in).
+summary: one sentence on the plan.
+
+PRODUCTS: ${JSON.stringify(prods)}`;
+    const res=await fetch('https://take24-scout.kortnycall5.workers.dev/?service=gemini&model=gemini-2.5-flash',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',responseSchema:BD_SCHEMA,temperature:0.7}})});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
+    BD_PLAN=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
+    renderBatch();
+  }catch(e){ body.innerHTML=`<div class="tc-wait">Couldn't plan the day: ${esc(e.message)}</div>`; }
+}
+function bdMatch(name){ const n=String(name||'').toLowerCase().trim(); return BD_PRODUCTS.find(p=>String(p.name).toLowerCase().trim()===n)||BD_PRODUCTS.find(p=>n&&String(p.name).toLowerCase().includes(n))||null; }
+function renderBatch(){
+  const P=BD_PLAN; if(!P) return;
+  const dateLbl=new Date(document.getElementById('bdDate').value+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
+  document.getElementById('bdBody').innerHTML=`<div class="tc-sum" style="margin-top:16px">${esc(P.summary)}</div>
+    ${P.products.map((x,i)=>{ const p=bdMatch(x.product); return `<div class="bd-prod"><img src="${esc(p?.image_url||'icons/default-product.png')}" alt="" onerror="this.src='icons/default-product.png'">
+      <div><h4>${esc(p?.name||x.product)}</h4><div class="why">${esc(p?.brand||'')}${p?.brand?' · ':''}${esc(x.why)}</div></div>
+      <button class="bd-x" title="Remove from the plan" onclick="BD_PLAN.products.splice(${i},1);renderBatch()">✕</button>
+      <div class="bd-takes">${(x.takes||[]).map(t=>`<div class="bd-take"><span class="st">${esc(t.style)}</span><div><b>${esc(t.angle)}</b></div><div><b>Hook:</b> ${esc(t.hook)}</div><div><b>Shots:</b> ${esc(t.shots)}</div>${t.on_screen_text?`<div><b>Text:</b> ${esc(t.on_screen_text)}</div>`:''}</div>`).join('')}</div></div>`; }).join('')}
+    ${(P.setup_tips||[]).length?`<div class="bd-tips"><b>Batching tips:</b><ul style="padding-left:18px;margin-top:4px">${P.setup_tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`:''}
+    <div class="bd-foot"><button class="add-bar" style="width:auto;margin:0;padding:11px 20px" id="bdAdd" onclick="addBatchToTodo()">+ Add all ${P.products.reduce((a,x)=>a+(x.takes||[]).length,0)} takes to ${esc(dateLbl)}</button><button class="tc-btn" onclick="runBatch()">↻ Plan again</button></div>`;
+}
+async function addBatchToTodo(){
+  if(!BD_PLAN) return; const btn=document.getElementById('bdAdd'); btn.disabled=true; btn.textContent='Adding…';
+  const date=document.getElementById('bdDate').value||localDateKey(), acct=ttSel('all');
+  const rows=[]; let n=0;
+  BD_PLAN.products.forEach(x=>{ const p=bdMatch(x.product);
+    (x.takes||[]).forEach(t=>{ rows.push({user_id:_dashboardUser.id,tiktok_account_id:p?.tiktok_account_id||acct||null,date,prod_id:p?.id||null,name:p?.name||x.product,brand:p?.brand||'',
+      notes:`${t.style}: ${t.angle}`, script:`STYLE: ${t.style}\nANGLE: ${t.angle}\n\nHOOK: ${t.hook}\n\nSHOTS: ${t.shots}${t.on_screen_text?`\n\nON-SCREEN TEXT: ${t.on_screen_text}`:''}`, done:false, sort_order:n++}); }); });
+  const {error}=await db.from('queue').insert(rows);
+  if(error){ btn.disabled=false; btn.textContent='Try again'; showToast('Could not add: '+error.message,'error'); return; }
+  btn.textContent=`✓ Added ${rows.length} takes`;
+  showToast(`Batch day planned — ${rows.length} takes added`);
+  if(date===localDateKey()){ const {data}=await db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order,tiktok_account_id').eq('user_id',_dashboardUser.id).eq('date',date).order('sort_order'); _todayQueue=data||_todayQueue; renderTodayContent(); }
+}
 function renderTodayContent(){
   const list=document.getElementById('sched-list');
   const progressWrap=document.getElementById('sched-progress-wrap');
