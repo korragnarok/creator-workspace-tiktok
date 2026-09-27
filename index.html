@@ -764,7 +764,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 </style>
 <div class="tc-modal" id="tcModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeTikTokTips()">
   <div class="tc-card">
-    <div class="tc-head"><div><h2>TikTok Coach</h2><small id="tcMeta"></small></div><div class="tc-btns"><button class="tc-btn" onclick="runTikTokTips(true)">↻ Refresh</button><button class="tc-btn" onclick="closeTikTokTips()">Close</button></div></div>
+    <div class="tc-head"><div><h2 id="tcTitle">TikTok Coach</h2><small id="tcMeta"></small></div><div class="tc-btns"><button class="tc-btn" onclick="COACH_MODE==='meta'?runMetaTips():runTikTokTips()">↻ Refresh</button><button class="tc-btn" onclick="closeTikTokTips()">Close</button></div></div>
     <div id="tcBody"></div>
   </div>
 </div>
@@ -891,10 +891,11 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                   <div class="tt-stat" style="grid-column:1/-1"><div class="tt-l">Views · last 30 days</div><div class="tt-v" id="mViews30">-</div></div>
                 </div>
               </div>
-              <div class="card meta-spare">
-                <div class="b-title">Coming soon</div>
-                <div class="spare-sub">Space saved for something new on the Facebook &amp; Instagram side.</div>
-              </div>
+              <button type="button" class="card tt-tips" onclick="openMetaTips()">
+                <div class="b-title">Facebook Coach</div>
+                <div class="tips-sub">Gemini looks at what you've posted on Facebook &amp; Instagram and tells you how to do better and what to post next.</div>
+                <div class="tips-go">Get my tips →</div>
+              </button>
             </div>
           </div>
 
@@ -1985,7 +1986,9 @@ const TC_SCHEMA={type:'OBJECT',properties:{
   this_week:{type:'ARRAY',items:{type:'STRING'}}},
   required:['summary','working','not_working','retarget','new_to_try','this_week']};
 function tcKey(){ return 'take24:tiktokCoach:'+(ttSel('all')||''); }
+let COACH_MODE='tiktok';
 function openTikTokTips(){
+  COACH_MODE='tiktok'; document.getElementById('tcTitle').textContent='TikTok Coach';
   document.getElementById('tcModal').classList.add('open');
   let saved=null; try{ saved=JSON.parse(localStorage.getItem(tcKey())); }catch(e){}
   if(saved?.tips) renderTikTokTips(saved.tips,saved.at); else runTikTokTips(false);
@@ -2041,6 +2044,72 @@ function renderTikTokTips(t,at){
       <div class="tc-sec"><h3>New to try</h3>${(t.new_to_try||[]).map(r=>`<div class="tc-prod"><span class="tag">New</span><div><b>${esc(r.product)}</b> — ${esc(r.why)}</div></div>`).join('')}</div>
       <div class="tc-sec"><h3>What's working</h3><ul>${li(t.working)}</ul></div>
       <div class="tc-sec"><h3>What's not</h3><ul>${li(t.not_working)}</ul></div>
+    </div>`;
+}
+// ── Facebook Coach: Gemini reviews your Facebook (and Instagram) posts ──
+const MC_SCHEMA={type:'OBJECT',properties:{
+  summary:{type:'STRING'},
+  working:{type:'ARRAY',items:{type:'STRING'}},
+  not_working:{type:'ARRAY',items:{type:'STRING'}},
+  post_next:{type:'ARRAY',items:{type:'OBJECT',properties:{idea:{type:'STRING'},why:{type:'STRING'}},required:['idea','why']}},
+  from_tiktok:{type:'ARRAY',items:{type:'OBJECT',properties:{video:{type:'STRING'},why:{type:'STRING'},tweak:{type:'STRING'}},required:['video','why','tweak']}},
+  habits:{type:'ARRAY',items:{type:'STRING'}},
+  this_week:{type:'ARRAY',items:{type:'STRING'}}},
+  required:['summary','working','not_working','post_next','from_tiktok','habits','this_week']};
+function openMetaTips(){
+  COACH_MODE='meta'; document.getElementById('tcTitle').textContent='Facebook Coach';
+  document.getElementById('tcModal').classList.add('open');
+  let saved=null; try{ saved=JSON.parse(localStorage.getItem('take24:metaCoach')); }catch(e){}
+  if(saved?.tips) renderMetaTips(saved.tips,saved.at); else runMetaTips();
+}
+async function runMetaTips(){
+  const u=_dashboardUser; if(!u) return;
+  document.getElementById('tcMeta').textContent='Facebook & Instagram';
+  document.getElementById('tcBody').innerHTML='<div class="tc-wait">Looking through your Facebook &amp; Instagram posts…<br>This takes about 20–40 seconds.</div>';
+  try{
+    const {data:accts}=await db.from('meta_accounts').select('account_id,platform,name,username,follower_count').eq('user_id',u.id);
+    if(!accts?.length) throw new Error('Connect Facebook & Instagram in Settings first.');
+    const {data:posts}=await db.from('meta_posts').select('platform,account_id,caption,posted_at,views,likes,comments,shares,saves').eq('user_id',u.id).order('posted_at',{ascending:false}).limit(150);
+    const name=new Map(accts.map(a=>[a.account_id,(a.platform==='instagram'?'@':'')+(a.username||a.name)]));
+    const P=(posts||[]).map(p=>({platform:p.platform,account:name.get(p.account_id)||'',posted:p.posted_at?new Date(p.posted_at).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric'}):'',
+      caption:String(p.caption||'').slice(0,120),views:p.views||0,likes:p.likes||0,comments:p.comments||0,shares:p.shares||0,saves:p.saves||0}));
+    // TikTok videos that did well — candidates to repost on Facebook
+    const tt=(_dashboardVideos||[]).filter(v=>(Number(v.views)||0)>0).sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,25).map(v=>({title:String(v.title||'').slice(0,90),views:v.views,date:v.date,product:v.brand||''}));
+    const prompt=`You are a Facebook Reels & Instagram growth coach for a shopping creator who also posts on TikTok. Focus mainly on FACEBOOK (use Instagram data as extra context). Using ONLY the data below, give specific, practical advice.
+Today: ${localDateKey()}. Accounts: ${accts.map(a=>`${a.platform} ${(a.username||a.name)} (${a.follower_count||0} followers)`).join('; ')}.
+
+Explain:
+- summary: 2–3 sentences on how Facebook is going and the biggest opportunity.
+- working: patterns in the posts with the most views/shares/comments (topics, products, caption style, timing).
+- not_working: what's underperforming and why.
+- post_next: 3–5 specific post ideas for Facebook, each with why it should work.
+- from_tiktok: 3–5 of the TikTok videos below worth reposting on Facebook, why, and a tweak for Facebook (caption, first frame, length).
+- habits: 3–4 posting habits to change (frequency, timing, captions, engaging comments, cross-posting).
+- this_week: a concrete plan of what to post each day this week.
+Use real captions/products from the data. Be concise; no generic advice.
+
+FACEBOOK & INSTAGRAM POSTS (newest first): ${JSON.stringify(P)}
+TOP TIKTOK VIDEOS: ${JSON.stringify(tt)}`;
+    const res=await fetch('https://take24-scout.kortnycall5.workers.dev/?service=gemini&model=gemini-2.5-flash',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',responseSchema:MC_SCHEMA,temperature:0.5}})});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
+    const tips=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
+    const at=Date.now(); try{ localStorage.setItem('take24:metaCoach',JSON.stringify({at,tips})); }catch(e){}
+    renderMetaTips(tips,at);
+  }catch(e){ document.getElementById('tcBody').innerHTML=`<div class="tc-wait">Couldn't get tips: ${esc(e.message)}</div>`; }
+}
+function renderMetaTips(t,at){
+  document.getElementById('tcMeta').textContent='Facebook & Instagram'+(at?' · '+new Date(at).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'');
+  const li=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
+  document.getElementById('tcBody').innerHTML=`<div class="tc-sum">${esc(t.summary)}</div>
+    <div class="tc-grid">
+      <div class="tc-sec wide"><h3>Post this week</h3><ul>${li(t.this_week)}</ul></div>
+      <div class="tc-sec"><h3>Post next</h3>${(t.post_next||[]).map(r=>`<div class="tc-prod"><span class="tag">Idea</span><div><b>${esc(r.idea)}</b> — ${esc(r.why)}</div></div>`).join('')}</div>
+      <div class="tc-sec"><h3>Repost from TikTok</h3>${(t.from_tiktok||[]).map(r=>`<div class="tc-prod"><span class="tag">Repost</span><div><b>${esc(r.video)}</b> — ${esc(r.why)}<br><i>For Facebook:</i> ${esc(r.tweak)}</div></div>`).join('')}</div>
+      <div class="tc-sec"><h3>What's working</h3><ul>${li(t.working)}</ul></div>
+      <div class="tc-sec"><h3>What's not</h3><ul>${li(t.not_working)}</ul></div>
+      <div class="tc-sec wide"><h3>Habits to change</h3><ul>${li(t.habits)}</ul></div>
     </div>`;
 }
 function renderTodayContent(){
