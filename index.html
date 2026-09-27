@@ -783,6 +783,13 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .bd-foot{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap;}
 .bd-tips{margin-top:12px;font-size:13px;line-height:1.5;color:var(--text-mid);}
 @media(max-width:768px){.bd-takes{grid-template-columns:1fr;}.bd-fields{grid-template-columns:1fr;}}
+.bd-l{font:800 10px 'Stack Sans Notch',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);margin-bottom:6px;}
+.bd-lineup{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.bd-lineup .bd-l{flex-basis:100%;}
+.bd-chip{border:1px solid var(--border-mid);background:var(--bg-lift);border-radius:999px;padding:5px 11px;font-size:12px;color:var(--ink);}
+.bd-chip small{color:var(--text-muted);} .bd-chip em{font-style:normal;font:800 9px 'Stack Sans Notch',sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#fff;background:var(--rust);border-radius:999px;padding:1px 6px;margin-left:3px;}
+.bd-samples{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:13px;color:var(--text-mid);cursor:pointer;}
+.bd-samples input{accent-color:var(--rust);}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -823,13 +830,12 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 </div>
 <div class="tc-modal" id="bdModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeBatch()">
   <div class="tc-card bd-card">
-    <div class="tc-head"><div><h2>Batch Film Day</h2><small id="bdMeta"></small></div><div class="tc-btns"><button class="tc-btn" onclick="closeBatch()">Close</button></div></div>
+    <div class="tc-head"><div><h2>Plan Today's Takes</h2><small id="bdMeta"></small></div><div class="tc-btns"><button class="tc-btn" onclick="closeBatch()">Close</button></div></div>
     <div class="bd-form" id="bdForm">
-      <div class="bd-fields">
-        <label>Film day<input type="date" id="bdDate"></label>
-        <label>How many products<select id="bdCount"><option>5</option><option selected>6</option><option>7</option></select></label>
-        <label class="wide">Accounts<select id="bdAcct"></select></label>
-        <label class="wide">Anything to focus on? (optional)<input id="bdFocus" placeholder="e.g. free samples first, cozy fall vibe, Kitsch products"></label>
+      <div class="bd-lineup" id="bdLineup"></div>
+      <label class="bd-samples"><input type="checkbox" id="bdSamples" checked onchange="renderBatchLineup()"> Also add my free samples that aren't filmed yet <span id="bdSampleCount"></span></label>
+      <div class="bd-fields" style="margin-top:10px">
+        <label class="wide">Anything to focus on? (optional)<input id="bdFocus" placeholder="e.g. cozy fall vibe, film everything in the kitchen"></label>
       </div>
       <div class="bd-styles"><span>Styles to use:</span>
         <label><input type="checkbox" value="B-roll" checked> B-roll</label>
@@ -839,7 +845,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
         <label><input type="checkbox" value="Problem → solution"> Problem → solution</label>
         <label><input type="checkbox" value="Trending sound + text"> Trending sound + text</label>
       </div>
-      <button class="add-bar" style="margin-top:12px" onclick="runBatch()">✦ Plan my batch day</button>
+      <button class="add-bar" style="margin-top:12px" onclick="runBatch()">✦ Plan 3 takes for each product</button>
     </div>
     <div id="bdBody"></div>
   </div>
@@ -941,6 +947,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
               </div>
               <div style="display:flex;gap:6px;margin-top:10px;">
                 <button class="add-bar" type="button" onclick="openAddProduct()" style="flex:1;margin-top:0;">+ Add Product</button>
+                <button class="add-bar" type="button" onclick="openBatch()" style="flex:1;margin-top:0;background:var(--surface);color:var(--tan);border:1px solid var(--rust);">✦ Plan takes</button>
               </div>
               <div id="bulkEditBar" style="display:none;margin-top:8px;padding:10px 12px;border:1px solid var(--border-mid);border-radius:10px;background:var(--surface);display:none;gap:8px;flex-wrap:wrap;align-items:center;">
                 <span id="bulkSelCount" style="font-family:'Stack Sans Notch',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.08em;color:var(--text-muted);flex:1;">0 selected</span>
@@ -973,11 +980,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                   <div class="tt-stat" style="grid-column:1/-1"><div class="tt-l">Views · last 30 days</div><div class="tt-v" id="mViews30">-</div></div>
                 </div>
               </div>
-              <button type="button" class="card tt-tips" onclick="openMetaTips()">
-                <div class="b-title">Facebook Coach</div>
-                <div class="tips-sub">Gemini looks at what you've posted on Facebook &amp; Instagram and tells you how to do better and what to post next.</div>
-                <div class="tips-go">Get my tips →</div>
-              </button>
+              <div class="card meta-spare"><div class="b-title">Coming soon</div><div class="spare-sub">Space saved for something new.</div></div>
             </div>
           </div>
 
@@ -1012,11 +1015,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                   <div class="tt-stat"><div class="tt-l">Followers</div><div class="tt-v" id="ttFol">-</div></div>
                 </div>
               </div>
-              <button type="button" class="card tt-tips" onclick="openBatch()">
-                <div class="b-title">Batch Film Day</div>
-                <div class="tips-sub">Gemini picks 5–7 products from your samples &amp; stock and plans 3 different takes for each.</div>
-                <div class="tips-go">Plan a batch day →</div>
-              </button>
+              <div class="card meta-spare"><div class="b-title">Coming soon</div><div class="spare-sub">Space saved for something new.</div></div>
             </div>
             <div class="card mob-order-4 tops-card">
               <div class="tt-head"><div class="b-title">Top Videos &amp; Best Sellers</div></div>
@@ -2274,62 +2273,62 @@ const BD_SCHEMA={type:'OBJECT',properties:{
   setup_tips:{type:'ARRAY',items:{type:'STRING'}}},
   required:['summary','products','setup_tips']};
 let BD_PLAN=null, BD_PRODUCTS=[];
+function lineupGroups(){
+  const g=[], m={};
+  (_todayQueue||[]).forEach(q=>{ const k=String(q.prod_id||q.name||q.id).toLowerCase(); if(!m[k]){ m[k]={name:q.name,brand:q.brand,prod_id:q.prod_id,acct:q.tiktok_account_id,rows:[]}; g.push(m[k]); } m[k].rows.push(q); });
+  return g;
+}
+function sampleCandidates(){
+  const inLineup=new Set(lineupGroups().map(x=>String(x.prod_id||x.name).toLowerCase()));
+  const filmed=new Set((_dashboardVideos||[]).map(v=>v.prod_id).filter(Boolean));
+  return (_dashboardProducts||[]).filter(p=>/FREE_SAMPLE/.test(p.notes||'') && ['active','promote'].includes(String(p.status||'active')) && !filmed.has(p.id) && !inLineup.has(String(p.id).toLowerCase()) && !inLineup.has(String(p.name).toLowerCase()));
+}
+function renderBatchLineup(){
+  const g=lineupGroups(), sm=sampleCandidates(), useS=document.getElementById('bdSamples').checked;
+  document.getElementById('bdSampleCount').textContent=sm.length?`(${sm.length})`:'(none right now)';
+  const chip=(n,b,tag)=>`<span class="bd-chip">${esc(n)}${b?` <small>${esc(b)}</small>`:''}${tag?` <em>${tag}</em>`:''}</span>`;
+  document.getElementById('bdLineup').innerHTML=(g.length||sm.length)
+    ? `<div class="bd-l">Products to plan</div>${g.map(x=>chip(x.name,x.brand,'')).join('')}${useS?sm.map(p=>chip(p.name,p.brand,'sample')).join(''):''}`
+    : '<div class="tops-empty">Add products to Today\'s Content first (or tick free samples).</div>';
+}
 function openBatch(){
-  const d=new Date(); d.setDate(d.getDate()+1);
-  const el=document.getElementById('bdDate'); if(!el.value) el.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const sel=document.getElementById('bdAcct');
-  if(!sel.options.length) sel.innerHTML='<option value="all">Both accounts</option>'+TT.accts.map(a=>`<option value="${esc(a.tiktok_open_id)}">@${esc(a.display_name||a.username||'account')}</option>`).join('');
-  document.getElementById('bdMeta').textContent='';
+  BD_PLAN=null; document.getElementById('bdBody').innerHTML='';
+  document.getElementById('bdMeta').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
+  renderBatchLineup();
   document.getElementById('bdModal').classList.add('open');
 }
 function closeBatch(){ document.getElementById('bdModal').classList.remove('open'); }
 async function runBatch(){
-  const count=Number(document.getElementById('bdCount').value)||6, focus=document.getElementById('bdFocus').value.trim();
+  const focus=document.getElementById('bdFocus').value.trim();
   const styles=[...document.querySelectorAll('.bd-styles input:checked')].map(x=>x.value);
   if(!styles.length){ alert('Pick at least one style.'); return; }
+  const g=lineupGroups(), sm=document.getElementById('bdSamples').checked?sampleCandidates():[];
+  BD_PRODUCTS=[...(_dashboardProducts||[])];
+  const list=[...g.map(x=>{ const p=(_dashboardProducts||[]).find(pp=>pp.id===x.prod_id); return {name:x.name,brand:x.brand||'',existing_scripts:x.rows.map(r=>String(r.script||'').slice(0,200)).filter(Boolean),free_sample:/FREE_SAMPLE/.test(p?.notes||'')}; }),
+              ...sm.map(p=>({name:p.name,brand:p.brand||'',existing_scripts:[],free_sample:true}))];
+  if(!list.length){ alert("Add products to Today's Content first."); return; }
   const body=document.getElementById('bdBody');
-  body.innerHTML='<div class="tc-wait">Picking products and planning your takes…<br>This takes about 20–40 seconds.</div>';
+  body.innerHTML='<div class="tc-wait">Planning angles and scripts…<br>This takes about 20–40 seconds.</div>';
   try{
-    const pick=document.getElementById('bdAcct').value||'all';
-    const nameOf=aid=>{ const a=TT.accts.find(x=>x.tiktok_open_id===aid); return a?'@'+(a.display_name||a.username):'all accounts'; };
-    const allProds=_dashboardProducts||[], allVids=_dashboardVideos||[];
-    const units=window._productUnits||new Map();
-    const d={products:allProds.filter(p=>pick==='all'||!p.tiktok_account_id||p.tiktok_account_id===pick), videos:allVids};
-    document.getElementById('bdMeta').textContent=pick==='all'?'Both accounts':nameOf(pick);
-    const lastFilmed=new Map(), filmCount=new Map();
-    d.videos.forEach(v=>{ const k=v.prod_id; if(!k) return; filmCount.set(k,(filmCount.get(k)||0)+1); if(v.date&&(!lastFilmed.has(k)||v.date>lastFilmed.get(k))) lastFilmed.set(k,v.date); });
-    BD_PRODUCTS=d.products.filter(p=>['active','promote'].includes(String(p.status||'active')));
-    const prods=BD_PRODUCTS.map(p=>({name:p.name,brand:p.brand||'',account:p.tiktok_account_id?nameOf(p.tiktok_account_id):'all accounts',free_sample:/FREE_SAMPLE/.test(p.notes||''),promote:p.status==='promote',sold:units.get(p.id)||0,videos_made:filmCount.get(p.id)||0,last_filmed:lastFilmed.get(p.id)||'never'})).slice(0,220);
-    // Both accounts: split the picks evenly (e.g. 5 → 3 from the first account, 2 from the second)
-    let split='';
-    if(pick==='all' && TT.accts.length>1){
-      const accs=TT.accts.slice(0,2), first=Math.ceil(count/2), second=count-first;
-      const quota=[[accs[0],first],[accs[1],second]];
-      split=`ACCOUNT SPLIT (required): pick exactly ${quota.map(([a,n])=>`${n} from ${nameOf(a.tiktok_open_id)}`).join(' and ')}. Products listed as "all accounts" may count toward either account. Put the account name you picked it for in each product's "why".\n`;
-      window._bdQuota=quota.map(([a,n])=>({id:a.tiktok_open_id,n}));
-    } else window._bdQuota=null;
-    const prompt=`You are planning a BATCH FILMING DAY for a TikTok Shop affiliate creator. ${split}Pick exactly ${count} products from the list and plan 3 DIFFERENT takes for each, so one filming session produces ${count*3} videos.
-
-How to pick (in order): free samples not filmed yet (brands expect videos), products marked "promote", products that sold before but haven't been filmed recently, then good in-stock products rarely filmed. Mix brands and categories so the day isn't repetitive${pick==='all'?', and include products from BOTH TikTok accounts (each product lists its account)':''}. Only use exact product names from the list.
-Styles to use for the takes: ${styles.join(', ')}. Each product's 3 takes must be different styles/angles (e.g. one ${styles[0]}${styles[1]?', one '+styles[1]:''}${styles[2]?', one '+styles[2]:''}).
-${focus?`Creator's focus: ${focus}
-`:''}For each take: style, angle (the story/idea), hook (first 3 seconds: what to show + say/text), shots (specific shot list: angles, close-ups, B-roll, props, location), on_screen_text. No "click the link" CTAs.
-setup_tips: 3–5 tips to batch efficiently (group by location/lighting, outfits, order to film in).
+    const prompt=`You are helping a TikTok Shop affiliate creator plan a filming session. For EACH product below (use every one, exact names, same order), plan 3 DIFFERENT takes using these styles: ${styles.join(', ')}.
+${focus?`Creator's focus: ${focus}\n`:''}For each take give: style, angle (the story/idea), hook (first 3 seconds: what to show + say/text), shots (specific shot list: angles, close-ups, B-roll, props, location), on_screen_text, and script (a short, natural script in the creator's casual voice — for "Trending sound + text" or aesthetic takes the script is just the on-screen text beats, no voiceover). If a product already has scripts, make the new takes different from them. No "click the link" CTAs — build urgency and desire instead.
+setup_tips: 3–5 tips to film these efficiently (group by location/lighting, order to film in).
 summary: one sentence on the plan.
 
-PRODUCTS: ${JSON.stringify(prods)}`;
+PRODUCTS: ${JSON.stringify(list)}`;
+    const schema=JSON.parse(JSON.stringify(BD_SCHEMA)); schema.properties.products.items.properties.takes.items.properties.script={type:'STRING'}; schema.properties.products.items.properties.takes.items.required.push('script');
     const res=await fetch('https://take24-scout.kortnycall5.workers.dev/?service=gemini&model=gemini-2.5-flash',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',responseSchema:BD_SCHEMA,temperature:0.7}})});
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',responseSchema:schema,temperature:0.7}})});
     const data=await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
     BD_PLAN=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
     renderBatch();
-  }catch(e){ body.innerHTML=`<div class="tc-wait">Couldn't plan the day: ${esc(e.message)}</div>`; }
+  }catch(e){ body.innerHTML=`<div class="tc-wait">Couldn't plan the takes: ${esc(e.message)}</div>`; }
 }
 function bdMatch(name){ const n=String(name||'').toLowerCase().trim(); return BD_PRODUCTS.find(p=>String(p.name).toLowerCase().trim()===n)||BD_PRODUCTS.find(p=>n&&String(p.name).toLowerCase().includes(n))||null; }
 // Which account each planned product goes to (shared "all accounts" products fill whichever account still has room)
 function bdAssign(){
-  const out=[], fallback=(document.getElementById('bdAcct').value!=='all'?document.getElementById('bdAcct').value:ttSel('all'));
+  const out=[], fallback=ttSel('all'); window._bdQuota=null;
   const left={}; (window._bdQuota||[]).forEach(q=>left[q.id]=q.n);
   const ps=BD_PLAN.products.map(x=>bdMatch(x.product));
   ps.forEach((p,i)=>{ if(p?.tiktok_account_id){ out[i]=p.tiktok_account_id; if(left[p.tiktok_account_id]!=null) left[p.tiktok_account_id]--; } });
@@ -2339,19 +2338,19 @@ function bdAssign(){
 function renderBatch(){
   const P=BD_PLAN; if(!P) return;
   const BD_ACCT=bdAssign();
-  const dateLbl=new Date(document.getElementById('bdDate').value+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
+  const dateLbl=new Date().toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
   document.getElementById('bdBody').innerHTML=`<div class="tc-sum" style="margin-top:16px">${esc(P.summary)}</div>
     ${P.products.map((x,i)=>{ const p=bdMatch(x.product); return `<div class="bd-prod"><img src="${esc(p?.image_url||'icons/default-product.png')}" alt="" onerror="this.src='icons/default-product.png'">
       <div><h4>${esc(p?.name||x.product)}</h4><div class="why">${esc(p?.brand||'')}${BD_ACCT[i]?` · <b>@${esc((TT.accts.find(a=>a.tiktok_open_id===BD_ACCT[i])||{}).display_name||'')}</b>`:''} · ${esc(x.why)}</div></div>
       <button class="bd-x" title="Remove from the plan" onclick="BD_PLAN.products.splice(${i},1);renderBatch()">✕</button>
       <div class="bd-takes">${(x.takes||[]).map(t=>`<div class="bd-take"><span class="st">${esc(t.style)}</span><div><b>${esc(t.angle)}</b></div><div><b>Hook:</b> ${esc(t.hook)}</div><div><b>Shots:</b> ${esc(t.shots)}</div>${t.on_screen_text?`<div><b>Text:</b> ${esc(t.on_screen_text)}</div>`:''}</div>`).join('')}</div></div>`; }).join('')}
     ${(P.setup_tips||[]).length?`<div class="bd-tips"><b>Batching tips:</b><ul style="padding-left:18px;margin-top:4px">${P.setup_tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`:''}
-    <div class="bd-foot"><button class="add-bar" style="width:auto;margin:0;padding:11px 20px" id="bdAdd" onclick="addBatchToTodo()">+ Add all ${P.products.reduce((a,x)=>a+(x.takes||[]).length,0)} takes to ${esc(dateLbl)}</button><button class="tc-btn" onclick="saveBatchPdf()">Save as PDF</button><button class="tc-btn" onclick="runBatch()">↻ Plan again</button></div>`;
+    <div class="bd-foot"><button class="add-bar" style="width:auto;margin:0;padding:11px 20px" id="bdAdd" onclick="addBatchToTodo()">+ Add all ${P.products.reduce((a,x)=>a+(x.takes||[]).length,0)} takes to today</button><button class="tc-btn" onclick="saveBatchPdf()">Save as PDF</button><button class="tc-btn" onclick="runBatch()">↻ Plan again</button></div>`;
 }
 // Opens a clean, printable version of the plan — choose "Save as PDF" in the print window
 function saveBatchPdf(){
   if(!BD_PLAN) return;
-  const dateLbl=new Date(document.getElementById('bdDate').value+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const dateLbl=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const acct=document.getElementById('bdMeta').textContent;
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Batch Film Day — ${esc(dateLbl)}</title>
 <style>
@@ -2379,17 +2378,25 @@ ${(BD_PLAN.setup_tips||[]).length?`<div class="tips"><b>Batching tips</b><ul>${B
 }
 async function addBatchToTodo(){
   if(!BD_PLAN) return; const btn=document.getElementById('bdAdd'); btn.disabled=true; btn.textContent='Adding…';
-  const date=document.getElementById('bdDate').value||localDateKey(), acct=(document.getElementById('bdAcct').value!=='all'?document.getElementById('bdAcct').value:ttSel('all'));
+  const date=localDateKey(), acct=ttSel('all');
   const rows=[]; let n=0;
-  const assigned=bdAssign();
+  const assigned=bdAssign(); const updates=[];
   BD_PLAN.products.forEach((x,pi)=>{ const p=bdMatch(x.product);
-    (x.takes||[]).forEach(t=>{ rows.push({user_id:_dashboardUser.id,tiktok_account_id:assigned[pi]||acct||null,date,prod_id:p?.id||null,name:p?.name||x.product,brand:p?.brand||'',
-      notes:`${t.style}: ${t.angle}`, script:`STYLE: ${t.style}\nANGLE: ${t.angle}\n\nHOOK: ${t.hook}\n\nSHOTS: ${t.shots}${t.on_screen_text?`\n\nON-SCREEN TEXT: ${t.on_screen_text}`:''}`, done:false, sort_order:n++}); }); });
-  const {error}=await db.from('queue').insert(rows);
+    const grp=lineupGroups().find(gg=>String(gg.prod_id||'')===String(p?.id||'~')||String(gg.name).toLowerCase()===String(x.product).toLowerCase());
+    const empty=grp?grp.rows.filter(r=>!String(r.script||'').trim()):[];
+    (x.takes||[]).forEach(t=>{
+      const text=`${t.style.toUpperCase()} — ${t.angle}\n\nHOOK: ${t.hook}\n\nSCRIPT:\n${t.script||''}\n\nSHOTS: ${t.shots}${t.on_screen_text?`\n\nON-SCREEN TEXT: ${t.on_screen_text}`:''}`;
+      const slot=empty.shift();
+      if(slot){ updates.push({id:slot.id,script:text,notes:`${t.style}: ${t.angle}`}); return; }
+      rows.push({user_id:_dashboardUser.id,tiktok_account_id:grp?.acct||p?.tiktok_account_id||assigned[pi]||acct||null,date,prod_id:p?.id||grp?.prod_id||null,name:p?.name||grp?.name||x.product,brand:p?.brand||grp?.brand||'',
+        notes:`${t.style}: ${t.angle}`,script:text,done:false,sort_order:(_todayQueue||[]).length+n++});
+    }); });
+  for(const u of updates){ const {error:ue}=await db.from('queue').update({script:u.script,notes:u.notes}).eq('id',u.id).eq('user_id',_dashboardUser.id); if(ue){ showToast('Could not save: '+ue.message,'error'); btn.disabled=false; return; } }
+  const {error}=rows.length?await db.from('queue').insert(rows):{error:null};
   if(error){ btn.disabled=false; btn.textContent='Try again'; showToast('Could not add: '+error.message,'error'); return; }
-  btn.textContent=`✓ Added ${rows.length} takes`;
-  showToast(`Batch day planned — ${rows.length} takes added`);
-  if(date===localDateKey()){ const {data}=await db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order,tiktok_account_id').eq('user_id',_dashboardUser.id).eq('date',date).order('sort_order'); _todayQueue=data||_todayQueue; renderTodayContent(); }
+  const total=rows.length+updates.length; btn.textContent=`✓ Added ${total} takes`;
+  showToast(`${total} takes added to today`);
+  { const {data}=await db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order,tiktok_account_id').eq('user_id',_dashboardUser.id).eq('date',date).order('sort_order'); _todayQueue=data||_todayQueue; renderTodayContent(); }
 }
 function renderTodayContent(){
   const list=document.getElementById('sched-list');
