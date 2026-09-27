@@ -77,6 +77,14 @@ textarea{resize:vertical;min-height:60px;}
 .hk-steps{padding-left:18px;font-size:13px;line-height:1.5;margin-bottom:8px;color:var(--text-mid);}
 .hk-why{font-size:13px;line-height:1.5;color:var(--ink);margin-bottom:8px;}
 .hk-alt{font-size:13px;line-height:1.5;} .hk-alt ol{padding-left:20px;margin-top:4px;display:flex;flex-direction:column;gap:4px;}
+.hist-toggle{background:none;border:none;color:var(--ink);font:400 22px 'Cormorant Garamond',serif;cursor:pointer;padding:0;display:flex;align-items:center;gap:8px;}
+.hist-toggle span{font-size:14px;color:var(--text-muted);}
+.newscript{margin:14px 0 0;}
+.scene{border-left:3px solid var(--border-mid);padding:6px 0 6px 12px;margin:8px 0;}
+.scene.hook{border-left-color:var(--rust);}
+.scene .st{font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);margin-bottom:3px;}
+.scene p{margin:2px 0!important;}
+.scene .chg{color:var(--text-muted);font-size:12px;font-style:italic;}
 </style>
 </head>
 <body>
@@ -118,11 +126,13 @@ textarea{resize:vertical;min-height:60px;}
     <div class="right-col">
     <div class="card" id="results"><div class="empty"><b>No feedback yet</b>Choose a video on the left, then tap “Get feedback”. It usually takes 20–60 seconds.</div></div>
     <div class="card" id="historyCard">
-      <div class="hist-head"><h3>History</h3><button class="copy" id="cmpBtn" onclick="compareSelected()" disabled>Compare 2</button></div>
+      <div class="hist-head"><button type="button" class="hist-toggle" onclick="toggleHistory()"><span id="histArrow">▸</span> History <span id="histCount"></span></button><button class="copy" id="cmpBtn" onclick="toggleCompare()" style="display:none">Compare</button></div>
+      <div id="histBody" style="display:none">
       <div class="sub" style="margin:-4px 0 8px;font-size:12px">Tick the box on any two videos, then tap Compare 2.</div>
-      <div class="sub" style="margin:0 0 8px;font-size:12px">Tick two videos, then tap <b>Compare 2</b>.</div>
+      <div class="sub" id="cmpHint" style="margin:0 0 8px;font-size:12px;display:none">Pick <b>2</b> videos to compare.</div>
       <div class="trend" id="trend"></div>
       <div class="hist" id="hist"><div class="sub">Your past feedback shows up here.</div></div>
+      </div>
     </div>
     </div>
   </div>
@@ -135,7 +145,7 @@ textarea{resize:vertical;min-height:60px;}
 <script>
 const WORKER = 'https://take24-scout.kortnycall5.workers.dev';
 const MAX_MB = 90;
-let VIDEO = null, LINK = '';
+let VIDEO = null, LINK = '', CTX = {};
 function onLink(){
   LINK = document.getElementById('ttLink').value.trim();
   const ok = /tiktok\.com\//i.test(LINK);
@@ -224,18 +234,24 @@ Rules:
 async function analyze(){
   if (!VIDEO && !LINK) return;
   const btn = document.getElementById('goBtn'); btn.disabled = true;
+  // remember what this run is about, then clear the form for the next video
+  CTX = { video: VIDEO, link: LINK, name: VIDEO ? VIDEO.name : LINK, product: document.getElementById('product').value.trim(),
+          audio: document.getElementById('audio').value, goal: document.getElementById('goal').selectedOptions[0].textContent, prompt: buildPrompt(), fileUri: '', fileMime: '' };
+  const vid = VIDEO, link = LINK;
+  resetForm();
   try {
-    setStatus(LINK ? 'Getting the video from TikTok…' : 'Uploading video…');
-    const up = LINK
-      ? await fetch(`${WORKER}/?service=gemini-upload&url=${encodeURIComponent(LINK)}`, { method: 'POST' })
-      : await fetch(`${WORKER}/?service=gemini-upload`, { method: 'POST', headers: { 'Content-Type': VIDEO.type || 'video/mp4' }, body: VIDEO });
+    setStatus(link ? 'Getting the video from TikTok…' : 'Uploading video…');
+    const up = link
+      ? await fetch(`${WORKER}/?service=gemini-upload&url=${encodeURIComponent(link)}`, { method: 'POST' })
+      : await fetch(`${WORKER}/?service=gemini-upload`, { method: 'POST', headers: { 'Content-Type': vid.type || 'video/mp4' }, body: vid });
     const f = await up.json().catch(() => ({}));
     if (!up.ok || !f.uri) throw new Error(f.error || `Upload failed (${up.status})`);
+    CTX.fileUri = f.uri; CTX.fileMime = f.mime_type;
     setStatus('Watching your video…');
     const res = await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ file_data: { mime_type: f.mime_type, file_uri: f.uri } }, { text: buildPrompt() }] }],
+        contents: [{ role: 'user', parts: [{ file_data: { mime_type: f.mime_type, file_uri: f.uri } }, { text: CTX.prompt }] }],
         generationConfig: { responseMimeType: 'application/json', responseSchema: SCHEMA, temperature: 0.4 }
       })
     });
@@ -244,11 +260,17 @@ async function analyze(){
     const text = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
     const fb = JSON.parse(text.replace(/```json|```/g, '').trim());
     render(fb, null, true); setStatus('');
-    await addHistory({ at: Date.now(), name: VIDEO ? VIDEO.name : LINK, link: LINK || '', product: document.getElementById('product').value.trim(), fb });
-    try { localStorage.setItem('take24:lastFeedback', JSON.stringify({ at: Date.now(), name: VIDEO ? VIDEO.name : LINK, fb })); } catch (e) {}
+    await addHistory({ at: Date.now(), name: CTX.name, link: CTX.link || '', product: CTX.product, audio: CTX.audio, goal: CTX.goal, fb });
   } catch (e) {
     setStatus(''); document.getElementById('results').innerHTML = `<div class="empty"><b>Something went wrong</b>${esc(e.message)}</div>`;
-  } finally { btn.disabled = false; }
+  } finally { btn.disabled = !(VIDEO || LINK); }
+}
+function resetForm(){
+  VIDEO = null; LINK = '';
+  document.getElementById('file').value = ''; document.getElementById('ttLink').value = '';
+  document.getElementById('product').value = ''; document.getElementById('focus').value = '';
+  document.getElementById('drop').innerHTML = '<b>Drop a video here</b>or tap to choose one · up to about 90 MB';
+  document.getElementById('goBtn').disabled = true;
 }
 
 // timestamps like [0:03] become buttons that jump the preview to that moment
@@ -274,24 +296,29 @@ function render(fb, name, fresh){
     <div class="fixes"><h3>Top fixes</h3><ol>${(fb.top_fixes || []).map(x => `<li>${stamps(x)}</li>`).join('')}</ol></div>
     <div class="secs">${(fb.sections || []).map(s => `<div class="sec"><span class="rt">${Number(s.rating) || '–'}/10</span><h3>${esc(s.name)}</h3>
       ${(s.working || []).map(x => `<p class="good">${stamps(x)}</p>`).join('')}${(s.improve || []).map(x => `<p class="try">${stamps(x)}</p>`).join('')}</div>`).join('')}</div>
+    <div class="newscript" id="newScript"><button class="btn" style="margin-top:0" onclick="makeScript(this)">✦ Write me a new script from this feedback</button></div>
     <div class="sec" style="margin-top:12px"><h3>Suggested caption</h3><div class="caption" id="capText">${esc(fb.caption)}${tags ? '\n\n' + esc(tags) : ''}</div>
       <button class="copy" onclick="navigator.clipboard.writeText(document.getElementById('capText').innerText);this.textContent='✓ Copied'">Copy caption</button></div>`;
 }
 
 // ── History (synced) ──
-let HIST=[], SEL=[];
+let HIST=[], SEL=[], CMP_MODE=false;
+function toggleHistory(){ const b=document.getElementById('histBody'), open=b.style.display==='none'; b.style.display=open?'':'none'; document.getElementById('histArrow').textContent=open?'▾':'▸'; document.getElementById('cmpBtn').style.display=open&&HIST.length>1?'':'none'; if(!open&&CMP_MODE) toggleCompare(); }
+function toggleCompare(){ CMP_MODE=!CMP_MODE; SEL=[]; document.getElementById('cmpBtn').textContent=CMP_MODE?'Cancel':'Compare'; document.getElementById('cmpHint').style.display=CMP_MODE?'':'none'; renderHistory(); }
 async function addHistory(entry){ HIST=[entry,...HIST].slice(0,50); try{ plannerSet('feedback',HIST,true); }catch(e){ console.warn(e); } renderHistory(); }
 function renderHistory(){
   const el=document.getElementById('hist');
+  document.getElementById('histCount').textContent=HIST.length?`(${HIST.length})`:'';
   if(!HIST.length){ el.innerHTML='<div class="sub">Your past feedback shows up here.</div>'; document.getElementById('trend').innerHTML=''; return; }
-  el.innerHTML=HIST.map((h,i)=>`<div class="hrow${SEL.includes(i)?' on':''}" onclick="openHistory(${i})"><input type="checkbox" title="Select to compare" ${SEL.includes(i)?'checked':''} onclick="event.stopPropagation();toggleSel(${i})"><div class="hs">${Number(h.fb?.score)||'–'}</div><div class="hi"><b>${esc(h.product||h.name||'Video')}</b><small>${new Date(h.at).toLocaleDateString(undefined,{month:'short',day:'numeric'})}${h.product&&h.name?' · '+esc(h.name).slice(0,40):''}</small></div><button class="hdel" title="Remove" onclick="event.stopPropagation();delHistory(${i})">×</button></div>`).join('');
+  el.innerHTML=HIST.map((h,i)=>`<div class="hrow${SEL.includes(i)?' on':''}" onclick="openHistory(${i})">${CMP_MODE?`<input type="checkbox" ${SEL.includes(i)?'checked':''} onclick="event.stopPropagation();toggleSel(${i})">`:''}<div class="hs">${Number(h.fb?.score)||'–'}</div><div class="hi"><b>${esc(h.product||h.name||'Video')}</b><small>${new Date(h.at).toLocaleDateString(undefined,{month:'short',day:'numeric'})}${h.product&&h.name?' · '+esc(h.name).slice(0,40):''}</small></div><button class="hdel" title="Remove" onclick="event.stopPropagation();delHistory(${i})">×</button></div>`).join('');
   // score trend, oldest → newest
   const last=HIST.slice(0,20).reverse(), top=Math.max(...last.map(h=>Number(h.fb?.score)||0),1);
   document.getElementById('trend').innerHTML=last.map((h,i)=>`<i class="${i===last.length-1?'hi-s':''}" title="${Number(h.fb?.score)||0}/10" style="height:${Math.max(8,(Number(h.fb?.score)||0)/10*100)}%"></i>`).join('');
-  document.getElementById('cmpBtn').disabled=SEL.length!==2;
+  document.getElementById('histCount').textContent=`(${HIST.length})`;
+  const hOpen=document.getElementById('histBody').style.display!=='none'; document.getElementById('cmpBtn').style.display=hOpen&&HIST.length>1?'':'none';
 }
-function toggleSel(i){ SEL=SEL.includes(i)?SEL.filter(x=>x!==i):[...SEL,i].slice(-2); renderHistory(); }
-function openHistory(i){ const h=HIST[i]; if(h) { render(h.fb, h.product||h.name); window.scrollTo({top:0,behavior:'smooth'}); } }
+function toggleSel(i){ SEL=SEL.includes(i)?SEL.filter(x=>x!==i):[...SEL,i]; if(SEL.length===2){ compareSelected(); CMP_MODE=true; toggleCompare(); return; } renderHistory(); }
+function openHistory(i){ if(CMP_MODE){ toggleSel(i); return; } const h=HIST[i]; if(h) { CTX={ name:h.name, link:h.link||'', product:h.product||'', audio:h.audio||'voiceover', goal:h.goal||'', fileUri:'' }; render(h.fb, h.product||h.name); window.scrollTo({top:0,behavior:'smooth'}); } }
 function delHistory(i){ if(!confirm('Remove this feedback from your history?')) return; HIST.splice(i,1); SEL=[]; plannerSet('feedback',HIST,true); renderHistory(); }
 function compareSelected(){
   if(SEL.length!==2) return;
@@ -309,18 +336,78 @@ function compareSelected(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+// ── New script built from the feedback ──
+const SCRIPT_SCHEMA = { type:'OBJECT', properties:{
+  title:{type:'STRING'},
+  hook:{type:'OBJECT',properties:{visual:{type:'STRING'},on_screen_text:{type:'STRING'},spoken:{type:'STRING'}},required:['visual','on_screen_text','spoken']},
+  scenes:{type:'ARRAY',items:{type:'OBJECT',properties:{time:{type:'STRING'},visual:{type:'STRING'},on_screen_text:{type:'STRING'},spoken:{type:'STRING'},change:{type:'STRING',description:'What is new/different vs. the original video'}},required:['time','visual','on_screen_text','spoken','change']}},
+  urgency:{type:'STRING'},
+  filming_tips:{type:'ARRAY',items:{type:'STRING'}},
+  caption:{type:'STRING'}, hashtags:{type:'ARRAY',items:{type:'STRING'}} },
+  required:['title','hook','scenes','urgency','filming_tips','caption','hashtags'] };
+let NEW_SCRIPT=null;
+async function makeScript(btn){
+  if(!CURRENT) return;
+  btn.disabled=true; btn.textContent='Writing your script…';
+  const audio=CTX.audio||'voiceover', noVoice=audio==='trending'||audio==='text-music';
+  const prompt=`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Using the feedback below${CTX.fileUri?' and the original video':''}, write a NEW, improved version of this video that fixes the problems and keeps what worked.
+Product: ${CTX.product||'(see video)'}. Goal: ${CTX.goal||'TikTok Shop sale'}.
+Audio style: ${AUDIO_NOTES[audio]||''}
+${noVoice?'Because this is a sound/music video with NO voiceover, "spoken" must be empty ("") in every scene — tell the story with visuals and ON-SCREEN TEXT timed to the beat.':'Write natural, casual spoken lines in the creator\'s voice (not salesy).'}
+Requirements:
+- The first 3 seconds must be a scroll-stopping hook (use the hook alternatives from the feedback as inspiration).
+- Scenes: 5–9 short scenes with timestamps, what to film (angles, close-ups, B-roll, props, transitions), the on-screen text, the spoken line, and what changed from the original.
+- No "click the link"/"tap the cart" CTA. Build urgency and desire instead (deal, limited stock, problem→solution, payoff, FOMO) and describe it in "urgency".
+- filming_tips: 3–5 practical tips (lighting, framing, pacing).
+Keep it under ~30 seconds unless the feedback says longer works.
+
+FEEDBACK:
+${JSON.stringify(CURRENT)}`;
+  try{
+    const parts=[...(CTX.fileUri?[{file_data:{mime_type:CTX.fileMime,file_uri:CTX.fileUri}}]:[]),{text:prompt}];
+    const res=await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',responseSchema:SCRIPT_SCHEMA,temperature:0.7}})});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
+    NEW_SCRIPT=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
+    renderScript(NEW_SCRIPT);
+  }catch(e){ btn.disabled=false; btn.textContent='✦ Write me a new script from this feedback'; alert('Could not write the script: '+e.message); }
+}
+function scriptText(sc){
+  return [`HOOK (0:00–0:03)`,`Visual: ${sc.hook.visual}`,`On-screen: ${sc.hook.on_screen_text}`,sc.hook.spoken?`Say: ${sc.hook.spoken}`:'',
+    ...sc.scenes.map(x=>[``,`[${x.time}]`,`Visual: ${x.visual}`,x.on_screen_text?`On-screen: ${x.on_screen_text}`:'',x.spoken?`Say: ${x.spoken}`:''].filter(v=>v!=='' || v===``).join('\n'))].filter(Boolean).join('\n');
+}
+function renderScript(sc){
+  const el=document.getElementById('newScript');
+  el.innerHTML=`<div class="sec"><h3>${esc(sc.title||'New script')}</h3>
+    <div class="scene hook"><div class="st">Hook · 0:00–0:03</div><p><b>Film:</b> ${esc(sc.hook.visual)}</p><p><b>On-screen:</b> ${esc(sc.hook.on_screen_text)}</p>${sc.hook.spoken?`<p><b>Say:</b> ${esc(sc.hook.spoken)}</p>`:''}</div>
+    ${sc.scenes.map(x=>`<div class="scene"><div class="st">${esc(x.time)}</div><p><b>Film:</b> ${esc(x.visual)}</p>${x.on_screen_text?`<p><b>On-screen:</b> ${esc(x.on_screen_text)}</p>`:''}${x.spoken?`<p><b>Say:</b> ${esc(x.spoken)}</p>`:''}${x.change?`<p class="chg">↻ ${esc(x.change)}</p>`:''}</div>`).join('')}
+    <p style="margin-top:10px"><b>Urgency:</b> ${esc(sc.urgency)}</p>
+    ${(sc.filming_tips||[]).length?`<p style="margin-top:6px"><b>Filming tips:</b></p><ul style="padding-left:18px;font-size:13px;line-height:1.5">${sc.filming_tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}
+    <div class="actions-row" style="margin:12px 0 0"><button class="copy" onclick="navigator.clipboard.writeText(scriptText(NEW_SCRIPT));this.textContent='✓ Copied'">Copy script</button><button class="copy" onclick="saveNewScript(this)">+ Save to Script Vault</button><button class="copy" onclick="makeScript(this)">↻ Write another</button></div></div>`;
+}
+async function saveNewScript(btn){
+  if(!NEW_SCRIPT) return;
+  const { data:{ session } }=await db.auth.getSession(); if(!session) return;
+  const tags=(NEW_SCRIPT.hashtags||[]).map(h=>'#'+String(h).replace(/^#/,'')).join(' ');
+  const { error }=await db.from('scripts').insert({ user_id:session.user.id, title:NEW_SCRIPT.title||((CTX.product||'Video')+' — new script'), brand:CTX.product||'', cat:'review',
+    script:scriptText(NEW_SCRIPT), notes:[`Urgency: ${NEW_SCRIPT.urgency}`, (NEW_SCRIPT.filming_tips||[]).length?`Filming tips:\n${NEW_SCRIPT.filming_tips.join('\n')}`:'', NEW_SCRIPT.caption?`Caption:\n${NEW_SCRIPT.caption}`:'', tags?`Hashtags:\n${tags}`:''].filter(Boolean).join('\n\n') });
+  if(error){ alert('Could not save: '+error.message); return; }
+  btn.textContent='✓ Saved'; btn.disabled=true;
+}
+
 // ── Send to Content Ideas / Script Vault ──
 async function sendToIdeas(btn){
   if(!CURRENT) return;
   const ideas=[...(await plannerGet('ideas',[]))];
-  const label=document.getElementById('product').value.trim()||'last video';
-  ideas.push({ text:`Fixes for ${label}:\n`+(CURRENT.top_fixes||[]).map((f,i)=>`${i+1}. ${f}`).join('\n'), done:false, ...(LINK?{link:LINK}:{}) });
+  const label=CTX.product||'last video';
+  ideas.push({ text:`Fixes for ${label}:\n`+(CURRENT.top_fixes||[]).map((f,i)=>`${i+1}. ${f}`).join('\n'), done:false, ...(CTX.link?{link:CTX.link}:{}) });
   plannerSet('ideas',ideas,true); btn.textContent='✓ Saved to Content Ideas'; btn.disabled=true;
 }
 async function sendToScripts(btn){
   if(!CURRENT) return;
   const { data:{ session } }=await db.auth.getSession(); if(!session) return;
-  const product=document.getElementById('product').value.trim();
+  const product=CTX.product||'';
   const tags=(CURRENT.hashtags||[]).map(h=>'#'+String(h).replace(/^#/,'')).join(' ');
   const { error }=await db.from('scripts').insert({ user_id:session.user.id, title:(product||'Video')+' — caption', brand:product, cat:'review',
     script:CURRENT.caption||'', notes:[tags?`Hashtags:\n${tags}`:'', (CURRENT.top_fixes||[]).length?`Video feedback fixes:\n${CURRENT.top_fixes.join('\n')}`:''].filter(Boolean).join('\n\n') });
