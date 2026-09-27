@@ -12,7 +12,9 @@ const PLANNER_LOCAL = {
 const _plannerCache = {};
 function _readLocal(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } }
 
+function _localKeys(key){ return PLANNER_LOCAL[key] || ['take24:' + key]; }
 function _mergeLocal(key){
+  if (!PLANNER_LOCAL[key]) return _readLocal('take24:' + key);
   const [a, b] = PLANNER_LOCAL[key].map(_readLocal);
   if (key === 'ideas') {
     const out = [], seen = new Set();
@@ -50,14 +52,14 @@ async function plannerGet(key, fallback){
   } catch(e) { console.warn('Planner load failed, using this device', e); }
   if (value === null || value === undefined) value = _mergeLocal(key) ?? fallback;
   _plannerCache[key] = value ?? fallback;
-  try { localStorage.setItem(PLANNER_LOCAL[key][0], JSON.stringify(_plannerCache[key])); } catch(e) {}
+  try { localStorage.setItem(_localKeys(key)[0], JSON.stringify(_plannerCache[key])); } catch(e) {}
   return _plannerCache[key];
 }
 
 const _plannerTimers = {};
 function plannerSet(key, value, immediate){
   _plannerCache[key] = value;
-  try { localStorage.setItem(PLANNER_LOCAL[key][0], JSON.stringify(value)); } catch(e) {}   // offline backup
+  try { localStorage.setItem(_localKeys(key)[0], JSON.stringify(value)); } catch(e) {}   // offline backup
   clearTimeout(_plannerTimers[key]);
   _plannerTimers[key] = setTimeout(async () => {
     try {
