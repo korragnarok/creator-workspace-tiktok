@@ -108,14 +108,12 @@ textarea{resize:vertical;min-height:60px;}
         <option value="trending">Trending sound / song only (no voiceover)</option>
         <option value="text-music">Text on screen + music</option>
       </select>
-      <label>What is it for?</label>
-      <select id="goal">
-        <option value="tiktok-shop">TikTok Shop — sell the product</option>
-        <option value="views">Views & reach</option>
-        <option value="brand-deal">Brand deal / sponsored</option>
-        <option value="reels">Instagram / Facebook Reel</option>
+      <label>What do you want?</label>
+      <select id="goal" onchange="onMode()">
+        <option value="feedback">Review my video — give me feedback</option>
+        <option value="framework">Copy what worked — new script for another product</option>
       </select>
-      <label>Product (optional)</label>
+      <label id="productLabel">Product (optional)</label>
       <input id="product" placeholder="e.g. Shark FlexStyle" list="prodList">
       <datalist id="prodList"></datalist>
       <label>Anything to focus on? (optional)</label>
@@ -146,6 +144,13 @@ textarea{resize:vertical;min-height:60px;}
 const WORKER = 'https://take24-scout.kortnycall5.workers.dev';
 const MAX_MB = 90;
 let VIDEO = null, LINK = '', CTX = {};
+function onMode(){
+  const fw = document.getElementById('goal').value === 'framework';
+  document.getElementById('productLabel').textContent = fw ? 'Product for the new script' : 'Product (optional)';
+  document.getElementById('product').placeholder = fw ? 'Which product should the new script be for?' : 'e.g. Shark FlexStyle';
+  document.getElementById('goBtn').textContent = fw ? 'Break it down & write my script' : 'Get feedback';
+  try { localStorage.setItem('take24:fbMode', document.getElementById('goal').value); } catch (e) {}
+}
 function onLink(){
   LINK = document.getElementById('ttLink').value.trim();
   const ok = /tiktok\.com\//i.test(LINK);
@@ -202,9 +207,33 @@ const AUDIO_NOTES = {
   'trending': 'The audio is a TRENDING SOUND / SONG ONLY — there is NO voiceover. Any singing or speaking in the audio is part of the song, NOT the creator. Never critique the lyrics or treat them as a voiceover. Instead judge how well the visuals and cuts sync to the sound, whether the sound fits the vibe, and whether the ON-SCREEN TEXT carries the message.',
   'text-music': 'The audio is MUSIC ONLY with the message told through ON-SCREEN TEXT. Any singing in the audio is the song, not the creator. Judge the text (readability, length, timing on screen) and how well the visuals sync to the music.'
 };
+const FW_SCHEMA = { type:'OBJECT', properties:{
+  why_it_worked:{type:'STRING'},
+  hook:{type:'OBJECT',properties:{what_happens:{type:'STRING'},why_it_stops_scroll:{type:'STRING'}},required:['what_happens','why_it_stops_scroll']},
+  framework:{type:'ARRAY',items:{type:'OBJECT',properties:{time:{type:'STRING'},beat:{type:'STRING'},purpose:{type:'STRING'}},required:['time','beat','purpose']}},
+  ingredients:{type:'ARRAY',items:{type:'STRING'}},
+  script:{type:'OBJECT',properties:{title:{type:'STRING'},
+    hook:{type:'OBJECT',properties:{visual:{type:'STRING'},on_screen_text:{type:'STRING'},spoken:{type:'STRING'}},required:['visual','on_screen_text','spoken']},
+    scenes:{type:'ARRAY',items:{type:'OBJECT',properties:{time:{type:'STRING'},visual:{type:'STRING'},on_screen_text:{type:'STRING'},spoken:{type:'STRING'},change:{type:'STRING',description:'Which framework beat this matches'}},required:['time','visual','on_screen_text','spoken','change']}},
+    urgency:{type:'STRING'},filming_tips:{type:'ARRAY',items:{type:'STRING'}},caption:{type:'STRING'},hashtags:{type:'ARRAY',items:{type:'STRING'}}},
+    required:['title','hook','scenes','urgency','filming_tips','caption','hashtags']}},
+  required:['why_it_worked','hook','framework','ingredients','script'] };
+function buildFrameworkPrompt(){
+  const audio = document.getElementById('audio').value, product = document.getElementById('product').value.trim();
+  const noVoice = audio === 'trending' || audio === 'text-music';
+  return `You are a short-form video strategist for a TikTok Shop affiliate creator. This video performed well. Watch it closely and REVERSE-ENGINEER why it worked, then reuse that exact framework for a different product.
+AUDIO of this video: ${AUDIO_NOTES[audio]}
+
+1. why_it_worked: 3–4 sentences on the real reasons it performed (hook, format, emotion, pacing, relatability, payoff).
+2. hook: what happens in the first 3 seconds and why it stops the scroll.
+3. framework: the video's structure as a reusable, timed template — each beat with a timestamp range, what happens (described generically, not about the original product) and its purpose.
+4. ingredients: the 4–6 key elements to keep (e.g. "reaction shot before the reveal", "text-only story told over a trending sound").
+5. script: a brand-new script for "${product || 'the new product'}" that follows the SAME framework beat for beat, adapted naturally to that product. ${noVoice ? 'Keep the same audio style: NO voiceover — "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.' : 'Write natural, casual spoken lines in the creator\'s voice (not salesy).'} In each scene's "change", name the framework beat it matches. No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). Include 3–5 filming tips, a caption and 5–8 hashtags.`;
+}
 function buildPrompt(){
+  if (document.getElementById('goal').value === 'framework') return buildFrameworkPrompt();
   try{ localStorage.setItem('take24:fbAudio', document.getElementById('audio').value); }catch(e){}
-  const goal = document.getElementById('goal').selectedOptions[0].textContent;
+  const goal = 'TikTok Shop — sell the product';
   const audio = document.getElementById('audio').value;
   const product = document.getElementById('product').value.trim();
   const focus = document.getElementById('focus').value.trim();
@@ -233,10 +262,12 @@ Rules:
 
 async function analyze(){
   if (!VIDEO && !LINK) return;
+  const mode = document.getElementById('goal').value;
+  if (mode === 'framework' && !document.getElementById('product').value.trim()) { alert('Add the product you want the new script to be for.'); document.getElementById('product').focus(); return; }
   const btn = document.getElementById('goBtn'); btn.disabled = true;
   // remember what this run is about, then clear the form for the next video
   CTX = { video: VIDEO, link: LINK, name: VIDEO ? VIDEO.name : LINK, product: document.getElementById('product').value.trim(),
-          audio: document.getElementById('audio').value, goal: document.getElementById('goal').selectedOptions[0].textContent, prompt: buildPrompt(), fileUri: '', fileMime: '' };
+          audio: document.getElementById('audio').value, goal: document.getElementById('goal').selectedOptions[0].textContent, prompt: buildPrompt(), mode, fileUri: '', fileMime: '' };
   const vid = VIDEO, link = LINK;
   resetForm();
   try {
@@ -247,20 +278,21 @@ async function analyze(){
     const f = await up.json().catch(() => ({}));
     if (!up.ok || !f.uri) throw new Error(f.error || `Upload failed (${up.status})`);
     CTX.fileUri = f.uri; CTX.fileMime = f.mime_type;
-    setStatus('Watching your video…');
+    setStatus(CTX.mode === 'framework' ? 'Breaking down what made it work…' : 'Watching your video…');
     const res = await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ file_data: { mime_type: f.mime_type, file_uri: f.uri } }, { text: CTX.prompt }] }],
-        generationConfig: { responseMimeType: 'application/json', responseSchema: SCHEMA, temperature: 0.4 }
+        generationConfig: { responseMimeType: 'application/json', responseSchema: CTX.mode === 'framework' ? FW_SCHEMA : SCHEMA, temperature: CTX.mode === 'framework' ? 0.6 : 0.4 }
       })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data?.error?.message || `Gemini error (${res.status})`);
     const text = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
     const fb = JSON.parse(text.replace(/```json|```/g, '').trim());
-    render(fb, null, true); setStatus('');
-    await addHistory({ at: Date.now(), name: CTX.name, link: CTX.link || '', product: CTX.product, audio: CTX.audio, goal: CTX.goal, fb });
+    if (CTX.mode === 'framework') renderFramework(fb); else render(fb, null, true);
+    setStatus('');
+    await addHistory({ at: Date.now(), name: CTX.name, link: CTX.link || '', product: CTX.product, audio: CTX.audio, goal: CTX.goal, mode: CTX.mode, fb });
   } catch (e) {
     setStatus(''); document.getElementById('results').innerHTML = `<div class="empty"><b>Something went wrong</b>${esc(e.message)}</div>`;
   } finally { btn.disabled = !(VIDEO || LINK); }
@@ -277,6 +309,19 @@ function resetForm(){
 function stamps(t){ return esc(t).replace(/\[(\d{1,2}):(\d{2})\]/g, (m, a, b) => `<span class="ts" onclick="seek(${Number(a)*60+Number(b)})">${a}:${b}</span>`); }
 function seek(s){ const v = document.getElementById('preview'); if (v.getAttribute('src')) { v.currentTime = s; v.play(); v.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
 
+function renderFramework(fw){
+  CURRENT=null; NEW_SCRIPT=fw.script;
+  document.getElementById('results').innerHTML=`
+    <div class="sub" style="margin-top:0">Framework → ${esc(CTX.product||'new product')}</div>
+    <div class="fixes"><h3>Why it worked</h3><p style="font-size:14px;line-height:1.55">${stamps(fw.why_it_worked)}</p></div>
+    <div class="hookcard"><div class="hk-top"><h3>The Hook · first 3 seconds</h3></div><p class="hk-why">${stamps(fw.hook?.what_happens||'')}</p><p class="hk-why"><b>Why it stops the scroll:</b> ${esc(fw.hook?.why_it_stops_scroll||'')}</p></div>
+    <div class="secs">
+      <div class="sec"><h3>The framework</h3>${(fw.framework||[]).map(b=>`<div class="scene"><div class="st">${esc(b.time)}</div><p><b>${esc(b.beat)}</b></p><p class="chg">${esc(b.purpose)}</p></div>`).join('')}</div>
+      <div class="sec"><h3>Keep these ingredients</h3>${(fw.ingredients||[]).map(x=>`<p class="good">${esc(x)}</p>`).join('')}</div>
+    </div>
+    <div class="newscript" id="newScript"></div>`;
+  renderScript(fw.script);
+}
 let CURRENT=null;
 function render(fb, name, fresh){
   CURRENT=fb;
@@ -307,18 +352,19 @@ function toggleHistory(){ const b=document.getElementById('histBody'), open=b.st
 function toggleCompare(){ CMP_MODE=!CMP_MODE; SEL=[]; document.getElementById('cmpBtn').textContent=CMP_MODE?'Cancel':'Compare'; document.getElementById('cmpHint').style.display=CMP_MODE?'':'none'; renderHistory(); }
 async function addHistory(entry){ HIST=[entry,...HIST].slice(0,50); try{ plannerSet('feedback',HIST,true); }catch(e){ console.warn(e); } renderHistory(); }
 function renderHistory(){
+  const isFW=h=>h.mode==='framework';
   const el=document.getElementById('hist');
   document.getElementById('histCount').textContent=HIST.length?`(${HIST.length})`:'';
   if(!HIST.length){ el.innerHTML='<div class="sub">Your past feedback shows up here.</div>'; document.getElementById('trend').innerHTML=''; return; }
-  el.innerHTML=HIST.map((h,i)=>`<div class="hrow${SEL.includes(i)?' on':''}" onclick="openHistory(${i})">${CMP_MODE?`<input type="checkbox" ${SEL.includes(i)?'checked':''} onclick="event.stopPropagation();toggleSel(${i})">`:''}<div class="hs">${Number(h.fb?.score)||'–'}</div><div class="hi"><b>${esc(h.product||h.name||'Video')}</b><small>${new Date(h.at).toLocaleDateString(undefined,{month:'short',day:'numeric'})}${h.product&&h.name?' · '+esc(h.name).slice(0,40):''}</small></div><button class="hdel" title="Remove" onclick="event.stopPropagation();delHistory(${i})">×</button></div>`).join('');
+  el.innerHTML=HIST.map((h,i)=>`<div class="hrow${SEL.includes(i)?' on':''}" onclick="openHistory(${i})">${CMP_MODE&&!isFW(h)?`<input type="checkbox" ${SEL.includes(i)?'checked':''} onclick="event.stopPropagation();toggleSel(${i})">`:''}<div class="hs">${isFW(h)?'✦':(Number(h.fb?.score)||'–')}</div><div class="hi"><b>${esc(h.product||h.name||'Video')}</b><small>${new Date(h.at).toLocaleDateString(undefined,{month:'short',day:'numeric'})}${h.product&&h.name?' · '+esc(h.name).slice(0,40):''}</small></div><button class="hdel" title="Remove" onclick="event.stopPropagation();delHistory(${i})">×</button></div>`).join('');
   // score trend, oldest → newest
-  const last=HIST.slice(0,20).reverse(), top=Math.max(...last.map(h=>Number(h.fb?.score)||0),1);
+  const last=HIST.filter(h=>h.mode!=='framework').slice(0,20).reverse(), top=Math.max(...last.map(h=>Number(h.fb?.score)||0),1);
   document.getElementById('trend').innerHTML=last.map((h,i)=>`<i class="${i===last.length-1?'hi-s':''}" title="${Number(h.fb?.score)||0}/10" style="height:${Math.max(8,(Number(h.fb?.score)||0)/10*100)}%"></i>`).join('');
   document.getElementById('histCount').textContent=`(${HIST.length})`;
   const hOpen=document.getElementById('histBody').style.display!=='none'; document.getElementById('cmpBtn').style.display=hOpen&&HIST.length>1?'':'none';
 }
-function toggleSel(i){ SEL=SEL.includes(i)?SEL.filter(x=>x!==i):[...SEL,i]; if(SEL.length===2){ compareSelected(); CMP_MODE=true; toggleCompare(); return; } renderHistory(); }
-function openHistory(i){ if(CMP_MODE){ toggleSel(i); return; } const h=HIST[i]; if(h) { CTX={ name:h.name, link:h.link||'', product:h.product||'', audio:h.audio||'voiceover', goal:h.goal||'', fileUri:'' }; render(h.fb, h.product||h.name); window.scrollTo({top:0,behavior:'smooth'}); } }
+function toggleSel(i){ if(HIST[i]?.mode==='framework') return; SEL=SEL.includes(i)?SEL.filter(x=>x!==i):[...SEL,i]; if(SEL.length===2){ compareSelected(); CMP_MODE=true; toggleCompare(); return; } renderHistory(); }
+function openHistory(i){ if(CMP_MODE){ toggleSel(i); return; } const h=HIST[i]; if(h) { CTX={ name:h.name, link:h.link||'', product:h.product||'', audio:h.audio||'voiceover', goal:h.goal||'', fileUri:'' }; if(h.mode==='framework') renderFramework(h.fb); else render(h.fb, h.product||h.name); window.scrollTo({top:0,behavior:'smooth'}); } }
 function delHistory(i){ if(!confirm('Remove this feedback from your history?')) return; HIST.splice(i,1); SEL=[]; plannerSet('feedback',HIST,true); renderHistory(); }
 function compareSelected(){
   if(SEL.length!==2) return;
@@ -423,11 +469,13 @@ async function sendToScripts(btn){
   try { const { data } = await db.from('products').select('name').eq('user_id', session.user.id).order('name');
     document.getElementById('prodList').innerHTML = (data || []).map(p => `<option value="${esc(p.name)}">`).join(''); } catch (e) {}
   try { const a = localStorage.getItem('take24:fbAudio'); if (a) document.getElementById('audio').value = a; } catch (e) {}
+  try { const m = localStorage.getItem('take24:fbMode'); if (m) document.getElementById('goal').value = m; } catch (e) {}
+  onMode();
   try { HIST = [...((await plannerGet('feedback', [])) || [])]; } catch (e) { console.warn('History load failed', e); HIST = []; }
   // first time: bring over the last result saved on this device
   try { const last = JSON.parse(localStorage.getItem('take24:lastFeedback')); if (last?.fb && !HIST.some(h => h.at === last.at)) { HIST.unshift({ at: last.at || Date.now(), name: last.name, fb: last.fb }); plannerSet('feedback', HIST, true); } } catch (e) {}
   renderHistory();
-  if (HIST[0]) render(HIST[0].fb, HIST[0].product || HIST[0].name);
+  if (HIST[0]) { CTX = { name: HIST[0].name, link: HIST[0].link || '', product: HIST[0].product || '', audio: HIST[0].audio || 'voiceover', goal: HIST[0].goal || '', mode: HIST[0].mode, fileUri: '' }; if (HIST[0].mode === 'framework') renderFramework(HIST[0].fb); else render(HIST[0].fb, HIST[0].product || HIST[0].name); }
 })();
 </script>
 </body>
