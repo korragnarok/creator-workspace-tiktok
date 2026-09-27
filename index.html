@@ -2323,7 +2323,36 @@ function renderBatch(){
       <button class="bd-x" title="Remove from the plan" onclick="BD_PLAN.products.splice(${i},1);renderBatch()">✕</button>
       <div class="bd-takes">${(x.takes||[]).map(t=>`<div class="bd-take"><span class="st">${esc(t.style)}</span><div><b>${esc(t.angle)}</b></div><div><b>Hook:</b> ${esc(t.hook)}</div><div><b>Shots:</b> ${esc(t.shots)}</div>${t.on_screen_text?`<div><b>Text:</b> ${esc(t.on_screen_text)}</div>`:''}</div>`).join('')}</div></div>`; }).join('')}
     ${(P.setup_tips||[]).length?`<div class="bd-tips"><b>Batching tips:</b><ul style="padding-left:18px;margin-top:4px">${P.setup_tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`:''}
-    <div class="bd-foot"><button class="add-bar" style="width:auto;margin:0;padding:11px 20px" id="bdAdd" onclick="addBatchToTodo()">+ Add all ${P.products.reduce((a,x)=>a+(x.takes||[]).length,0)} takes to ${esc(dateLbl)}</button><button class="tc-btn" onclick="runBatch()">↻ Plan again</button></div>`;
+    <div class="bd-foot"><button class="add-bar" style="width:auto;margin:0;padding:11px 20px" id="bdAdd" onclick="addBatchToTodo()">+ Add all ${P.products.reduce((a,x)=>a+(x.takes||[]).length,0)} takes to ${esc(dateLbl)}</button><button class="tc-btn" onclick="saveBatchPdf()">Save as PDF</button><button class="tc-btn" onclick="runBatch()">↻ Plan again</button></div>`;
+}
+// Opens a clean, printable version of the plan — choose "Save as PDF" in the print window
+function saveBatchPdf(){
+  if(!BD_PLAN) return;
+  const dateLbl=new Date(document.getElementById('bdDate').value+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const acct=document.getElementById('bdMeta').textContent;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Batch Film Day — ${esc(dateLbl)}</title>
+<style>
+  body{font-family:Georgia,'Times New Roman',serif;color:#2a2320;margin:32px;line-height:1.45;}
+  h1{font-weight:400;font-size:28px;margin:0;} .meta{color:#8a6f5c;margin:4px 0 18px;font-size:14px;}
+  .sum{font-size:15px;margin-bottom:18px;}
+  .prod{border:1px solid #d9cbbd;border-radius:12px;padding:14px 16px;margin-bottom:14px;page-break-inside:avoid;}
+  .ph{display:flex;gap:12px;align-items:center;margin-bottom:10px;}
+  .ph img{width:54px;height:54px;object-fit:cover;border-radius:8px;border:1px solid #e5dacd;}
+  .ph h2{font-size:17px;margin:0;} .why{font-size:12px;color:#7a6a5e;}
+  .takes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .take{border:1px solid #eadfd3;border-radius:10px;padding:9px 10px;font-size:11.5px;}
+  .st{display:inline-block;background:#955B3B;color:#fff;border-radius:99px;padding:1px 8px;font:bold 9px Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;}
+  .box{display:inline-block;width:11px;height:11px;border:1px solid #955B3B;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+  .tips{margin-top:8px;font-size:13px;} @media print{body{margin:14mm;}}
+</style></head><body>
+<h1>Batch Film Day</h1><div class="meta">${esc(dateLbl)}${acct?' · '+esc(acct):''}</div>
+<div class="sum">${esc(BD_PLAN.summary||'')}</div>
+${BD_PLAN.products.map(x=>{ const p=bdMatch(x.product); return `<div class="prod"><div class="ph">${p?.image_url?`<img src="${esc(p.image_url)}">`:''}<div><h2>${esc(p?.name||x.product)}</h2><div class="why">${esc(p?.brand||'')}${p?.brand?' · ':''}${esc(x.why)}</div></div></div>
+  <div class="takes">${(x.takes||[]).map(t=>`<div class="take"><span class="st">${esc(t.style)}</span><div><span class="box"></span><b>${esc(t.angle)}</b></div><div><b>Hook:</b> ${esc(t.hook)}</div><div><b>Shots:</b> ${esc(t.shots)}</div>${t.on_screen_text?`<div><b>Text:</b> ${esc(t.on_screen_text)}</div>`:''}</div>`).join('')}</div></div>`; }).join('')}
+${(BD_PLAN.setup_tips||[]).length?`<div class="tips"><b>Batching tips</b><ul>${BD_PLAN.setup_tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`:''}
+<script>window.onload=()=>setTimeout(()=>window.print(),400);<\/script></body></html>`;
+  const w=window.open('','_blank'); if(!w){ alert('Please allow pop-ups for take24.co to save the PDF.'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
 }
 async function addBatchToTodo(){
   if(!BD_PLAN) return; const btn=document.getElementById('bdAdd'); btn.disabled=true; btn.textContent='Adding…';
