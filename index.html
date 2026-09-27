@@ -699,6 +699,41 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .left-goals .ib-go{font-size:15px;}
   .board .level-feature{width:auto!important;max-width:none!important;}
 }
+/* combined streak, TikTok Coach, spare card */
+.both-streak{padding:14px 16px!important;}
+.both-streak .b-title{margin-bottom:6px!important;}
+.bs-row{text-align:center;padding:6px 0;}
+.bs-row+.bs-row{border-top:1px solid var(--border);}
+.bs-row .streak-num span{font-size:34px;}
+.bs-row .streak-dots{margin:6px 0 2px;}
+.tt-tips{display:flex;flex-direction:column;justify-content:center;gap:8px;text-align:left;cursor:pointer;background:linear-gradient(150deg,color-mix(in srgb,var(--rust) 35%,var(--surface)),var(--surface))!important;border:1px solid var(--rust)!important;color:inherit;font:inherit;}
+.tt-tips:hover{filter:brightness(1.08);}
+.tt-tips .b-title{text-align:left!important;margin:0!important;}
+.tips-sub{font-size:12px;line-height:1.45;color:var(--text-mid);}
+.tips-go{font-family:'Bad Script',cursive;font-size:19px;color:var(--tan);}
+.meta-spare{border-style:dashed!important;display:flex;flex-direction:column;justify-content:center;text-align:center;}
+.spare-sub{font-size:12px;color:var(--text-muted);line-height:1.45;}
+/* TikTok Coach popup */
+.tc-modal{position:fixed;inset:0;z-index:650;background:rgba(10,8,7,.82);display:none;align-items:center;justify-content:center;padding:20px;}
+.tc-modal.open{display:flex;}
+.tc-card{width:100%;max-width:760px;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--border-mid);border-radius:22px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.55);}
+.tc-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;}
+.tc-head h2{font:400 30px 'Cormorant Garamond',serif;color:var(--ink);}
+.tc-head small{display:block;font:13px 'IBM Plex Serif',serif;color:var(--text-muted);}
+.tc-btns{display:flex;gap:6px;}
+.tc-btn{border:1px solid var(--border-mid);background:var(--bg);color:var(--tan);border-radius:999px;padding:6px 12px;font:800 11px 'Stack Sans Notch',sans-serif;cursor:pointer;}
+.tc-sum{font-size:15px;line-height:1.55;color:var(--ink);margin-bottom:14px;}
+.tc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.tc-sec{background:var(--bg-lift);border:1px solid var(--border);border-radius:14px;padding:12px 14px;}
+.tc-sec.wide{grid-column:1/-1;}
+.tc-sec h3{font:400 20px 'Cormorant Garamond',serif;color:var(--ink);margin-bottom:6px;}
+.tc-sec ul{padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:13px;line-height:1.5;}
+.tc-prod{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px;line-height:1.45;}
+.tc-prod:first-of-type{border-top:none;}
+.tc-prod b{color:var(--ink);}
+.tc-prod .tag{flex-shrink:0;align-self:flex-start;font:800 9px 'Stack Sans Notch',sans-serif;letter-spacing:.06em;text-transform:uppercase;background:var(--rust);color:#fff;border-radius:999px;padding:3px 8px;}
+.tc-wait{text-align:center;color:var(--text-muted);padding:50px 10px;}
+@media(max-width:768px){.tc-grid{grid-template-columns:1fr;}}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -727,6 +762,12 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .board .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
 }
 </style>
+<div class="tc-modal" id="tcModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeTikTokTips()">
+  <div class="tc-card">
+    <div class="tc-head"><div><h2>TikTok Coach</h2><small id="tcMeta"></small></div><div class="tc-btns"><button class="tc-btn" onclick="runTikTokTips(true)">↻ Refresh</button><button class="tc-btn" onclick="closeTikTokTips()">Close</button></div></div>
+    <div id="tcBody"></div>
+  </div>
+</div>
 <div class="ap-modal" id="apModal" role="dialog" aria-modal="true">
   <div class="ap-card">
     <div class="ap-head"><div class="ap-title">Add to Today</div><button type="button" class="ap-close" onclick="closeAddProduct()">✕</button></div>
@@ -753,9 +794,10 @@ select.sched-location-tag:focus{border-color:var(--rust);}
           </div>
           <div id="heroBrandsSlot"></div>
             <div class="goals-col left-goals">
-            <div class="card b-goals">
-            <div class="b-title">Monthly Goals</div>
-            <div id="bGoals"></div>
+            <div class="card streak both-streak">
+              <div class="b-title">Posting Streak</div>
+              <div class="bs-row"><div class="streak-num"><span id="ttStreak">0</span><small>days in a row on TikTok</small></div><div class="streak-dots" id="ttDots"></div></div>
+              <div class="bs-row"><div class="streak-num"><span id="streakDays">0</span><small>days in a row on Facebook/Instagram</small></div><div class="streak-dots" id="streakDots"></div></div>
             </div>
             <a class="card ideas-btn" href="ideas.html"><div class="b-title">Content Ideas</div><div class="ib-count" id="ideasCount"></div><div class="ib-go">Open ideas board →</div></a>
             </div>
@@ -849,12 +891,9 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                   <div class="tt-stat" style="grid-column:1/-1"><div class="tt-l">Views · last 30 days</div><div class="tt-v" id="mViews30">-</div></div>
                 </div>
               </div>
-              <div class="card streak">
-                <div class="b-title">Posting Streak</div>
-                <div class="streak-num"><span id="streakDays">0</span><small>days in a row on Facebook/Instagram</small></div>
-                <div class="streak-dots" id="streakDots"></div>
-                <div class="streak-goal">This week: <b id="weekDone">0</b> / <input id="weekGoal" type="number" min="1" max="99"> posts</div>
-                <div class="streak-bar"><div id="weekBar"></div></div>
+              <div class="card meta-spare">
+                <div class="b-title">Coming soon</div>
+                <div class="spare-sub">Space saved for something new on the Facebook &amp; Instagram side.</div>
               </div>
             </div>
           </div>
@@ -890,12 +929,11 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                   <div class="tt-stat"><div class="tt-l">Followers</div><div class="tt-v" id="ttFol">-</div></div>
                 </div>
               </div>
-              <div class="card tt-streak streak">
-                <div class="tt-head"><div class="b-title">Posting Streak</div></div>
-                <div class="streak-num"><span id="ttStreak">0</span><small>days in a row on TikTok</small></div>
-                <div class="streak-dots" id="ttDots"></div>
-                <div class="streak-goal">This week: <b id="ttWeek">0</b> posts</div>
-              </div>
+              <button type="button" class="card tt-tips" onclick="openTikTokTips()">
+                <div class="b-title">TikTok Coach</div>
+                <div class="tips-sub">Gemini looks at your videos, views &amp; sales and tells you what to film next and which products to push.</div>
+                <div class="tips-go" id="tipsGo">Get my tips →</div>
+              </button>
             </div>
             <div class="card mob-order-4 tops-card">
               <div class="tt-head"><div class="b-title">Top Videos &amp; Best Sellers</div></div>
@@ -970,7 +1008,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 </div>
 
 <script src="planner-sync.js?v=238"></script>
-<script src="layout.js?v=241"></script>
+<script src="layout.js?v=243"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
@@ -1008,20 +1046,20 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   renderBCal();
 
   // Folders — every page from the old sidebar. Drop your own folder.png in the main folder to change the icon.
+  // [page, label, folder image number] — image numbers stay fixed so your folder pictures never shuffle
   const FOLDERS = [
-    ['daily-todo.html','Daily To Do'], ['video-tracker.html','Content Tracker'],
-    ['products.html','Products'], ['brand-deals.html','Brand Deals'], ['product-scout.html','Product Scout'],
-    ['scripts.html','Script Vault'], ['script-workshop.html','Script Workshop'], ['script-scout.html','Script Scout'],
-    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'],
-    ['https://a.co/d/0aN0vMFu','Storefront'], ['https://affiliate-program.amazon.com/home','Associates'],
-    ['video-feedback.html','Video Feedback'], ['settings.html','Settings']
+    ['daily-todo.html','Daily To Do',1], ['video-tracker.html','Content Tracker',2],
+    ['products.html','Products',3], ['brand-deals.html','Brand Deals',4],
+    ['scripts.html','Script Vault',6], ['sales-calendar.html','Sales Log',10],
+    ['https://a.co/d/0aN0vMFu','Storefront',11], ['https://affiliate-program.amazon.com/home','Associates',12],
+    ['video-feedback.html','Video Feedback',14], ['settings.html','Settings',15]
   ];
   // Ombre: each folder a shade lighter than the one before (deep rust → soft tan)
   const shade = i => { const t = FOLDERS.length > 1 ? i / (FOLDERS.length - 1) : 0, a = [110,63,40], b = [222,196,170];
     return `rgb(${a.map((c,k) => Math.round(c + (b[k]-c) * t)).join(',')})`; };
   document.getElementById('bFolders').innerHTML = FOLDERS.map(([href, label], i) =>
     `<a class="b-folder" href="${href}"${/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : ''} style="--f:${shade(i)}">
-       <img class="ic" src="icons/folder-${i + 1 >= 13 ? i + 2 : i + 1}.png" alt="" onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src='icons/folder-12.png';}else{this.outerHTML='<span class=&quot;ic fallback&quot;></span>';}">${label}</a>`).join('');
+       <img class="ic" src="icons/folder-${FOLDERS[i][2]}.png" alt="" onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src='icons/folder-12.png';}else{this.outerHTML='<span class=&quot;ic fallback&quot;></span>';}">${label}</a>`).join('');
 
 
   // Today's date on the filming card
@@ -1852,6 +1890,7 @@ async function renderSocialCards(){
   const monday=new Date(today0); monday.setDate(today0.getDate()-((today0.getDay()+6)%7));
   document.getElementById('streakDots').innerHTML=[...Array(7)].map((_,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return `<i class="${posted.has(ymdL(d))?'on':''}">${'MTWTFSS'[i]}</i>`; }).join('');
   const weekCount=all.filter(p=>p.d>=monday).length, goalEl=document.getElementById('weekGoal');
+  if(!goalEl) return;   // weekly goal box was removed from Home
   let g=35; try{ g=Number(localStorage.getItem('take24:postGoal'))||35; }catch(e){}
   goalEl.value=g;
   const paint=()=>{ const gv=Math.max(1,Number(goalEl.value)||35); document.getElementById('weekDone').textContent=weekCount; document.getElementById('weekBar').style.width=Math.min(100,weekCount/gv*100)+'%'; };
@@ -1892,7 +1931,7 @@ const TT_RENDER={
     const t=new Date(), mon=new Date(t.getFullYear(),t.getMonth(),t.getDate()); mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
     const keys=new Set(d.videos.map(videoDateKey)); let wk=0;
     document.getElementById('ttDots').innerHTML=[...Array(7)].map((_,i)=>{ const x=new Date(mon); x.setDate(mon.getDate()+i); const k=`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; return `<i class="${keys.has(k)?'on':''}">${'MTWTFSS'[i]}</i>`; }).join('');
-    d.videos.forEach(v=>{ const k=videoDateKey(v); if(k&&dateFromKey(k)>=mon) wk++; }); setText('ttWeek',String(wk)); },
+    d.videos.forEach(v=>{ const k=videoDateKey(v); if(k&&dateFromKey(k)>=mon) wk++; }); if(document.getElementById('ttWeek')) setText('ttWeek',String(wk)); },
   async tops(id){ const d=await ttData(id);
     renderTopVideos(d.videos);
     const units=videoUnitsByProduct(d.products,d.videos,d.attributed);
@@ -1936,6 +1975,74 @@ function renderAddProduct(){
 async function addFromPicker(id,btn){ await addRecommendedToToday(id,btn); if(btn&&(_todayQueue||[]).some(x=>String(x.prod_id)===String(id))){ btn.disabled=true; btn.textContent='✓'; } }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAddProduct(); });
 document.addEventListener('click',e=>{ if(e.target.id==='apModal') closeAddProduct(); });
+// ── TikTok Coach: Gemini reviews this account's videos, views & sales ──
+const TC_SCHEMA={type:'OBJECT',properties:{
+  summary:{type:'STRING'},
+  working:{type:'ARRAY',items:{type:'STRING'}},
+  not_working:{type:'ARRAY',items:{type:'STRING'}},
+  retarget:{type:'ARRAY',items:{type:'OBJECT',properties:{product:{type:'STRING'},why:{type:'STRING'},angle:{type:'STRING'}},required:['product','why','angle']}},
+  new_to_try:{type:'ARRAY',items:{type:'OBJECT',properties:{product:{type:'STRING'},why:{type:'STRING'}},required:['product','why']}},
+  this_week:{type:'ARRAY',items:{type:'STRING'}}},
+  required:['summary','working','not_working','retarget','new_to_try','this_week']};
+function tcKey(){ return 'take24:tiktokCoach:'+(ttSel('all')||''); }
+function openTikTokTips(){
+  document.getElementById('tcModal').classList.add('open');
+  let saved=null; try{ saved=JSON.parse(localStorage.getItem(tcKey())); }catch(e){}
+  if(saved?.tips) renderTikTokTips(saved.tips,saved.at); else runTikTokTips(false);
+}
+function closeTikTokTips(){ document.getElementById('tcModal').classList.remove('open'); }
+async function runTikTokTips(){
+  const id=ttSel('all'); if(!id) return;
+  const acct=TT.accts.find(a=>a.tiktok_open_id===id), handle='@'+(acct?.display_name||acct?.username||'account');
+  document.getElementById('tcMeta').textContent=handle;
+  document.getElementById('tcBody').innerHTML='<div class="tc-wait">Looking through your videos, views and sales…<br>This takes about 20–40 seconds.</div>';
+  try{
+    const d=await ttData(id);
+    const units=videoUnitsByProduct(d.products,d.videos,d.attributed);
+    const prodName=new Map(d.products.map(p=>[p.id,p.name]));
+    const since=Date.now()-90*864e5;
+    const vids=d.videos.filter(v=>v.date&&new Date(v.date)>=since).sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,80)
+      .map(v=>({date:v.date,title:String(v.title||'').slice(0,90),product:prodName.get(v.prod_id)||v.brand||'',views:Number(v.views)||0,units:Number(v.units)||0}));
+    const lastFilmed=new Map(); d.videos.forEach(v=>{ const k=v.prod_id; if(k&&v.date&&(!lastFilmed.has(k)||v.date>lastFilmed.get(k))) lastFilmed.set(k,v.date); });
+    const prods=d.products.filter(p=>String(p.status||'active')!=='shelved').map(p=>({name:p.name,brand:p.brand||'',status:p.status||'active',sold:units.get(p.id)||0,
+      last_filmed:lastFilmed.get(p.id)||'never',free_sample:/FREE_SAMPLE/.test(p.notes||'')})).slice(0,200);
+    const gmv=d.sales.reduce((a,r)=>a+(parseFloat(r.gmv)||0),0), comm=d.sales.reduce((a,r)=>a+(parseFloat(r.comm)||0),0);
+    const prompt=`You are a TikTok Shop growth coach for an affiliate creator (${handle}). Using ONLY the data below, give specific, practical advice.
+Today: ${localDateKey()}. Last 30 days: GMV $${gmv.toFixed(0)}, commission $${comm.toFixed(0)}.
+
+Explain:
+- summary: 2–3 sentences on how the account is doing and the single biggest opportunity.
+- working: patterns in videos with the most views/sales (products, hooks in titles, posting frequency).
+- not_working: what's underperforming (low views, no sales, products that flopped).
+- retarget: 3–5 products worth filming AGAIN (sold well or got views but haven't been filmed recently) — why, and a fresh angle/hook to try.
+- new_to_try: 2–4 in-stock products never or rarely filmed that fit what works (free samples not filmed yet are a priority).
+- this_week: a concrete plan of 4–6 videos to film this week.
+Use real product names from the data. Be concise; no generic advice.
+
+VIDEOS (last 90 days, newest first): ${JSON.stringify(vids)}
+PRODUCTS: ${JSON.stringify(prods)}`;
+    const res=await fetch('https://take24-scout.kortnycall5.workers.dev/?service=gemini&model=gemini-2.5-flash',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',responseSchema:TC_SCHEMA,temperature:0.5}})});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
+    const tips=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
+    const at=Date.now(); try{ localStorage.setItem(tcKey(),JSON.stringify({at,tips})); }catch(e){}
+    renderTikTokTips(tips,at);
+  }catch(e){ document.getElementById('tcBody').innerHTML=`<div class="tc-wait">Couldn't get tips: ${esc(e.message)}</div>`; }
+}
+function renderTikTokTips(t,at){
+  const id=ttSel('all'), acct=TT.accts.find(a=>a.tiktok_open_id===id);
+  document.getElementById('tcMeta').textContent='@'+(acct?.display_name||acct?.username||'account')+(at?' · '+new Date(at).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'');
+  const li=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
+  document.getElementById('tcBody').innerHTML=`<div class="tc-sum">${esc(t.summary)}</div>
+    <div class="tc-grid">
+      <div class="tc-sec wide"><h3>Film this week</h3><ul>${li(t.this_week)}</ul></div>
+      <div class="tc-sec"><h3>Retarget these</h3>${(t.retarget||[]).map(r=>`<div class="tc-prod"><span class="tag">Again</span><div><b>${esc(r.product)}</b> — ${esc(r.why)}<br><i>Try:</i> ${esc(r.angle)}</div></div>`).join('')}</div>
+      <div class="tc-sec"><h3>New to try</h3>${(t.new_to_try||[]).map(r=>`<div class="tc-prod"><span class="tag">New</span><div><b>${esc(r.product)}</b> — ${esc(r.why)}</div></div>`).join('')}</div>
+      <div class="tc-sec"><h3>What's working</h3><ul>${li(t.working)}</ul></div>
+      <div class="tc-sec"><h3>What's not</h3><ul>${li(t.not_working)}</ul></div>
+    </div>`;
+}
 function renderTodayContent(){
   const list=document.getElementById('sched-list');
   const progressWrap=document.getElementById('sched-progress-wrap');

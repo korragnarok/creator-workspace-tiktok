@@ -77,16 +77,16 @@
   }
 
   // ── New planner sidebar: wordmark, mini calendar, ombre folders, profile ──
+  // [page, label, folder image number] — image numbers stay fixed so your folder pictures never shuffle
   const FOLDERS = [
-    ['daily-todo.html','Daily To Do'], ['video-tracker.html','Content Tracker'],
-    ['products.html','Products'], ['brand-deals.html','Brand Deals'], ['product-scout.html','Product Scout'],
-    ['scripts.html','Script Vault'], ['script-workshop.html','Script Workshop'], ['script-scout.html','Script Scout'],
-    ['notes.html','Notes'], ['sales-calendar.html','Sales Log'],
-    ['https://a.co/d/0aN0vMFu','Storefront'], ['https://affiliate-program.amazon.com/home','Associates'],
-    ['video-feedback.html','Video Feedback'], ['settings.html','Settings']
+    ['daily-todo.html','Daily To Do',1], ['video-tracker.html','Content Tracker',2],
+    ['products.html','Products',3], ['brand-deals.html','Brand Deals',4],
+    ['scripts.html','Script Vault',6], ['sales-calendar.html','Sales Log',10],
+    ['https://a.co/d/0aN0vMFu','Storefront',11], ['https://affiliate-program.amazon.com/home','Associates',12],
+    ['video-feedback.html','Video Feedback',14], ['settings.html','Settings',15]
   ];
   // folder image number: 1, 2, 3… but skips 13 (that's the black "you are here" folder)
-  const folderNum = i => (i + 1 >= 13 ? i + 2 : i + 1);
+  const folderNum = i => FOLDERS[i][2];
   const extAttr = href => /^https?:/.test(href) ? ' target="_blank" rel="noopener"' : '';
   function folderShade(i) {
     const t = i / (FOLDERS.length - 1), a = [110,63,40], b = [222,196,170];
@@ -340,7 +340,7 @@
 
   // ── Phone layout: logo + profile, calendar, and folders at the top (replaces the tab bar) ──
   // Phone folders: the 6 main pages, plus a "More" folder that opens the rest
-  const MOBILE_MAIN = ['video-tracker.html','products.html','brand-deals.html','script-workshop.html','sales-calendar.html','settings.html'];
+  const MOBILE_MAIN = ['video-tracker.html','products.html','brand-deals.html','scripts.html','sales-calendar.html','settings.html'];
   function mobileFolders(page) {
     const tile = ([href,label]) => { const i = FOLDERS.findIndex(f => f[0] === href);
       return `<a class="ls-folder${href === page ? ' active' : ''}" href="${href}"${extAttr(href)} style="--f:${folderShade(i)}">
