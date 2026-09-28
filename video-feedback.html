@@ -310,7 +310,7 @@ function stamps(t){ return esc(t).replace(/\[(\d{1,2}):(\d{2})\]/g, (m, a, b) =>
 function seek(s){ const v = document.getElementById('preview'); if (v.getAttribute('src')) { v.currentTime = s; v.play(); v.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
 
 function renderFramework(fw){
-  CURRENT=null; NEW_SCRIPT=fw.script;
+  CURRENT=null; NEW_SCRIPT=fw.script; FW_CURRENT=fw;
   document.getElementById('results').innerHTML=`
     <div class="sub" style="margin-top:0">Framework → ${esc(CTX.product||'new product')}</div>
     <div class="fixes"><h3>Why it worked</h3><p style="font-size:14px;line-height:1.55">${stamps(fw.why_it_worked)}</p></div>
@@ -322,9 +322,9 @@ function renderFramework(fw){
     <div class="newscript" id="newScript"></div>`;
   renderScript(fw.script);
 }
-let CURRENT=null;
+let CURRENT=null, FW_CURRENT=null;
 function render(fb, name, fresh){
-  CURRENT=fb;
+  CURRENT=fb; FW_CURRENT=null; NEW_SCRIPT=null;
   const tags = (fb.hashtags || []).map(h => '#' + String(h).replace(/^#/, '')).join(' ');
   document.getElementById('results').innerHTML = `
     ${name ? `<div class="sub" style="margin-top:0">Last feedback · ${esc(name)}</div>` : ''}
@@ -393,10 +393,20 @@ const SCRIPT_SCHEMA = { type:'OBJECT', properties:{
   required:['title','hook','scenes','urgency','filming_tips','caption','hashtags'] };
 let NEW_SCRIPT=null;
 async function makeScript(btn){
-  if(!CURRENT) return;
+  if(!CURRENT && !FW_CURRENT) return;
   btn.disabled=true; btn.textContent='Writing your script…';
   const audio=CTX.audio||'voiceover', noVoice=audio==='trending'||audio==='text-music';
-  const prompt=`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Using the feedback below${CTX.fileUri?' and the original video':''}, write a NEW, improved version of this video that fixes the problems and keeps what worked.
+  // Framework breakdowns: write a different version for the same product, following the same framework
+  const fwPrompt=FW_CURRENT&&!CURRENT?`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Write a DIFFERENT new script for "${CTX.product||'the product'}" that follows this proven framework beat for beat, but with a new hook, angle and wording than the previous version.
+Audio style: ${AUDIO_NOTES[audio]||''}
+${noVoice?'NO voiceover: "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.':'Natural, casual spoken lines in the creator\'s voice (not salesy).'}
+No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). In each scene's "change", name the framework beat it matches. Include 3–5 filming tips, a caption and 5–8 hashtags.
+
+WHY THE ORIGINAL WORKED: ${FW_CURRENT.why_it_worked}
+FRAMEWORK: ${JSON.stringify(FW_CURRENT.framework)}
+KEEP THESE INGREDIENTS: ${JSON.stringify(FW_CURRENT.ingredients)}
+PREVIOUS SCRIPT (make yours different): ${JSON.stringify(NEW_SCRIPT||FW_CURRENT.script)}`:'';
+  const prompt=fwPrompt||`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Using the feedback below${CTX.fileUri?' and the original video':''}, write a NEW, improved version of this video that fixes the problems and keeps what worked.
 Product: ${CTX.product||'(see video)'}. Goal: ${CTX.goal||'TikTok Shop sale'}.
 Audio style: ${AUDIO_NOTES[audio]||''}
 ${noVoice?'Because this is a sound/music video with NO voiceover, "spoken" must be empty ("") in every scene — tell the story with visuals and ON-SCREEN TEXT timed to the beat.':'Write natural, casual spoken lines in the creator\'s voice (not salesy).'}
@@ -407,7 +417,7 @@ Requirements:
 - filming_tips: 3–5 practical tips (lighting, framing, pacing).
 Keep it under ~30 seconds unless the feedback says longer works.
 
-FEEDBACK:
+${NEW_SCRIPT?`PREVIOUS VERSION YOU WROTE (make this one clearly different — new hook and angle): ${JSON.stringify(NEW_SCRIPT)}\n\n`:''}FEEDBACK:
 ${JSON.stringify(CURRENT)}`;
   try{
     const parts=[...(CTX.fileUri?[{file_data:{mime_type:CTX.fileMime,file_uri:CTX.fileUri}}]:[]),{text:prompt}];
