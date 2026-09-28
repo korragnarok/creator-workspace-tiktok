@@ -779,6 +779,8 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .bd-take{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 10px;font-size:12px;line-height:1.45;}
 .bd-take .st{font:800 9px 'Stack Sans Notch',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--rust);border-radius:999px;padding:2px 8px;display:inline-block;margin-bottom:5px;}
 .bd-take b{color:var(--ink);}
+.bd-take.vault{border-color:var(--tan);}
+.bd-take .vs{white-space:pre-wrap;color:var(--text-mid);margin:4px 0;max-height:140px;overflow:hidden;}
 .bd-x{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;align-self:start;}
 .bd-foot{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap;}
 .bd-tips{margin-top:12px;font-size:13px;line-height:1.5;color:var(--text-mid);}
@@ -2273,6 +2275,19 @@ const BD_SCHEMA={type:'OBJECT',properties:{
   setup_tips:{type:'ARRAY',items:{type:'STRING'}}},
   required:['summary','products','setup_tips']};
 let BD_PLAN=null, BD_PRODUCTS=[];
+// Script Vault scripts that belong to a product (by the brand/product field or the title)
+function _norm(v){ return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
+function vaultMatches(productName){
+  const n=_norm(productName); if(!n) return [];
+  const words=n.split(' ').filter(w=>w.length>2);
+  return (VAULT||[]).filter(sc=>{
+    const b=_norm(sc.brand), t=_norm(sc.title);
+    if(b===n || t===n || t.startsWith(n+' ')) return true;           // saved for this exact product
+    if(b && b.includes(n)) return true;                               // e.g. saved as "Shark VACMOP Cordless (blue)"
+    if(b && n.includes(b) && b.split(' ').length>=2 && b.length>6) return true;   // e.g. saved as "Shark VacMop" for "Shark VACMOP Cordless"
+    return words.length>=2 && words.every(w=>t.includes(w));        // title names every word of the product
+  });
+}
 function lineupGroups(){
   const g=[], m={};
   (_todayQueue||[]).forEach(q=>{ const k=String(q.prod_id||q.name||q.id).toLowerCase(); if(!m[k]){ m[k]={name:q.name,brand:q.brand,prod_id:q.prod_id,acct:q.tiktok_account_id,rows:[]}; g.push(m[k]); } m[k].rows.push(q); });
@@ -2308,20 +2323,38 @@ async function runBatch(){
               ...sm.map(p=>({name:p.name,brand:p.brand||'',existing_scripts:[],free_sample:true}))];
   if(!list.length){ alert("Add products to Today's Content first."); return; }
   const body=document.getElementById('bdBody');
-  body.innerHTML='<div class="tc-wait">Planning angles and scripts…<br>This takes about 20–40 seconds.</div>';
+  body.innerHTML='<div class="tc-wait">Checking your Script Vault…</div>';
+  // Scripts you've saved (e.g. from Video Feedback) win — Gemini only writes takes for products without one
+  if(!VAULT){ try{ VAULT=(await db.from('scripts').select('id,title,brand,script,notes,created_at').eq('user_id',_dashboardUser.id).order('created_at',{ascending:false})).data||[]; }catch(e){ VAULT=[]; } }
+  const inQueue=new Set((_todayQueue||[]).map(q=>String(q.script||'').trim()).filter(Boolean));
+  const fromVault={};
+  list.forEach(item=>{ const hits=vaultMatches(item.name).filter(sc=>String(sc.script||'').trim()&&!inQueue.has(String(sc.script).trim())).slice(0,3);
+    if(hits.length) fromVault[item.name]=hits; });
+  const need=list.filter(item=>!fromVault[item.name]);
+  body.innerHTML=`<div class="tc-wait">${Object.keys(fromVault).length?`Using ${Object.keys(fromVault).length} product${Object.keys(fromVault).length===1?'':'s'}' scripts from your Script Vault. `:''}${need.length?'Planning the rest…<br>This takes about 20–40 seconds.':''}</div>`;
   try{
+    let plan={summary:'',products:[],setup_tips:[]};
+    if(need.length){
     const prompt=`You are helping a TikTok Shop affiliate creator plan a filming session. For EACH product below (use every one, exact names, same order), plan 3 DIFFERENT takes using these styles: ${styles.join(', ')}.
 ${focus?`Creator's focus: ${focus}\n`:''}For each take give: style, angle (the story/idea), hook (first 3 seconds: what to show + say/text), shots (specific shot list: angles, close-ups, B-roll, props, location), on_screen_text, and script (a short, natural script in the creator's casual voice — for "Trending sound + text" or aesthetic takes the script is just the on-screen text beats, no voiceover). If a product already has scripts, make the new takes different from them. No "click the link" CTAs — build urgency and desire instead.
 setup_tips: 3–5 tips to film these efficiently (group by location/lighting, order to film in).
 summary: one sentence on the plan.
 
-PRODUCTS: ${JSON.stringify(list)}`;
+PRODUCTS: ${JSON.stringify(need)}`;
     const schema=JSON.parse(JSON.stringify(BD_SCHEMA)); schema.properties.products.items.properties.takes.items.properties.script={type:'STRING'}; schema.properties.products.items.properties.takes.items.required.push('script');
     const res=await fetch('https://take24-scout.kortnycall5.workers.dev/?service=gemini&model=gemini-2.5-flash',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',responseSchema:schema,temperature:0.7}})});
     const data=await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
-    BD_PLAN=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
+    plan=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
+    }
+    // put everything back in lineup order: vault scripts where you have them, Gemini's takes for the rest
+    const gen=new Map((plan.products||[]).map(x=>[String(x.product).toLowerCase(),x]));
+    BD_PLAN={summary:plan.summary||(Object.keys(fromVault).length?'Using the scripts saved in your Script Vault.':''),setup_tips:plan.setup_tips||[],
+      products:list.map(item=>fromVault[item.name]
+        ? {product:item.name,why:`${fromVault[item.name].length} script${fromVault[item.name].length===1?'':'s'} from your Script Vault`,
+           takes:fromVault[item.name].map(sc=>({style:'Script Vault',angle:sc.title||'Saved script',hook:'',shots:'',on_screen_text:'',script:sc.script||'',vault:true}))}
+        : (gen.get(String(item.name).toLowerCase())||(plan.products||[]).find(x=>String(x.product).toLowerCase().includes(String(item.name).toLowerCase()))||{product:item.name,why:'',takes:[]}))};
     renderBatch();
   }catch(e){ body.innerHTML=`<div class="tc-wait">Couldn't plan the takes: ${esc(e.message)}</div>`; }
 }
@@ -2343,7 +2376,7 @@ function renderBatch(){
     ${P.products.map((x,i)=>{ const p=bdMatch(x.product); return `<div class="bd-prod"><img src="${esc(p?.image_url||'icons/default-product.png')}" alt="" onerror="this.src='icons/default-product.png'">
       <div><h4>${esc(p?.name||x.product)}</h4><div class="why">${esc(p?.brand||'')}${BD_ACCT[i]?` · <b>@${esc((TT.accts.find(a=>a.tiktok_open_id===BD_ACCT[i])||{}).display_name||'')}</b>`:''} · ${esc(x.why)}</div></div>
       <button class="bd-x" title="Remove from the plan" onclick="BD_PLAN.products.splice(${i},1);renderBatch()">✕</button>
-      <div class="bd-takes">${(x.takes||[]).map(t=>`<div class="bd-take"><span class="st">${esc(t.style)}</span><div><b>${esc(t.angle)}</b></div><div><b>Hook:</b> ${esc(t.hook)}</div><div><b>Shots:</b> ${esc(t.shots)}</div>${t.on_screen_text?`<div><b>Text:</b> ${esc(t.on_screen_text)}</div>`:''}</div>`).join('')}</div></div>`; }).join('')}
+      <div class="bd-takes">${(x.takes||[]).map(t=>`<div class="bd-take${t.vault?' vault':''}"><span class="st">${esc(t.style)}</span><div><b>${esc(t.angle)}</b></div>${t.vault?`<div class="vs">${esc(String(t.script||'').slice(0,260))}${String(t.script||'').length>260?'…':''}</div>`:''}${t.hook?`<div><b>Hook:</b> ${esc(t.hook)}</div>`:''}${t.shots?`<div><b>Shots:</b> ${esc(t.shots)}</div>`:''}${t.on_screen_text?`<div><b>Text:</b> ${esc(t.on_screen_text)}</div>`:''}</div>`).join('')}</div></div>`; }).join('')}
     ${(P.setup_tips||[]).length?`<div class="bd-tips"><b>Batching tips:</b><ul style="padding-left:18px;margin-top:4px">${P.setup_tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`:''}
     <div class="bd-foot"><button class="add-bar" style="width:auto;margin:0;padding:11px 20px" id="bdAdd" onclick="addBatchToTodo()">+ Add all ${P.products.reduce((a,x)=>a+(x.takes||[]).length,0)} takes to today</button><button class="tc-btn" onclick="saveBatchPdf()">Save as PDF</button><button class="tc-btn" onclick="runBatch()">↻ Plan again</button></div>`;
 }
@@ -2370,7 +2403,7 @@ function saveBatchPdf(){
 <h1>Batch Film Day</h1><div class="meta">${esc(dateLbl)}${acct?' · '+esc(acct):''}</div>
 <div class="sum">${esc(BD_PLAN.summary||'')}</div>
 ${BD_PLAN.products.map(x=>{ const p=bdMatch(x.product); return `<div class="prod"><div class="ph">${p?.image_url?`<img src="${esc(p.image_url)}">`:''}<div><h2>${esc(p?.name||x.product)}</h2><div class="why">${esc(p?.brand||'')}${p?.brand?' · ':''}${esc(x.why)}</div></div></div>
-  <div class="takes">${(x.takes||[]).map(t=>`<div class="take"><span class="st">${esc(t.style)}</span><div><span class="box"></span><b>${esc(t.angle)}</b></div><div><b>Hook:</b> ${esc(t.hook)}</div><div><b>Shots:</b> ${esc(t.shots)}</div>${t.on_screen_text?`<div><b>Text:</b> ${esc(t.on_screen_text)}</div>`:''}</div>`).join('')}</div></div>`; }).join('')}
+  <div class="takes">${(x.takes||[]).map(t=>`<div class="take"><span class="st">${esc(t.style)}</span><div><span class="box"></span><b>${esc(t.angle)}</b></div>${t.vault?`<div style="white-space:pre-wrap">${esc(t.script||'')}</div>`:''}${t.hook?`<div><b>Hook:</b> ${esc(t.hook)}</div>`:''}${t.shots?`<div><b>Shots:</b> ${esc(t.shots)}</div>`:''}${t.on_screen_text?`<div><b>Text:</b> ${esc(t.on_screen_text)}</div>`:''}</div>`).join('')}</div></div>`; }).join('')}
 ${(BD_PLAN.setup_tips||[]).length?`<div class="tips"><b>Batching tips</b><ul>${BD_PLAN.setup_tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`:''}
 <script>window.onload=()=>setTimeout(()=>window.print(),400);<\/script></body></html>`;
   const w=window.open('','_blank'); if(!w){ alert('Please allow pop-ups for take24.co to save the PDF.'); return; }
@@ -2385,9 +2418,9 @@ async function addBatchToTodo(){
     const grp=lineupGroups().find(gg=>String(gg.prod_id||'')===String(p?.id||'~')||String(gg.name).toLowerCase()===String(x.product).toLowerCase());
     const empty=grp?grp.rows.filter(r=>!String(r.script||'').trim()):[];
     (x.takes||[]).forEach(t=>{
-      const text=`${t.style.toUpperCase()} — ${t.angle}\n\nHOOK: ${t.hook}\n\nSCRIPT:\n${t.script||''}\n\nSHOTS: ${t.shots}${t.on_screen_text?`\n\nON-SCREEN TEXT: ${t.on_screen_text}`:''}`;
+      const text=t.vault?String(t.script||''):`${t.style.toUpperCase()} — ${t.angle}\n\nHOOK: ${t.hook}\n\nSCRIPT:\n${t.script||''}\n\nSHOTS: ${t.shots}${t.on_screen_text?`\n\nON-SCREEN TEXT: ${t.on_screen_text}`:''}`;
       const slot=empty.shift();
-      if(slot){ updates.push({id:slot.id,script:text,notes:`${t.style}: ${t.angle}`}); return; }
+      if(slot){ updates.push({id:slot.id,script:text,notes:t.vault?`Script Vault: ${t.angle}`:`${t.style}: ${t.angle}`}); return; }
       rows.push({user_id:_dashboardUser.id,tiktok_account_id:grp?.acct||p?.tiktok_account_id||assigned[pi]||acct||null,date,prod_id:p?.id||grp?.prod_id||null,name:p?.name||grp?.name||x.product,brand:p?.brand||grp?.brand||'',
         notes:`${t.style}: ${t.angle}`,script:text,done:false,sort_order:(_todayQueue||[]).length+n++});
     }); });
