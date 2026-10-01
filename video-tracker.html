@@ -224,6 +224,9 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .mcard-st{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text-muted);}
 .mcard-st b{color:var(--tan);}
 .meta-status{text-align:center;color:var(--text-muted);font-size:13px;padding:18px;}
+.month-select{background:var(--surface);border:1px solid var(--border-mid);border-radius:999px;color:var(--ink);padding:7px 12px;font:700 12px 'Stack Sans Notch',sans-serif;cursor:pointer;outline:none;}
+.month-select:focus{border-color:var(--tan);}
+.month-count{font:800 11px 'Stack Sans Notch',sans-serif;letter-spacing:.04em;color:var(--tan);white-space:nowrap;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=209"></script>
@@ -274,6 +277,8 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <button class="pill" data-f="nosales" onclick="setFilter(this,'nosales')">No Sales</button>
     <div class="filter-bar-sep"></div>
     <button class="pill sort-pill" id="sortSalesPill" onclick="toggleSortSales(this)">Most Sales</button>
+    <select class="month-select" id="monthFilter" onchange="onMonthFilter()" title="Show one month"><option value="">All months</option></select>
+    <span class="month-count" id="monthCount"></span>
     <div class="view-toggle" aria-label="Video view">
       <button class="view-btn active" id="gridViewBtn" onclick="setTrackerView('grid')">Grid</button>
       <button class="view-btn" id="tableViewBtn" onclick="setTrackerView('table')">Table</button>
@@ -680,6 +685,7 @@ async function loadVideos(pageToShow=currentPage){
     return;
   }
   DATA=data||[];
+  populateMonths();
   if(DATA.length){
     const {data:productData,error:productError}=await db.from('products').select('id,name,brand,image_url').eq('user_id',user.id);
     if(!productError){
@@ -744,6 +750,23 @@ function sortBy(field){
   if(sortField===field)sortDir*=-1;else{sortField=field;sortDir=-1;}
   goPage(1);
 }
+// ── Month filter: pick a month to see only its videos (and how many you posted) ──
+let _monthFilter=(()=>{ try{ return localStorage.getItem('take24:trackerMonth')||''; }catch(e){ return ''; } })();
+function populateMonths(){
+  const sel=document.getElementById('monthFilter'); if(!sel) return;
+  const counts={}; DATA.forEach(v=>{ const m=String(v.date||'').slice(0,7); if(/^\d{4}-\d{2}$/.test(m)) counts[m]=(counts[m]||0)+1; });
+  const months=Object.keys(counts).sort().reverse();
+  if(_monthFilter&&!counts[_monthFilter]) _monthFilter='';
+  sel.innerHTML='<option value="">All months</option>'+months.map(m=>{ const [y,mo]=m.split('-'); const lbl=new Date(+y,+mo-1,1).toLocaleDateString(undefined,{month:'long',year:'numeric'}); return `<option value="${m}" ${m===_monthFilter?'selected':''}>${lbl} (${counts[m]})</option>`; }).join('');
+  updateMonthCount();
+}
+function updateMonthCount(){
+  const el=document.getElementById('monthCount'); if(!el) return;
+  if(!_monthFilter){ el.textContent=''; return; }
+  const n=DATA.filter(v=>String(v.date||'').startsWith(_monthFilter)).length;
+  const [y,mo]=_monthFilter.split('-'); el.textContent=`${n} video${n===1?'':'s'} posted in ${new Date(+y,+mo-1,1).toLocaleDateString(undefined,{month:'long'})}`;
+}
+function onMonthFilter(){ _monthFilter=document.getElementById('monthFilter').value; try{ localStorage.setItem('take24:trackerMonth',_monthFilter); }catch(e){} updateMonthCount(); goPage(1); }
 function getFiltered(){
   const q=document.getElementById('searchBox').value.toLowerCase();
   return DATA.filter(v=>{
@@ -751,6 +774,7 @@ function getFiltered(){
     if(filterStatus==='sales'&&!hasSales)return false;
     if(filterStatus==='nosales'&&hasSales)return false;
     if(!videoMatchesProductFilter(v))return false;
+    if(_monthFilter&&!String(v.date||'').startsWith(_monthFilter))return false;
     if(q&&!((v.title||'')+(v.brand||'')+(v.notes||'')+(v.status||'')).toLowerCase().includes(q))return false;
     return true;
   }).sort((a,b)=>{
