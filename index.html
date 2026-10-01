@@ -994,9 +994,10 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                 <div>
                   <div class="card-title">Commission / GMV</div>
                   <div class="chart-range-pills">
-                    <button class="chart-pill active" onclick="setChartRange('30d')">30 Days</button>
-                    <button class="chart-pill" onclick="setChartRange('month')">This Month</button>
-                    <button class="chart-pill" onclick="setChartRange('week')">This Week</button>
+                    <button class="chart-pill" data-r="90d" onclick="setChartRange('90d')">90 Days</button>
+                    <button class="chart-pill active" data-r="30d" onclick="setChartRange('30d')">30 Days</button>
+                    <button class="chart-pill" data-r="month" onclick="setChartRange('month')">This Month</button>
+                    <button class="chart-pill" data-r="week" onclick="setChartRange('week')">This Week</button>
                   </div>
                 </div>
                 
@@ -1258,7 +1259,7 @@ function drawLine(ctx, points, color){
 function setChartRange(range){
   window._chartRange = range;
   // Update pill active state
-  document.querySelectorAll('.chart-pill').forEach(p => p.classList.toggle('active', p.textContent.trim().toLowerCase().replace(' ','').includes(range==='30d'?'30':range==='month'?'month':'week')));
+  document.querySelectorAll('.chart-pill').forEach(p => p.classList.toggle('active', p.dataset.r === range));
   const today = window._dashboardToday || new Date();
   const rows = window._allSalesRows || [];
   const labels=[], gmvData=[], commData=[];
@@ -1292,8 +1293,9 @@ function setChartRange(range){
       totalGmv+=gmv; totalComm+=comm;
     }
   } else {
-    // 30 days default
-    for(let i=29;i>=0;i--){
+    // 30 days (default) or 90 days
+    const span = range==='90d' ? 90 : 30;
+    for(let i=span-1;i>=0;i--){
       const d=new Date(today); d.setDate(today.getDate()-i);
       const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
       const row=rows.find(r=>r.date===key);
@@ -1987,7 +1989,7 @@ function ttSel(card){ let v=null; try{ v=localStorage.getItem('take24:cardAcct:'
   return TT.accts.some(a=>a.tiktok_open_id===v)?v:(getActiveAccountId()&&TT.accts.some(a=>a.tiktok_open_id===getActiveAccountId())?getActiveAccountId():TT.accts[0]?.tiktok_open_id); }
 function ttData(id){
   if(TT.cache[id]) return TT.cache[id];
-  const u=TT.user, t=new Date(), since=new Date(t); since.setDate(t.getDate()-29);
+  const u=TT.user, t=new Date(), since=new Date(t); since.setDate(t.getDate()-89);   // 90 days for the graph
   const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const monthStart=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-01`;
   TT.cache[id]=(async()=>{
@@ -2006,8 +2008,10 @@ function ttData(id){
 const TT_RENDER={
   async chart(id){ const d=await ttData(id); window._allSalesRows=d.sales; setChartRange(window._chartRange||'30d'); },
   async stats(id){ const d=await ttData(id), a=TT.accts.find(x=>x.tiktok_open_id===id);
-    setText('ttComm',fmtMoney(d.sales.reduce((s,r)=>s+(parseFloat(r.comm)||0),0)));
-    setText('ttGmv',fmtMoney(d.sales.reduce((s,r)=>s+(parseFloat(r.gmv)||0),0)));
+    const c30=new Date(); c30.setDate(c30.getDate()-29); const k30=`${c30.getFullYear()}-${String(c30.getMonth()+1).padStart(2,'0')}-${String(c30.getDate()).padStart(2,'0')}`;
+    const last30=d.sales.filter(r=>String(r.date)>=k30);   // stats stay "30 days"
+    setText('ttComm',fmtMoney(last30.reduce((s,r)=>s+(parseFloat(r.comm)||0),0)));
+    setText('ttGmv',fmtMoney(last30.reduce((s,r)=>s+(parseFloat(r.gmv)||0),0)));
     setText('ttTodo',String(d.queue.filter(q=>!q.done).length));
     const f=Number(a?.follower_count)||0; setText('ttFol',f>=1e4?Math.round(f/1e3)+'K':f>=1e3?(f/1e3).toFixed(1)+'K':String(f)); },
   async streak(id){ const d=await ttData(id), todayStr=localDateKey();
