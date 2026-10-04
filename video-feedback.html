@@ -200,6 +200,17 @@ const SCHEMA = {
 };
 
 
+// ── How every script/caption should sound ──
+let USER_TONE='';
+function voiceGuide(){
+  const tone = USER_TONE || (typeof DEFAULT_AI_TONE!=='undefined' ? DEFAULT_AI_TONE : '');
+  return `VOICE (very important): ${tone}
+Write it like she's casually telling a friend about something she actually uses — laid-back, honest, a little dry, real-life details, short sentences, normal words. It should NOT sound like an ad.
+- Lead with the real-life moment or problem, not the product's features list.
+- One or two honest specifics beat a pile of hype. A tiny downside or "I didn't expect…" is good.
+- Urgency should feel low-key and natural ("it's on sale right now, fyi", "they keep selling out of the blue one"), never pushy.
+- Avoid: "game changer", "obsessed", "you NEED this", "must-have", "run don't walk", "trust me", "holy grail", "life-changing", "don't sleep on", ALL CAPS hype, stacked exclamation points, and more than one emoji.`;
+}
 const AUDIO_NOTES = {
   'voiceover': 'The audio is the creator\'s OWN VOICEOVER talking about the product (no song). Judge the voiceover: clarity, energy, whether it sounds genuine, and whether the words and visuals match.',
   'voiceover-music': 'The audio is the creator\'s OWN VOICEOVER with background music underneath. Judge the voiceover (clarity, energy, authenticity) and whether the music level supports it without drowning it out. Do NOT treat song lyrics as things the creator said.',
@@ -228,7 +239,9 @@ AUDIO of this video: ${AUDIO_NOTES[audio]}
 2. hook: what happens in the first 3 seconds and why it stops the scroll.
 3. framework: the video's structure as a reusable, timed template — each beat with a timestamp range, what happens (described generically, not about the original product) and its purpose.
 4. ingredients: the 4–6 key elements to keep (e.g. "reaction shot before the reveal", "text-only story told over a trending sound").
-5. script: a brand-new script for "${product || 'the new product'}" that follows the SAME framework beat for beat, adapted naturally to that product. ${noVoice ? 'Keep the same audio style: NO voiceover — "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.' : 'Write natural, casual spoken lines in the creator\'s voice (not salesy).'} In each scene's "change", name the framework beat it matches. No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). Include 3–5 filming tips, a caption and 5–8 hashtags.`;
+${voiceGuide()}
+
+5. script: a brand-new script for "${product || 'the new product'}" that follows the SAME framework beat for beat, adapted naturally to that product. ${noVoice ? 'Keep the same audio style: NO voiceover — "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.' : voiceGuide()} In each scene's "change", name the framework beat it matches. No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). Include 3–5 filming tips, a caption and 5–8 hashtags.`;
 }
 function buildPrompt(){
   if (document.getElementById('goal').value === 'framework') return buildFrameworkPrompt();
@@ -257,7 +270,9 @@ Rules:
 - sections (use exactly these names): "Pacing & length", "On-screen text & captions", "${audioSection}", "Product showcase", "Urgency & desire". Each: rating 1–10, 1–3 things working, 1–3 specific improvements. Do not repeat the hook here.
 - top_fixes: the 3 changes that would help this video most, most important first.
 - compliance_flags: anything that could break TikTok Shop content rules (unverifiable/medical/health claims, before-after promises, off-platform links, misleading pricing). Empty list if none.
-- caption: a ready-to-post caption in the creator's voice (casual, not salesy); hashtags separately (5–8).`;
+- caption: a ready-to-post caption in the creator's voice; hashtags separately (5–8).
+
+${voiceGuide()}`;
 }
 
 async function analyze(){
@@ -399,7 +414,7 @@ async function makeScript(btn){
   // Framework breakdowns: write a different version for the same product, following the same framework
   const fwPrompt=FW_CURRENT&&!CURRENT?`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Write a DIFFERENT new script for "${CTX.product||'the product'}" that follows this proven framework beat for beat, but with a new hook, angle and wording than the previous version.
 Audio style: ${AUDIO_NOTES[audio]||''}
-${noVoice?'NO voiceover: "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.':'Natural, casual spoken lines in the creator\'s voice (not salesy).'}
+${noVoice?'NO voiceover: "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.\n'+voiceGuide():voiceGuide()}
 No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). In each scene's "change", name the framework beat it matches. Include 3–5 filming tips, a caption and 5–8 hashtags.
 
 WHY THE ORIGINAL WORKED: ${FW_CURRENT.why_it_worked}
@@ -409,7 +424,7 @@ PREVIOUS SCRIPT (make yours different): ${JSON.stringify(NEW_SCRIPT||FW_CURRENT.
   const prompt=fwPrompt||`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Using the feedback below${CTX.fileUri?' and the original video':''}, write a NEW, improved version of this video that fixes the problems and keeps what worked.
 Product: ${CTX.product||'(see video)'}. Goal: ${CTX.goal||'TikTok Shop sale'}.
 Audio style: ${AUDIO_NOTES[audio]||''}
-${noVoice?'Because this is a sound/music video with NO voiceover, "spoken" must be empty ("") in every scene — tell the story with visuals and ON-SCREEN TEXT timed to the beat.':'Write natural, casual spoken lines in the creator\'s voice (not salesy).'}
+${noVoice?'Because this is a sound/music video with NO voiceover, "spoken" must be empty ("") in every scene — tell the story with visuals and ON-SCREEN TEXT timed to the beat.':voiceGuide()}
 Requirements:
 - The first 3 seconds must be a scroll-stopping hook (use the hook alternatives from the feedback as inspiration).
 - Scenes: 5–9 short scenes with timestamps, what to film (angles, close-ups, B-roll, props, transitions), the on-screen text, the spoken line, and what changed from the original.
@@ -474,6 +489,7 @@ async function sendToScripts(btn){
 (async () => {
   const { data: { session } } = await db.auth.getSession();
   if (!session) { location.href = 'auth.html'; return; }
+  try { USER_TONE = session.user.user_metadata?.ai_tone || ''; } catch (e) {}
   try { const prefs = await loadUserPrefs(session.user.id); await initTheme(session.user.id, prefs); await initDisplayName(session.user, prefs); initProfilePopover(session.user.id); } catch (e) {}
   // product suggestions
   try { const { data } = await db.from('products').select('name').eq('user_id', session.user.id).order('name');
