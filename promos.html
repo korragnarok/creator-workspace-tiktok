@@ -67,6 +67,7 @@ select:focus,input:focus{border-color:var(--tan);}
 .star.on{color:#D9A441;}
 .item.is-big{border-color:#D9A441;}
 .day.big .day-h{color:#D9A441;}
+.plink.linked{border-style:solid;color:var(--text-muted);}
 .plink{margin:4px 0 2px;padding:3px 6px;font-size:11px;max-width:260px;border-style:dashed;}
 </style>
 </head>
@@ -123,7 +124,7 @@ select:focus,input:focus{border-color:var(--tan);}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=260"></script>
-<script src="promos-sync.js?v=266"></script>
+<script src="promos-sync.js?v=267"></script>
 <script src="layout.js?v=260"></script>
 <script>
 const WORKER='https://take24-scout.kortnycall5.workers.dev';
@@ -178,14 +179,18 @@ function render(){
     v.innerHTML=`<div class="cal">${html}</div>`;
   }
 }
-function itemHtml(p){ const today=promoYmd(new Date()), pr=prodOf(p), st=promoStatus(p,today); const link=pr?'':`<select class="plink" onchange="linkPromo('${p.id}',this.value)"><option value="">🔗 Link to a product…</option>${PRODUCTS.slice().sort((a,b)=>String(a.name).localeCompare(b.name)).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>`; return `<div class="item${p.priority?' is-big':''}"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt="">
+function itemHtml(p){ const today=promoYmd(new Date()), pr=prodOf(p), st=promoStatus(p,today); const link=`<select class="plink${pr?' linked':''}" title="Change which product this is" onchange="linkPromo('${p.id}',this.value)"><option value="">${pr?'— not my product (unlink) —':'🔗 Link to a product…'}</option>${PRODUCTS.slice().sort((a,b)=>String(a.name).localeCompare(b.name)).map(x=>`<option value="${x.id}" ${x.id===p.prod_id?'selected':''}>${pr?'🔗 ':''}${esc(x.name)}${x.sku?' · '+esc(x.sku):''}</option>`).join('')}</select>`; return `<div class="item${p.priority?' is-big':''}"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt="">
         <div><div class="n"><span class="line ${lineClass(p.line)}">${esc(p.line)}</span>${esc(p.product)}</div>
-        ${link}<div class="s">${p.sku?`<b>${esc(p.sku)}</b> · `:''}${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}${p.notes?' · '+esc(p.notes):''}${p.todo_added?' · ✓ on to-do':` · to-do on ${fmtD(promoShift(p.start_date||today,-PROMO_LEAD_DAYS))}`}</div></div>
+        ${link}<div class="s">${p.sku?`<b>${esc(p.sku)}</b> · `:''}${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}${String(p.notes||'').replace(/\s*\[nolink\]/g,'')?' · '+esc(String(p.notes).replace(/\s*\[nolink\]/g,'')):''}${p.todo_added?' · ✓ on to-do':` · to-do on ${fmtD(promoShift(p.start_date||today,-PROMO_LEAD_DAYS))}`}</div></div>
         <div class="deal">${esc(p.deal||'')}</div>
         <div style="display:flex;gap:6px;align-items:center"><button class="star${p.priority?' on':''}" title="${p.priority?'Remove from Biggest Gets':'Mark as a Biggest Get'}" onclick="toggleBig('${p.id}')">★</button><span class="st st-${st}">${st==='live'?'Live':st==='ended'?'Ended':st==='upcoming'?'Upcoming':'No date'}</span><button class="x" title="Delete" onclick="delPromo('${p.id}')">✕</button></div></div>`; }
-async function linkPromo(id,prodId){ if(!prodId) return;
-  const {error}=await db.from('promos').update({prod_id:prodId}).eq('id',id).eq('user_id',USER.id); if(error){ alert(error.message); return; }
-  const p=PROMOS.find(x=>x.id===id); if(p) p.prod_id=prodId; render(); }
+async function linkPromo(id,prodId){
+  const p=PROMOS.find(x=>x.id===id); if(!p) return;
+  if(!prodId && !confirm(`Unlink "${p.product}" from ${prodOf(p)?.name||'its product'}?`)){ render(); return; }
+  // unlinking marks the item so automatic matching won't link it again
+  const notes=String(p.notes||'').replace(/\s*\[nolink\]/g,'')+(prodId?'':' [nolink]');
+  const {error}=await db.from('promos').update({prod_id:prodId||null,notes:notes.trim()}).eq('id',id).eq('user_id',USER.id); if(error){ alert(error.message); return; }
+  p.prod_id=prodId||null; p.notes=notes.trim(); render(); }
 async function toggleBig(id){ const p=PROMOS.find(x=>x.id===id); if(!p) return; const v=!p.priority;
   const {error}=await db.from('promos').update({priority:v}).eq('id',id).eq('user_id',USER.id); if(error){ alert(error.message); return; } p.priority=v; render(); }
 async function delPromo(id){ if(!confirm('Delete this promo item?')) return; await db.from('promos').delete().eq('id',id).eq('user_id',USER.id); PROMOS=PROMOS.filter(p=>p.id!==id); render(); }

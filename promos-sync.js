@@ -51,7 +51,7 @@ function promoMatchBySku(sku, prods){
 async function linkPromoProducts(userId){
   try {
     const [{ data: promos }, { data: prods }] = await Promise.all([
-      db.from('promos').select('id,product,sku').eq('user_id', userId).is('prod_id', null),
+      db.from('promos').select('id,product,sku,notes').eq('user_id', userId).is('prod_id', null),
       db.from('products').select('id,name,sku').eq('user_id', userId)
     ]);
     if (!promos?.length || !prods?.length) return 0;
@@ -59,6 +59,7 @@ async function linkPromoProducts(userId){
     const words = v => norm(v).split(' ').filter(w => w.length > 2 && !['the','and','with','for'].includes(w));
     let n = 0;
     for (const p of promos) {
+      if (/\[nolink\]/.test(p.notes || '')) continue;   // you unlinked this one on purpose
       if (promoSkuKey(p.sku)) {   // has a SKU → only SKU matching counts
         const hit = promoMatchBySku(p.sku, prods);
         if (hit) { await db.from('promos').update({ prod_id: hit.id }).eq('id', p.id).eq('user_id', userId); n++; }
