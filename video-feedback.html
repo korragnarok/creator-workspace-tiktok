@@ -85,11 +85,58 @@ textarea{resize:vertical;min-height:60px;}
 .scene .st{font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);margin-bottom:3px;}
 .scene p{margin:2px 0!important;}
 .scene .chg{color:var(--text-muted);font-size:12px;font-style:italic;}
+.ptabs{display:flex;gap:6px;margin:6px 0 4px;}
+.ptab{border:1px solid var(--border-mid);background:var(--surface);color:var(--text-muted);border-radius:999px;padding:8px 16px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}
+.ptab.on{background:var(--rust);border-color:var(--rust);color:#fff;}
+.sw{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:14px;}
+#swFlow{max-width:820px;margin:14px auto 0;display:flex;flex-direction:column;gap:14px;}
+.swh{font-weight:800;color:var(--ink);font-size:15px;margin-bottom:10px;} .swh span{color:var(--rust);margin-right:6px;}
+.swrow{display:flex;gap:8px;} .swrow input{flex:1;}
+.btn.sm{width:auto;margin:0;padding:10px 18px;}
+.or{text-align:center;color:var(--text-muted);font-size:12px;margin:10px 0;}
+.swpicked{display:flex;align-items:center;gap:12px;background:var(--bg-lift);border:1px solid var(--tan);border-radius:14px;padding:10px 14px;}
+.swpicked img{width:46px;height:46px;border-radius:8px;object-fit:cover;background:var(--surface-2);}
+.swpicked b{color:var(--ink);display:block;} .swpicked small{color:var(--text-muted);} .swpicked a{margin-left:auto;color:var(--rust);cursor:pointer;font-weight:800;font-size:12px;}
+.swopts{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.swopt{display:block;border:1px solid var(--border-mid);border-radius:14px;padding:12px 14px 12px 40px;position:relative;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;font:13px 'Nunito Sans',sans-serif;color:var(--text-mid);}
+.swopt input{position:absolute;left:13px;top:15px;width:18px;height:18px;accent-color:var(--rust);}
+.swopt b{display:block;color:var(--ink);font-size:14px;margin-bottom:2px;} .swopt small{font-size:12px;line-height:1.4;}
+.swopt.on{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 10%,var(--surface));}
+.swsub{background:var(--bg-lift);border-radius:14px;padding:12px;margin-top:10px;}
+.swsl{font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);margin-bottom:6px;} .swsl em{font-style:normal;text-transform:none;letter-spacing:0;color:var(--rust);font-weight:600;}
+.swgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.swev{display:block;border:1px solid var(--border-mid);border-radius:12px;padding:9px 12px;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;font:12px 'Nunito Sans',sans-serif;color:var(--text-muted);background:var(--surface);}
+.swev input{display:none;} .swev b{display:block;color:var(--ink);font-size:13px;}
+.swev:has(input:checked){border-color:var(--rust);background:color-mix(in srgb,var(--rust) 12%,var(--surface));}
+.swmore{background:none;border:none;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer;margin-top:8px;}
+.swseg2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+.seg{display:flex;background:var(--bg);border-radius:12px;padding:3px;gap:3px;}
+.seg button{flex:1;border:none;background:none;color:var(--text-muted);padding:9px;border-radius:9px;font:700 13px 'Nunito Sans',sans-serif;cursor:pointer;}
+.seg button.on{background:var(--surface);color:var(--rust);box-shadow:0 1px 3px rgba(0,0,0,.25);}
+.swbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.swbar .chip{background:var(--bg-lift);border:1px solid var(--border);border-radius:999px;padding:4px 10px;font-size:11px;color:var(--ink);}
+.swangles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.swang{border:1px solid var(--border-mid);border-radius:14px;padding:12px 14px;cursor:pointer;background:var(--surface);position:relative;}
+.swang b{display:block;color:var(--ink);margin-bottom:4px;} .swang p{font-size:12.5px;line-height:1.5;color:var(--text-mid);}
+.swang.on{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 10%,var(--surface));} .swang.on::after{content:'✓';position:absolute;top:10px;right:12px;color:var(--rust);font-weight:800;}
+.swsteps{display:flex;flex-direction:column;gap:6px;margin-top:6px;} .swsteps div{font-size:13px;color:var(--text-muted);} .swsteps div.done{color:var(--ink);} .swsteps div.done::after{content:' ✓';color:var(--rust);}
+.swscript p{font-size:15px;line-height:1.65;color:var(--ink);margin-bottom:12px;}
+.swpol{font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:4px 10px;}
+.swpol.ok{background:#5E7A55;color:#fff;} .swpol.fix{background:#9A7A3A;color:#fff;} .swpol.wait{background:var(--surface-2);color:var(--ink);}
+.swacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.swtabs{display:flex;background:var(--bg);border-radius:12px;padding:3px;gap:3px;margin:8px 0;}
+.swtabs button{flex:1;border:none;background:none;color:var(--text-muted);padding:9px;border-radius:9px;font:700 13px 'Nunito Sans',sans-serif;cursor:pointer;}
+.swtabs button.on{background:var(--surface);color:var(--rust);}
+.swextra{font-size:13.5px;line-height:1.6;color:var(--ink);white-space:pre-wrap;}
+.swtwo{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:760px){.swopts,.swangles,.swseg2,.swtwo,.swgrid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Video Feedback <em>powered by Gemini</em></h1>
+  <div class="ptabs"><button class="ptab on" data-p="fb" onclick="setPane('fb')">Video feedback</button><button class="ptab" data-p="sw" onclick="setPane('sw')">✦ Write a script</button></div>
+  <div id="fbPane">
   <p class="sub">Upload a video before you post it and get honest notes on the hook, pacing, product shots and call to action.</p>
   <div class="layout">
     <div class="card">
@@ -126,13 +173,51 @@ textarea{resize:vertical;min-height:60px;}
     <div class="card" id="historyCard">
       <div class="hist-head"><button type="button" class="hist-toggle" onclick="toggleHistory()"><span id="histArrow">▸</span> History <span id="histCount"></span></button><button class="copy" id="cmpBtn" onclick="toggleCompare()" style="display:none">Compare</button></div>
       <div id="histBody" style="display:none">
-      <div class="sub" style="margin:-4px 0 8px;font-size:12px">Tick the box on any two videos, then tap Compare 2.</div>
       <div class="sub" id="cmpHint" style="margin:0 0 8px;font-size:12px;display:none">Pick <b>2</b> videos to compare.</div>
       <div class="trend" id="trend"></div>
       <div class="hist" id="hist"><div class="sub">Your past feedback shows up here.</div></div>
       </div>
     </div>
     </div>
+  </div>
+  </div>
+
+  <!-- ✦ Script writer -->
+  <div id="swPane" style="display:none">
+    <p class="sub">Tell it what you're selling and how it should sound — it finds the reasons people buy, you pick the angles, and it writes the script.</p>
+    <div class="sw" id="swSetup">
+      <div class="card swc">
+        <div class="swh"><span>1</span> What are you selling?</div>
+        <div id="swProdPicked" style="display:none"></div>
+        <div id="swProdPick">
+          <label>Type the product name</label>
+          <div class="swrow"><input id="swProduct" list="prodList" placeholder="e.g. Shark Glossi Blow Dryer Brush"><button class="btn sm" onclick="swUseProduct()">Use it</button></div>
+          <div class="or">or</div>
+          <div class="drop" onclick="document.getElementById('swShots').click()"><b>Upload screenshots or photos</b>Up to 5 — like the product page and its description</div>
+          <input type="file" id="swShots" accept="image/*" multiple hidden onchange="swPickShots(this.files)">
+        </div>
+      </div>
+      <div class="card swc">
+        <div class="swh"><span>2</span> How should it sound?</div>
+        <div class="swopts">
+          <label class="swopt on"><input type="checkbox" id="swPsych" checked onchange="swOpt(this)"><b>Buyer psychology</b><small>Shows why people justify buying it, and you pick the angles.</small></label>
+          <label class="swopt"><input type="checkbox" id="swRage" onchange="swOpt(this)"><b>Rage bait</b><small>Adds a debate-starting version to compare side by side.</small></label>
+          <label class="swopt"><input type="checkbox" id="swHoliday" onchange="swOpt(this);swRenderHolidays()"><b>Holidays &amp; events</b><small>Time it for a holiday, shopping day or season coming up.</small></label>
+          <label class="swopt"><input type="checkbox" id="swSpecial" onchange="swOpt(this);document.getElementById('swSpecialPick').style.display=this.checked?'':'none'"><b>Special occasions</b><small>A new release or limited edition? The script opens with it.</small></label>
+        </div>
+        <div class="swsub" id="swHolidayPick" style="display:none"></div>
+        <div class="swsub" id="swSpecialPick" style="display:none">
+          <div class="swsl">What's special about it? <em>Pick one or both.</em></div>
+          <div class="swgrid"><label class="swev"><input type="checkbox" value="New release" class="swSp"><b>New release</b><small>It just came out.</small></label><label class="swev"><input type="checkbox" value="Limited edition" class="swSp"><b>Limited edition</b><small>It's only around for a while.</small></label></div>
+        </div>
+        <div class="swseg2">
+          <div><div class="swsl">Filming</div><div class="seg" data-k="film"><button class="on" data-v="Talking to camera">Talking to camera</button><button data-v="Faceless">Faceless</button></div></div>
+          <div><div class="swsl">Format</div><div class="seg" data-k="fmt"><button class="on" data-v="Standard">Standard</button><button data-v="Aesthetic">Aesthetic</button></div></div>
+        </div>
+      </div>
+      <button class="btn" id="swGo" onclick="swStart()">✦ Write my script</button>
+    </div>
+    <div id="swFlow"></div>
   </div>
 </div>
 
@@ -486,12 +571,184 @@ async function sendToScripts(btn){
   btn.textContent='✓ Saved to Script Vault'; btn.disabled=true;
 }
 
+// ════════ ✦ Script writer ════════
+function setPane(p){ document.querySelectorAll('.ptab').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+  document.getElementById('fbPane').style.display=p==='fb'?'':'none'; document.getElementById('swPane').style.display=p==='sw'?'':'none';
+  try{ localStorage.setItem('take24:vfPane',p); }catch(e){} if(p==='sw') swRenderHolidays(); }
+const SW={product:'',brand:'',image:'',shots:[],angles:[],picked:[],script:null,rage:null,film:'Talking to camera',fmt:'Standard',holiday:'',special:[]};
+async function gem(parts,schema,temperature=0.6){
+  const res=await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',responseSchema:schema,temperature}})});
+  const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
+  return JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
+}
+let SW_PRODUCTS=[];
+function swOpt(cb){ cb.closest('.swopt').classList.toggle('on',cb.checked); }
+document.addEventListener('click',e=>{ const b=e.target.closest('.seg button'); if(!b) return; const seg=b.parentElement;
+  seg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); SW[seg.dataset.k]=b.dataset.v; });
+function swUseProduct(){
+  const v=document.getElementById('swProduct').value.trim(); if(!v){ document.getElementById('swProduct').focus(); return; }
+  const p=SW_PRODUCTS.find(x=>String(x.name).toLowerCase()===v.toLowerCase());
+  SW.product=p?.name||v; SW.brand=p?.brand||''; SW.image=p?.image_url||''; SW.shots=[]; swShowPicked();
+}
+async function swPickShots(files){
+  const list=[...(files||[])].slice(0,5); document.getElementById('swShots').value=''; if(!list.length) return;
+  SW.shots=list; SW.product=document.getElementById('swProduct').value.trim()||''; SW.brand=''; SW.image=URL.createObjectURL(list[0]); swShowPicked();
+}
+function swShowPicked(){
+  document.getElementById('swProdPick').style.display='none'; const el=document.getElementById('swProdPicked'); el.style.display='';
+  el.innerHTML=`<div class="swpicked">${SW.image?`<img src="${esc(SW.image)}">`:''}<div><b>${esc(SW.product||`${SW.shots.length} screenshot${SW.shots.length===1?'':'s'}`)}</b><small>${esc(SW.brand||(SW.shots.length?'Gemini reads the product from your screenshots':''))}</small></div><a onclick="swChange()">Change</a></div>`;
+}
+function swChange(){ SW.product=''; SW.shots=[]; document.getElementById('swProdPick').style.display=''; document.getElementById('swProdPicked').style.display='none'; }
+
+// upcoming holidays & events (next ~4 months)
+function swHolidays(){
+  const t=new Date(); t.setHours(0,0,0,0); const Y=t.getFullYear(), out=[];
+  const d=(y,m,dd)=>new Date(y,m-1,dd);
+  const nth=(y,m,wd,n)=>{ const x=d(y,m,1); x.setDate(1+((7+wd-x.getDay())%7)+7*(n-1)); return x; };
+  const last=(y,m,wd)=>{ const x=d(y,m+1,0); x.setDate(x.getDate()-((7+x.getDay()-wd)%7)); return x; };
+  for(const y of [Y,Y+1]){
+    const tg=nth(y,11,4,4), bf=new Date(tg); bf.setDate(tg.getDate()+1); const cm=new Date(tg); cm.setDate(tg.getDate()+4);
+    out.push(['New Year\'s Day',d(y,1,1)],['Galentine\'s Day',d(y,2,13)],['Valentine\'s Day',d(y,2,14)],['Spring cleaning',d(y,3,15),d(y,4,30)],
+      ['Mother\'s Day',nth(y,5,0,2)],['Memorial Day',last(y,5,1)],['Father\'s Day',nth(y,6,0,3)],['Summer',d(y,6,1),d(y,8,31)],['4th of July',d(y,7,4)],
+      ['Back to school',d(y,7,15),d(y,8,31)],['Labor Day',nth(y,9,1,1)],['Cozy season',d(y,9,15),d(y,11,30)],['Halloween',d(y,10,31)],
+      ['Friendsgiving',d(y,11,1),d(y,11,25)],['Holiday gifting season',d(y,11,1),d(y,12,24)],['Thanksgiving',tg],['Black Friday',bf],['Cyber Monday',cm],
+      ['Stocking stuffers & Secret Santa',d(y,12,1),d(y,12,24)],['Christmas',d(y,12,25)],['New Year\'s Eve',d(y,12,31)]);
+  }
+  const fmt=x=>x.toLocaleDateString(undefined,{month:'short',day:'numeric'}), days=x=>Math.round((x-t)/864e5);
+  return out.filter(([,s,e])=>(e||s)>=t && days(s)<=120).sort((a,b)=>a[1]-b[1])
+    .map(([n,s,e])=>({name:n,label:e?(s<=t?`Now through ${fmt(e)}`:`${fmt(s)} – ${fmt(e)} · starts in ${days(s)} days`):`${fmt(s)} · ${days(s)===0?'today':'in '+days(s)+' days'}`}))
+    .filter((x,i,a)=>a.findIndex(y=>y.name===x.name)===i);
+}
+let SW_SHOW_ALL=false;
+function swRenderHolidays(){
+  const box=document.getElementById('swHolidayPick'), on=document.getElementById('swHoliday').checked; box.style.display=on?'':'none'; if(!on) return;
+  const all=swHolidays(), list=SW_SHOW_ALL?all:all.slice(0,8);
+  box.innerHTML=`<div class="swsl">Which holiday or event? <em>Pick one.</em></div><div class="swgrid">${list.map(h=>`<label class="swev"><input type="radio" name="swHol" value="${esc(h.name)}" ${SW.holiday===h.name?'checked':''} onchange="SW.holiday=this.value"><b>${esc(h.name)}</b><small>${esc(h.label)}</small></label>`).join('')}</div>${all.length>8?`<button class="swmore" onclick="SW_SHOW_ALL=!SW_SHOW_ALL;swRenderHolidays()">${SW_SHOW_ALL?'Show fewer':`Show ${all.length-8} more`}</button>`:''}`;
+}
+function swContext(){
+  const bits=[`Filming: ${SW.film}${SW.film==='Faceless'?' (voiceover over hands/product/B-roll shots, creator never on camera)':''}`,
+    `Format: ${SW.fmt}${SW.fmt==='Aesthetic'?' (calm, visual, minimal words — short lines that work as on-screen text or a soft voiceover)':''}`];
+  if(document.getElementById('swHoliday').checked&&SW.holiday) bits.push(`Work in this holiday/event naturally: ${SW.holiday}`);
+  if(SW.special.length) bits.push(`Open the script with this: it's a ${SW.special.join(' and ')}`);
+  return bits.join('\n');
+}
+async function swProductParts(){
+  const parts=[];
+  for(const f of SW.shots){ const r=await fetch(`${WORKER}/?service=gemini-upload`,{method:'POST',headers:{'Content-Type':f.type||'image/png'},body:f});
+    const j=await r.json().catch(()=>({})); if(!r.ok||!j.uri) throw new Error(j.error||'Upload failed'); parts.push({file_data:{mime_type:j.mime_type,file_uri:j.uri}}); }
+  SW.shots=[]; SW.shotParts=[...(SW.shotParts||[]),...parts];
+  return SW.shotParts||[];
+}
+function swBar(){ return `<div class="card swc swbar">${SW.image?`<img src="${esc(SW.image)}" style="width:30px;height:30px;border-radius:6px;object-fit:cover">`:''}<b style="color:var(--ink);margin-right:4px">${esc(SW.product||'Your product')}</b>
+  ${document.getElementById('swPsych').checked?'<span class="chip">Buyer psychology</span>':''}${document.getElementById('swHoliday').checked&&SW.holiday?`<span class="chip">${esc(SW.holiday)}</span>`:''}${SW.special.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}
+  <span class="chip">${esc(SW.film)}</span><span class="chip">${esc(SW.fmt)}</span><a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer" onclick="swReset()">Start over</a></div>`; }
+function swReset(){ SW.angles=[];SW.picked=[];SW.script=null;SW.rage=null;SW.shotParts=[]; document.getElementById('swFlow').innerHTML=''; document.getElementById('swSetup').style.display=''; window.scrollTo({top:0,behavior:'smooth'}); }
+async function swStart(){
+  if(!SW.product&&!SW.shots.length){ const v=document.getElementById('swProduct').value.trim(); if(v) swUseProduct(); else { alert('Add a product first — type its name or upload screenshots.'); return; } }
+  if(document.getElementById('swHoliday').checked&&!SW.holiday){ alert('Pick a holiday or event (or turn that option off).'); return; }
+  SW.special=document.getElementById('swSpecial').checked?[...document.querySelectorAll('.swSp:checked')].map(x=>x.value):[];
+  if(document.getElementById('swSpecial').checked&&!SW.special.length){ alert('Pick New release or Limited edition (or turn that option off).'); return; }
+  document.getElementById('swSetup').style.display='none';
+  const flow=document.getElementById('swFlow');
+  if(!document.getElementById('swPsych').checked){ flow.innerHTML=swBar(); SW.picked=[]; return swWrite(); }
+  flow.innerHTML=swBar()+`<div class="card swc"><div class="swh">Why people justify buying it</div><div class="swsteps" id="swSteps"><div>Reading about ${esc(SW.product||'your product')}</div><div>Thinking like the person who buys it</div><div>Finding the reasons people say yes</div><div>Writing your angles…</div></div></div>`;
+  const step=n=>document.querySelectorAll('#swSteps div').forEach((d,i)=>d.classList.toggle('done',i<n));
+  try{
+    step(0); const parts=await swProductParts(); step(1);
+    const schema={type:'OBJECT',properties:{product:{type:'STRING'},brand:{type:'STRING'},angles:{type:'ARRAY',items:{type:'OBJECT',properties:{title:{type:'STRING'},why:{type:'STRING'}},required:['title','why']}}},required:['product','brand','angles']};
+    setTimeout(()=>step(2),1500);
+    const out=await gem([...parts,{text:`You are a buyer-psychology expert for TikTok Shop. Product: ${SW.product||'(read it from the screenshots)'}${SW.brand?` by ${SW.brand}`:''}.
+${swContext()}
+List 6–8 different reasons real people use to JUSTIFY buying this (money saved, replaces other things, a frustration it fixes, a worry it removes, who it's for, gifting/self-gifting, timing). Each: a short, catchy "title" (3–5 words, first person is fine, e.g. "Replaces my tool pile") and "why" (1–2 plain sentences with a real product detail). If a holiday/event or special occasion is set, include 1–2 angles for it. Also return the clean product name and brand.`}],schema,0.8);
+    if(!SW.product) SW.product=out.product; if(!SW.brand) SW.brand=out.brand;
+    SW.angles=out.angles||[]; SW.picked=[]; step(4); swRenderAngles();
+  }catch(e){ flow.innerHTML=swBar()+`<div class="card swc">Couldn't find angles: ${esc(e.message)}</div>`; }
+}
+function swRenderAngles(){
+  document.getElementById('swFlow').innerHTML=swBar()+`<div class="card swc"><div class="swh">Why people justify buying it. Pick your angles.</div>
+    <div class="swangles">${SW.angles.map((a,i)=>`<div class="swang${SW.picked.includes(i)?' on':''}" onclick="SW.picked=SW.picked.includes(${i})?SW.picked.filter(x=>x!==${i}):[...SW.picked,${i}];swRenderAngles()"><b>${esc(a.title)}</b><p>${esc(a.why)}</p></div>`).join('')}</div>
+    <div class="swacts" style="margin-top:12px"><button class="btn sm" ${SW.picked.length?'':'disabled'} onclick="swWrite()">${SW.picked.length?`Continue with ${SW.picked.length}`:'Pick at least one'}</button><button class="tc-btn copy" onclick="swStart()">↻ Show different reasons</button></div></div>`;
+}
+const SCRIPT1={type:'OBJECT',properties:{title:{type:'STRING'},paragraphs:{type:'ARRAY',items:{type:'STRING'}}},required:['title','paragraphs']};
+function swAngleText(){ return SW.picked.map(i=>SW.angles[i]).filter(Boolean).map(a=>`- ${a.title}: ${a.why}`).join('\n'); }
+async function swPolicy(sc){
+  const schema={type:'OBJECT',properties:{passed:{type:'BOOLEAN'},issues:{type:'ARRAY',items:{type:'STRING'}},title:{type:'STRING'},paragraphs:{type:'ARRAY',items:{type:'STRING'}}},required:['passed','issues','title','paragraphs']};
+  return gem([{text:`Check this TikTok Shop affiliate script against TikTok Shop content policy: no medical/health or cure claims, no unverifiable "best/#1/guaranteed" claims, no exaggerated before/after promises, no false urgency or fake pricing/discounts, no directing people off TikTok, no comparisons that disparage named competitors, nothing unsafe. If it's fine, return passed=true, issues=[] and the script unchanged. If not, return passed=false, list each issue in plain words, and return a FIXED version with the smallest possible changes, keeping the same voice.
+TITLE: ${sc.title}
+SCRIPT:
+${sc.paragraphs.join('\n\n')}`}],schema,0.2);
+}
+async function swWrite(extra){
+  const flow=document.getElementById('swFlow');
+  const head=swBar()+(SW.picked.length?`<div class="card swc"><div class="swh" style="margin-bottom:6px">Why people justify buying it</div><div class="swbar">${SW.picked.map(i=>`<span class="chip">${esc(SW.angles[i].title)}</span>`).join('')}</div></div>`:'');
+  flow.innerHTML=head+`<div class="card swc"><div class="swh">Your script <span class="swpol wait" style="float:right" id="swState">Writing…</span></div><div class="sub">Writing your script, then checking it against TikTok Shop policy.</div></div>`;
+  try{
+    const parts=SW.shotParts||[];
+    let sc=extra?.from?await gem([{text:`Rewrite this TikTok Shop script. Change: ${extra.how}. Keep the same product facts.\n${voiceGuide()}\n${swContext()}\nTITLE: ${extra.from.title}\nSCRIPT:\n${extra.from.paragraphs.join('\n\n')}`}],SCRIPT1,0.7)
+      :await gem([...parts,{text:`Write a TikTok Shop video script (spoken, about 30–45 seconds, 5–8 short paragraphs) for ${SW.product}${SW.brand?` by ${SW.brand}`:''}.
+${voiceGuide()}
+${swContext()}
+${SW.picked.length?`Build it around these angles (use them naturally, don't list them):\n${swAngleText()}`:'Pick the most convincing everyday angle yourself.'}
+Open with a relatable real-life moment as the hook. Use real product details. End with a soft, casual close like "I tagged it below" — never "click the link" or "tap the orange cart". Also give it a short title (3–6 words).`}],SCRIPT1,0.7);
+    document.getElementById('swState').textContent='Checking TikTok policy…';
+    const pol=await swPolicy(sc);
+    SW.script={title:pol.title||sc.title,paragraphs:pol.paragraphs?.length?pol.paragraphs:sc.paragraphs,passed:pol.passed,issues:pol.issues||[]};
+    SW.extras={}; swRenderScript();
+  }catch(e){ flow.innerHTML=head+`<div class="card swc">Couldn't write the script: ${esc(e.message)}</div>`; }
+}
+function swRenderScript(tab){
+  const sc=SW.script; if(!sc) return;
+  const head=swBar()+(SW.picked.length?`<div class="card swc"><div class="swh" style="margin-bottom:6px">Why people justify buying it</div><div class="swbar">${SW.picked.map(i=>`<span class="chip">${esc(SW.angles[i].title)}</span>`).join('')}</div></div>`:'');
+  const block=(s,label)=>`<div class="card swc"><div class="swh">${esc(s.title)} ${label}</div>${s.issues?.length&&!s.passed?`<div class="flag" style="margin-bottom:10px"><b>Fixed for TikTok policy:</b><br>${s.issues.map(esc).join('<br>')}</div>`:''}<div class="swscript">${s.paragraphs.map(p=>`<p>${esc(p)}</p>`).join('')}</div>`;
+  const pol=sc.passed?'<span class="swpol ok" style="float:right">✓ Policy check passed</span>':'<span class="swpol fix" style="float:right">Policy fixes applied</span>';
+  const main=block(sc,pol)+`<div class="swacts"><button class="copy" onclick="navigator.clipboard.writeText(SW.script.paragraphs.join('\\n\\n'));this.textContent='✓ Copied'">Copy</button><button class="copy" onclick="swSave(this,SW.script)">Save to Script Vault</button>${document.getElementById('swRage').checked||SW.rage?'':`<button class="copy" onclick="swRage()">Rage bait version</button>`}</div></div>`;
+  const rage=SW.rage?block(SW.rage,'<span class="swpol wait" style="float:right">Rage bait</span>')+`<div class="swacts"><button class="copy" onclick="navigator.clipboard.writeText(SW.rage.paragraphs.join('\\n\\n'));this.textContent='✓ Copied'">Copy</button><button class="copy" onclick="swSave(this,SW.rage)">Save to Script Vault</button></div></div>`:'';
+  const t=tab||SW.tab||'';
+  document.getElementById('swFlow').innerHTML=head+(rage?`<div class="swtwo">${main}${rage}</div>`:main)+
+    `<div class="card swc"><div class="swh">Make the rest of your video <small style="float:right;color:var(--text-muted);font-weight:600">Written for this script</small></div>
+      <div class="swtabs">${[['shots','Shot by shot'],['hooks','Text hooks'],['caption','Caption']].map(([k,l])=>`<button class="${t===k?'on':''}" onclick="swExtra('${k}')">${l}</button>`).join('')}</div>
+      <div class="swextra" id="swExtra">${t&&SW.extras[t]?SW.extras[t]:''}</div>${t&&SW.extras[t]?`<button class="copy" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('swExtra').innerText);this.textContent='✓ Copied'">Copy</button>`:''}</div>
+    <div class="swacts">${['Shorter','Funnier','Stronger hook','More casual'].map(x=>`<button class="copy" onclick="swWrite({from:SW.script,how:'${x.toLowerCase()}'})">${x}</button>`).join('')}<a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer;align-self:center" onclick="swReset()">Start over</a></div>
+    <div class="swrow"><input id="swAsk" placeholder="Or tell it what to change…" onkeydown="if(event.key==='Enter'&&this.value.trim())swWrite({from:SW.script,how:this.value.trim()})"><button class="btn sm" onclick="const v=document.getElementById('swAsk').value.trim();if(v)swWrite({from:SW.script,how:v})">↑</button></div>`;
+  if(document.getElementById('swRage').checked&&!SW.rage&&!SW._rageBusy) swRage();
+}
+async function swRage(){
+  SW._rageBusy=true;
+  try{ const r=await gem([{text:`Write a "rage bait" version of this TikTok Shop script: same product and facts, but open with a mildly controversial, debate-starting take that makes people want to comment (e.g. "unpopular opinion…", "I don't get why people still…"). Keep it playful, not mean, no insulting groups or naming competitors, no false claims.\n${voiceGuide()}\nTITLE: ${SW.script.title}\nSCRIPT:\n${SW.script.paragraphs.join('\n\n')}`}],SCRIPT1,0.8);
+    const pol=await swPolicy(r); SW.rage={title:pol.title||r.title,paragraphs:pol.paragraphs?.length?pol.paragraphs:r.paragraphs,passed:pol.passed,issues:pol.issues||[]}; }
+  catch(e){ alert('Could not write the rage bait version: '+e.message); }
+  SW._rageBusy=false; swRenderScript();
+}
+async function swExtra(k){
+  SW.tab=k; if(SW.extras[k]) return swRenderScript(k);
+  swRenderScript(k); document.getElementById('swExtra').textContent='Writing…';
+  const txt=SW.script.paragraphs.join('\n\n');
+  try{
+    if(k==='shots'){ const o=await gem([{text:`Turn this TikTok Shop script into a shot-by-shot filming plan for "${SW.film}" / ${SW.fmt} format. For each line of the script: what to film (framing, angle, close-ups, B-roll, props) and the matching line.\n${swContext()}\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{shots:{type:'ARRAY',items:{type:'OBJECT',properties:{film:{type:'STRING'},line:{type:'STRING'}},required:['film','line']}}},required:['shots']},0.5);
+      SW.extras.shots=o.shots.map((x,i)=>`${i+1}. 🎬 ${x.film}\n   “${x.line}”`).join('\n\n'); }
+    if(k==='hooks'){ const o=await gem([{text:`Write 8 short on-screen TEXT HOOKS (the text overlay in the first 2 seconds) for this TikTok Shop video. Under 10 words each, laid-back and curiosity-driven, not salesy; no "you NEED this", no all-caps hype.\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{hooks:{type:'ARRAY',items:{type:'STRING'}}},required:['hooks']},0.9);
+      SW.extras.hooks=o.hooks.map((h,i)=>`${i+1}. ${h}`).join('\n'); }
+    if(k==='caption'){ const o=await gem([{text:`Write a TikTok caption for this video and 5–8 hashtags.\n${voiceGuide()}\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{caption:{type:'STRING'},hashtags:{type:'ARRAY',items:{type:'STRING'}}},required:['caption','hashtags']},0.7);
+      SW.extras.caption=`${o.caption}\n\n${o.hashtags.map(h=>'#'+String(h).replace(/^#/,'')).join(' ')}`; }
+  }catch(e){ SW.extras[k]=''; alert('Could not write that: '+e.message); }
+  swRenderScript(k);
+}
+async function swSave(btn,sc){
+  const { data:{ session } }=await db.auth.getSession(); if(!session) return;
+  const notes=[SW.picked.length?`Angles: ${SW.picked.map(i=>SW.angles[i].title).join(', ')}`:'', SW.extras?.hooks?`Text hooks:\n${SW.extras.hooks}`:'', SW.extras?.caption?`Caption:\n${SW.extras.caption}`:'', SW.extras?.shots?`Shot by shot:\n${SW.extras.shots}`:''].filter(Boolean).join('\n\n');
+  const { error }=await db.from('scripts').insert({ user_id:session.user.id, title:sc.title, brand:SW.product, cat:'review', script:sc.paragraphs.join('\n\n'), notes });
+  if(error){ alert('Could not save: '+error.message); return; } btn.textContent='✓ Saved'; btn.disabled=true;
+}
+
 (async () => {
   const { data: { session } } = await db.auth.getSession();
   if (!session) { location.href = 'auth.html'; return; }
   try { USER_TONE = session.user.user_metadata?.ai_tone || ''; } catch (e) {}
   try { const prefs = await loadUserPrefs(session.user.id); await initTheme(session.user.id, prefs); await initDisplayName(session.user, prefs); initProfilePopover(session.user.id); } catch (e) {}
   // product suggestions
+  try { SW_PRODUCTS = (await db.from('products').select('name,brand,image_url').eq('user_id', session.user.id)).data || []; } catch (e) {}
+  try { if (localStorage.getItem('take24:vfPane') === 'sw') setPane('sw'); } catch (e) {}
   try { const { data } = await db.from('products').select('name').eq('user_id', session.user.id).order('name');
     document.getElementById('prodList').innerHTML = (data || []).map(p => `<option value="${esc(p.name)}">`).join(''); } catch (e) {}
   try { const a = localStorage.getItem('take24:fbAudio'); if (a) document.getElementById('audio').value = a; } catch (e) {}
