@@ -69,6 +69,24 @@ select:focus,input:focus{border-color:var(--tan);}
 .day.big .day-h{color:#D9A441;}
 .plink.linked{border-style:solid;color:var(--text-muted);}
 .plink{margin:4px 0 2px;padding:3px 6px;font-size:11px;max-width:260px;border-style:dashed;}
+.filt .tab{padding:6px 11px;font-size:10px;}
+.hide-ended{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);cursor:pointer;} .hide-ended input{accent-color:var(--rust);}
+.tl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border-mid);border-radius:18px;padding:12px;}
+.tl{min-width:860px;}
+.tl-row{display:grid;grid-template-columns:230px 1fr;align-items:center;border-top:1px solid var(--border);}
+.tl-row:first-child{border-top:none;} .tl-row.ended{opacity:.45;} .tl-row.big .tl-name b{color:#D9A441;}
+.tl-name{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 2px;min-width:0;}
+.tl-name img{width:30px;height:30px;border-radius:7px;object-fit:cover;background:var(--surface-2);flex-shrink:0;}
+.tl-name b{display:block;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .tl-name small{display:block;font-size:11px;color:var(--tan);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tl-days{position:relative;height:30px;display:flex;}
+.tl-head .tl-days{height:38px;} .tl-head{position:sticky;top:0;background:var(--surface);z-index:2;}
+.tl-d{flex:1;text-align:center;font-size:11px;font-weight:800;color:var(--text-muted);border-left:1px solid var(--border);padding-top:3px;line-height:1.1;}
+.tl-d span{display:block;font-size:8.5px;font-weight:600;opacity:.7;} .tl-d.wk{background:var(--bg-lift);} .tl-d.today{color:#fff;background:var(--rust);border-radius:6px 6px 0 0;}
+.tl-row:not(.tl-head) .tl-days{background:repeating-linear-gradient(90deg,transparent 0,transparent calc(100%/var(--days) - 1px),var(--border) calc(100%/var(--days) - 1px),var(--border) calc(100%/var(--days)));}
+.tl-bar{position:absolute;top:5px;height:20px;border-radius:6px;color:#fff;font-size:10.5px;font-weight:700;line-height:20px;padding:0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,.35);}
+.tl-today{position:absolute;top:0;bottom:0;width:2px;background:var(--rust);opacity:.7;}
+.tl-key{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--text-muted);margin:8px 2px;}
+.tl-key span{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:2px;}
 </style>
 </head>
 <body>
@@ -101,7 +119,9 @@ select:focus,input:focus{border-color:var(--tan);}
   <div class="bar">
     <div class="mnav"><button onclick="shiftMonth(-1)">‹</button><b id="monthLbl"></b><button onclick="shiftMonth(1)">›</button></div>
     <select id="archive" onchange="jumpMonth(this.value)"><option value="">Past months…</option></select>
-    <div class="tabs"><button class="tab on" data-v="list" onclick="setView('list')">List</button><button class="tab" data-v="cal" onclick="setView('cal')">Calendar</button></div>
+    <div class="tabs"><button class="tab on" data-v="list" onclick="setView('list')">List</button><button class="tab" data-v="tl" onclick="setView('tl')">Timeline</button></div>
+    <div class="tabs filt"><button class="tab on" data-f="all" onclick="setFilter('all')">All</button><button class="tab" data-f="Shark" onclick="setFilter('Shark')">Shark</button><button class="tab" data-f="Ninja" onclick="setFilter('Ninja')">Ninja</button><button class="tab" data-f="Shark Beauty" onclick="setFilter('Shark Beauty')">Beauty</button><button class="tab" data-f="big" onclick="setFilter('big')">★ Biggest Gets</button></div>
+    <label class="hide-ended"><input type="checkbox" id="hideEnded" onchange="render()"> Hide ended</label>
     <span id="countLbl" style="color:var(--text-muted);font-size:12px"></span>
   </div>
   <div id="view"></div>
@@ -149,7 +169,9 @@ async function loadAll(){
 }
 function shiftMonth(n){ const [y,m]=MONTH.split('-').map(Number); const d=new Date(y,m-1+n,1); MONTH=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render(); }
 function jumpMonth(m){ if(m){ MONTH=m; render(); } document.getElementById('archive').value=''; }
-function setView(v){ VIEW=v; document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v)); render(); }
+let FILTER='all';
+function setView(v){ VIEW=v; document.querySelectorAll('.tab[data-v]').forEach(t=>t.classList.toggle('on',t.dataset.v===v)); try{ localStorage.setItem('take24:promoView',v); }catch(e){} render(); }
+function setFilter(f){ FILTER=f; document.querySelectorAll('.tab[data-f]').forEach(t=>t.classList.toggle('on',t.dataset.f===f)); render(); }
 function monthItems(){
   const [y,m]=MONTH.split('-').map(Number), first=`${MONTH}-01`, last=promoYmd(new Date(y,m,0));
   return PROMOS.filter(p=>p.month===MONTH || (p.start_date&&p.start_date<=last&&(p.end_date||p.start_date)>=first));
@@ -159,7 +181,9 @@ function prodOf(p){ return PRODUCTS.find(x=>x.id===p.prod_id); }
 // ── Render ──
 function render(){
   document.getElementById('monthLbl').textContent=monthName(MONTH);
-  const items=monthItems().sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date))||String(a.product).localeCompare(String(b.product)));
+  const todayK=promoYmd(new Date()), hideEnded=document.getElementById('hideEnded').checked;
+  const items=monthItems().filter(p=>FILTER==='all'||(FILTER==='big'?p.priority:p.line===FILTER)).filter(p=>!hideEnded||promoStatus(p,todayK)!=='ended')
+    .sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date))||String(a.product).localeCompare(String(b.product)));
   document.getElementById('countLbl').textContent=items.length?`${items.length} promo item${items.length===1?'':'s'}`:'';
   const v=document.getElementById('view');
   if(!items.length){ v.innerHTML=`<div class="card empty"><b>No promos for ${monthName(MONTH)}</b>Tap “+ Upload promo list” to add this month's Shark &amp; Ninja list.</div>`; return; }
@@ -170,13 +194,17 @@ function render(){
     v.innerHTML=(big.length?`<div class="day big"><div class="day-h">★ Biggest Gets <small>${big.length} item${big.length===1?'':'s'}</small></div>${big.map(itemHtml).join('')}</div>`:'')+Object.keys(groups).sort().map(k=>`<div class="day"><div class="day-h">${k?new Date(k+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}):'No date'} <small>${groups[k].length} item${groups[k].length===1?'':'s'}</small></div>
       ${groups[k].map(itemHtml).join('')}</div>`).join('');
   } else {
-    const [y,m]=MONTH.split('-').map(Number), first=new Date(y,m-1,1), start=new Date(first); start.setDate(1-first.getDay());
-    const today=promoYmd(new Date()); let html=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="dow">${d}</div>`).join('');
-    for(let i=0;i<42;i++){ const d=new Date(start); d.setDate(start.getDate()+i); const k=promoYmd(d);
-      if(i>=35&&d.getMonth()!==m-1) break;
-      const on=items.filter(p=>p.start_date&&p.start_date<=k&&(p.end_date||p.start_date)>=k);
-      html+=`<div class="cday${k===today?' today':''}${d.getMonth()!==m-1?' out':''}"><div class="dn">${d.getDate()}</div>${on.map(p=>`<span class="chip" style="background:${lineColor(p.line)}" title="${esc(p.product)} · ${esc(p.deal||'')}">${p.priority?'★ ':''}${p.start_date===k?'▸ ':''}${esc(p.product)}</span>`).join('')}</div>`; }
-    v.innerHTML=`<div class="cal">${html}</div>`;
+    // Timeline: one row per product, a bar across the days its deal runs
+    const [y,m]=MONTH.split('-').map(Number), days=new Date(y,m,0).getDate(), first=`${MONTH}-01`, last=promoYmd(new Date(y,m,0));
+    const today=promoYmd(new Date()), dayN=k=>Number(k.slice(8,10));
+    const rows=items.filter(p=>p.start_date).sort((a,b)=>(b.priority?1:0)-(a.priority?1:0)||String(a.start_date).localeCompare(String(b.start_date))||String(a.end_date||a.start_date).localeCompare(String(b.end_date||b.start_date)));
+    const head=`<div class="tl-row tl-head"><div class="tl-name"></div><div class="tl-days">${[...Array(days)].map((_,i)=>{ const k=`${MONTH}-${String(i+1).padStart(2,'0')}`, d=new Date(y,m-1,i+1); return `<div class="tl-d${k===today?' today':''}${d.getDay()===0||d.getDay()===6?' wk':''}"><span>${'SMTWTFS'[d.getDay()]}</span>${i+1}</div>`; }).join('')}</div></div>`;
+    const body=rows.map(p=>{ const s0=p.start_date<first?1:dayN(p.start_date), e0=(p.end_date||p.start_date)>last?days:dayN(p.end_date||p.start_date), st=promoStatus(p,today), pr=prodOf(p);
+      return `<div class="tl-row${p.priority?' big':''}${st==='ended'?' ended':''}" title="${esc(p.product)} · ${esc(p.deal||'')} · ${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}">
+        <div class="tl-name"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt=""><div><b>${p.priority?'★ ':''}${esc(p.product)}</b><small>${esc(p.deal||'')}</small></div></div>
+        <div class="tl-days">${today>=first&&today<=last?`<i class="tl-today" style="left:${(dayN(today)-1)/days*100}%"></i>`:''}<div class="tl-bar" style="left:${(s0-1)/days*100}%;width:${(e0-s0+1)/days*100}%;background:${lineColor(p.line)}">${p.start_date<first?'◂ ':''}${fmtD(p.start_date)}${p.end_date&&p.end_date!==p.start_date?' – '+fmtD(p.end_date):''}${(p.end_date||p.start_date)>last?' ▸':''}</div></div></div>`; }).join('');
+    v.innerHTML=`<div class="tl-wrap" style="--days:${days}"><div class="tl">${head}${body||'<div class="empty">No dated promos match this filter.</div>'}</div></div>
+      <div class="tl-key"><span style="background:#2E62A8"></span>Shark <span style="background:#4a4a4a"></span>Ninja <span style="background:#A0526B"></span>Shark Beauty · ★ Biggest Gets on top · faded = ended</div>`;
   }
 }
 function itemHtml(p){ const today=promoYmd(new Date()), pr=prodOf(p), st=promoStatus(p,today); const link=`<select class="plink${pr?' linked':''}" title="Change which product this is" onchange="linkPromo('${p.id}',this.value)"><option value="">${pr?'— not my product (unlink) —':'🔗 Link to a product…'}</option>${PRODUCTS.slice().sort((a,b)=>String(a.name).localeCompare(b.name)).map(x=>`<option value="${x.id}" ${x.id===p.prod_id?'selected':''}>${pr?'🔗 ':''}${esc(x.name)}${x.sku?' · '+esc(x.sku):''}</option>`).join('')}</select>`; return `<div class="item${p.priority?' is-big':''}"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt="">
@@ -353,6 +381,7 @@ async function addPlan(){
   const {data:{session}}=await db.auth.getSession(); if(!session){ location.href='auth.html'; return; }
   USER=session.user;
   try{ const prefs=await loadUserPrefs(USER.id); await initTheme(USER.id,prefs); await initDisplayName(USER,prefs); initProfilePopover(USER.id); }catch(e){}
+  try{ const v=localStorage.getItem('take24:promoView'); if(v==='tl') setView('tl'); }catch(e){}
   ACCTS=await promoAccounts(USER.id);
   await linkPromoProducts(USER.id);   // connect items to products you've added since
   await syncPromoTodos(USER.id);
