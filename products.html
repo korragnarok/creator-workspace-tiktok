@@ -317,8 +317,9 @@ tr.select-mode .tbl-action{display:none;}
         <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Optional — shows on your dashboard. PNG, JPG, WEBP under 2MB.</div>
       </div>
     </div>
-    <div class="form-row"><label class="form-label">Product Name *</label><input type="text" class="form-input" id="fName" placeholder="e.g. PetLab ProBright Dental Powder"></div>
-    <div class="form-row"><label class="form-label">Brand</label><input type="text" class="form-input" id="fBrand" placeholder="e.g. PetLab Co."></div>
+    <div class="form-row"><label class="form-label">Product Name *</label><input type="text" class="form-input" id="fName" oninput="toggleSkuRow()" placeholder="e.g. PetLab ProBright Dental Powder"></div>
+    <div class="form-row"><label class="form-label">Brand</label><input type="text" class="form-input" id="fBrand" placeholder="e.g. PetLab Co." oninput="toggleSkuRow()"></div>
+    <div class="form-row" id="skuRow" style="display:none"><label class="form-label">SKU <span style="text-transform:none;letter-spacing:0;color:var(--text-muted);font-weight:600">· Shark / Ninja</span></label><input type="text" class="form-input" id="fSku" placeholder="e.g. HT302"></div>
     <div class="form-row"><label class="form-label">Tags (comma separated)</label><input type="text" class="form-input" id="fTags" placeholder="e.g. pet, dental, supplement"></div>
     <div class="form-row"><label class="form-label">TikTok Shop Link</label><input type="url" class="form-input" id="fLink" placeholder="https://..."></div>
     <div class="form-row"><label class="form-label">Other Links <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text-muted);">(tap-to-copy badges)</span></label>
@@ -670,6 +671,8 @@ window.importProduct = async function(index) {
   document.getElementById('fBrand').value = p.brand || '';
   document.getElementById('fTags').value = '';
   document.getElementById('fLink').value = p.link || '';
+  document.getElementById('fSku').value = '';
+  window.toggleSkuRow && toggleSkuRow();
   document.getElementById('fUnitsSold').value = '';
   document.getElementById('fStatus').value = 'active';
   document.getElementById('fNotes').value = importNotesForProduct(p);
@@ -902,6 +905,12 @@ async function init() {
     btn.disabled = false; btn.textContent = 'Get Missing Photos';
     showToast(`Added ${found} photo${found===1?'':'s'}` + (todo.length - found ? ` · ${todo.length - found} not found${lastErr ? ' (' + lastErr + ')' : ''}` : ''), found ? 'success' : 'error');
     window.renderProducts();
+  };
+  // SKU box shows for Shark / Ninja / Shark Beauty products (or any product that already has a SKU)
+  window.toggleSkuRow = function(){
+    const brand = document.getElementById('fBrand').value, name = document.getElementById('fName')?.value || '';
+    const show = /shark|ninja/i.test(`${brand} ${name}`) || document.getElementById('fSku').value.trim();
+    document.getElementById('skuRow').style.display = show ? '' : 'none';
   };
   window.copyProdLink = async function(btn){
     const url = btn.dataset.url;
@@ -1435,6 +1444,8 @@ async function init() {
     document.getElementById('fBrand').value = p?.brand || '';
     document.getElementById('fTags').value = p?.tags || '';
     document.getElementById('fLink').value = p?.link || '';
+    document.getElementById('fSku').value = p?.sku || '';
+    toggleSkuRow();
     document.getElementById('fUnitsSold').value = p?.units_sold || '';
     document.getElementById('fStatus').value = p?.status || 'active';
     document.getElementById('fNotes').value = String(p?.notes || '').replace(/\nFREE_SAMPLE|FREE_SAMPLE\n|FREE_SAMPLE/g, '').trim();
@@ -1484,7 +1495,7 @@ async function init() {
     notesVal = notesVal.replace(/\nFREE_SAMPLE|FREE_SAMPLE\n|FREE_SAMPLE/g, '').trim();
     if(isFreeSample) notesVal = notesVal ? notesVal + '\nFREE_SAMPLE' : 'FREE_SAMPLE';
 
-    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: notesVal, image_url, links: readProdLinks(), tiktok_account_id: (() => {
+    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), ...(document.getElementById('skuRow').style.display !== 'none' || document.getElementById('fSku').value.trim() ? { sku: document.getElementById('fSku').value.trim() } : {}), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: notesVal, image_url, links: readProdLinks(), tiktok_account_id: (() => {
       if (document.getElementById('fAllAccounts').checked) return null;
       // editing keeps the product on its own account; new products (or ones leaving "all accounts") go to the account you're viewing
       const orig = window._editingProductOriginal?.tiktok_account_id;
