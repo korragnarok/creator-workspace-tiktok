@@ -78,11 +78,12 @@ select:focus,input:focus{border-color:var(--tan);}
 .tl-name{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 2px;min-width:0;}
 .tl-name img{width:30px;height:30px;border-radius:7px;object-fit:cover;background:var(--surface-2);flex-shrink:0;}
 .tl-name b{display:block;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .tl-name small{display:block;font-size:11px;color:var(--tan);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tl-days{position:relative;height:30px;display:flex;}
+.tl-days{position:relative;height:calc(30px + (var(--lanes,1) - 1) * 22px);display:flex;}
 .tl-head .tl-days{height:38px;} .tl-head{position:sticky;top:0;background:var(--surface);z-index:2;}
 .tl-d{flex:1;text-align:center;font-size:11px;font-weight:800;color:var(--text-muted);border-left:1px solid var(--border);padding-top:3px;line-height:1.1;}
 .tl-d span{display:block;font-size:8.5px;font-weight:600;opacity:.7;} .tl-d.wk{background:var(--bg-lift);} .tl-d.today{color:#fff;background:var(--rust);border-radius:6px 6px 0 0;}
 .tl-row:not(.tl-head) .tl-days{background:repeating-linear-gradient(90deg,transparent 0,transparent calc(100%/var(--days) - 1px),var(--border) calc(100%/var(--days) - 1px),var(--border) calc(100%/var(--days)));}
+.tl-bar.ended{opacity:.45;}
 .tl-bar{position:absolute;top:5px;height:20px;border-radius:6px;color:#fff;font-size:10.5px;font-weight:700;line-height:20px;padding:0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,.35);}
 .tl-today{position:absolute;top:0;bottom:0;width:2px;background:var(--rust);opacity:.7;}
 .tl-key{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--text-muted);margin:8px 2px;}
@@ -103,7 +104,7 @@ select:focus,input:focus{border-color:var(--tan);}
     <div class="bar">
       <label style="font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan)">Promo month</label>
       <input type="month" id="upMonth">
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-mid);cursor:pointer"><input type="checkbox" id="upBig" style="accent-color:var(--rust)"> This is a <b style="color:var(--ink)">★ Biggest Gets</b> list</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-mid);cursor:pointer"><input type="checkbox" id="upBig" style="accent-color:var(--rust)"> Everything in this file is a <b style="color:var(--ink)">★ Biggest Focus</b> item</label>
     </div>
     <div class="drop" style="padding:16px" onclick="document.getElementById('csvFile').click()"><b>Import a promo CSV</b>The list Claude makes from your Canva (.csv)</div>
     <input type="file" id="csvFile" accept=".csv,text/csv" hidden onchange="importCsv(this.files[0])">
@@ -120,7 +121,7 @@ select:focus,input:focus{border-color:var(--tan);}
     <div class="mnav"><button onclick="shiftMonth(-1)">‹</button><b id="monthLbl"></b><button onclick="shiftMonth(1)">›</button></div>
     <select id="archive" onchange="jumpMonth(this.value)"><option value="">Past months…</option></select>
     <div class="tabs"><button class="tab on" data-v="list" onclick="setView('list')">List</button><button class="tab" data-v="tl" onclick="setView('tl')">Timeline</button></div>
-    <div class="tabs filt"><button class="tab on" data-f="all" onclick="setFilter('all')">All</button><button class="tab" data-f="Shark" onclick="setFilter('Shark')">Shark</button><button class="tab" data-f="Ninja" onclick="setFilter('Ninja')">Ninja</button><button class="tab" data-f="Shark Beauty" onclick="setFilter('Shark Beauty')">Beauty</button><button class="tab" data-f="big" onclick="setFilter('big')">★ Biggest Gets</button></div>
+    <div class="tabs filt"><button class="tab on" data-f="all" onclick="setFilter('all')">All</button><button class="tab" data-f="Shark" onclick="setFilter('Shark')">Shark</button><button class="tab" data-f="Ninja" onclick="setFilter('Ninja')">Ninja</button><button class="tab" data-f="Shark Beauty" onclick="setFilter('Shark Beauty')">Beauty</button><button class="tab" data-f="big" onclick="setFilter('big')">★ Biggest Focus</button></div>
     <label class="hide-ended"><input type="checkbox" id="hideEnded" onchange="render()"> Hide ended</label>
     <span id="countLbl" style="color:var(--text-muted);font-size:12px"></span>
   </div>
@@ -179,6 +180,11 @@ function monthItems(){
 function prodOf(p){ return PRODUCTS.find(x=>x.id===p.prod_id); }
 
 // ── Render ──
+// Exact duplicates (same product + dates, e.g. from uploading a list twice) can be cleaned up with one tap
+function findDupes(){ const seen={}, extra=[]; PROMOS.forEach(p=>{ const k=`${p.month}|${norm(p.product)}|${p.start_date}|${p.end_date}`; if(seen[k]) extra.push(p.id); else seen[k]=1; }); return extra; }
+function dupeBtn(){ const d=findDupes(); return d.length?`<div class="bar" style="margin-top:10px"><button class="btn" onclick="removeDupes()">Remove ${d.length} duplicate item${d.length===1?'':'s'}</button></div>`:''; }
+async function removeDupes(){ const d=findDupes(); if(!d.length||!confirm(`Remove ${d.length} duplicate item${d.length===1?'':'s'}? (Same product and dates listed twice.)`)) return;
+  const {error}=await db.from('promos').delete().in('id',d).eq('user_id',USER.id); if(error){ alert(error.message); return; } PROMOS=PROMOS.filter(p=>!d.includes(p.id)); render(); }
 function render(){
   document.getElementById('monthLbl').textContent=monthName(MONTH);
   const todayK=promoYmd(new Date()), hideEnded=document.getElementById('hideEnded').checked;
@@ -191,27 +197,36 @@ function render(){
     const today=promoYmd(new Date()), groups={};
     items.filter(p=>!p.priority).forEach(p=>{ (groups[p.start_date||'']=groups[p.start_date||'']||[]).push(p); });   // Biggest Gets already shown at the top
     const big=items.filter(p=>p.priority);
-    v.innerHTML=(big.length?`<div class="day big"><div class="day-h">★ Biggest Gets <small>${big.length} item${big.length===1?'':'s'}</small></div>${big.map(itemHtml).join('')}</div>`:'')+Object.keys(groups).sort().map(k=>`<div class="day"><div class="day-h">${k?new Date(k+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}):'No date'} <small>${groups[k].length} item${groups[k].length===1?'':'s'}</small></div>
+    v.innerHTML=dupeBtn()+(big.length?`<div class="day big"><div class="day-h">★ Biggest Focus <small>${big.length} item${big.length===1?'':'s'}</small></div>${big.map(itemHtml).join('')}</div>`:'')+Object.keys(groups).sort().map(k=>`<div class="day"><div class="day-h">${k?new Date(k+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}):'No date'} <small>${groups[k].length} item${groups[k].length===1?'':'s'}</small></div>
       ${groups[k].map(itemHtml).join('')}</div>`).join('');
   } else {
     // Timeline: one row per product, a bar across the days its deal runs
     const [y,m]=MONTH.split('-').map(Number), days=new Date(y,m,0).getDate(), first=`${MONTH}-01`, last=promoYmd(new Date(y,m,0));
     const today=promoYmd(new Date()), dayN=k=>Number(k.slice(8,10));
-    const rows=items.filter(p=>p.start_date).sort((a,b)=>(b.priority?1:0)-(a.priority?1:0)||String(a.start_date).localeCompare(String(b.start_date))||String(a.end_date||a.start_date).localeCompare(String(b.end_date||b.start_date)));
+    // one row per product — every promo window for it becomes a bar on that row
+    const groups=[], gmap={};
+    items.filter(p=>p.start_date).forEach(p=>{ const k=p.prod_id||norm(p.product); if(!gmap[k]){ gmap[k]={key:k,p,items:[]}; groups.push(gmap[k]); } gmap[k].items.push(p); if(p.priority) gmap[k].p=p; });
+    groups.forEach(g=>g.items.sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date))));
+    groups.sort((a,b)=>(b.items.some(x=>x.priority)?1:0)-(a.items.some(x=>x.priority)?1:0)||String(a.items[0].start_date).localeCompare(String(b.items[0].start_date)));
     const head=`<div class="tl-row tl-head"><div class="tl-name"></div><div class="tl-days">${[...Array(days)].map((_,i)=>{ const k=`${MONTH}-${String(i+1).padStart(2,'0')}`, d=new Date(y,m-1,i+1); return `<div class="tl-d${k===today?' today':''}${d.getDay()===0||d.getDay()===6?' wk':''}"><span>${'SMTWTFS'[d.getDay()]}</span>${i+1}</div>`; }).join('')}</div></div>`;
-    const body=rows.map(p=>{ const s0=p.start_date<first?1:dayN(p.start_date), e0=(p.end_date||p.start_date)>last?days:dayN(p.end_date||p.start_date), st=promoStatus(p,today), pr=prodOf(p);
-      return `<div class="tl-row${p.priority?' big':''}${st==='ended'?' ended':''}" title="${esc(p.product)} · ${esc(p.deal||'')} · ${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}">
-        <div class="tl-name"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt=""><div><b>${p.priority?'★ ':''}${esc(p.product)}</b><small>${esc(p.deal||'')}</small></div></div>
-        <div class="tl-days">${today>=first&&today<=last?`<i class="tl-today" style="left:${(dayN(today)-1)/days*100}%"></i>`:''}<div class="tl-bar" style="left:${(s0-1)/days*100}%;width:${(e0-s0+1)/days*100}%;background:${lineColor(p.line)}">${p.start_date<first?'◂ ':''}${fmtD(p.start_date)}${p.end_date&&p.end_date!==p.start_date?' – '+fmtD(p.end_date):''}${(p.end_date||p.start_date)>last?' ▸':''}</div></div></div>`; }).join('');
-    v.innerHTML=`<div class="tl-wrap" style="--days:${days}"><div class="tl">${head}${body||'<div class="empty">No dated promos match this filter.</div>'}</div></div>
-      <div class="tl-key"><span style="background:#2E62A8"></span>Shark <span style="background:#4a4a4a"></span>Ninja <span style="background:#A0526B"></span>Shark Beauty · ★ Biggest Gets on top · faded = ended</div>`;
+    const body=groups.map(g=>{ const p=g.p, pr=prodOf(p), big=g.items.some(x=>x.priority), allEnded=g.items.every(x=>promoStatus(x,today)==='ended');
+      const deals=[...new Set(g.items.map(x=>x.deal).filter(Boolean))].join(' · ');
+      // overlapping windows get stacked on extra lines
+      const lanes=[]; g.items.forEach(x=>{ const s0=x.start_date, e0=x.end_date||x.start_date; let L=lanes.findIndex(l=>l.every(o=>o.e<s0||o.s>e0)); if(L<0){ lanes.push([]); L=lanes.length-1; } lanes[L].push({s:s0,e:e0,x}); });
+      const bars=lanes.map((lane,li)=>lane.map(({x})=>{ const s0=x.start_date<first?1:dayN(x.start_date), e0=(x.end_date||x.start_date)>last?days:dayN(x.end_date||x.start_date), ended=promoStatus(x,today)==='ended';
+        return `<div class="tl-bar${ended?' ended':''}" style="left:${(s0-1)/days*100}%;width:${(e0-s0+1)/days*100}%;top:${5+li*22}px;background:${lineColor(x.line)}" title="${esc(x.product)} · ${esc(x.deal||'')} · ${fmtD(x.start_date)}${x.end_date?' – '+fmtD(x.end_date):''}">${x.start_date<first?'◂ ':''}${esc(x.deal||'')}${x.deal?' · ':''}${fmtD(x.start_date)}${x.end_date&&x.end_date!==x.start_date?' – '+fmtD(x.end_date):''}${(x.end_date||x.start_date)>last?' ▸':''}</div>`; }).join('')).join('');
+      return `<div class="tl-row${big?' big':''}${allEnded?' ended':''}" style="--lanes:${lanes.length}">
+        <div class="tl-name"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt=""><div><b>${big?'★ ':''}${esc(pr?.name||p.product)}</b><small>${g.items.length>1?`${g.items.length} promos`:esc(deals)}</small></div></div>
+        <div class="tl-days">${today>=first&&today<=last?`<i class="tl-today" style="left:${(dayN(today)-1)/days*100}%"></i>`:''}${bars}</div></div>`; }).join('');
+    v.innerHTML=`<div class="tl-wrap" style="--days:${days}"><div class="tl">${head}${body||'<div class="empty">No dated promos match this filter.</div>'}</div></div>${dupeBtn()}
+      <div class="tl-key"><span style="background:#2E62A8"></span>Shark <span style="background:#4a4a4a"></span>Ninja <span style="background:#A0526B"></span>Shark Beauty · ★ Biggest Focus on top · faded = ended</div>`;
   }
 }
 function itemHtml(p){ const today=promoYmd(new Date()), pr=prodOf(p), st=promoStatus(p,today); const link=`<select class="plink${pr?' linked':''}" title="Change which product this is" onchange="linkPromo('${p.id}',this.value)"><option value="">${pr?'— not my product (unlink) —':'🔗 Link to a product…'}</option>${PRODUCTS.slice().sort((a,b)=>String(a.name).localeCompare(b.name)).map(x=>`<option value="${x.id}" ${x.id===p.prod_id?'selected':''}>${pr?'🔗 ':''}${esc(x.name)}${x.sku?' · '+esc(x.sku):''}</option>`).join('')}</select>`; return `<div class="item${p.priority?' is-big':''}"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt="">
         <div><div class="n"><span class="line ${lineClass(p.line)}">${esc(p.line)}</span>${esc(p.product)}</div>
         ${link}<div class="s">${p.sku?`<b>${esc(p.sku)}</b> · `:''}${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}${String(p.notes||'').replace(/\s*\[nolink\]/g,'')?' · '+esc(String(p.notes).replace(/\s*\[nolink\]/g,'')):''}${p.todo_added?' · ✓ on to-do':` · to-do on ${fmtD(promoShift(p.start_date||today,-PROMO_LEAD_DAYS))}`}</div></div>
         <div class="deal">${esc(p.deal||'')}</div>
-        <div style="display:flex;gap:6px;align-items:center"><button class="star${p.priority?' on':''}" title="${p.priority?'Remove from Biggest Gets':'Mark as a Biggest Get'}" onclick="toggleBig('${p.id}')">★</button><span class="st st-${st}">${st==='live'?'Live':st==='ended'?'Ended':st==='upcoming'?'Upcoming':'No date'}</span><button class="x" title="Delete" onclick="delPromo('${p.id}')">✕</button></div></div>`; }
+        <div style="display:flex;gap:6px;align-items:center"><button class="star${p.priority?' on':''}" title="${p.priority?'Remove from Biggest Focus':'Mark as Biggest Focus'}" onclick="toggleBig('${p.id}')">★</button><span class="st st-${st}">${st==='live'?'Live':st==='ended'?'Ended':st==='upcoming'?'Upcoming':'No date'}</span><button class="x" title="Delete" onclick="delPromo('${p.id}')">✕</button></div></div>`; }
 async function linkPromo(id,prodId){
   const p=PROMOS.find(x=>x.id===id); if(!p) return;
   if(!prodId && !confirm(`Unlink "${p.product}" from ${prodOf(p)?.name||'its product'}?`)){ render(); return; }
@@ -249,7 +264,7 @@ async function importCsv(file){
   REVIEW=rows.slice(1).map(r=>{ const name=get(r,'product');
     const sku=get(r,'sku');
     return {product:name,sku,line:get(r,'line')||'Shark',deal:get(r,'deal'),start_date:get(r,'start_date'),end_date:get(r,'end_date'),notes:get(r,'notes'),
-      month:get(r,'month')||month,priority:big||/^(y|yes|true|1|★)$/i.test(get(r,'biggest_get')),prod_id:matchProduct(sku,name)}; })
+      month:get(r,'month')||month,priority:big||/^(y|yes|true|1|★)$/i.test(get(r,'biggest_focus')||get(r,'biggest_get')),prod_id:matchProduct(sku,name)}; })
     .filter(x=>x.product).sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
   st.textContent=`Loaded ${REVIEW.length} items — check them below, then save.`; renderReview();
 }
@@ -260,7 +275,7 @@ function toggleUpload(){ const c=document.getElementById('uploadCard'); c.style.
 const PROMO_SCHEMA={type:'OBJECT',properties:{items:{type:'ARRAY',items:{type:'OBJECT',properties:{
   product:{type:'STRING'},sku:{type:'STRING',description:'Model/SKU number as printed, e.g. HT302, or empty'},line:{type:'STRING',description:'Shark, Ninja or Shark Beauty'},deal:{type:'STRING'},
   start_date:{type:'STRING',description:'YYYY-MM-DD'},end_date:{type:'STRING',description:'YYYY-MM-DD or empty'},notes:{type:'STRING'},
-  matched_product:{type:'STRING',description:'Exact name from MY PRODUCTS, or empty'}},required:['product','line','deal','start_date','end_date','notes','matched_product']}}},required:['items']};
+  matched_product:{type:'STRING',description:'Exact name from MY PRODUCTS, or empty'},biggest_focus:{type:'BOOLEAN',description:'true if this item (or its SKU) is listed under a Biggest Focus / Biggest Gets section'}},required:['product','line','deal','start_date','end_date','notes','matched_product','biggest_focus']}}},required:['items']};
 async function readPromoFiles(files){
   if(!files?.length) return; const st=document.getElementById('upStatus'), month=document.getElementById('upMonth').value||MONTH;
   try{
@@ -273,22 +288,23 @@ async function readPromoFiles(files){
     const mine=PRODUCTS.filter(p=>/shark|ninja/i.test(`${p.brand} ${p.name}`)).map(p=>p.name);
     const [y]=month.split('-');
     parts.push({text:`This is a Shark / SharkNinja monthly promo list for ${monthName(month)} (a Canva design, usually split into Ninja, Shark and Shark Beauty sections). Extract EVERY promoted product into one flat list.
+Some slides have a "Biggest Focus" (or "Biggest Gets") section, often at the bottom, listing SKUs or product names the brand is pushing hardest: set biggest_focus=true for every item whose SKU or name appears there (match SKUs exactly, or by the first 4 characters), false for the rest.
 For each: product (clean product name), sku (the model/SKU number exactly as printed, e.g. HT302 or AF101 — empty if none), line ("Shark", "Ninja" or "Shark Beauty" — the section it was in), deal (e.g. "$100 off", "30% off", "Lowest price"), start_date and end_date as YYYY-MM-DD (year ${y} unless stated; if only one date, use it for both; if no date, use empty), notes (codes, bundles, "hero"/"push" items, anything important), matched_product (the exact name from MY PRODUCTS that is the same item, or "" if none).
 MY PRODUCTS: ${JSON.stringify(mine)}`});
     const res=await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',responseSchema:PROMO_SCHEMA,temperature:0.1}})});
     const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
     REVIEW=(JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim()).items||[])
-      .map(x=>({...x,month,priority:document.getElementById('upBig').checked,prod_id:matchProduct(x.sku,x.matched_product)}))
+      .map(x=>({...x,month,priority:!!x.biggest_focus||document.getElementById('upBig').checked,prod_id:matchProduct(x.sku,x.matched_product)}))
       .sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
-    st.textContent=`Found ${REVIEW.length} items${document.getElementById('upBig').checked?' (marked ★ Biggest Gets)':''} — check them below, then save.`; renderReview();
+    const nb=REVIEW.filter(x=>x.priority).length; st.textContent=`Found ${REVIEW.length} items${nb?` · ${nb} marked ★ Biggest Focus`:''} — check them below, then save.`; renderReview();
   }catch(e){ st.textContent='Could not read it: '+e.message; }
   document.getElementById('upFile').value='';
 }
 function renderReview(){
   const opts=sel=>'<option value="">— not on Products page —</option>'+PRODUCTS.filter(p=>/shark|ninja/i.test(`${p.brand} ${p.name}`)).sort((a,b)=>String(a.name).localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('');
   document.getElementById('reviewWrap').innerHTML=REVIEW.length?`<table class="review"><tr><th>★</th><th>Product</th><th>SKU</th><th>Line</th><th>Deal</th><th>Start</th><th>End</th><th>Notes</th><th>Your product</th><th></th></tr>
-    ${REVIEW.map((r,i)=>`<tr><td><input type="checkbox" title="Biggest Get" style="width:auto;accent-color:var(--rust)" ${r.priority?'checked':''} onchange="REVIEW[${i}].priority=this.checked"></td><td><input value="${esc(r.product)}" oninput="REVIEW[${i}].product=this.value"></td>
+    ${REVIEW.map((r,i)=>`<tr><td><input type="checkbox" title="Biggest Focus" style="width:auto;accent-color:var(--rust)" ${r.priority?'checked':''} onchange="REVIEW[${i}].priority=this.checked"></td><td><input value="${esc(r.product)}" oninput="REVIEW[${i}].product=this.value"></td>
       <td><input value="${esc(r.sku||'')}" style="width:90px" onchange="REVIEW[${i}].sku=this.value;REVIEW[${i}].prod_id=matchProduct(this.value,REVIEW[${i}].product);renderReview()"></td>
       <td><select onchange="REVIEW[${i}].line=this.value">${['Shark','Ninja','Shark Beauty'].map(l=>`<option ${norm(l)===norm(r.line)?'selected':''}>${l}</option>`).join('')}</select></td>
       <td><input value="${esc(r.deal)}" oninput="REVIEW[${i}].deal=this.value"></td>
