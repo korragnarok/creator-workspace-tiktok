@@ -123,7 +123,7 @@ select:focus,input:focus{border-color:var(--tan);}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=260"></script>
-<script src="promos-sync.js?v=264"></script>
+<script src="promos-sync.js?v=266"></script>
 <script src="layout.js?v=260"></script>
 <script>
 const WORKER='https://take24-scout.kortnycall5.workers.dev';
@@ -139,7 +139,7 @@ const monthName=m=>{ const [y,mo]=m.split('-'); return new Date(+y,+mo-1,1).toLo
 async function loadAll(){
   const [{data:pr},{data:prods}]=await Promise.all([
     db.from('promos').select('*').eq('user_id',USER.id).order('start_date',{ascending:true}),
-    db.from('products').select('id,name,brand,image_url,tiktok_account_id').eq('user_id',USER.id)
+    db.from('products').select('id,name,brand,image_url,tiktok_account_id,sku').eq('user_id',USER.id)
   ]);
   PROMOS=pr||[]; PRODUCTS=prods||[];
   const months=[...new Set(PROMOS.map(p=>p.month))].sort().reverse();
@@ -180,7 +180,7 @@ function render(){
 }
 function itemHtml(p){ const today=promoYmd(new Date()), pr=prodOf(p), st=promoStatus(p,today); const link=pr?'':`<select class="plink" onchange="linkPromo('${p.id}',this.value)"><option value="">🔗 Link to a product…</option>${PRODUCTS.slice().sort((a,b)=>String(a.name).localeCompare(b.name)).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>`; return `<div class="item${p.priority?' is-big':''}"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt="">
         <div><div class="n"><span class="line ${lineClass(p.line)}">${esc(p.line)}</span>${esc(p.product)}</div>
-        ${link}<div class="s">${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}${p.notes?' · '+esc(p.notes):''}${p.todo_added?' · ✓ on to-do':` · to-do on ${fmtD(promoShift(p.start_date||today,-PROMO_LEAD_DAYS))}`}</div></div>
+        ${link}<div class="s">${p.sku?`<b>${esc(p.sku)}</b> · `:''}${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}${p.notes?' · '+esc(p.notes):''}${p.todo_added?' · ✓ on to-do':` · to-do on ${fmtD(promoShift(p.start_date||today,-PROMO_LEAD_DAYS))}`}</div></div>
         <div class="deal">${esc(p.deal||'')}</div>
         <div style="display:flex;gap:6px;align-items:center"><button class="star${p.priority?' on':''}" title="${p.priority?'Remove from Biggest Gets':'Mark as a Biggest Get'}" onclick="toggleBig('${p.id}')">★</button><span class="st st-${st}">${st==='live'?'Live':st==='ended'?'Ended':st==='upcoming'?'Upcoming':'No date'}</span><button class="x" title="Delete" onclick="delPromo('${p.id}')">✕</button></div></div>`; }
 async function linkPromo(id,prodId){ if(!prodId) return;
@@ -190,6 +190,11 @@ async function toggleBig(id){ const p=PROMOS.find(x=>x.id===id); if(!p) return; 
   const {error}=await db.from('promos').update({priority:v}).eq('id',id).eq('user_id',USER.id); if(error){ alert(error.message); return; } p.priority=v; render(); }
 async function delPromo(id){ if(!confirm('Delete this promo item?')) return; await db.from('promos').delete().eq('id',id).eq('user_id',USER.id); PROMOS=PROMOS.filter(p=>p.id!==id); render(); }
 
+// Match a promo to your product: SKU first (exact, then same first 4) — if it has a SKU and nothing matches, you don't own it.
+function matchProduct(sku,name){
+  if(promoSkuKey(sku)) return promoMatchBySku(sku,PRODUCTS)?.id||'';
+  const n=norm(name); return (PRODUCTS.find(p=>norm(p.name)===n)||(n.length>4?PRODUCTS.find(p=>norm(p.name).includes(n)):null))?.id||'';
+}
 // ── CSV import (no AI on the site) ──
 function parseCsv(text){
   const rows=[]; let row=[], cur='', q=false;
@@ -209,18 +214,18 @@ async function importCsv(file){
   const get=(r,n)=>{ const i=col(n); return i>=0?String(r[i]||'').trim():''; };
   const big=document.getElementById('upBig').checked;
   REVIEW=rows.slice(1).map(r=>{ const name=get(r,'product');
-    const match=PRODUCTS.find(p=>norm(p.name)===norm(name))||PRODUCTS.find(p=>norm(name).length>4&&norm(p.name).includes(norm(name)));
-    return {product:name,line:get(r,'line')||'Shark',deal:get(r,'deal'),start_date:get(r,'start_date'),end_date:get(r,'end_date'),notes:get(r,'notes'),
-      month:get(r,'month')||month,priority:big||/^(y|yes|true|1|★)$/i.test(get(r,'biggest_get')),prod_id:match?.id||''}; })
+    const sku=get(r,'sku');
+    return {product:name,sku,line:get(r,'line')||'Shark',deal:get(r,'deal'),start_date:get(r,'start_date'),end_date:get(r,'end_date'),notes:get(r,'notes'),
+      month:get(r,'month')||month,priority:big||/^(y|yes|true|1|★)$/i.test(get(r,'biggest_get')),prod_id:matchProduct(sku,name)}; })
     .filter(x=>x.product).sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
   st.textContent=`Loaded ${REVIEW.length} items — check them below, then save.`; renderReview();
 }
-function addBlankRow(){ REVIEW.push({product:'',line:'Shark',deal:'',start_date:'',end_date:'',notes:'',month:document.getElementById('upMonth').value||MONTH,priority:document.getElementById('upBig').checked,prod_id:''}); renderReview(); }
+function addBlankRow(){ REVIEW.push({product:'',sku:'',line:'Shark',deal:'',start_date:'',end_date:'',notes:'',month:document.getElementById('upMonth').value||MONTH,priority:document.getElementById('upBig').checked,prod_id:''}); renderReview(); }
 
 // ── Upload → Gemini → review ──
 function toggleUpload(){ const c=document.getElementById('uploadCard'); c.style.display=c.style.display==='none'?'':'none'; if(!document.getElementById('upMonth').value) document.getElementById('upMonth').value=MONTH; }
 const PROMO_SCHEMA={type:'OBJECT',properties:{items:{type:'ARRAY',items:{type:'OBJECT',properties:{
-  product:{type:'STRING'},line:{type:'STRING',description:'Shark, Ninja or Shark Beauty'},deal:{type:'STRING'},
+  product:{type:'STRING'},sku:{type:'STRING',description:'Model/SKU number as printed, e.g. HT302, or empty'},line:{type:'STRING',description:'Shark, Ninja or Shark Beauty'},deal:{type:'STRING'},
   start_date:{type:'STRING',description:'YYYY-MM-DD'},end_date:{type:'STRING',description:'YYYY-MM-DD or empty'},notes:{type:'STRING'},
   matched_product:{type:'STRING',description:'Exact name from MY PRODUCTS, or empty'}},required:['product','line','deal','start_date','end_date','notes','matched_product']}}},required:['items']};
 async function readPromoFiles(files){
@@ -235,13 +240,13 @@ async function readPromoFiles(files){
     const mine=PRODUCTS.filter(p=>/shark|ninja/i.test(`${p.brand} ${p.name}`)).map(p=>p.name);
     const [y]=month.split('-');
     parts.push({text:`This is a Shark / SharkNinja monthly promo list for ${monthName(month)} (a Canva design, usually split into Ninja, Shark and Shark Beauty sections). Extract EVERY promoted product into one flat list.
-For each: product (clean product name), line ("Shark", "Ninja" or "Shark Beauty" — the section it was in), deal (e.g. "$100 off", "30% off", "Lowest price"), start_date and end_date as YYYY-MM-DD (year ${y} unless stated; if only one date, use it for both; if no date, use empty), notes (codes, bundles, "hero"/"push" items, anything important), matched_product (the exact name from MY PRODUCTS that is the same item, or "" if none).
+For each: product (clean product name), sku (the model/SKU number exactly as printed, e.g. HT302 or AF101 — empty if none), line ("Shark", "Ninja" or "Shark Beauty" — the section it was in), deal (e.g. "$100 off", "30% off", "Lowest price"), start_date and end_date as YYYY-MM-DD (year ${y} unless stated; if only one date, use it for both; if no date, use empty), notes (codes, bundles, "hero"/"push" items, anything important), matched_product (the exact name from MY PRODUCTS that is the same item, or "" if none).
 MY PRODUCTS: ${JSON.stringify(mine)}`});
     const res=await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',responseSchema:PROMO_SCHEMA,temperature:0.1}})});
     const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
     REVIEW=(JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim()).items||[])
-      .map(x=>({...x,month,priority:document.getElementById('upBig').checked,prod_id:(PRODUCTS.find(p=>norm(p.name)===norm(x.matched_product))||{}).id||''}))
+      .map(x=>({...x,month,priority:document.getElementById('upBig').checked,prod_id:matchProduct(x.sku,x.matched_product)}))
       .sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
     st.textContent=`Found ${REVIEW.length} items${document.getElementById('upBig').checked?' (marked ★ Biggest Gets)':''} — check them below, then save.`; renderReview();
   }catch(e){ st.textContent='Could not read it: '+e.message; }
@@ -249,8 +254,9 @@ MY PRODUCTS: ${JSON.stringify(mine)}`});
 }
 function renderReview(){
   const opts=sel=>'<option value="">— not on Products page —</option>'+PRODUCTS.filter(p=>/shark|ninja/i.test(`${p.brand} ${p.name}`)).sort((a,b)=>String(a.name).localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('');
-  document.getElementById('reviewWrap').innerHTML=REVIEW.length?`<table class="review"><tr><th>★</th><th>Product</th><th>Line</th><th>Deal</th><th>Start</th><th>End</th><th>Notes</th><th>Your product</th><th></th></tr>
+  document.getElementById('reviewWrap').innerHTML=REVIEW.length?`<table class="review"><tr><th>★</th><th>Product</th><th>SKU</th><th>Line</th><th>Deal</th><th>Start</th><th>End</th><th>Notes</th><th>Your product</th><th></th></tr>
     ${REVIEW.map((r,i)=>`<tr><td><input type="checkbox" title="Biggest Get" style="width:auto;accent-color:var(--rust)" ${r.priority?'checked':''} onchange="REVIEW[${i}].priority=this.checked"></td><td><input value="${esc(r.product)}" oninput="REVIEW[${i}].product=this.value"></td>
+      <td><input value="${esc(r.sku||'')}" style="width:90px" onchange="REVIEW[${i}].sku=this.value;REVIEW[${i}].prod_id=matchProduct(this.value,REVIEW[${i}].product);renderReview()"></td>
       <td><select onchange="REVIEW[${i}].line=this.value">${['Shark','Ninja','Shark Beauty'].map(l=>`<option ${norm(l)===norm(r.line)?'selected':''}>${l}</option>`).join('')}</select></td>
       <td><input value="${esc(r.deal)}" oninput="REVIEW[${i}].deal=this.value"></td>
       <td><input type="date" value="${esc(r.start_date)}" onchange="REVIEW[${i}].start_date=this.value"></td>
@@ -262,7 +268,7 @@ function renderReview(){
 }
 async function saveReview(){
   const rows=REVIEW.filter(r=>String(r.product||'').trim()).map(r=>({user_id:USER.id,month:r.month,product:r.product.trim(),line:/beauty/i.test(r.line)?'Shark Beauty':/ninja/i.test(r.line)?'Ninja':'Shark',
-    deal:r.deal||'',start_date:r.start_date||null,end_date:r.end_date||r.start_date||null,notes:r.notes||'',prod_id:r.prod_id||null,
+    sku:String(r.sku||'').trim(),deal:r.deal||'',start_date:r.start_date||null,end_date:r.end_date||r.start_date||null,notes:r.notes||'',prod_id:r.prod_id||null,
     tiktok_account_id:promoAccountFor(r.line,ACCTS),todo_added:false}));
   rows.forEach((r,i)=>r.priority=!!REVIEW.filter(x=>String(x.product||'').trim())[i]?.priority);
   const dupes=[], fresh=[];

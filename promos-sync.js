@@ -38,18 +38,32 @@ async function syncPromoTodos(userId){
   } catch (e) { console.warn('Promo to-do sync failed', e); return 0; }
 }
 
-// Links promo items to products you've added since (matched by name). Runs on Home + the Promos page.
+// SKU matching: exact SKU first, otherwise the same first 4 letters/numbers. No match = you don't own it.
+function promoSkuKey(v){ return String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+function promoMatchBySku(sku, prods){
+  const k = promoSkuKey(sku); if (!k) return null;
+  const withSku = (prods || []).filter(p => promoSkuKey(p.sku));
+  return withSku.find(p => promoSkuKey(p.sku) === k)
+      || (k.length >= 4 ? withSku.find(p => promoSkuKey(p.sku).slice(0, 4) === k.slice(0, 4)) : null)
+      || null;
+}
+// Links promo items to products you've added since (by SKU when the promo has one, otherwise by name). Runs on Home + the Promos page.
 async function linkPromoProducts(userId){
   try {
     const [{ data: promos }, { data: prods }] = await Promise.all([
-      db.from('promos').select('id,product').eq('user_id', userId).is('prod_id', null),
-      db.from('products').select('id,name').eq('user_id', userId)
+      db.from('promos').select('id,product,sku').eq('user_id', userId).is('prod_id', null),
+      db.from('products').select('id,name,sku').eq('user_id', userId)
     ]);
     if (!promos?.length || !prods?.length) return 0;
     const norm = v => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
     const words = v => norm(v).split(' ').filter(w => w.length > 2 && !['the','and','with','for'].includes(w));
     let n = 0;
     for (const p of promos) {
+      if (promoSkuKey(p.sku)) {   // has a SKU → only SKU matching counts
+        const hit = promoMatchBySku(p.sku, prods);
+        if (hit) { await db.from('promos').update({ prod_id: hit.id }).eq('id', p.id).eq('user_id', userId); n++; }
+        continue;
+      }
       const pn = norm(p.product), pw = words(p.product);
       // exact name, one name containing the other, or every important word of the promo name in the product name
       const hit = prods.find(x => norm(x.name) === pn)
