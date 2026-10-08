@@ -203,12 +203,14 @@ textarea{resize:vertical;min-height:60px;}
           <label class="swopt on"><input type="checkbox" id="swPsych" checked onchange="swOpt(this)"><b>Buyer psychology</b><small>Shows why people justify buying it, and you pick the angles.</small></label>
           <label class="swopt"><input type="checkbox" id="swRage" onchange="swOpt(this)"><b>Rage bait</b><small>Adds a debate-starting version to compare side by side.</small></label>
           <label class="swopt"><input type="checkbox" id="swHoliday" onchange="swOpt(this);swRenderHolidays()"><b>Holidays &amp; events</b><small>Time it for a holiday, shopping day or season coming up.</small></label>
-          <label class="swopt"><input type="checkbox" id="swSpecial" onchange="swOpt(this);document.getElementById('swSpecialPick').style.display=this.checked?'':'none'"><b>Special occasions</b><small>A new release or limited edition? The script opens with it.</small></label>
+          <label class="swopt"><input type="checkbox" id="swSpecial" onchange="swOpt(this);document.getElementById('swSpecialPick').style.display=this.checked?'':'none'"><b>Special occasions</b><small>A new release, limited edition or a sale? The script opens with it.</small></label>
         </div>
         <div class="swsub" id="swHolidayPick" style="display:none"></div>
         <div class="swsub" id="swSpecialPick" style="display:none">
-          <div class="swsl">What's special about it? <em>Pick one or both.</em></div>
-          <div class="swgrid"><label class="swev"><input type="checkbox" value="New release" class="swSp"><b>New release</b><small>It just came out.</small></label><label class="swev"><input type="checkbox" value="Limited edition" class="swSp"><b>Limited edition</b><small>It's only around for a while.</small></label></div>
+          <div class="swsl">What's special about it? <em>Pick any that apply.</em></div>
+          <div class="swgrid"><label class="swev"><input type="checkbox" value="New release" class="swSp"><b>New release</b><small>It just came out.</small></label><label class="swev"><input type="checkbox" value="Limited edition" class="swSp"><b>Limited edition</b><small>It's only around for a while.</small></label><label class="swev"><input type="checkbox" value="On sale" class="swSp" id="swSale" onchange="document.getElementById('swSaleInfo').style.display=this.checked?'':'none'"><b>On sale / promo</b><small>There's a deal on it right now.</small></label></div>
+          <div class="swrow" id="swSaleInfo" style="display:none;margin-top:8px"><input id="swDeal" placeholder="The deal, e.g. $100 off, 30% off, lowest price this year"><input id="swDealEnd" type="date" title="When the deal ends (optional)" style="flex:0 0 160px"></div>
+          <div class="sub" id="swPromoNote" style="display:none;margin:6px 0 0;font-size:12px"></div>
         </div>
         <div class="swseg2">
           <div><div class="swsl">Filming</div><div class="seg" data-k="film"><button class="on" data-v="Talking to camera">Talking to camera</button><button data-v="Faceless">Faceless</button></div></div>
@@ -590,6 +592,7 @@ function swUseProduct(){
   const v=document.getElementById('swProduct').value.trim(); if(!v){ document.getElementById('swProduct').focus(); return; }
   const p=SW_PRODUCTS.find(x=>String(x.name).toLowerCase()===v.toLowerCase());
   SW.product=p?.name||v; SW.brand=p?.brand||''; SW.image=p?.image_url||''; SW.shots=[]; swShowPicked();
+  if(p?.id) swCheckPromo(p.id);
 }
 async function swPickShots(files){
   const list=[...(files||[])].slice(0,5); document.getElementById('swShots').value=''; if(!list.length) return;
@@ -598,6 +601,19 @@ async function swPickShots(files){
 function swShowPicked(){
   document.getElementById('swProdPick').style.display='none'; const el=document.getElementById('swProdPicked'); el.style.display='';
   el.innerHTML=`<div class="swpicked">${SW.image?`<img src="${esc(SW.image)}">`:''}<div><b>${esc(SW.product||`${SW.shots.length} screenshot${SW.shots.length===1?'':'s'}`)}</b><small>${esc(SW.brand||(SW.shots.length?'Gemini reads the product from your screenshots':''))}</small></div><a onclick="swChange()">Change</a></div>`;
+}
+// If this product is on your Shark & Ninja promo list right now (or soon), fill in the sale for you
+async function swCheckPromo(prodId){
+  try{
+    const today=new Date().toISOString().slice(0,10);
+    const {data}=await db.from('promos').select('deal,start_date,end_date').eq('prod_id',prodId).gte('end_date',today).order('start_date').limit(1);
+    const pr=data?.[0]; if(!pr) return;
+    document.getElementById('swSpecial').checked=true; swOpt(document.getElementById('swSpecial')); document.getElementById('swSpecialPick').style.display='';
+    document.getElementById('swSale').checked=true; document.getElementById('swSaleInfo').style.display='';
+    document.getElementById('swDeal').value=pr.deal||''; document.getElementById('swDealEnd').value=pr.end_date||'';
+    const note=document.getElementById('swPromoNote'); note.style.display='';
+    note.textContent=`Filled in from your Shark & Ninja promos: ${pr.deal||'deal'} · ${pr.start_date<=today?'live now':'starts '+new Date(pr.start_date+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}.`;
+  }catch(e){}
 }
 function swChange(){ SW.product=''; SW.shots=[]; document.getElementById('swProdPick').style.display=''; document.getElementById('swProdPicked').style.display='none'; }
 
@@ -630,7 +646,10 @@ function swContext(){
   const bits=[`Filming: ${SW.film}${SW.film==='Faceless'?' (voiceover over hands/product/B-roll shots, creator never on camera)':''}`,
     `Format: ${SW.fmt}${SW.fmt==='Aesthetic'?' (calm, visual, minimal words — short lines that work as on-screen text or a soft voiceover)':''}`];
   if(document.getElementById('swHoliday').checked&&SW.holiday) bits.push(`Work in this holiday/event naturally: ${SW.holiday}`);
-  if(SW.special.length) bits.push(`Open the script with this: it's a ${SW.special.join(' and ')}`);
+  const sp=SW.special.filter(x=>x!=='On sale');
+  if(sp.length) bits.push(`Open the script with this: it's a ${sp.join(' and ')}`);
+  if(SW.special.includes('On sale')){ const deal=document.getElementById('swDeal').value.trim(), end=document.getElementById('swDealEnd').value;
+    bits.push(`It's ON SALE right now${deal?`: ${deal}`:''}${end?` (deal ends ${new Date(end+'T00:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'})})`:''}. Mention the sale early and naturally as low-key urgency ("it's on sale right now, fyi", "this is the lowest I've seen it"). Only state the deal exactly as given — never invent prices, percentages or end dates.`); }
   return bits.join('\n');
 }
 async function swProductParts(){
@@ -641,14 +660,14 @@ async function swProductParts(){
   return SW.shotParts||[];
 }
 function swBar(){ return `<div class="card swc swbar">${SW.image?`<img src="${esc(SW.image)}" style="width:30px;height:30px;border-radius:6px;object-fit:cover">`:''}<b style="color:var(--ink);margin-right:4px">${esc(SW.product||'Your product')}</b>
-  ${document.getElementById('swPsych').checked?'<span class="chip">Buyer psychology</span>':''}${document.getElementById('swHoliday').checked&&SW.holiday?`<span class="chip">${esc(SW.holiday)}</span>`:''}${SW.special.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}
+  ${document.getElementById('swPsych').checked?'<span class="chip">Buyer psychology</span>':''}${document.getElementById('swHoliday').checked&&SW.holiday?`<span class="chip">${esc(SW.holiday)}</span>`:''}${SW.special.map(x=>`<span class="chip">${esc(x==='On sale'&&document.getElementById('swDeal').value.trim()?'On sale · '+document.getElementById('swDeal').value.trim():x)}</span>`).join('')}
   <span class="chip">${esc(SW.film)}</span><span class="chip">${esc(SW.fmt)}</span><a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer" onclick="swReset()">Start over</a></div>`; }
 function swReset(){ SW.angles=[];SW.picked=[];SW.script=null;SW.rage=null;SW.shotParts=[]; document.getElementById('swFlow').innerHTML=''; document.getElementById('swSetup').style.display=''; window.scrollTo({top:0,behavior:'smooth'}); }
 async function swStart(){
   if(!SW.product&&!SW.shots.length){ const v=document.getElementById('swProduct').value.trim(); if(v) swUseProduct(); else { alert('Add a product first — type its name or upload screenshots.'); return; } }
   if(document.getElementById('swHoliday').checked&&!SW.holiday){ alert('Pick a holiday or event (or turn that option off).'); return; }
   SW.special=document.getElementById('swSpecial').checked?[...document.querySelectorAll('.swSp:checked')].map(x=>x.value):[];
-  if(document.getElementById('swSpecial').checked&&!SW.special.length){ alert('Pick New release or Limited edition (or turn that option off).'); return; }
+  if(document.getElementById('swSpecial').checked&&!SW.special.length){ alert('Pick New release, Limited edition or On sale (or turn that option off).'); return; }
   document.getElementById('swSetup').style.display='none';
   const flow=document.getElementById('swFlow');
   if(!document.getElementById('swPsych').checked){ flow.innerHTML=swBar(); SW.picked=[]; return swWrite(); }
@@ -747,7 +766,7 @@ async function swSave(btn,sc){
   try { USER_TONE = session.user.user_metadata?.ai_tone || ''; } catch (e) {}
   try { const prefs = await loadUserPrefs(session.user.id); await initTheme(session.user.id, prefs); await initDisplayName(session.user, prefs); initProfilePopover(session.user.id); } catch (e) {}
   // product suggestions
-  try { SW_PRODUCTS = (await db.from('products').select('name,brand,image_url').eq('user_id', session.user.id)).data || []; } catch (e) {}
+  try { SW_PRODUCTS = (await db.from('products').select('id,name,brand,image_url').eq('user_id', session.user.id)).data || []; } catch (e) {}
   try { if (localStorage.getItem('take24:vfPane') === 'sw') setPane('sw'); } catch (e) {}
   try { const { data } = await db.from('products').select('name').eq('user_id', session.user.id).order('name');
     document.getElementById('prodList').innerHTML = (data || []).map(p => `<option value="${esc(p.name)}">`).join(''); } catch (e) {}
