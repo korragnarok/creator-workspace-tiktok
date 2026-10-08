@@ -67,6 +67,7 @@ select:focus,input:focus{border-color:var(--tan);}
 .star.on{color:#D9A441;}
 .item.is-big{border-color:#D9A441;}
 .day.big .day-h{color:#D9A441;}
+.plink{margin:4px 0 2px;padding:3px 6px;font-size:11px;max-width:260px;border-style:dashed;}
 </style>
 </head>
 <body>
@@ -85,7 +86,12 @@ select:focus,input:focus{border-color:var(--tan);}
       <input type="month" id="upMonth">
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-mid);cursor:pointer"><input type="checkbox" id="upBig" style="accent-color:var(--rust)"> This is a <b style="color:var(--ink)">★ Biggest Gets</b> list</label>
     </div>
-    <div class="drop" onclick="document.getElementById('upFile').click()"><b>Drop your Canva export here</b>PDF or images (PNG/JPG) — you can pick several</div>
+    <div class="drop" style="padding:16px" onclick="document.getElementById('csvFile').click()"><b>Import a promo CSV</b>The list Claude makes from your Canva (.csv)</div>
+    <input type="file" id="csvFile" accept=".csv,text/csv" hidden onchange="importCsv(this.files[0])">
+    <div class="bar" style="margin-top:10px">
+      <button class="btn" onclick="addBlankRow()">+ Add an item by hand</button>
+      <button class="btn" onclick="document.getElementById('upFile').click()" title="Uses Gemini">Read a Canva file with Gemini</button>
+    </div>
     <input type="file" id="upFile" accept="application/pdf,image/*" multiple hidden onchange="readPromoFiles(this.files)">
     <div class="status" id="upStatus"></div>
     <div id="reviewWrap"></div>
@@ -117,7 +123,7 @@ select:focus,input:focus{border-color:var(--tan);}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=260"></script>
-<script src="promos-sync.js?v=260"></script>
+<script src="promos-sync.js?v=264"></script>
 <script src="layout.js?v=260"></script>
 <script>
 const WORKER='https://take24-scout.kortnycall5.workers.dev';
@@ -172,14 +178,44 @@ function render(){
     v.innerHTML=`<div class="cal">${html}</div>`;
   }
 }
-function itemHtml(p){ const today=promoYmd(new Date()), pr=prodOf(p), st=promoStatus(p,today); return `<div class="item${p.priority?' is-big':''}"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt="">
+function itemHtml(p){ const today=promoYmd(new Date()), pr=prodOf(p), st=promoStatus(p,today); const link=pr?'':`<select class="plink" onchange="linkPromo('${p.id}',this.value)"><option value="">🔗 Link to a product…</option>${PRODUCTS.slice().sort((a,b)=>String(a.name).localeCompare(b.name)).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>`; return `<div class="item${p.priority?' is-big':''}"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt="">
         <div><div class="n"><span class="line ${lineClass(p.line)}">${esc(p.line)}</span>${esc(p.product)}</div>
-        <div class="s">${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}${p.notes?' · '+esc(p.notes):''}${p.todo_added?' · ✓ on to-do':` · to-do on ${fmtD(promoShift(p.start_date||today,-PROMO_LEAD_DAYS))}`}</div></div>
+        ${link}<div class="s">${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}${p.notes?' · '+esc(p.notes):''}${p.todo_added?' · ✓ on to-do':` · to-do on ${fmtD(promoShift(p.start_date||today,-PROMO_LEAD_DAYS))}`}</div></div>
         <div class="deal">${esc(p.deal||'')}</div>
         <div style="display:flex;gap:6px;align-items:center"><button class="star${p.priority?' on':''}" title="${p.priority?'Remove from Biggest Gets':'Mark as a Biggest Get'}" onclick="toggleBig('${p.id}')">★</button><span class="st st-${st}">${st==='live'?'Live':st==='ended'?'Ended':st==='upcoming'?'Upcoming':'No date'}</span><button class="x" title="Delete" onclick="delPromo('${p.id}')">✕</button></div></div>`; }
+async function linkPromo(id,prodId){ if(!prodId) return;
+  const {error}=await db.from('promos').update({prod_id:prodId}).eq('id',id).eq('user_id',USER.id); if(error){ alert(error.message); return; }
+  const p=PROMOS.find(x=>x.id===id); if(p) p.prod_id=prodId; render(); }
 async function toggleBig(id){ const p=PROMOS.find(x=>x.id===id); if(!p) return; const v=!p.priority;
   const {error}=await db.from('promos').update({priority:v}).eq('id',id).eq('user_id',USER.id); if(error){ alert(error.message); return; } p.priority=v; render(); }
 async function delPromo(id){ if(!confirm('Delete this promo item?')) return; await db.from('promos').delete().eq('id',id).eq('user_id',USER.id); PROMOS=PROMOS.filter(p=>p.id!==id); render(); }
+
+// ── CSV import (no AI on the site) ──
+function parseCsv(text){
+  const rows=[]; let row=[], cur='', q=false;
+  for(let i=0;i<text.length;i++){ const c=text[i];
+    if(q){ if(c==='"'&&text[i+1]==='"'){ cur+='"'; i++; } else if(c==='"') q=false; else cur+=c; }
+    else if(c==='"') q=true; else if(c===','){ row.push(cur); cur=''; }
+    else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n') i++; row.push(cur); cur=''; if(row.some(v=>v.trim())) rows.push(row); row=[]; }
+    else cur+=c; }
+  row.push(cur); if(row.some(v=>v.trim())) rows.push(row);
+  return rows;
+}
+async function importCsv(file){
+  if(!file) return; const st=document.getElementById('upStatus'), month=document.getElementById('upMonth').value||MONTH;
+  const rows=parseCsv(await file.text()); document.getElementById('csvFile').value='';
+  if(rows.length<2){ st.textContent='That CSV looks empty.'; return; }
+  const head=rows[0].map(h=>norm(h).replace(/ /g,'_')), col=n=>head.indexOf(n);
+  const get=(r,n)=>{ const i=col(n); return i>=0?String(r[i]||'').trim():''; };
+  const big=document.getElementById('upBig').checked;
+  REVIEW=rows.slice(1).map(r=>{ const name=get(r,'product');
+    const match=PRODUCTS.find(p=>norm(p.name)===norm(name))||PRODUCTS.find(p=>norm(name).length>4&&norm(p.name).includes(norm(name)));
+    return {product:name,line:get(r,'line')||'Shark',deal:get(r,'deal'),start_date:get(r,'start_date'),end_date:get(r,'end_date'),notes:get(r,'notes'),
+      month:get(r,'month')||month,priority:big||/^(y|yes|true|1|★)$/i.test(get(r,'biggest_get')),prod_id:match?.id||''}; })
+    .filter(x=>x.product).sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
+  st.textContent=`Loaded ${REVIEW.length} items — check them below, then save.`; renderReview();
+}
+function addBlankRow(){ REVIEW.push({product:'',line:'Shark',deal:'',start_date:'',end_date:'',notes:'',month:document.getElementById('upMonth').value||MONTH,priority:document.getElementById('upBig').checked,prod_id:''}); renderReview(); }
 
 // ── Upload → Gemini → review ──
 function toggleUpload(){ const c=document.getElementById('uploadCard'); c.style.display=c.style.display==='none'?'':'none'; if(!document.getElementById('upMonth').value) document.getElementById('upMonth').value=MONTH; }
@@ -307,6 +343,7 @@ async function addPlan(){
   USER=session.user;
   try{ const prefs=await loadUserPrefs(USER.id); await initTheme(USER.id,prefs); await initDisplayName(USER,prefs); initProfilePopover(USER.id); }catch(e){}
   ACCTS=await promoAccounts(USER.id);
+  await linkPromoProducts(USER.id);   // connect items to products you've added since
   await syncPromoTodos(USER.id);
   await loadAll();
 })();

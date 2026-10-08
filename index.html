@@ -1104,7 +1104,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   </div>
 </div>
 
-<script src="promos-sync.js?v=260"></script>
+<script src="promos-sync.js?v=264"></script>
 <script src="planner-sync.js?v=238"></script>
 <script src="layout.js?v=260"></script>
 <script>
@@ -1497,7 +1497,7 @@ async function init() {
   const user = await requireAuth();
   if (!user) return;
   _dashboardUser=user;
-  try{ await syncPromoTodos(user.id); }catch(e){}   // Shark/Ninja promo items land on the to-do 2 days early
+  try{ await linkPromoProducts(user.id); await syncPromoTodos(user.id); }catch(e){}   // Shark/Ninja promo items land on the to-do 2 days early
   renderPromoHome(user.id);
   const prefs = await loadUserPrefs(user.id);
   _streakGoal = resolveStreakGoal(user, prefs);

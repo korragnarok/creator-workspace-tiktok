@@ -37,3 +37,26 @@ async function syncPromoTodos(userId){
     return rows.length;
   } catch (e) { console.warn('Promo to-do sync failed', e); return 0; }
 }
+
+// Links promo items to products you've added since (matched by name). Runs on Home + the Promos page.
+async function linkPromoProducts(userId){
+  try {
+    const [{ data: promos }, { data: prods }] = await Promise.all([
+      db.from('promos').select('id,product').eq('user_id', userId).is('prod_id', null),
+      db.from('products').select('id,name').eq('user_id', userId)
+    ]);
+    if (!promos?.length || !prods?.length) return 0;
+    const norm = v => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const words = v => norm(v).split(' ').filter(w => w.length > 2 && !['the','and','with','for'].includes(w));
+    let n = 0;
+    for (const p of promos) {
+      const pn = norm(p.product), pw = words(p.product);
+      // exact name, one name containing the other, or every important word of the promo name in the product name
+      const hit = prods.find(x => norm(x.name) === pn)
+        || prods.find(x => pn.length > 5 && (norm(x.name).includes(pn) || pn.includes(norm(x.name))) && norm(x.name).length > 5)
+        || (pw.length >= 2 ? prods.find(x => pw.every(w => norm(x.name).includes(w))) : null);
+      if (hit) { await db.from('promos').update({ prod_id: hit.id }).eq('id', p.id).eq('user_id', userId); n++; }
+    }
+    return n;
+  } catch (e) { console.warn('Promo linking failed', e); return 0; }
+}
