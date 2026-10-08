@@ -290,13 +290,14 @@ const SCHEMA = {
 // ── How every script/caption should sound ──
 let USER_TONE='';
 function voiceGuide(){
-  const tone = USER_TONE || (typeof DEFAULT_AI_TONE!=='undefined' ? DEFAULT_AI_TONE : '');
-  return `VOICE (very important): ${tone}
-Write it like she's casually telling a friend about something she actually uses — laid-back, honest, a little dry, real-life details, short sentences, normal words. It should NOT sound like an ad.
-- Lead with the real-life moment or problem, not the product's features list.
-- One or two honest specifics beat a pile of hype. A tiny downside or "I didn't expect…" is good.
-- Urgency should feel low-key and natural ("it's on sale right now, fyi", "they keep selling out of the blue one"), never pushy.
-- Avoid: "game changer", "obsessed", "you NEED this", "must-have", "run don't walk", "trust me", "holy grail", "life-changing", "don't sleep on", ALL CAPS hype, stacked exclamation points, and more than one emoji.`;
+  // Your own tone from Settings is added as extra flavour (the old default "lazy mom energy" note is skipped — it made scripts sound bored)
+  const custom = USER_TONE && !/lazy mom energy/i.test(USER_TONE) ? `\nExtra notes on her style: ${USER_TONE}` : '';
+  return `VOICE (very important): half real conversation, half confident recommendation — like a friend who genuinely loves this thing and is excited to tell you about it.
+- Warm, upbeat and natural. Energy should feel like "okay you have to see this", NOT bored, sighing, sarcastic or "whatever".
+- Sound like a real person talking: contractions, short sentences, everyday words, a real-life moment or two.
+- Sell with confidence: clearly say what it does, why it's better, and why it's worth it — specific benefits and real product details, not vague hype.
+- Give the viewer a reason to buy now (a deal, a season, a problem they have today) in a natural way.
+- Avoid cringe ad-speak: "game changer", "holy grail", "you NEED this", "run don't walk", "trust me", "life-changing", all-caps hype, stacked exclamation points, more than one emoji.${custom}`;
 }
 const AUDIO_NOTES = {
   'voiceover': 'The audio is the creator\'s OWN VOICEOVER talking about the product (no song). Judge the voiceover: clarity, energy, whether it sounds genuine, and whether the words and visuals match.',
@@ -649,7 +650,7 @@ function swContext(){
   const sp=SW.special.filter(x=>x!=='On sale');
   if(sp.length) bits.push(`Open the script with this: it's a ${sp.join(' and ')}`);
   if(SW.special.includes('On sale')){ const deal=document.getElementById('swDeal').value.trim(), end=document.getElementById('swDealEnd').value;
-    bits.push(`It's ON SALE right now${deal?`: ${deal}`:''}${end?` (deal ends ${new Date(end+'T00:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'})})`:''}. Mention the sale early and naturally as low-key urgency ("it's on sale right now, fyi", "this is the lowest I've seen it"). Only state the deal exactly as given — never invent prices, percentages or end dates.`); }
+    bits.push(`It's ON SALE right now${deal?`: ${deal}`:''}${end?` (deal ends ${new Date(end+'T00:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'})})`:''}. Mention the sale early and naturally as a natural reason to buy now ("it's on sale right now, fyi", "this is the lowest I've seen it"). Only state the deal exactly as given — never invent prices, percentages or end dates.`); }
   return bits.join('\n');
 }
 async function swProductParts(){
@@ -746,7 +747,7 @@ async function swExtra(k){
   try{
     if(k==='shots'){ const o=await gem([{text:`Turn this TikTok Shop script into a shot-by-shot filming plan for "${SW.film}" / ${SW.fmt} format. For each line of the script: what to film (framing, angle, close-ups, B-roll, props) and the matching line.\n${swContext()}\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{shots:{type:'ARRAY',items:{type:'OBJECT',properties:{film:{type:'STRING'},line:{type:'STRING'}},required:['film','line']}}},required:['shots']},0.5);
       SW.extras.shots=o.shots.map((x,i)=>`${i+1}. 🎬 ${x.film}\n   “${x.line}”`).join('\n\n'); }
-    if(k==='hooks'){ const o=await gem([{text:`Write 8 short on-screen TEXT HOOKS (the text overlay in the first 2 seconds) for this TikTok Shop video. Under 10 words each, laid-back and curiosity-driven, not salesy; no "you NEED this", no all-caps hype.\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{hooks:{type:'ARRAY',items:{type:'STRING'}}},required:['hooks']},0.9);
+    if(k==='hooks'){ const o=await gem([{text:`Write 8 short on-screen TEXT HOOKS (the text overlay in the first 2 seconds) for this TikTok Shop video. Under 10 words each, punchy and curiosity-driven, confident but not cheesy; no "you NEED this", no all-caps hype.\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{hooks:{type:'ARRAY',items:{type:'STRING'}}},required:['hooks']},0.9);
       SW.extras.hooks=o.hooks.map((h,i)=>`${i+1}. ${h}`).join('\n'); }
     if(k==='caption'){ const o=await gem([{text:`Write a TikTok caption for this video and 5–8 hashtags.\n${voiceGuide()}\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{caption:{type:'STRING'},hashtags:{type:'ARRAY',items:{type:'STRING'}}},required:['caption','hashtags']},0.7);
       SW.extras.caption=`${o.caption}\n\n${o.hashtags.map(h=>'#'+String(h).replace(/^#/,'')).join(' ')}`; }
