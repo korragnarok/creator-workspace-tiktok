@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Shark &amp; Ninja Promos — Take24</title>
+<script src="theme-init.js?v=260"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Bad+Script&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font:14px 'Nunito Sans',sans-serif;padding:26px;padding-top:max(26px,env(safe-area-inset-top));}
+.wrap{max-width:1180px;margin:0 auto;}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+h1{font:300 40px 'Cormorant Garamond',serif;color:var(--ink);line-height:1;}
+h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
+.btn{border:1px solid var(--border-mid);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 16px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}
+.btn:hover{border-color:var(--tan);} .btn.primary{background:var(--rust);border-color:var(--rust);color:#fff;} .btn:disabled{opacity:.55;cursor:wait;}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.mnav{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border-mid);border-radius:999px;padding:4px 6px;}
+.mnav button{background:none;border:none;color:var(--ink);font-size:18px;cursor:pointer;padding:0 8px;}
+.mnav b{font:400 20px 'Cormorant Garamond',serif;color:var(--ink);min-width:150px;text-align:center;}
+.tabs{display:flex;gap:4px;} .tab{border:1px solid var(--border-mid);background:transparent;color:var(--text-muted);border-radius:999px;padding:7px 14px;font:800 11px 'Nunito Sans',sans-serif;cursor:pointer;}
+.tab.on{background:var(--rust);border-color:var(--rust);color:#fff;}
+select,input,textarea{background:var(--bg);border:1px solid var(--border-mid);border-radius:10px;padding:8px 10px;color:var(--ink);font:13px 'Nunito Sans',sans-serif;outline:none;}
+select:focus,input:focus{border-color:var(--tan);}
+.card{background:var(--surface);border:1px solid var(--border-mid);border-radius:20px;padding:18px;box-shadow:var(--shadow-md);margin-bottom:16px;}
+.drop{border:2px dashed var(--border-mid);border-radius:16px;padding:22px;text-align:center;color:var(--text-muted);cursor:pointer;}
+.drop:hover{border-color:var(--tan);} .drop b{display:block;color:var(--ink);font-size:15px;margin-bottom:3px;}
+.status{color:var(--tan);font-size:12px;margin-top:8px;min-height:16px;}
+.review{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;}
+.review th{text-align:left;font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tan);padding:6px;}
+.review td{padding:4px;border-top:1px solid var(--border);} .review input,.review select{width:100%;padding:6px 8px;}
+.day{margin-bottom:14px;} .day-h{font:400 22px 'Cormorant Garamond',serif;color:var(--ink);margin:6px 0 8px;display:flex;gap:10px;align-items:baseline;}
+.day-h small{font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);}
+.item{display:grid;grid-template-columns:52px 1fr auto auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:8px 12px;margin-bottom:6px;}
+.item img{width:52px;height:52px;border-radius:10px;object-fit:cover;background:var(--surface-2);}
+.item .n{font-weight:800;color:var(--ink);} .item .s{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.line{font:800 9px 'Nunito Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 8px;color:#fff;margin-right:6px;}
+.l-shark{background:#2E62A8;} .l-ninja{background:#3a3a3a;border:1px solid #777;} .l-beauty{background:#A0526B;}
+.st{font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:4px 10px;white-space:nowrap;}
+.st-live{background:#5E7A55;color:#fff;} .st-upcoming{background:var(--surface-2);color:var(--ink);} .st-ended{background:transparent;color:var(--text-muted);border:1px solid var(--border-mid);}
+.deal{font-weight:800;color:var(--tan);white-space:nowrap;}
+.x{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:15px;}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;}
+.cal .dow{font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tan);text-align:center;}
+.cday{min-height:104px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:6px;overflow:hidden;}
+.cday.today{border-color:var(--rust);} .cday.out{opacity:.35;}
+.cday .dn{font-size:11px;font-weight:800;color:var(--text-muted);margin-bottom:4px;}
+.chip{display:block;font-size:10.5px;line-height:1.25;border-radius:6px;padding:2px 5px;margin-bottom:3px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;}
+.empty{text-align:center;color:var(--text-muted);padding:40px 10px;}
+.empty b{display:block;font:400 26px 'Cormorant Garamond',serif;color:var(--ink);margin-bottom:6px;}
+.modal{position:fixed;inset:0;z-index:600;background:rgba(10,8,7,.82);display:none;align-items:center;justify-content:center;padding:20px;}
+.modal.open{display:flex;}
+.mcard{width:100%;max-width:860px;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--border-mid);border-radius:22px;padding:22px;}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;} .mh h2{font:400 28px 'Cormorant Garamond',serif;color:var(--ink);}
+.pick{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px;} .pick label{border:1px solid var(--border-mid);border-radius:999px;padding:5px 11px;font-size:12px;cursor:pointer;display:flex;gap:5px;align-items:center;}
+.pick input{accent-color:var(--rust);}
+.pp{border:1px solid var(--border);background:var(--bg-lift);border-radius:14px;padding:12px;margin-top:10px;}
+.pp h4{font:700 15px 'Nunito Sans',sans-serif;color:var(--ink);margin-bottom:6px;}
+.takes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.take{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px;font-size:12px;line-height:1.45;}
+.take.vault{border-color:var(--tan);} .take .tg{font:800 9px 'Nunito Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;background:var(--rust);color:#fff;border-radius:999px;padding:2px 8px;display:inline-block;margin-bottom:4px;}
+.take pre{white-space:pre-wrap;font:12px/1.45 'Nunito Sans',sans-serif;max-height:150px;overflow:hidden;color:var(--text-mid);}
+@media(max-width:800px){.takes{grid-template-columns:1fr;}.cday{min-height:70px;}.chip{font-size:9px;}.item{grid-template-columns:44px 1fr auto;}.item .deal{display:none;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div><h1>Shark &amp; Ninja <em>promos</em></h1></div>
+    <div class="bar" style="margin:0">
+      <button class="btn" onclick="toggleUpload()">+ Upload promo list</button>
+      <button class="btn primary" onclick="openPlan()">✦ Plan takes</button>
+    </div>
+  </div>
+
+  <div class="card" id="uploadCard" style="display:none">
+    <div class="bar">
+      <label style="font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan)">Promo month</label>
+      <input type="month" id="upMonth">
+    </div>
+    <div class="drop" onclick="document.getElementById('upFile').click()"><b>Drop your Canva export here</b>PDF or images (PNG/JPG) — you can pick several</div>
+    <input type="file" id="upFile" accept="application/pdf,image/*" multiple hidden onchange="readPromoFiles(this.files)">
+    <div class="status" id="upStatus"></div>
+    <div id="reviewWrap"></div>
+  </div>
+
+  <div class="bar">
+    <div class="mnav"><button onclick="shiftMonth(-1)">‹</button><b id="monthLbl"></b><button onclick="shiftMonth(1)">›</button></div>
+    <select id="archive" onchange="jumpMonth(this.value)"><option value="">Past months…</option></select>
+    <div class="tabs"><button class="tab on" data-v="list" onclick="setView('list')">List</button><button class="tab" data-v="cal" onclick="setView('cal')">Calendar</button></div>
+    <span id="countLbl" style="color:var(--text-muted);font-size:12px"></span>
+  </div>
+  <div id="view"></div>
+</div>
+
+<div class="modal" id="planModal" onclick="if(event.target===this)closePlan()">
+  <div class="mcard">
+    <div class="mh"><h2>Plan promo takes</h2><button class="btn" onclick="closePlan()">Close</button></div>
+    <div style="font-size:13px;color:var(--text-muted)">Pick the promo items to plan. Scripts saved in your Script Vault for a product are used first; Gemini writes 3 takes for the rest. Takes go on your to-do 2 days before each deal starts.</div>
+    <div class="pick" id="planPick"></div>
+    <div class="pick" id="planStyles">
+      <label><input type="checkbox" value="B-roll" checked>B-roll</label><label><input type="checkbox" value="Talking head" checked>Talking head</label>
+      <label><input type="checkbox" value="Aesthetic" checked>Aesthetic</label><label><input type="checkbox" value="Voiceover demo">Voiceover demo</label>
+      <label><input type="checkbox" value="Problem → solution">Problem → solution</label><label><input type="checkbox" value="Trending sound + text">Trending sound + text</label>
+    </div>
+    <button class="btn primary" onclick="runPlan()">✦ Plan takes</button>
+    <div id="planBody"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=260"></script>
+<script src="promos-sync.js?v=260"></script>
+<script src="layout.js?v=260"></script>
+<script>
+const WORKER='https://take24-scout.kortnycall5.workers.dev';
+let USER=null, PROMOS=[], PRODUCTS=[], VAULT=null, ACCTS={}, VIEW='list', MONTH=promoYmd(new Date()).slice(0,7), REVIEW=[], PLAN=null;
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const lineClass=l=>/beauty/i.test(l)?'l-beauty':/ninja/i.test(l)?'l-ninja':'l-shark';
+const lineColor=l=>/beauty/i.test(l)?'#A0526B':/ninja/i.test(l)?'#4a4a4a':'#2E62A8';
+const fmtD=k=>k?new Date(k+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
+const monthName=m=>{ const [y,mo]=m.split('-'); return new Date(+y,+mo-1,1).toLocaleDateString(undefined,{month:'long',year:'numeric'}); };
+
+// ── Load ──
+async function loadAll(){
+  const [{data:pr},{data:prods}]=await Promise.all([
+    db.from('promos').select('*').eq('user_id',USER.id).order('start_date',{ascending:true}),
+    db.from('products').select('id,name,brand,image_url,tiktok_account_id').eq('user_id',USER.id)
+  ]);
+  PROMOS=pr||[]; PRODUCTS=prods||[];
+  const months=[...new Set(PROMOS.map(p=>p.month))].sort().reverse();
+  document.getElementById('archive').innerHTML='<option value="">Past months…</option>'+months.map(m=>`<option value="${m}">${monthName(m)}</option>`).join('');
+  render();
+}
+function shiftMonth(n){ const [y,m]=MONTH.split('-').map(Number); const d=new Date(y,m-1+n,1); MONTH=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render(); }
+function jumpMonth(m){ if(m){ MONTH=m; render(); } document.getElementById('archive').value=''; }
+function setView(v){ VIEW=v; document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v)); render(); }
+function monthItems(){
+  const [y,m]=MONTH.split('-').map(Number), first=`${MONTH}-01`, last=promoYmd(new Date(y,m,0));
+  return PROMOS.filter(p=>p.month===MONTH || (p.start_date&&p.start_date<=last&&(p.end_date||p.start_date)>=first));
+}
+function prodOf(p){ return PRODUCTS.find(x=>x.id===p.prod_id); }
+
+// ── Render ──
+function render(){
+  document.getElementById('monthLbl').textContent=monthName(MONTH);
+  const items=monthItems().sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date))||String(a.product).localeCompare(String(b.product)));
+  document.getElementById('countLbl').textContent=items.length?`${items.length} promo item${items.length===1?'':'s'}`:'';
+  const v=document.getElementById('view');
+  if(!items.length){ v.innerHTML=`<div class="card empty"><b>No promos for ${monthName(MONTH)}</b>Tap “+ Upload promo list” to add this month's Shark &amp; Ninja list.</div>`; return; }
+  if(VIEW==='list'){
+    const today=promoYmd(new Date()), groups={};
+    items.forEach(p=>{ (groups[p.start_date||'']=groups[p.start_date||'']||[]).push(p); });
+    v.innerHTML=Object.keys(groups).sort().map(k=>`<div class="day"><div class="day-h">${k?new Date(k+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}):'No date'} <small>${groups[k].length} item${groups[k].length===1?'':'s'}</small></div>
+      ${groups[k].map(p=>{ const pr=prodOf(p), st=promoStatus(p,today); return `<div class="item"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt="">
+        <div><div class="n"><span class="line ${lineClass(p.line)}">${esc(p.line)}</span>${esc(p.product)}</div>
+        <div class="s">${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}${p.notes?' · '+esc(p.notes):''}${p.todo_added?' · ✓ on to-do':` · to-do on ${fmtD(promoShift(p.start_date||today,-PROMO_LEAD_DAYS))}`}</div></div>
+        <div class="deal">${esc(p.deal||'')}</div>
+        <div style="display:flex;gap:6px;align-items:center"><span class="st st-${st}">${st==='live'?'Live':st==='ended'?'Ended':st==='upcoming'?'Upcoming':'No date'}</span><button class="x" title="Delete" onclick="delPromo('${p.id}')">✕</button></div></div>`; }).join('')}</div>`).join('');
+  } else {
+    const [y,m]=MONTH.split('-').map(Number), first=new Date(y,m-1,1), start=new Date(first); start.setDate(1-first.getDay());
+    const today=promoYmd(new Date()); let html=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="dow">${d}</div>`).join('');
+    for(let i=0;i<42;i++){ const d=new Date(start); d.setDate(start.getDate()+i); const k=promoYmd(d);
+      if(i>=35&&d.getMonth()!==m-1) break;
+      const on=items.filter(p=>p.start_date&&p.start_date<=k&&(p.end_date||p.start_date)>=k);
+      html+=`<div class="cday${k===today?' today':''}${d.getMonth()!==m-1?' out':''}"><div class="dn">${d.getDate()}</div>${on.map(p=>`<span class="chip" style="background:${lineColor(p.line)}" title="${esc(p.product)} · ${esc(p.deal||'')}">${p.start_date===k?'▸ ':''}${esc(p.product)}</span>`).join('')}</div>`; }
+    v.innerHTML=`<div class="cal">${html}</div>`;
+  }
+}
+async function delPromo(id){ if(!confirm('Delete this promo item?')) return; await db.from('promos').delete().eq('id',id).eq('user_id',USER.id); PROMOS=PROMOS.filter(p=>p.id!==id); render(); }
+
+// ── Upload → Gemini → review ──
+function toggleUpload(){ const c=document.getElementById('uploadCard'); c.style.display=c.style.display==='none'?'':'none'; if(!document.getElementById('upMonth').value) document.getElementById('upMonth').value=MONTH; }
+const PROMO_SCHEMA={type:'OBJECT',properties:{items:{type:'ARRAY',items:{type:'OBJECT',properties:{
+  product:{type:'STRING'},line:{type:'STRING',description:'Shark, Ninja or Shark Beauty'},deal:{type:'STRING'},
+  start_date:{type:'STRING',description:'YYYY-MM-DD'},end_date:{type:'STRING',description:'YYYY-MM-DD or empty'},notes:{type:'STRING'},
+  matched_product:{type:'STRING',description:'Exact name from MY PRODUCTS, or empty'}},required:['product','line','deal','start_date','end_date','notes','matched_product']}}},required:['items']};
+async function readPromoFiles(files){
+  if(!files?.length) return; const st=document.getElementById('upStatus'), month=document.getElementById('upMonth').value||MONTH;
+  try{
+    const parts=[];
+    for(const f of files){ st.textContent=`Uploading ${f.name}…`;
+      const r=await fetch(`${WORKER}/?service=gemini-upload`,{method:'POST',headers:{'Content-Type':f.type||'application/pdf'},body:f});
+      const j=await r.json().catch(()=>({})); if(!r.ok||!j.uri) throw new Error(j.error||`Upload failed (${r.status})`);
+      parts.push({file_data:{mime_type:j.mime_type,file_uri:j.uri}}); }
+    st.textContent='Reading the promo list…';
+    const mine=PRODUCTS.filter(p=>/shark|ninja/i.test(`${p.brand} ${p.name}`)).map(p=>p.name);
+    const [y]=month.split('-');
+    parts.push({text:`This is a Shark / SharkNinja monthly promo list for ${monthName(month)} (a Canva design, usually split into Ninja, Shark and Shark Beauty sections). Extract EVERY promoted product into one flat list.
+For each: product (clean product name), line ("Shark", "Ninja" or "Shark Beauty" — the section it was in), deal (e.g. "$100 off", "30% off", "Lowest price"), start_date and end_date as YYYY-MM-DD (year ${y} unless stated; if only one date, use it for both; if no date, use empty), notes (codes, bundles, "hero"/"push" items, anything important), matched_product (the exact name from MY PRODUCTS that is the same item, or "" if none).
+MY PRODUCTS: ${JSON.stringify(mine)}`});
+    const res=await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',responseSchema:PROMO_SCHEMA,temperature:0.1}})});
+    const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
+    REVIEW=(JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim()).items||[])
+      .map(x=>({...x,month,prod_id:(PRODUCTS.find(p=>norm(p.name)===norm(x.matched_product))||{}).id||''}))
+      .sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
+    st.textContent=`Found ${REVIEW.length} items — check them below, then save.`; renderReview();
+  }catch(e){ st.textContent='Could not read it: '+e.message; }
+  document.getElementById('upFile').value='';
+}
+function renderReview(){
+  const opts=sel=>'<option value="">— not on Products page —</option>'+PRODUCTS.filter(p=>/shark|ninja/i.test(`${p.brand} ${p.name}`)).sort((a,b)=>String(a.name).localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('');
+  document.getElementById('reviewWrap').innerHTML=REVIEW.length?`<table class="review"><tr><th>Product</th><th>Line</th><th>Deal</th><th>Start</th><th>End</th><th>Notes</th><th>Your product</th><th></th></tr>
+    ${REVIEW.map((r,i)=>`<tr><td><input value="${esc(r.product)}" oninput="REVIEW[${i}].product=this.value"></td>
+      <td><select onchange="REVIEW[${i}].line=this.value">${['Shark','Ninja','Shark Beauty'].map(l=>`<option ${norm(l)===norm(r.line)?'selected':''}>${l}</option>`).join('')}</select></td>
+      <td><input value="${esc(r.deal)}" oninput="REVIEW[${i}].deal=this.value"></td>
+      <td><input type="date" value="${esc(r.start_date)}" onchange="REVIEW[${i}].start_date=this.value"></td>
+      <td><input type="date" value="${esc(r.end_date)}" onchange="REVIEW[${i}].end_date=this.value"></td>
+      <td><input value="${esc(r.notes)}" oninput="REVIEW[${i}].notes=this.value"></td>
+      <td><select onchange="REVIEW[${i}].prod_id=this.value">${opts(r.prod_id)}</select></td>
+      <td><button class="x" onclick="REVIEW.splice(${i},1);renderReview()">✕</button></td></tr>`).join('')}</table>
+    <div class="bar" style="margin-top:12px"><button class="btn primary" onclick="saveReview()">Save ${REVIEW.length} items</button><button class="btn" onclick="REVIEW=[];renderReview();document.getElementById('upStatus').textContent=''">Discard</button></div>`:'';
+}
+async function saveReview(){
+  const rows=REVIEW.filter(r=>String(r.product||'').trim()).map(r=>({user_id:USER.id,month:r.month,product:r.product.trim(),line:/beauty/i.test(r.line)?'Shark Beauty':/ninja/i.test(r.line)?'Ninja':'Shark',
+    deal:r.deal||'',start_date:r.start_date||null,end_date:r.end_date||r.start_date||null,notes:r.notes||'',prod_id:r.prod_id||null,
+    tiktok_account_id:promoAccountFor(r.line,ACCTS),todo_added:false}));
+  const {error}=await db.from('promos').insert(rows);
+  if(error){ alert('Could not save: '+error.message); return; }
+  REVIEW=[]; renderReview(); document.getElementById('upStatus').textContent=`Saved ${rows.length} items.`;
+  MONTH=rows[0]?.month||MONTH; const n=await syncPromoTodos(USER.id); if(n) document.getElementById('upStatus').textContent+=` ${n} added to your to-do.`;
+  loadAll();
+}
+
+// ── Plan takes (Script Vault first, Gemini for the rest) ──
+function vaultMatches(name){
+  const n=norm(name); if(!n) return []; const words=n.split(' ').filter(w=>w.length>2);
+  return (VAULT||[]).filter(sc=>{ const b=norm(sc.brand), t=norm(sc.title);
+    if(b===n||t===n||t.startsWith(n+' ')) return true; if(b&&b.includes(n)) return true;
+    if(b&&n.includes(b)&&b.split(' ').length>=2&&b.length>6) return true; return words.length>=2&&words.every(w=>t.includes(w)); });
+}
+function openPlan(){
+  const today=promoYmd(new Date());
+  const items=PROMOS.filter(p=>promoStatus(p,today)!=='ended').sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
+  document.getElementById('planPick').innerHTML=items.length?items.map(p=>`<label><input type="checkbox" value="${p.id}" ${p.start_date&&p.start_date<=promoShift(today,14)?'checked':''}>${esc(p.product)} <span style="color:var(--text-muted)">${fmtD(p.start_date)}</span></label>`).join(''):'<span style="color:var(--text-muted)">No upcoming promo items.</span>';
+  document.getElementById('planBody').innerHTML=''; document.getElementById('planModal').classList.add('open');
+}
+function closePlan(){ document.getElementById('planModal').classList.remove('open'); }
+async function runPlan(){
+  const ids=[...document.querySelectorAll('#planPick input:checked')].map(x=>x.value);
+  const styles=[...document.querySelectorAll('#planStyles input:checked')].map(x=>x.value);
+  const items=PROMOS.filter(p=>ids.includes(p.id)); if(!items.length){ alert('Pick at least one promo item.'); return; }
+  const body=document.getElementById('planBody'); body.innerHTML='<div class="status">Checking your Script Vault…</div>';
+  if(!VAULT){ VAULT=(await db.from('scripts').select('id,title,brand,script').eq('user_id',USER.id).order('created_at',{ascending:false})).data||[]; }
+  const fromVault={}; items.forEach(p=>{ const nm=prodOf(p)?.name||p.product; const h=vaultMatches(nm).filter(s=>String(s.script||'').trim()).slice(0,3); if(h.length) fromVault[p.id]=h; });
+  const need=items.filter(p=>!fromVault[p.id]);
+  body.innerHTML=`<div class="status">${need.length?'Writing takes…':'Using your saved scripts.'}</div>`;
+  try{
+    let gen=[];
+    if(need.length){
+      const tone=(USER.user_metadata?.ai_tone)||(typeof DEFAULT_AI_TONE!=='undefined'?DEFAULT_AI_TONE:'');
+      const schema={type:'OBJECT',properties:{products:{type:'ARRAY',items:{type:'OBJECT',properties:{id:{type:'STRING'},takes:{type:'ARRAY',items:{type:'OBJECT',properties:{style:{type:'STRING'},angle:{type:'STRING'},hook:{type:'STRING'},shots:{type:'STRING'},script:{type:'STRING'}},required:['style','angle','hook','shots','script']}}},required:['id','takes']}}},required:['products']};
+      const prompt=`Plan 3 DIFFERENT TikTok takes for each Shark/Ninja promo product below, using these styles: ${styles.join(', ')}. The video should be up before the deal starts, so work the deal in naturally as low-key urgency ("it's about to go on sale…", "this is the lowest I've seen it").
+VOICE: ${tone} Laid-back, like telling a friend — not an ad. Avoid "game changer", "obsessed", "you NEED this", "must-have", all-caps hype and stacked exclamation points.
+For each take: style, angle, hook (first 3 seconds), shots (shot list), script (short and natural; for trending sound/aesthetic takes, just the on-screen text beats). Return each product's "id" exactly as given.
+PRODUCTS: ${JSON.stringify(need.map(p=>({id:p.id,product:prodOf(p)?.name||p.product,line:p.line,deal:p.deal,starts:p.start_date,ends:p.end_date,notes:p.notes})))}`;
+      const res=await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',responseSchema:schema,temperature:0.7}})});
+      const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
+      gen=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim()).products||[];
+    }
+    PLAN=items.map(p=>({p,takes:fromVault[p.id]?fromVault[p.id].map(s=>({vault:true,style:'Script Vault',angle:s.title||'Saved script',script:s.script})):((gen.find(g=>g.id===p.id)||{}).takes||[])}));
+    body.innerHTML=PLAN.map(x=>`<div class="pp"><h4><span class="line ${lineClass(x.p.line)}">${esc(x.p.line)}</span>${esc(x.p.product)} <span style="color:var(--tan);font-size:12px">${esc(x.p.deal||'')} · ${fmtD(x.p.start_date)}</span></h4>
+      <div class="takes">${x.takes.map(t=>`<div class="take${t.vault?' vault':''}"><span class="tg">${esc(t.style)}</span><div><b>${esc(t.angle)}</b></div>${t.hook?`<div><b>Hook:</b> ${esc(t.hook)}</div>`:''}${t.shots?`<div><b>Shots:</b> ${esc(t.shots)}</div>`:''}<pre>${esc(t.script||'')}</pre></div>`).join('')}</div></div>`).join('')
+      +`<div class="bar" style="margin-top:14px"><button class="btn primary" id="planAdd" onclick="addPlan()">+ Add all takes to my to-do</button></div>`;
+  }catch(e){ body.innerHTML=`<div class="status">Couldn't plan: ${esc(e.message)}</div>`; }
+}
+async function addPlan(){
+  const btn=document.getElementById('planAdd'); btn.disabled=true; btn.textContent='Adding…';
+  const today=promoYmd(new Date()); let added=0;
+  for(const x of PLAN){
+    const p=x.p, lead=promoShift(p.start_date||today,-PROMO_LEAD_DAYS), date=lead<today?today:lead, acct=p.tiktok_account_id||promoAccountFor(p.line,ACCTS);
+    const {data:existing}=await db.from('queue').select('id,script').eq('user_id',USER.id).eq('date',date).eq('name',prodOf(p)?.name||p.product);
+    const empty=(existing||[]).filter(r=>!String(r.script||'').trim());
+    const rows=[];
+    for(const t of x.takes){
+      const text=t.vault?String(t.script||''):`${String(t.style).toUpperCase()} — ${t.angle}\n\nHOOK: ${t.hook}\n\nSCRIPT:\n${t.script||''}\n\nSHOTS: ${t.shots}`;
+      const slot=empty.shift();
+      if(slot){ await db.from('queue').update({script:text}).eq('id',slot.id).eq('user_id',USER.id); added++; continue; }
+      rows.push({user_id:USER.id,tiktok_account_id:acct,date,prod_id:p.prod_id||null,name:prodOf(p)?.name||p.product,brand:p.line,notes:`Promo: ${p.deal||'deal'} · ${p.start_date}`,script:text,done:false,sort_order:950+rows.length});
+    }
+    if(rows.length){ const {error}=await db.from('queue').insert(rows); if(error){ alert('Could not add: '+error.message); btn.disabled=false; return; } added+=rows.length; }
+    if(!p.todo_added) await db.from('promos').update({todo_added:true}).eq('id',p.id).eq('user_id',USER.id);
+  }
+  btn.textContent=`✓ Added ${added} takes`; loadAll();
+}
+
+// ── Start ──
+(async()=>{
+  const {data:{session}}=await db.auth.getSession(); if(!session){ location.href='auth.html'; return; }
+  USER=session.user;
+  try{ const prefs=await loadUserPrefs(USER.id); await initTheme(USER.id,prefs); await initDisplayName(USER,prefs); initProfilePopover(USER.id); }catch(e){}
+  ACCTS=await promoAccounts(USER.id);
+  await syncPromoTodos(USER.id);
+  await loadAll();
+})();
+</script>
+</body>
+</html>

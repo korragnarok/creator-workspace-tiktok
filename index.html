@@ -792,6 +792,15 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .bd-chip small{color:var(--text-muted);} .bd-chip em{font-style:normal;font:800 9px 'Stack Sans Notch',sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#fff;background:var(--rust);border-radius:999px;padding:1px 6px;margin-left:3px;}
 .bd-samples{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:13px;color:var(--text-mid);cursor:pointer;}
 .bd-samples input{accent-color:var(--rust);}
+.promo-card{display:block;text-decoration:none;color:inherit;}
+.promo-card:hover{border-color:var(--tan)!important;}
+.promo-go{font-family:'Bad Script',cursive;color:var(--tan);font-size:15px;}
+.pr-l{font:800 9px 'Stack Sans Notch',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);margin:6px 0 3px;}
+.pr-row{display:flex;align-items:center;gap:7px;font-size:12px;padding:2px 0;}
+.pr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.pr-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
+.pr-d{color:var(--text-muted);font-size:11px;white-space:nowrap;}
+.pr-end{margin-top:6px;font-size:11px;color:var(--rust);font-weight:700;}
 /* Monthly Goals */
 .b-goals .goal{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
 .b-goals .goal:last-child{border:none;}
@@ -1018,7 +1027,10 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                   <div class="tt-stat"><div class="tt-l">Followers</div><div class="tt-v" id="ttFol">-</div></div>
                 </div>
               </div>
-              <div class="card meta-spare"><div class="b-title">Coming soon</div><div class="spare-sub">Space saved for something new.</div></div>
+              <a class="card promo-card" href="promos.html">
+                <div class="tt-head"><div class="b-title">Shark &amp; Ninja</div><span class="promo-go">All promos →</span></div>
+                <div id="promoHome"><div class="spare-sub">Loading promos…</div></div>
+              </a>
             </div>
             <div class="card mob-order-4 tops-card">
               <div class="tt-head"><div class="b-title">Top Videos &amp; Best Sellers</div></div>
@@ -1092,8 +1104,9 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   </div>
 </div>
 
+<script src="promos-sync.js?v=260"></script>
 <script src="planner-sync.js?v=238"></script>
-<script src="layout.js?v=246"></script>
+<script src="layout.js?v=260"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
 (function(){
@@ -1135,6 +1148,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   const FOLDERS = [
     ['video-tracker.html','Content Tracker',2],
     ['products.html','Products',3], ['brand-deals.html','Brand Deals',4],
+    ['promos.html','Shark & Ninja',16],
     ['scripts.html','Script Vault',6], ['sales-calendar.html','Sales Log',10],
     ['https://a.co/d/0aN0vMFu','Storefront',11], ['https://affiliate-program.amazon.com/home','Associates',12],
     ['video-feedback.html','Video Feedback',14], ['settings.html','Settings',15]
@@ -1483,6 +1497,8 @@ async function init() {
   const user = await requireAuth();
   if (!user) return;
   _dashboardUser=user;
+  try{ await syncPromoTodos(user.id); }catch(e){}   // Shark/Ninja promo items land on the to-do 2 days early
+  renderPromoHome(user.id);
   const prefs = await loadUserPrefs(user.id);
   _streakGoal = resolveStreakGoal(user, prefs);
   await initDisplayName(user, prefs);
@@ -2434,6 +2450,22 @@ async function addBatchToTodo(){
   const total=rows.length+updates.length; btn.textContent=`✓ Added ${total} takes`;
   showToast(`${total} takes added to today`);
   { const {data}=await db.from('queue').select('id,name,brand,notes,script,done,prod_id,sort_order,tiktok_account_id').eq('user_id',_dashboardUser.id).eq('date',date).order('sort_order'); _todayQueue=data||_todayQueue; renderTodayContent(); }
+}
+// ── Shark & Ninja promos at a glance ──
+async function renderPromoHome(uid){
+  const el=document.getElementById('promoHome'); if(!el) return;
+  try{
+    const today=promoYmd(new Date()), week=promoShift(today,7);
+    const {data}=await db.from('promos').select('product,line,deal,start_date,end_date').eq('user_id',uid).gte('end_date',today).lte('start_date',week).order('start_date');
+    const live=(data||[]).filter(p=>p.start_date<=today), soon=(data||[]).filter(p=>p.start_date>today);
+    const ending=live.filter(p=>p.end_date&&p.end_date<=promoShift(today,2));
+    const row=(p,txt)=>`<div class="pr-row"><span class="pr-dot" style="background:${/beauty/i.test(p.line)?'#A0526B':/ninja/i.test(p.line)?'#777':'#2E62A8'}"></span><span class="pr-n">${esc(p.product)}</span><span class="pr-d">${esc(txt)}</span></div>`;
+    const days=k=>Math.round((new Date(k+'T00:00:00')-new Date(today+'T00:00:00'))/864e5);
+    el.innerHTML=(!live.length&&!soon.length)?'<div class="spare-sub">No Shark/Ninja deals this week.</div>':
+      (live.length?`<div class="pr-l">Live now</div>${live.slice(0,4).map(p=>row(p,`${p.deal||''}${p.end_date?` · ${days(p.end_date)===0?'ends today':days(p.end_date)+'d left'}`:''}`)).join('')}`:'')+
+      (soon.length?`<div class="pr-l">Starting soon</div>${soon.slice(0,4).map(p=>row(p,`${p.deal||''} · in ${days(p.start_date)}d`)).join('')}`:'')+
+      (ending.length?`<div class="pr-end">⏳ ${ending.length} deal${ending.length===1?'':'s'} ending in 2 days — repost!</div>`:'');
+  }catch(e){ el.innerHTML='<div class="spare-sub">Promos not set up yet.</div>'; }
 }
 function renderTodayContent(){
   const list=document.getElementById('sched-list');

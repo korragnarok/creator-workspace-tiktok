@@ -81,6 +81,7 @@
   const FOLDERS = [
     ['video-tracker.html','Content Tracker',2],
     ['products.html','Products',3], ['brand-deals.html','Brand Deals',4],
+    ['promos.html','Shark & Ninja',16],
     ['scripts.html','Script Vault',6], ['sales-calendar.html','Sales Log',10],
     ['https://a.co/d/0aN0vMFu','Storefront',11], ['https://affiliate-program.amazon.com/home','Associates',12],
     ['video-feedback.html','Video Feedback',14], ['settings.html','Settings',15]
