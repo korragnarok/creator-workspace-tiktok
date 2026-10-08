@@ -63,6 +63,10 @@ select:focus,input:focus{border-color:var(--tan);}
 .take.vault{border-color:var(--tan);} .take .tg{font:800 9px 'Nunito Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;background:var(--rust);color:#fff;border-radius:999px;padding:2px 8px;display:inline-block;margin-bottom:4px;}
 .take pre{white-space:pre-wrap;font:12px/1.45 'Nunito Sans',sans-serif;max-height:150px;overflow:hidden;color:var(--text-mid);}
 @media(max-width:800px){.takes{grid-template-columns:1fr;}.cday{min-height:70px;}.chip{font-size:9px;}.item{grid-template-columns:44px 1fr auto;}.item .deal{display:none;}}
+.star{background:none;border:none;font-size:17px;color:var(--border-mid);cursor:pointer;line-height:1;}
+.star.on{color:#D9A441;}
+.item.is-big{border-color:#D9A441;}
+.day.big .day-h{color:#D9A441;}
 </style>
 </head>
 <body>
@@ -79,6 +83,7 @@ select:focus,input:focus{border-color:var(--tan);}
     <div class="bar">
       <label style="font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan)">Promo month</label>
       <input type="month" id="upMonth">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-mid);cursor:pointer"><input type="checkbox" id="upBig" style="accent-color:var(--rust)"> This is a <b style="color:var(--ink)">★ Biggest Gets</b> list</label>
     </div>
     <div class="drop" onclick="document.getElementById('upFile').click()"><b>Drop your Canva export here</b>PDF or images (PNG/JPG) — you can pick several</div>
     <input type="file" id="upFile" accept="application/pdf,image/*" multiple hidden onchange="readPromoFiles(this.files)">
@@ -153,23 +158,27 @@ function render(){
   if(!items.length){ v.innerHTML=`<div class="card empty"><b>No promos for ${monthName(MONTH)}</b>Tap “+ Upload promo list” to add this month's Shark &amp; Ninja list.</div>`; return; }
   if(VIEW==='list'){
     const today=promoYmd(new Date()), groups={};
-    items.forEach(p=>{ (groups[p.start_date||'']=groups[p.start_date||'']||[]).push(p); });
-    v.innerHTML=Object.keys(groups).sort().map(k=>`<div class="day"><div class="day-h">${k?new Date(k+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}):'No date'} <small>${groups[k].length} item${groups[k].length===1?'':'s'}</small></div>
-      ${groups[k].map(p=>{ const pr=prodOf(p), st=promoStatus(p,today); return `<div class="item"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt="">
-        <div><div class="n"><span class="line ${lineClass(p.line)}">${esc(p.line)}</span>${esc(p.product)}</div>
-        <div class="s">${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}${p.notes?' · '+esc(p.notes):''}${p.todo_added?' · ✓ on to-do':` · to-do on ${fmtD(promoShift(p.start_date||today,-PROMO_LEAD_DAYS))}`}</div></div>
-        <div class="deal">${esc(p.deal||'')}</div>
-        <div style="display:flex;gap:6px;align-items:center"><span class="st st-${st}">${st==='live'?'Live':st==='ended'?'Ended':st==='upcoming'?'Upcoming':'No date'}</span><button class="x" title="Delete" onclick="delPromo('${p.id}')">✕</button></div></div>`; }).join('')}</div>`).join('');
+    items.filter(p=>!p.priority).forEach(p=>{ (groups[p.start_date||'']=groups[p.start_date||'']||[]).push(p); });   // Biggest Gets already shown at the top
+    const big=items.filter(p=>p.priority);
+    v.innerHTML=(big.length?`<div class="day big"><div class="day-h">★ Biggest Gets <small>${big.length} item${big.length===1?'':'s'}</small></div>${big.map(itemHtml).join('')}</div>`:'')+Object.keys(groups).sort().map(k=>`<div class="day"><div class="day-h">${k?new Date(k+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}):'No date'} <small>${groups[k].length} item${groups[k].length===1?'':'s'}</small></div>
+      ${groups[k].map(itemHtml).join('')}</div>`).join('');
   } else {
     const [y,m]=MONTH.split('-').map(Number), first=new Date(y,m-1,1), start=new Date(first); start.setDate(1-first.getDay());
     const today=promoYmd(new Date()); let html=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="dow">${d}</div>`).join('');
     for(let i=0;i<42;i++){ const d=new Date(start); d.setDate(start.getDate()+i); const k=promoYmd(d);
       if(i>=35&&d.getMonth()!==m-1) break;
       const on=items.filter(p=>p.start_date&&p.start_date<=k&&(p.end_date||p.start_date)>=k);
-      html+=`<div class="cday${k===today?' today':''}${d.getMonth()!==m-1?' out':''}"><div class="dn">${d.getDate()}</div>${on.map(p=>`<span class="chip" style="background:${lineColor(p.line)}" title="${esc(p.product)} · ${esc(p.deal||'')}">${p.start_date===k?'▸ ':''}${esc(p.product)}</span>`).join('')}</div>`; }
+      html+=`<div class="cday${k===today?' today':''}${d.getMonth()!==m-1?' out':''}"><div class="dn">${d.getDate()}</div>${on.map(p=>`<span class="chip" style="background:${lineColor(p.line)}" title="${esc(p.product)} · ${esc(p.deal||'')}">${p.priority?'★ ':''}${p.start_date===k?'▸ ':''}${esc(p.product)}</span>`).join('')}</div>`; }
     v.innerHTML=`<div class="cal">${html}</div>`;
   }
 }
+function itemHtml(p){ const today=promoYmd(new Date()), pr=prodOf(p), st=promoStatus(p,today); return `<div class="item${p.priority?' is-big':''}"><img src="${esc(pr?.image_url||'icons/default-product.png')}" onerror="this.src='icons/default-product.png'" alt="">
+        <div><div class="n"><span class="line ${lineClass(p.line)}">${esc(p.line)}</span>${esc(p.product)}</div>
+        <div class="s">${fmtD(p.start_date)}${p.end_date?' – '+fmtD(p.end_date):''}${p.notes?' · '+esc(p.notes):''}${p.todo_added?' · ✓ on to-do':` · to-do on ${fmtD(promoShift(p.start_date||today,-PROMO_LEAD_DAYS))}`}</div></div>
+        <div class="deal">${esc(p.deal||'')}</div>
+        <div style="display:flex;gap:6px;align-items:center"><button class="star${p.priority?' on':''}" title="${p.priority?'Remove from Biggest Gets':'Mark as a Biggest Get'}" onclick="toggleBig('${p.id}')">★</button><span class="st st-${st}">${st==='live'?'Live':st==='ended'?'Ended':st==='upcoming'?'Upcoming':'No date'}</span><button class="x" title="Delete" onclick="delPromo('${p.id}')">✕</button></div></div>`; }
+async function toggleBig(id){ const p=PROMOS.find(x=>x.id===id); if(!p) return; const v=!p.priority;
+  const {error}=await db.from('promos').update({priority:v}).eq('id',id).eq('user_id',USER.id); if(error){ alert(error.message); return; } p.priority=v; render(); }
 async function delPromo(id){ if(!confirm('Delete this promo item?')) return; await db.from('promos').delete().eq('id',id).eq('user_id',USER.id); PROMOS=PROMOS.filter(p=>p.id!==id); render(); }
 
 // ── Upload → Gemini → review ──
@@ -196,16 +205,16 @@ MY PRODUCTS: ${JSON.stringify(mine)}`});
       body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',responseSchema:PROMO_SCHEMA,temperature:0.1}})});
     const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
     REVIEW=(JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim()).items||[])
-      .map(x=>({...x,month,prod_id:(PRODUCTS.find(p=>norm(p.name)===norm(x.matched_product))||{}).id||''}))
+      .map(x=>({...x,month,priority:document.getElementById('upBig').checked,prod_id:(PRODUCTS.find(p=>norm(p.name)===norm(x.matched_product))||{}).id||''}))
       .sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
-    st.textContent=`Found ${REVIEW.length} items — check them below, then save.`; renderReview();
+    st.textContent=`Found ${REVIEW.length} items${document.getElementById('upBig').checked?' (marked ★ Biggest Gets)':''} — check them below, then save.`; renderReview();
   }catch(e){ st.textContent='Could not read it: '+e.message; }
   document.getElementById('upFile').value='';
 }
 function renderReview(){
   const opts=sel=>'<option value="">— not on Products page —</option>'+PRODUCTS.filter(p=>/shark|ninja/i.test(`${p.brand} ${p.name}`)).sort((a,b)=>String(a.name).localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('');
-  document.getElementById('reviewWrap').innerHTML=REVIEW.length?`<table class="review"><tr><th>Product</th><th>Line</th><th>Deal</th><th>Start</th><th>End</th><th>Notes</th><th>Your product</th><th></th></tr>
-    ${REVIEW.map((r,i)=>`<tr><td><input value="${esc(r.product)}" oninput="REVIEW[${i}].product=this.value"></td>
+  document.getElementById('reviewWrap').innerHTML=REVIEW.length?`<table class="review"><tr><th>★</th><th>Product</th><th>Line</th><th>Deal</th><th>Start</th><th>End</th><th>Notes</th><th>Your product</th><th></th></tr>
+    ${REVIEW.map((r,i)=>`<tr><td><input type="checkbox" title="Biggest Get" style="width:auto;accent-color:var(--rust)" ${r.priority?'checked':''} onchange="REVIEW[${i}].priority=this.checked"></td><td><input value="${esc(r.product)}" oninput="REVIEW[${i}].product=this.value"></td>
       <td><select onchange="REVIEW[${i}].line=this.value">${['Shark','Ninja','Shark Beauty'].map(l=>`<option ${norm(l)===norm(r.line)?'selected':''}>${l}</option>`).join('')}</select></td>
       <td><input value="${esc(r.deal)}" oninput="REVIEW[${i}].deal=this.value"></td>
       <td><input type="date" value="${esc(r.start_date)}" onchange="REVIEW[${i}].start_date=this.value"></td>
@@ -219,9 +228,13 @@ async function saveReview(){
   const rows=REVIEW.filter(r=>String(r.product||'').trim()).map(r=>({user_id:USER.id,month:r.month,product:r.product.trim(),line:/beauty/i.test(r.line)?'Shark Beauty':/ninja/i.test(r.line)?'Ninja':'Shark',
     deal:r.deal||'',start_date:r.start_date||null,end_date:r.end_date||r.start_date||null,notes:r.notes||'',prod_id:r.prod_id||null,
     tiktok_account_id:promoAccountFor(r.line,ACCTS),todo_added:false}));
-  const {error}=await db.from('promos').insert(rows);
+  rows.forEach((r,i)=>r.priority=!!REVIEW.filter(x=>String(x.product||'').trim())[i]?.priority);
+  const dupes=[], fresh=[];
+  rows.forEach(r=>{ const ex=PROMOS.find(p=>p.month===r.month&&norm(p.product)===norm(r.product)); if(ex&&r.priority) dupes.push(ex.id); else fresh.push(r); });
+  if(dupes.length){ const {error:e1}=await db.from('promos').update({priority:true}).in('id',dupes).eq('user_id',USER.id); if(e1){ alert('Could not save: '+e1.message); return; } }
+  const {error}=fresh.length?await db.from('promos').insert(fresh):{error:null};
   if(error){ alert('Could not save: '+error.message); return; }
-  REVIEW=[]; renderReview(); document.getElementById('upStatus').textContent=`Saved ${rows.length} items.`;
+  REVIEW=[]; renderReview(); document.getElementById('upStatus').textContent=`Saved ${fresh.length} items${dupes.length?` · starred ${dupes.length} already on the list`:''}.`; document.getElementById('upBig').checked=false;
   MONTH=rows[0]?.month||MONTH; const n=await syncPromoTodos(USER.id); if(n) document.getElementById('upStatus').textContent+=` ${n} added to your to-do.`;
   loadAll();
 }
@@ -235,8 +248,8 @@ function vaultMatches(name){
 }
 function openPlan(){
   const today=promoYmd(new Date());
-  const items=PROMOS.filter(p=>promoStatus(p,today)!=='ended').sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date)));
-  document.getElementById('planPick').innerHTML=items.length?items.map(p=>`<label><input type="checkbox" value="${p.id}" ${p.start_date&&p.start_date<=promoShift(today,14)?'checked':''}>${esc(p.product)} <span style="color:var(--text-muted)">${fmtD(p.start_date)}</span></label>`).join(''):'<span style="color:var(--text-muted)">No upcoming promo items.</span>';
+  const items=PROMOS.filter(p=>promoStatus(p,today)!=='ended').sort((a,b)=>(b.priority?1:0)-(a.priority?1:0)||String(a.start_date).localeCompare(String(b.start_date)));
+  document.getElementById('planPick').innerHTML=items.length?items.map(p=>`<label><input type="checkbox" value="${p.id}" ${p.priority||(p.start_date&&p.start_date<=promoShift(today,14))?'checked':''}>${p.priority?'★ ':''}${esc(p.product)} <span style="color:var(--text-muted)">${fmtD(p.start_date)}</span></label>`).join(''):'<span style="color:var(--text-muted)">No upcoming promo items.</span>';
   document.getElementById('planBody').innerHTML=''; document.getElementById('planModal').classList.add('open');
 }
 function closePlan(){ document.getElementById('planModal').classList.remove('open'); }

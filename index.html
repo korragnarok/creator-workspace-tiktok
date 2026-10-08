@@ -2456,10 +2456,11 @@ async function renderPromoHome(uid){
   const el=document.getElementById('promoHome'); if(!el) return;
   try{
     const today=promoYmd(new Date()), week=promoShift(today,7);
-    const {data}=await db.from('promos').select('product,line,deal,start_date,end_date').eq('user_id',uid).gte('end_date',today).lte('start_date',week).order('start_date');
+    const {data}=await db.from('promos').select('product,line,deal,start_date,end_date,priority').eq('user_id',uid).gte('end_date',today).lte('start_date',week).order('start_date');
+    (data||[]).sort((a,b)=>(b.priority?1:0)-(a.priority?1:0));   // ★ Biggest Gets first
     const live=(data||[]).filter(p=>p.start_date<=today), soon=(data||[]).filter(p=>p.start_date>today);
     const ending=live.filter(p=>p.end_date&&p.end_date<=promoShift(today,2));
-    const row=(p,txt)=>`<div class="pr-row"><span class="pr-dot" style="background:${/beauty/i.test(p.line)?'#A0526B':/ninja/i.test(p.line)?'#777':'#2E62A8'}"></span><span class="pr-n">${esc(p.product)}</span><span class="pr-d">${esc(txt)}</span></div>`;
+    const row=(p,txt)=>`<div class="pr-row"><span class="pr-dot" style="background:${/beauty/i.test(p.line)?'#A0526B':/ninja/i.test(p.line)?'#777':'#2E62A8'}"></span><span class="pr-n">${p.priority?'<b style="color:#D9A441">★</b> ':''}${esc(p.product)}</span><span class="pr-d">${esc(txt)}</span></div>`;
     const days=k=>Math.round((new Date(k+'T00:00:00')-new Date(today+'T00:00:00'))/864e5);
     el.innerHTML=(!live.length&&!soon.length)?'<div class="spare-sub">No Shark/Ninja deals this week.</div>':
       (live.length?`<div class="pr-l">Live now</div>${live.slice(0,4).map(p=>row(p,`${p.deal||''}${p.end_date?` · ${days(p.end_date)===0?'ends today':days(p.end_date)+'d left'}`:''}`)).join('')}`:'')+
