@@ -393,6 +393,7 @@ async function analyze(){
     if (!res.ok) throw new Error(data?.error?.message || `Gemini error (${res.status})`);
     const text = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
     const fb = JSON.parse(text.replace(/```json|```/g, '').trim());
+    if (CTX.mode === 'framework' && fb.script) { setStatus('Checking the new script against TikTok policy…'); fb.script = await policyCheckScenes(fb.script); }
     if (CTX.mode === 'framework') renderFramework(fb); else render(fb, null, true);
     setStatus('');
     await addHistory({ at: Date.now(), name: CTX.name, link: CTX.link || '', product: CTX.product, audio: CTX.audio, goal: CTX.goal, mode: CTX.mode, fb });
@@ -528,9 +529,25 @@ ${JSON.stringify(CURRENT)}`;
       body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',responseSchema:SCRIPT_SCHEMA,temperature:0.7}})});
     const data=await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
-    NEW_SCRIPT=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
+    btn.textContent='Checking TikTok policy…';
+    NEW_SCRIPT=await policyCheckScenes(JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim()));
     renderScript(NEW_SCRIPT);
   }catch(e){ btn.disabled=false; btn.textContent='✦ Write me a new script from this feedback'; alert('Could not write the script: '+e.message); }
+}
+async function policyCheckScenes(sc){
+  try{
+    const schema=JSON.parse(JSON.stringify(SCRIPT_SCHEMA));
+    schema.properties.policy_passed={type:'BOOLEAN'}; schema.properties.policy_issues={type:'ARRAY',items:{type:'STRING'}};
+    schema.required=[...schema.required,'policy_passed','policy_issues'];
+    const res=await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:`Check this TikTok Shop affiliate video script (spoken lines, on-screen text, caption and hashtags) against TikTok Shop content policy: no medical/health or cure claims, no unverifiable "best/#1/guaranteed" claims, no exaggerated before/after promises, no false urgency or made-up prices/discounts, no directing people off TikTok, no disparaging named competitors, nothing unsafe.
+If it's fine: policy_passed=true, policy_issues=[], and return the script unchanged. If not: policy_passed=false, list each issue in plain words, and return the FIXED script with the smallest possible changes, same voice and structure.
+SCRIPT: ${JSON.stringify(sc)}`}]}],generationConfig:{responseMimeType:'application/json',responseSchema:schema,temperature:0.2}})});
+    const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error();
+    const out=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
+    const {policy_passed,policy_issues,...fixed}=out;
+    return {...(fixed.scenes?.length?fixed:sc),_policy:{passed:!!policy_passed,issues:policy_issues||[]}};
+  }catch(e){ return {...sc,_policy:{passed:null,issues:[]}}; }   // check couldn't run — show the script anyway
 }
 function scriptText(sc){
   return [`HOOK (0:00–0:03)`,`Visual: ${sc.hook.visual}`,`On-screen: ${sc.hook.on_screen_text}`,sc.hook.spoken?`Say: ${sc.hook.spoken}`:'',
@@ -538,7 +555,8 @@ function scriptText(sc){
 }
 function renderScript(sc){
   const el=document.getElementById('newScript');
-  el.innerHTML=`<div class="sec"><h3>${esc(sc.title||'New script')}</h3>
+  const pol=sc._policy;
+  el.innerHTML=`<div class="sec"><h3>${esc(sc.title||'New script')} ${pol?.passed===true?'<span class="swpol ok" style="float:right">✓ Policy check passed</span>':pol?.passed===false?'<span class="swpol fix" style="float:right">Policy fixes applied</span>':''}</h3>${pol?.passed===false&&pol.issues.length?`<div class="flag" style="margin-bottom:8px"><b>Fixed for TikTok policy:</b><br>${pol.issues.map(esc).join('<br>')}</div>`:''}
     <div class="scene hook"><div class="st">Hook · 0:00–0:03</div><p><b>Film:</b> ${esc(sc.hook.visual)}</p><p><b>On-screen:</b> ${esc(sc.hook.on_screen_text)}</p>${sc.hook.spoken?`<p><b>Say:</b> ${esc(sc.hook.spoken)}</p>`:''}</div>
     ${sc.scenes.map(x=>`<div class="scene"><div class="st">${esc(x.time)}</div><p><b>Film:</b> ${esc(x.visual)}</p>${x.on_screen_text?`<p><b>On-screen:</b> ${esc(x.on_screen_text)}</p>`:''}${x.spoken?`<p><b>Say:</b> ${esc(x.spoken)}</p>`:''}${x.change?`<p class="chg">↻ ${esc(x.change)}</p>`:''}</div>`).join('')}
     <p style="margin-top:10px"><b>Urgency:</b> ${esc(sc.urgency)}</p>
