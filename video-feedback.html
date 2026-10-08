@@ -732,7 +732,7 @@ Open with a relatable real-life moment as the hook. Use real product details. En
     document.getElementById('swState').textContent='Checking TikTok policy…';
     const pol=await swPolicy(sc);
     SW.script={title:pol.title||sc.title,paragraphs:pol.paragraphs?.length?pol.paragraphs:sc.paragraphs,passed:pol.passed,issues:pol.issues||[]};
-    SW.extras={}; swRenderScript();
+    SW.extras={}; SW.seo=null; swRenderScript();
   }catch(e){ flow.innerHTML=head+`<div class="card swc">Couldn't write the script: ${esc(e.message)}</div>`; }
 }
 function swRenderScript(tab){
@@ -745,8 +745,8 @@ function swRenderScript(tab){
   const t=tab||SW.tab||'';
   document.getElementById('swFlow').innerHTML=head+(rage?`<div class="swtwo">${main}${rage}</div>`:main)+
     `<div class="card swc"><div class="swh">Make the rest of your video <small style="float:right;color:var(--text-muted);font-weight:600">Written for this script</small></div>
-      <div class="swtabs">${[['shots','Shot by shot'],['hooks','Text hooks'],['caption','Caption']].map(([k,l])=>`<button class="${t===k?'on':''}" onclick="swExtra('${k}')">${l}</button>`).join('')}</div>
-      <div class="swextra" id="swExtra">${t&&SW.extras[t]?SW.extras[t]:''}</div>${t&&SW.extras[t]?`<button class="copy" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('swExtra').innerText);this.textContent='✓ Copied'">Copy</button>`:''}</div>
+      <div class="swtabs">${[['shots','Shot by shot'],['hooks','Text hooks'],['seo','SEO words'],['caption','Caption']].map(([k,l])=>`<button class="${t===k?'on':''}" onclick="swExtra('${k}')">${l}</button>`).join('')}</div>
+      <div class="swextra" id="swExtra">${t&&SW.extras[t]?esc(SW.extras[t]):''}</div>${t&&SW.extras[t]?`<button class="copy" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('swExtra').innerText);this.textContent='✓ Copied'">${t==='seo'?'Copy all words':'Copy'}</button>`:''}</div>
     <div class="swacts">${['Shorter','Funnier','Stronger hook','More casual'].map(x=>`<button class="copy" onclick="swWrite({from:SW.script,how:'${x.toLowerCase()}'})">${x}</button>`).join('')}<a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer;align-self:center" onclick="swReset()">Start over</a></div>
     <div class="swrow"><input id="swAsk" placeholder="Or tell it what to change…" onkeydown="if(event.key==='Enter'&&this.value.trim())swWrite({from:SW.script,how:this.value.trim()})"><button class="btn sm" onclick="const v=document.getElementById('swAsk').value.trim();if(v)swWrite({from:SW.script,how:v})">↑</button></div>`;
   if(document.getElementById('swRage').checked&&!SW.rage&&!SW._rageBusy) swRage();
@@ -767,14 +767,24 @@ async function swExtra(k){
       SW.extras.shots=o.shots.map((x,i)=>`${i+1}. 🎬 ${x.film}\n   “${x.line}”`).join('\n\n'); }
     if(k==='hooks'){ const o=await gem([{text:`Write 8 short on-screen TEXT HOOKS (the text overlay in the first 2 seconds) for this TikTok Shop video. Under 10 words each, punchy and curiosity-driven, confident but not cheesy; no "you NEED this", no all-caps hype.\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{hooks:{type:'ARRAY',items:{type:'STRING'}}},required:['hooks']},0.9);
       SW.extras.hooks=o.hooks.map((h,i)=>`${i+1}. ${h}`).join('\n'); }
-    if(k==='caption'){ const o=await gem([{text:`Write a TikTok caption for this video and 5–8 hashtags.\n${voiceGuide()}\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{caption:{type:'STRING'},hashtags:{type:'ARRAY',items:{type:'STRING'}}},required:['caption','hashtags']},0.7);
-      SW.extras.caption=`${o.caption}\n\n${o.hashtags.map(h=>'#'+String(h).replace(/^#/,'')).join(' ')}`; }
+    if(k==='seo'){ const o=await gem([{text:`List 15–25 SEO keywords and short search phrases people would actually type into TikTok search to find a video like this (product name and type, brand, the problem it solves, who it's for, use cases, gift/season terms if relevant, "tiktok shop" style shopping terms). Lowercase, no hashtags, no duplicates, most important first.\nPRODUCT: ${SW.product}${SW.brand?` by ${SW.brand}`:''}\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{keywords:{type:'ARRAY',items:{type:'STRING'}}},required:['keywords']},0.4);
+      SW.seo=[...new Set(o.keywords.map(w=>String(w).trim().replace(/^#/,'')).filter(Boolean))];
+      SW.extras.seo=SW.seo.join(', '); }
+    if(k==='caption'){
+      if(!SW.seo){ const o=await gem([{text:`List 12 SEO search keywords for a TikTok video about ${SW.product}${SW.brand?` by ${SW.brand}`:''}. Lowercase, no hashtags.\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{keywords:{type:'ARRAY',items:{type:'STRING'}}},required:['keywords']},0.4); SW.seo=o.keywords; }
+      const o=await gem([{text:`Write the TikTok CAPTION for this video — the short text that goes under the post. It is NOT the script: do not repeat or summarize the script line by line.
+- 1–3 short sentences, under 150 characters before the hashtags.
+- Naturally include 2–4 of these SEO keywords so the post shows up in search: ${SW.seo.slice(0,12).join(', ')}
+- Then 5–8 hashtags (mix of broad and specific).
+${voiceGuide()}
+SCRIPT (for context only):\n${txt}`}],{type:'OBJECT',properties:{caption:{type:'STRING'},hashtags:{type:'ARRAY',items:{type:'STRING'}}},required:['caption','hashtags']},0.7);
+      SW.extras.caption=`${o.caption}\n\n${o.hashtags.map(h=>'#'+String(h).replace(/^#/,'').replace(/\s+/g,'')).join(' ')}`; }
   }catch(e){ SW.extras[k]=''; alert('Could not write that: '+e.message); }
   swRenderScript(k);
 }
 async function swSave(btn,sc){
   const { data:{ session } }=await db.auth.getSession(); if(!session) return;
-  const notes=[SW.picked.length?`Angles: ${SW.picked.map(i=>SW.angles[i].title).join(', ')}`:'', SW.extras?.hooks?`Text hooks:\n${SW.extras.hooks}`:'', SW.extras?.caption?`Caption:\n${SW.extras.caption}`:'', SW.extras?.shots?`Shot by shot:\n${SW.extras.shots}`:''].filter(Boolean).join('\n\n');
+  const notes=[SW.picked.length?`Angles: ${SW.picked.map(i=>SW.angles[i].title).join(', ')}`:'', SW.extras?.hooks?`Text hooks:\n${SW.extras.hooks}`:'', SW.extras?.caption?`Caption:\n${SW.extras.caption}`:'', SW.extras?.seo?`SEO words:\n${SW.extras.seo}`:'', SW.extras?.shots?`Shot by shot:\n${SW.extras.shots}`:''].filter(Boolean).join('\n\n');
   const { error }=await db.from('scripts').insert({ user_id:session.user.id, title:sc.title, brand:SW.product, cat:'review', script:sc.paragraphs.join('\n\n'), notes });
   if(error){ alert('Could not save: '+error.message); return; } btn.textContent='✓ Saved'; btn.disabled=true;
 }
