@@ -293,11 +293,12 @@ function voiceGuide(){
   // Your own tone from Settings is added as extra flavour (the old default "lazy mom energy" note is skipped — it made scripts sound bored)
   const custom = USER_TONE && !/lazy mom energy/i.test(USER_TONE) ? `\nExtra notes on her style: ${USER_TONE}` : '';
   return `VOICE (very important): half real conversation, half confident recommendation — like a friend who genuinely loves this thing and is excited to tell you about it.
-- Warm, upbeat and natural. Energy should feel like "okay you have to see this", NOT bored, sighing, sarcastic or "whatever".
+- Warm, upbeat and natural. Energy should feel genuinely excited, NOT bored, sighing, sarcastic or "whatever".
 - Sound like a real person talking: contractions, short sentences, everyday words, a real-life moment or two.
 - Sell with confidence: clearly say what it does, why it's better, and why it's worth it — specific benefits and real product details, not vague hype.
 - Give the viewer a reason to buy now (a deal, a season, a problem they have today) in a natural way.
-- Avoid cringe ad-speak: "game changer", "holy grail", "you NEED this", "run don't walk", "trust me", "life-changing", all-caps hype, stacked exclamation points, more than one emoji.${custom}`;
+- Avoid cringe ad-speak: "game changer", "holy grail", "you NEED this", "run don't walk", "trust me", "life-changing", all-caps hype, stacked exclamation points, more than one emoji.
+- NEVER start the script (or any paragraph) with "Okay", "Ok so", "Okay so", "So," or "Alright". Don't use the word "okay" at all. Open straight into the moment, the problem, or the product.${custom}`;
 }
 const AUDIO_NOTES = {
   'voiceover': 'The audio is the creator\'s OWN VOICEOVER talking about the product (no song). Judge the voiceover: clarity, energy, whether it sounds genuine, and whether the words and visuals match.',
@@ -700,15 +701,20 @@ async function swStart(){
 ${swContext()}
 List 6–8 different reasons real people use to JUSTIFY buying this (money saved, replaces other things, a frustration it fixes, a worry it removes, who it's for, gifting/self-gifting, timing). Each: a short, catchy "title" (3–5 words, first person is fine, e.g. "Replaces my tool pile") and "why" (1–2 plain sentences with a real product detail). If a holiday/event or special occasion is set, include 1–2 angles for it. Also return the clean product name and brand.`}],schema,0.8);
     if(!SW.product) SW.product=out.product; if(!SW.brand) SW.brand=out.brand;
-    SW.angles=out.angles||[]; SW.picked=[]; step(4); swRenderAngles();
+    { const mine=(SW.angles||[]).filter(a=>a.custom); SW.angles=[...mine,...(out.angles||[])]; SW.picked=mine.map((_,i)=>i); } step(4); swRenderAngles();
   }catch(e){ flow.innerHTML=swBar()+`<div class="card swc">Couldn't find angles: ${esc(e.message)}</div>`; }
 }
 function swRenderAngles(){
   document.getElementById('swFlow').innerHTML=swBar()+`<div class="card swc"><div class="swh">Why people justify buying it. Pick your angles.</div>
     <div class="swangles">${SW.angles.map((a,i)=>`<div class="swang${SW.picked.includes(i)?' on':''}" onclick="SW.picked=SW.picked.includes(${i})?SW.picked.filter(x=>x!==${i}):[...SW.picked,${i}];swRenderAngles()"><b>${esc(a.title)}</b><p>${esc(a.why)}</p></div>`).join('')}</div>
+    <div class="swrow" style="margin-top:12px"><input id="swMyAngle" placeholder="Or type your own angle… (e.g. it saves me 20 minutes every morning)" onkeydown="if(event.key==='Enter')swAddAngle()"><button class="btn sm" onclick="swAddAngle()">+ Add</button></div>
     <div class="swacts" style="margin-top:12px"><button class="btn sm" ${SW.picked.length?'':'disabled'} onclick="swWrite()">${SW.picked.length?`Continue with ${SW.picked.length}`:'Pick at least one'}</button><button class="tc-btn copy" onclick="swStart()">↻ Show different reasons</button></div></div>`;
 }
 const SCRIPT1={type:'OBJECT',properties:{title:{type:'STRING'},paragraphs:{type:'ARRAY',items:{type:'STRING'}}},required:['title','paragraphs']};
+function swAddAngle(){
+  const v=document.getElementById('swMyAngle').value.trim(); if(!v) return;
+  SW.angles.push({title:v,why:'Your own angle',custom:true}); SW.picked.push(SW.angles.length-1); swRenderAngles();
+}
 function swAngleText(){ return SW.picked.map(i=>SW.angles[i]).filter(Boolean).map(a=>`- ${a.title}: ${a.why}`).join('\n'); }
 async function swPolicy(sc){
   const schema={type:'OBJECT',properties:{passed:{type:'BOOLEAN'},issues:{type:'ARRAY',items:{type:'STRING'}},title:{type:'STRING'},paragraphs:{type:'ARRAY',items:{type:'STRING'}}},required:['passed','issues','title','paragraphs']};
@@ -732,6 +738,7 @@ Open with a relatable real-life moment as the hook. Use real product details. En
     document.getElementById('swState').textContent='Checking TikTok policy…';
     const pol=await swPolicy(sc);
     SW.script={title:pol.title||sc.title,paragraphs:pol.paragraphs?.length?pol.paragraphs:sc.paragraphs,passed:pol.passed,issues:pol.issues||[]};
+    SW.script.paragraphs=swNoOkay(SW.script.paragraphs);
     SW.extras={}; SW.seo=null; swRenderScript();
   }catch(e){ flow.innerHTML=head+`<div class="card swc">Couldn't write the script: ${esc(e.message)}</div>`; }
 }
@@ -740,13 +747,17 @@ function swRenderScript(tab){
   const head=swBar()+(SW.picked.length?`<div class="card swc"><div class="swh" style="margin-bottom:6px">Why people justify buying it</div><div class="swbar">${SW.picked.map(i=>`<span class="chip">${esc(SW.angles[i].title)}</span>`).join('')}</div></div>`:'');
   const block=(s,label)=>`<div class="card swc"><div class="swh">${esc(s.title)} ${label}</div>${s.issues?.length&&!s.passed?`<div class="flag" style="margin-bottom:10px"><b>Fixed for TikTok policy:</b><br>${s.issues.map(esc).join('<br>')}</div>`:''}<div class="swscript">${s.paragraphs.map(p=>`<p>${esc(p)}</p>`).join('')}</div>`;
   const pol=sc.passed?'<span class="swpol ok" style="float:right">✓ Policy check passed</span>':'<span class="swpol fix" style="float:right">Policy fixes applied</span>';
-  const main=block(sc,pol)+`<div class="swacts"><button class="copy" onclick="navigator.clipboard.writeText(SW.script.paragraphs.join('\\n\\n'));this.textContent='✓ Copied'">Copy</button><button class="copy" onclick="swSave(this,SW.script)">Save to Script Vault</button>${document.getElementById('swRage').checked||SW.rage?'':`<button class="copy" onclick="swRage()">Rage bait version</button>`}</div></div>`;
+  const main=block(sc,pol)+`<div class="swacts"><button class="copy" onclick="navigator.clipboard.writeText(SW.script.paragraphs.join('\\n\\n'));this.textContent='✓ Copied'">Copy</button><select id="swCat" class="copy" style="padding-right:6px" onchange="SW.cat=this.value">${[['review','Review'],['tutorial','Tutorial'],['unboxing','Unboxing'],['storytime','Storytime'],['live','Live']].map(([v,l])=>`<option value="${v}"${(SW.cat||'review')===v?' selected':''}>${l}</option>`).join('')}</select><button class="copy" onclick="swSave(this,SW.script)">Save to Script Vault</button>${document.getElementById('swRage').checked||SW.rage?'':`<button class="copy" onclick="swRage()">Rage bait version</button>`}</div></div>`;
   const rage=SW.rage?block(SW.rage,'<span class="swpol wait" style="float:right">Rage bait</span>')+`<div class="swacts"><button class="copy" onclick="navigator.clipboard.writeText(SW.rage.paragraphs.join('\\n\\n'));this.textContent='✓ Copied'">Copy</button><button class="copy" onclick="swSave(this,SW.rage)">Save to Script Vault</button></div></div>`:'';
   const t=tab||SW.tab||'';
   document.getElementById('swFlow').innerHTML=head+(rage?`<div class="swtwo">${main}${rage}</div>`:main)+
     `<div class="card swc"><div class="swh">Make the rest of your video <small style="float:right;color:var(--text-muted);font-weight:600">Written for this script</small></div>
-      <div class="swtabs">${[['shots','Shot by shot'],['hooks','Text hooks'],['seo','SEO words'],['caption','Caption']].map(([k,l])=>`<button class="${t===k?'on':''}" onclick="swExtra('${k}')">${l}</button>`).join('')}</div>
+      <div class="swtabs">${[['shots','Shot by shot'],['hooks','Text hooks'],['thumb','Thumbnail'],['sound','Sounds'],['seo','SEO words'],['caption','Caption']].map(([k,l])=>`<button class="${t===k?'on':''}" onclick="swExtra('${k}')">${l}</button>`).join('')}</div>
       <div class="swextra" id="swExtra">${t&&SW.extras[t]?esc(SW.extras[t]):''}</div>${t&&SW.extras[t]?`<button class="copy" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('swExtra').innerText);this.textContent='✓ Copied'">${t==='seo'?'Copy all words':'Copy'}</button>`:''}</div>
+    <div class="card swc"><div class="swh">Redo just one part</div><div class="sub" style="margin-bottom:8px">Everything else stays word-for-word.</div>
+      <div class="swacts">${[['the hook','opening hook (the first paragraph)'],['the middle','middle paragraphs (keep the first and last paragraph exactly)'],['the ending','closing (the last paragraph) — keep it a soft, casual close']].map(([l,h])=>`<button class="copy" onclick="swRedoPart('${h}')">Redo ${l}</button>`).join('')}</div>
+      <div class="swtabs" style="margin-top:8px">${sc.paragraphs.map((_,i)=>`<button onclick="swRedoPart('paragraph ${i+1} only')">¶${i+1}</button>`).join('')}</div></div>
+    <div class="card swc"><div class="swh">Add to my to-do</div><div class="swrow"><input type="date" id="swTodoDate" value="${swDateKey(new Date())}"><button class="btn sm" id="swTodoBtn" onclick="swToTodo(this)">Add to to-do</button></div></div>
     <div class="swacts">${['Shorter','Funnier','Stronger hook','More casual'].map(x=>`<button class="copy" onclick="swWrite({from:SW.script,how:'${x.toLowerCase()}'})">${x}</button>`).join('')}<a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer;align-self:center" onclick="swReset()">Start over</a></div>
     <div class="swrow"><input id="swAsk" placeholder="Or tell it what to change…" onkeydown="if(event.key==='Enter'&&this.value.trim())swWrite({from:SW.script,how:this.value.trim()})"><button class="btn sm" onclick="const v=document.getElementById('swAsk').value.trim();if(v)swWrite({from:SW.script,how:v})">↑</button></div>`;
   if(document.getElementById('swRage').checked&&!SW.rage&&!SW._rageBusy) swRage();
@@ -767,6 +778,10 @@ async function swExtra(k){
       SW.extras.shots=o.shots.map((x,i)=>`${i+1}. 🎬 ${x.film}\n   “${x.line}”`).join('\n\n'); }
     if(k==='hooks'){ const o=await gem([{text:`Write 8 short on-screen TEXT HOOKS (the text overlay in the first 2 seconds) for this TikTok Shop video. Under 10 words each, punchy and curiosity-driven, confident but not cheesy; no "you NEED this", no all-caps hype.\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{hooks:{type:'ARRAY',items:{type:'STRING'}}},required:['hooks']},0.9);
       SW.extras.hooks=o.hooks.map((h,i)=>`${i+1}. ${h}`).join('\n'); }
+    if(k==='thumb'){ const o=await gem([{text:`Give 3 thumbnail / first-frame ideas for this TikTok Shop video. For each: what's in the frame (shot + where the product is), the text overlay (max 6 words, never starting with "okay"), and why it stops the scroll. Simple to shoot at home${SW.film==='Faceless'?', no face in frame':''}.\nPRODUCT: ${SW.product}\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{ideas:{type:'ARRAY',items:{type:'OBJECT',properties:{frame:{type:'STRING'},text:{type:'STRING'},why:{type:'STRING'}},required:['frame','text','why']}}},required:['ideas']},0.8);
+      SW.extras.thumb=o.ideas.map((x,i)=>`${i+1}. ${x.frame}\n   Text: "${x.text}"\n   Why: ${x.why}`).join('\n\n'); }
+    if(k==='sound'){ const o=await gem([{text:`Suggest audio for this TikTok Shop video. You can't see what's trending today, so don't claim specific songs are trending. Instead give 4 sound STYLES that would fit (e.g. soft lo-fi, upbeat pop instrumental, cozy acoustic), each with: the vibe, why it fits this script, the music volume under the voiceover (e.g. 10–15%), and 2–3 search words to type into TikTok's sound library (Add sound → search) to find a matching trending or commercial sound. Add one tip reminding her to pick from the Commercial Music Library for Shop videos.\nPRODUCT: ${SW.product}\nFORMAT: ${SW.fmt}\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{sounds:{type:'ARRAY',items:{type:'OBJECT',properties:{style:{type:'STRING'},why:{type:'STRING'},volume:{type:'STRING'},search:{type:'ARRAY',items:{type:'STRING'}}},required:['style','why','volume','search']}},tip:{type:'STRING'}},required:['sounds','tip']},0.7);
+      SW.extras.sound=o.sounds.map((x,i)=>`${i+1}. ${x.style}\n   Why: ${x.why}\n   Volume: ${x.volume}\n   Search: ${x.search.join(', ')}`).join('\n\n')+`\n\nTip: ${o.tip}`; }
     if(k==='seo'){ const o=await gem([{text:`List 15–25 SEO keywords and short search phrases people would actually type into TikTok search to find a video like this (product name and type, brand, the problem it solves, who it's for, use cases, gift/season terms if relevant, "tiktok shop" style shopping terms). Lowercase, no hashtags, no duplicates, most important first.\nPRODUCT: ${SW.product}${SW.brand?` by ${SW.brand}`:''}\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{keywords:{type:'ARRAY',items:{type:'STRING'}}},required:['keywords']},0.4);
       SW.seo=[...new Set(o.keywords.map(w=>String(w).trim().replace(/^#/,'')).filter(Boolean))];
       SW.extras.seo=SW.seo.join(', '); }
@@ -782,10 +797,35 @@ SCRIPT (for context only):\n${txt}`}],{type:'OBJECT',properties:{caption:{type:'
   }catch(e){ SW.extras[k]=''; alert('Could not write that: '+e.message); }
   swRenderScript(k);
 }
+function swNoOkay(ps){
+  return (ps||[]).map(p=>{ const t=String(p).replace(/^\s*(okay|ok|alright|all right)\b[\s,.!…-]*(so\b[\s,]*)?/i,''); return t?t.charAt(0).toUpperCase()+t.slice(1):p; });
+}
+function swDateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function swRedoPart(part){
+  swWrite({from:SW.script,how:`Rewrite ONLY the ${part}. Every other paragraph must stay exactly word-for-word the same, in the same order. Make the rewritten part noticeably different and stronger.`});
+}
+async function swToTodo(btn){
+  const { data:{ session } }=await db.auth.getSession(); if(!session||!SW.script) return;
+  const date=document.getElementById('swTodoDate').value||swDateKey(new Date());
+  btn.disabled=true; btn.textContent='Adding…';
+  try{
+    const uid=session.user.id;
+    const { data:prods }=await db.from('products').select('id,name,brand,tiktok_account_id').eq('user_id',uid).ilike('name',SW.product);
+    const prod=prods?.[0]||null;
+    const { data:last }=await db.from('queue').select('sort_order').eq('user_id',uid).eq('date',date).order('sort_order',{ascending:false}).limit(1);
+    let acct=prod?.tiktok_account_id||null;
+    try{ if(!acct&&typeof getActiveAccountId==='function') acct=getActiveAccountId()||null; }catch(e){}
+    const { error }=await db.from('queue').insert({ user_id:uid, tiktok_account_id:acct, date, prod_id:prod?.id||null,
+      name:prod?.name||SW.product||SW.script.title, brand:prod?.brand||SW.brand||'', notes:'', script:SW.script.paragraphs.join('\n\n'), done:false,
+      sort_order:(Number(last?.[0]?.sort_order)||0)+1 });
+    if(error) throw error;
+    btn.textContent=date===swDateKey(new Date())?'✓ Added to today':'✓ Added';
+  }catch(e){ btn.disabled=false; btn.textContent='Add to to-do'; alert('Could not add: '+e.message); }
+}
 async function swSave(btn,sc){
   const { data:{ session } }=await db.auth.getSession(); if(!session) return;
-  const notes=[SW.picked.length?`Angles: ${SW.picked.map(i=>SW.angles[i].title).join(', ')}`:'', SW.extras?.hooks?`Text hooks:\n${SW.extras.hooks}`:'', SW.extras?.caption?`Caption:\n${SW.extras.caption}`:'', SW.extras?.seo?`SEO words:\n${SW.extras.seo}`:'', SW.extras?.shots?`Shot by shot:\n${SW.extras.shots}`:''].filter(Boolean).join('\n\n');
-  const { error }=await db.from('scripts').insert({ user_id:session.user.id, title:sc.title, brand:SW.product, cat:'review', script:sc.paragraphs.join('\n\n'), notes });
+  const notes=[SW.picked.length?`Angles: ${SW.picked.map(i=>SW.angles[i].title).join(', ')}`:'', SW.extras?.hooks?`Text hooks:\n${SW.extras.hooks}`:'', SW.extras?.caption?`Caption:\n${SW.extras.caption}`:'', SW.extras?.seo?`SEO words:\n${SW.extras.seo}`:'', SW.extras?.shots?`Shot by shot:\n${SW.extras.shots}`:'', SW.extras?.thumb?`Thumbnail ideas:\n${SW.extras.thumb}`:'', SW.extras?.sound?`Sounds:\n${SW.extras.sound}`:''].filter(Boolean).join('\n\n');
+  const { error }=await db.from('scripts').insert({ user_id:session.user.id, title:sc.title, brand:SW.product, cat:SW.cat||'review', script:sc.paragraphs.join('\n\n'), notes });
   if(error){ alert('Could not save: '+error.message); return; } btn.textContent='✓ Saved'; btn.disabled=true;
 }
 
