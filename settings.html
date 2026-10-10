@@ -669,8 +669,18 @@ async function vcLearn(){
     async function worker(){ while(queue.length){ const v=queue.shift(); const t=await vcTranscript(v.link); done++; st.textContent=`Reading transcripts… ${done}/${top.length}`;
       if(t&&t.split(' ').length>=15) VC_ITEMS.push({title:v.title||v.link,views:v.views,text:t}); } }
     await Promise.all([worker(),worker(),worker(),worker()]);
-    if(!VC_ITEMS.length) throw new Error("Couldn't get any transcripts — your top videos may be music-only, or the transcript lookup isn't available.");
-    st.textContent=`Found ${VC_ITEMS.length} videos with your voice. Uncheck any that don't sound like you.`;
+    // skip any video that was read from a Script Vault script (those were written by Gemini, not you)
+    let skipped=0;
+    try{
+      const { data:vault }=await db.from('scripts').select('script').eq('user_id',session.user.id);
+      const grams=t=>{ const w=String(t||'').toLowerCase().replace(/[^a-z0-9' ]+/g,' ').split(/\s+/).filter(Boolean); const g=new Set(); for(let i=0;i+4<w.length;i++) g.add(w.slice(i,i+5).join(' ')); return g; };
+      const vaultGrams=(vault||[]).map(v=>grams(v.script)).filter(g=>g.size>3);
+      VC_ITEMS=VC_ITEMS.filter(it=>{ const g=grams(it.text); if(!g.size) return true;
+        const hit=vaultGrams.some(vg=>{ let n=0; g.forEach(x=>{ if(vg.has(x)) n++; }); return n/g.size>=0.25; });
+        if(hit) skipped++; return !hit; });
+    }catch(e){ console.warn('vault check failed',e); }
+    if(!VC_ITEMS.length) throw new Error(`Couldn't get any transcripts${skipped?` — all ${skipped} matched Script Vault scripts, so they were skipped`:''} — your top videos may be music-only, or the transcript lookup isn't available.`);
+    st.textContent=`Found ${VC_ITEMS.length} videos with your voice${skipped?` (skipped ${skipped} read from Script Vault scripts)`:''}. Uncheck any that don't sound like you.`;
     list.innerHTML=VC_ITEMS.map((it,i)=>`<label style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer"><input type="checkbox" checked data-i="${i}" style="margin-top:4px"><span><b>${vcEsc(String(it.title).slice(0,80))}</b>${it.views!=null?` <span class="form-hint">· ${Number(it.views).toLocaleString()} views</span>`:''}<br><span class="form-hint">${vcEsc(it.text.slice(0,160))}…</span></span></label>`).join('')+
       `<button class="btn btn-primary" style="margin-top:12px" id="vcBuildBtn" onclick="vcBuild()">Build my voice profile</button>`;
   }catch(e){ st.textContent=e.message; }
