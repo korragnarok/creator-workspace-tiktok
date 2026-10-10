@@ -2366,7 +2366,7 @@ async function runBatch(){
   try{
     let plan={summary:'',products:[],setup_tips:[]};
     if(need.length){
-    const prompt=`You are helping a TikTok Shop affiliate creator plan a filming session. For EACH product below (use every one, exact names, same order), plan 3 DIFFERENT takes using these styles: ${styles.join(', ')}.
+    const prompt=`You are helping a TikTok Shop affiliate creator plan a filming session. RULE: never put a price, dollar amount or % off in any hook, script or on-screen text (TikTok Shop doesn't allow it) — say "it's on sale" or "check the price in the cart" instead. For EACH product below (use every one, exact names, same order), plan 3 DIFFERENT takes using these styles: ${styles.join(', ')}.
 ${focus?`Creator's focus: ${focus}\n`:''}For each take give: style, angle (the story/idea), hook (first 3 seconds: what to show + say/text), shots (specific shot list: angles, close-ups, B-roll, props, location), on_screen_text, and script (a short, natural script in the creator's casual voice — for "Trending sound + text" or aesthetic takes the script is just the on-screen text beats, no voiceover). If a product already has scripts, make the new takes different from them. No "click the link" CTAs — build urgency and desire instead.
 setup_tips: 3–5 tips to film these efficiently (group by location/lighting, order to film in).
 summary: one sentence on the plan.

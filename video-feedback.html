@@ -302,6 +302,7 @@ function voiceGuide(){
 - Sell with confidence: clearly say what it does, why it's better, and why it's worth it — specific benefits and real product details, not vague hype.
 - Give the viewer a reason to buy now (a deal, a season, a problem they have today) in a natural way.
 - Avoid cringe ad-speak: "game changer", "holy grail", "you NEED this", "run don't walk", "trust me", "life-changing", all-caps hype, stacked exclamation points, more than one emoji.
+- NEVER say a price, dollar amount, or discount % (no "under $50", "only 29 bucks", "40% off") — TikTok Shop doesn't allow it. Talk about the deal without numbers: "the price right now is crazy", "it's on sale", "check the price in the cart".
 - NEVER start the script (or any paragraph) with "Okay", "Ok so", "Okay so", "So," or "Alright". Don't use the word "okay" at all. Open straight into the moment, the problem, or the product.${custom}`;
 }
 const AUDIO_NOTES = {
@@ -674,9 +675,9 @@ function swContext(){
   const sp=SW.special.filter(x=>x!=='On sale');
   if(sp.length) bits.push(`Open the script with this: it's a ${sp.join(' and ')}`);
   if(SW.special.includes('On sale')){ const deal=document.getElementById('swDeal').value.trim(), end=document.getElementById('swDealEnd').value;
-    bits.push(`It's ON SALE right now${deal?`: ${deal}`:''}${end?` (deal ends ${new Date(end+'T00:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'})})`:''}. Mention the sale early and naturally as a natural reason to buy now ("it's on sale right now, fyi", "this is the lowest I've seen it"). Only state the deal exactly as given — never invent prices, percentages or end dates.`); }
+    bits.push(`It's ON SALE right now${deal?`: ${deal}`:''}${end?` (deal ends ${new Date(end+'T00:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'})})`:''}. Do NOT say the price or % in the script — just that it's on sale. Mention the sale early and naturally as a natural reason to buy now ("it's on sale right now, fyi", "this is the lowest I've seen it"). Only state the deal exactly as given — never invent prices, percentages or end dates.`); }
   const saleAngle=(SW.picked||[]).some(i=>/sale|deal|promo|discount|price|% off|percent off|markdown|clearance/i.test(((SW.angles||[])[i]?.title||'')+' '+((SW.angles||[])[i]?.why||'')));
-  if(SW.special.includes('On sale')||saleAngle) bits.push(`SALE OPENING (required): the very FIRST line of the script must be about the price/deal, e.g. "Have you seen the price on ${SW.product} today?" or "${SW.product} is on sale right now and I had to tell you." Vary the wording, but the price/sale must be the hook — don't open with anything else. Never invent a specific price or percentage that wasn't given.`);
+  if(SW.special.includes('On sale')||saleAngle) bits.push(`SALE OPENING (required): the very FIRST line of the script must be about the price/deal, e.g. "Have you seen the price on ${SW.product} today?" or "${SW.product} is on sale right now and I had to tell you." Vary the wording, but the price/sale must be the hook — don't open with anything else. Never say any price, dollar amount, or percentage — not even one from the deal info — because TikTok Shop doesn't allow it; hint at the deal instead ("you have to check the price", "it's on sale right now").`);
   return bits.join('\n');
 }
 async function swProductParts(){
@@ -725,7 +726,7 @@ function swAddAngle(){
 function swAngleText(){ return SW.picked.map(i=>SW.angles[i]).filter(Boolean).map(a=>`- ${a.title}: ${a.why}`).join('\n'); }
 async function swPolicy(sc){
   const schema={type:'OBJECT',properties:{passed:{type:'BOOLEAN'},issues:{type:'ARRAY',items:{type:'STRING'}},title:{type:'STRING'},paragraphs:{type:'ARRAY',items:{type:'STRING'}}},required:['passed','issues','title','paragraphs']};
-  return gem([{text:`Check this TikTok Shop affiliate script against TikTok Shop content policy: no medical/health or cure claims, no unverifiable "best/#1/guaranteed" claims, no exaggerated before/after promises, no false urgency or fake pricing/discounts, no directing people off TikTok, no comparisons that disparage named competitors, nothing unsafe. If it's fine, return passed=true, issues=[] and the script unchanged. If not, return passed=false, list each issue in plain words, and return a FIXED version with the smallest possible changes, keeping the same voice.
+  return gem([{text:`Check this TikTok Shop affiliate script against TikTok Shop content policy: no medical/health or cure claims, no unverifiable "best/#1/guaranteed" claims, no exaggerated before/after promises, no false urgency or fake pricing/discounts, NO stated prices or dollar amounts of any kind ("under fifty bucks", "only $29", "less than $20", "half price", "40% off" — the price shown in the cart can change and quoting it is against TikTok Shop rules; replace with price-free wording like "the price right now is so good" or "check the price in the cart"), no directing people off TikTok, no comparisons that disparage named competitors, nothing unsafe. If it's fine, return passed=true, issues=[] and the script unchanged. If not, return passed=false, list each issue in plain words, and return a FIXED version with the smallest possible changes, keeping the same voice.
 TITLE: ${sc.title}
 SCRIPT:
 ${sc.paragraphs.join('\n\n')}`}],schema,0.2);
