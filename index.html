@@ -991,7 +991,16 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                   <div class="tt-stat" style="grid-column:1/-1"><div class="tt-l">Views · last 30 days</div><div class="tt-v" id="mViews30">-</div></div>
                 </div>
               </div>
-              <div class="card meta-spare"><div class="b-title">Coming soon</div><div class="spare-sub">Space saved for something new.</div></div>
+              <div class="card meta-spare"><div class="b-title">Ask Take24</div><div class="spare-sub">Ask anything about your sales, videos and products.</div>
+                <form onsubmit="event.preventDefault();const v=this.q.value.trim();location.href='ask.html'+(v?'?q='+encodeURIComponent(v):'');" style="display:flex;gap:6px;margin-top:10px">
+                  <input name="q" placeholder="e.g. What should I film tomorrow?" style="flex:1;min-width:0;background:var(--bg);border:1px solid var(--border-mid);border-radius:10px;padding:9px 11px;color:var(--ink);font:13px 'Nunito Sans',sans-serif;outline:none">
+                  <button style="border:0;border-radius:10px;background:var(--rust);color:#fff;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:0 14px;cursor:pointer">Ask</button>
+                </form>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+                  <a href="ask.html?q=Why%20were%20my%20sales%20up%20or%20down%20this%20week%3F" style="border:1px solid var(--border-mid);border-radius:999px;padding:5px 10px;font-size:11.5px;color:var(--text)">Sales this week?</a>
+                  <a href="ask.html?q=What%20should%20I%20film%20tomorrow%3F" style="border:1px solid var(--border-mid);border-radius:999px;padding:5px 10px;font-size:11.5px;color:var(--text)">Film tomorrow?</a>
+                  <a href="ask.html?q=What%20do%20my%20best%20videos%20have%20in%20common%3F" style="border:1px solid var(--border-mid);border-radius:999px;padding:5px 10px;font-size:11.5px;color:var(--text)">Best videos?</a>
+                </div></div>
             </div>
           </div>
 

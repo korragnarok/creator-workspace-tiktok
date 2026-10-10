@@ -155,6 +155,7 @@ ${data}${extra}`;
   }catch(e){ w.classList.remove('wait'); w.innerHTML=`Couldn't answer that: ${esc(e.message)}`; }
   btn.disabled=false; box.focus();
 }
+(function(){ const v=new URLSearchParams(location.search).get('q'); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
 </script>
 </body>
 </html>
