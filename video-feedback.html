@@ -190,6 +190,13 @@ textarea{resize:vertical;min-height:60px;}
     <p class="sub">Tell it what you're selling and how it should sound — it finds the reasons people buy, you pick the angles, and it writes the script.</p>
     <div class="sw" id="swSetup">
       <div class="card swc">
+        <div class="swh">✎ Workshop an idea or a draft</div>
+        <div class="sub" style="margin-bottom:8px">Got a rough idea, a hook, or a script you already wrote? Paste it here and it'll tell you what's working, what to fix, and give it back tightened up in your voice. (Add the product below too if it's not obvious from your notes.)</div>
+        <textarea id="swDraft" rows="5" placeholder="e.g. idea: show the stain force cleaning up after the dogs, 'my dogs vs my carpet' — or paste your full script…" style="width:100%;resize:vertical"></textarea>
+        <div class="swrow" style="margin-top:8px;justify-content:flex-end"><button class="btn sm" id="swWsBtn" onclick="swWorkshop()">✎ Workshop it</button></div>
+      </div>
+      <div class="or" style="margin:4px 0 10px">or start from a product</div>
+      <div class="card swc">
         <div class="swh"><span>1</span> What are you selling?</div>
         <div id="swProdPicked" style="display:none"></div>
         <div id="swProdPick">
@@ -698,8 +705,9 @@ async function swProductParts(){
 function swBar(){ return `<div class="card swc swbar">${SW.image?`<img src="${esc(SW.image)}" style="width:30px;height:30px;border-radius:6px;object-fit:cover">`:''}<b style="color:var(--ink);margin-right:4px">${esc(SW.product||'Your product')}</b>
   ${document.getElementById('swPsych').checked?'<span class="chip">Buyer psychology</span>':''}${document.getElementById('swHoliday').checked&&SW.holiday?`<span class="chip">${esc(SW.holiday)}</span>`:''}${SW.special.map(x=>`<span class="chip">${esc(x==='On sale'&&document.getElementById('swDeal').value.trim()?'On sale · '+document.getElementById('swDeal').value.trim():x)}</span>`).join('')}
   <span class="chip">${esc(SW.film)}</span><span class="chip">${esc(SW.fmt)}</span><a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer" onclick="swReset()">Start over</a></div>`; }
-function swReset(){ SW.angles=[];SW.picked=[];SW.script=null;SW.rage=null;SW.shotParts=[]; document.getElementById('swFlow').innerHTML=''; document.getElementById('swSetup').style.display=''; window.scrollTo({top:0,behavior:'smooth'}); }
+function swReset(){ SW.wsNotes=null; SW.angles=[];SW.picked=[];SW.script=null;SW.rage=null;SW.shotParts=[]; document.getElementById('swFlow').innerHTML=''; document.getElementById('swSetup').style.display=''; window.scrollTo({top:0,behavior:'smooth'}); }
 async function swStart(){
+  SW.wsNotes=null;
   if(!SW.product&&!SW.shots.length){ const v=document.getElementById('swProduct').value.trim(); if(v) swUseProduct(); else { alert('Add a product first — type its name or upload screenshots.'); return; } }
   if(document.getElementById('swHoliday').checked&&!SW.holiday){ alert('Pick a holiday or event (or turn that option off).'); return; }
   SW.special=document.getElementById('swSpecial').checked?[...document.querySelectorAll('.swSp:checked')].map(x=>x.value):[];
@@ -767,6 +775,47 @@ async function swExtrasOnly(){
     `Angles to cover:\n${swAngleText()}`]};
   await swExtra('seo'); await swExtra('caption'); swRenderScript('seo');
 }
+function swWsCard(){
+  const w=SW.wsNotes; if(!w) return '';
+  const li=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
+  return `<div class="card swc"><div class="swh">Workshop notes <small style="float:right;color:var(--text-muted);font-weight:600">${esc(w.kind)}</small></div>
+    ${w.verdict?`<div class="sub" style="margin-bottom:8px">${esc(w.verdict)}</div>`:''}
+    ${w.works?.length?`<b style="color:var(--ink)">What's working</b><ul style="margin:4px 0 10px 18px">${li(w.works)}</ul>`:''}
+    ${w.fixes?.length?`<b style="color:var(--ink)">What I changed &amp; why</b><ul style="margin:4px 0 4px 18px">${li(w.fixes)}</ul>`:''}
+    ${w.original?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--text-muted);font-size:12px">Your original</summary><div style="white-space:pre-wrap;font-size:13px;margin-top:6px;color:var(--text-mid)">${esc(w.original)}</div></details>`:''}</div>`;
+}
+async function swWorkshop(){
+  const draft=document.getElementById('swDraft').value.trim(); if(!draft){ document.getElementById('swDraft').focus(); return; }
+  if(!SW.product){ const v=document.getElementById('swProduct').value.trim(); if(v) swUseProduct(); }
+  const btn=document.getElementById('swWsBtn'); btn.disabled=true; btn.textContent='Workshopping…';
+  document.getElementById('swSetup').style.display='none';
+  const flow=document.getElementById('swFlow');
+  flow.innerHTML=`<div class="card swc"><div class="swh">Workshopping your ${draft.split(/\s+/).length>40?'script':'idea'} <span class="swpol wait" style="float:right" id="swState">Reading…</span></div><div class="sub">Checking it against your playbook and voice, then tightening it up.</div></div>`;
+  try{
+    const schema={type:'OBJECT',properties:{product:{type:'STRING'},kind:{type:'STRING'},verdict:{type:'STRING'},works:{type:'ARRAY',items:{type:'STRING'}},fixes:{type:'ARRAY',items:{type:'STRING'}},title:{type:'STRING'},paragraphs:{type:'ARRAY',items:{type:'STRING'}}},required:['product','kind','verdict','works','fixes','title','paragraphs']};
+    const o=await gem([...(SW.shotParts||[]),{text:`Kourtney pasted something she wants to workshop for a TikTok Shop video. It may be a rough idea, a hook, notes, or a full script.
+${SW.product?`PRODUCT: ${SW.product}${SW.brand?` by ${SW.brand}`:''}`:'Work out the product from her text (return its name in "product"; use "Your product" if unclear).'}
+1. "kind": say whether it's an idea, a hook, or a full script.
+2. "verdict": one honest sentence on how strong it is right now.
+3. "works": 2–4 specific things that are already good (keep these in the rewrite).
+4. "fixes": 2–5 specific changes you made and why — hook strength in the first 3 seconds, buyer trigger, specificity, pacing, CTA, and any policy problems.
+5. Return the finished spoken script (5–8 short paragraphs, ~30–45 seconds) in "paragraphs" with a 3–6 word "title".
+If it's a full script, KEEP her structure, wording and best lines — edit, don't replace. If it's an idea or hook, build the script around HER idea, not a different one.
+End with a soft, casual CTA.
+${voiceGuide()}
+${swContext()}
+HER TEXT:
+${draft}`}],schema,0.6);
+    if(!SW.product&&o.product&&o.product!=='Your product') SW.product=o.product;
+    document.getElementById('swState').textContent='Checking TikTok policy…';
+    const pol=await swPolicy({title:o.title,paragraphs:o.paragraphs});
+    SW.script={title:pol.title||o.title,paragraphs:swNoOkay(pol.paragraphs?.length?pol.paragraphs:o.paragraphs),passed:pol.passed,issues:pol.issues||[]};
+    SW.wsNotes={kind:o.kind,verdict:o.verdict,works:o.works,fixes:o.fixes,original:draft};
+    SW.picked=[]; SW.angles=[]; SW.rage=null; SW.only=false; SW.extras={}; SW.seo=null;
+    swRenderScript();
+  }catch(e){ flow.innerHTML=`<div class="card swc">Couldn't workshop that: ${esc(e.message)} <a style="color:var(--rust);font-weight:800;cursor:pointer" onclick="swReset()">Start over</a></div>`; }
+  btn.disabled=false; btn.textContent='✎ Workshop it';
+}
 function swRenderScript(tab){
   const sc=SW.script; if(!sc) return;
   if(SW.only){
@@ -778,7 +827,7 @@ function swRenderScript(tab){
       <div class="swacts"><button class="copy" onclick="SW.only=false;swWrite()">Write the full script too</button><a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer;align-self:center" onclick="swReset()">Start over</a></div>`;
     return;
   }
-  const head=swBar()+(SW.picked.length?`<div class="card swc"><div class="swh" style="margin-bottom:6px">Why people justify buying it</div><div class="swbar">${SW.picked.map(i=>`<span class="chip">${esc(SW.angles[i].title)}</span>`).join('')}</div></div>`:'');
+  const head=swBar()+swWsCard()+(SW.picked.length?`<div class="card swc"><div class="swh" style="margin-bottom:6px">Why people justify buying it</div><div class="swbar">${SW.picked.map(i=>`<span class="chip">${esc(SW.angles[i].title)}</span>`).join('')}</div></div>`:'');
   const block=(s,label)=>`<div class="card swc"><div class="swh">${esc(s.title)} ${label}</div>${s.issues?.length&&!s.passed?`<div class="flag" style="margin-bottom:10px"><b>Fixed for TikTok policy:</b><br>${s.issues.map(esc).join('<br>')}</div>`:''}<div class="swscript">${s.paragraphs.map(p=>`<p>${esc(p)}</p>`).join('')}</div>`;
   const pol=sc.passed?'<span class="swpol ok" style="float:right">✓ Policy check passed</span>':'<span class="swpol fix" style="float:right">Policy fixes applied</span>';
   const main=block(sc,pol)+`<div class="swacts"><button class="copy" onclick="navigator.clipboard.writeText(SW.script.paragraphs.join('\\n\\n'));this.textContent='✓ Copied'">Copy</button><select id="swCat" class="copy" style="padding-right:6px" onchange="SW.cat=this.value">${[['review','Review'],['tutorial','Tutorial'],['unboxing','Unboxing'],['storytime','Storytime'],['live','Live']].map(([v,l])=>`<option value="${v}"${(SW.cat||'review')===v?' selected':''}>${l}</option>`).join('')}</select><button class="copy" onclick="swSave(this,SW.script)">Save to Script Vault</button>${document.getElementById('swRage').checked||SW.rage?'':`<button class="copy" onclick="swRage()">Rage bait version</button>`}</div></div>`;
