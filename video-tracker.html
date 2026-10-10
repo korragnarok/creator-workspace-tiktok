@@ -239,7 +239,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
     <div class="header-actions">
       <button class="btn btn-ghost" id="editVideosBtn" onclick="toggleVideoEditMode()">Edit Videos</button>
       <button class="btn btn-ghost" id="syncTikTokBtn" onclick="syncFromConnectedTikTok()">⟳ Sync from TikTok</button>
-      <button class="btn btn-ghost" id="syncMetaBtn" onclick="syncMetaTab()" style="display:none;">⟳ Sync Facebook &amp; Instagram</button>
+      <button class="btn btn-ghost" id="syncMetaBtn" onclick="syncMetaTab()" style="display:none;">⟳ Sync Facebook &amp; Instagram</button><span id="metaLastSync" style="display:none;font-size:12px;color:var(--text-muted);align-self:center;margin-left:4px"></span>
     </div>
   </div>
   <div class="platform-tabs" role="tablist">
@@ -1977,6 +1977,7 @@ function setPlatformTab(tab){
   document.getElementById('syncTikTokBtn').style.display=tt?'':'none';
   document.getElementById('editVideosBtn').style.display=tt?'':'none';
   document.getElementById('syncMetaBtn').style.display=tt?'none':'';
+  metaShowLastSync();
   if(!tt) renderMetaPane();
 }
 function setMetaSort(k){ _metaSort=k; document.querySelectorAll('[data-ms]').forEach(b=>b.classList.toggle('active',b.dataset.ms===k)); renderMetaPane(); }
@@ -2001,11 +2002,34 @@ async function renderMetaPane(){
   st.textContent=all.length?'':'No videos synced yet — tap “Sync Facebook & Instagram”.';
   grid.innerHTML=P.map(p=>`<a class="mcard" href="${e(p.permalink)}" target="_blank" rel="noopener"><div class="mcard-th" style="background-image:url('${e(p.thumbnail_url)}')"></div><div class="mcard-b"><div class="mcard-cap">${e(p.caption)||'<i>No caption</i>'}</div><div class="mcard-st"><span><b>${fmt(p.views)}</b> views</span><span>${p.posted_at?new Date(p.posted_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}):''}</span></div></div></a>`).join('');
 }
+function metaShowLastSync(msg){
+  const el=document.getElementById('metaLastSync'); if(!el) return;
+  const btn=document.getElementById('syncMetaBtn'); el.style.display=btn&&btn.style.display!=='none'?'':'none';
+  if(msg){ el.textContent=msg; return; }
+  let last=0; try{ last=Number(localStorage.getItem('take24meta:lastSync')||0); }catch(e){}
+  if(!last){ el.textContent='Not synced yet on this device'; return; }
+  const m=Math.round((Date.now()-last)/60000);
+  el.textContent='Last synced '+(m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' hr ago':new Date(last).toLocaleDateString());
+}
+setInterval(()=>metaShowLastSync(),60000);
 async function syncMetaTab(quiet){
-  const btn=document.getElementById('syncMetaBtn'), st=document.getElementById('metaStatus'); btn.disabled=true;
-  try{ const n=await metaSyncAll(user.id,t=>{ if(!quiet) st.textContent=t; }); if(!quiet) showToast(`Synced ${n} Facebook/Instagram videos`); _metaAccts=null; if(_ptab!=='tiktok') renderMetaPane(); }
-  catch(err){ if(!quiet) showToast(err.message,'error'); }
-  finally{ btn.disabled=false; if(!quiet&&st.textContent.startsWith('Syncing')) st.textContent=''; }
+  const btn=document.getElementById('syncMetaBtn'), st=document.getElementById('metaStatus');
+  const label=btn.textContent; btn.disabled=true; btn.textContent='⟳ Syncing…';
+  metaShowLastSync(quiet?'Auto-syncing Facebook & Instagram…':'Connecting to Facebook & Instagram…');
+  try{
+    const n=await metaSyncAll(user.id,t=>{ metaShowLastSync(t); if(!quiet&&st) st.textContent=t; });
+    btn.textContent=`✓ Synced ${n} video${n===1?'':'s'}`;
+    if(!quiet) showToast(`Synced ${n} Facebook/Instagram videos`);
+    _metaAccts=null; if(_ptab!=='tiktok') renderMetaPane();
+    setTimeout(()=>{ btn.textContent=label; },3500);
+    metaShowLastSync();
+  }catch(err){
+    btn.textContent='⚠ Sync failed — tap to retry';
+    metaShowLastSync('Error: '+err.message);
+    showToast(err.message,'error');
+    setTimeout(()=>{ btn.textContent=label; },6000);
+  }
+  finally{ btn.disabled=false; if(!quiet&&st&&st.textContent.startsWith('Syncing')) st.textContent=''; }
 }
 async function syncFromConnectedTikTok(){
   const btn=document.getElementById('syncTikTokBtn');
