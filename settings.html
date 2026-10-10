@@ -68,6 +68,8 @@ body{overflow-x:hidden;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=181"></script>
+<script src="planner-sync.js?v=238"></script>
+<script src="playbook.js?v=287"></script>
 </head>
 <body>
 <nav>
@@ -135,6 +137,26 @@ body{overflow-x:hidden;}
       <div class="form-hint">Used by Script Workshop when Gemini remixes a script.</div>
     </div>
     <button class="btn btn-primary" id="saveAiToneBtn" onclick="saveAiToneSetting()">Save AI Tone</button>
+  </div>
+
+  <!-- Script Playbook (private — stored only in your account) -->
+  <div class="settings-section">
+    <div class="section-title">Script Playbook</div>
+    <div class="form-group">
+      <label class="form-label">Your playbook</label>
+      <textarea class="form-input" id="pbText" rows="18" style="font-family:'Noto Sans Mono',monospace;font-size:12.5px;line-height:1.55" placeholder="Paste your playbook here…"></textarea>
+      <div class="form-hint">Every script Gemini writes follows this (Write a script, Copy what worked, Plan takes), and the policy check + video reviews use its HARD RULES section. Private — saved only to your account, never to the public site files.</div>
+    </div>
+    <button class="btn btn-primary" id="pbSaveBtn" onclick="pbSave()">Save Playbook</button>
+    <span id="pbStatus" class="form-hint" style="margin-left:10px"></span>
+
+    <div class="form-group" style="margin-top:26px">
+      <label class="form-label">Add call notes</label>
+      <textarea class="form-input" id="pbNotes" rows="5" placeholder="Paste a new call's summary (or transcript) here…"></textarea>
+      <div class="form-hint">Gemini pulls out only script-writing advice that isn't already in your playbook. You pick which to add. Where it conflicts with your rules, the safer option wins.</div>
+    </div>
+    <button class="btn btn-ghost" id="pbSuggestBtn" onclick="pbSuggest()">✦ Suggest new rules</button>
+    <div id="pbSuggestions" style="margin-top:14px"></div>
   </div>
 
   <!-- TikTok Integration — multi-account -->
@@ -589,6 +611,44 @@ document.addEventListener('keydown', e => {
 });
 
 init();
+</script>
+<script>
+(async function(){ try{ const t=await getPlaybook(); document.getElementById('pbText').value=t; }catch(e){} })();
+function pbSave(){
+  const t=document.getElementById('pbText').value;
+  plannerSet('playbook',{text:t,updated:new Date().toISOString()},true); setPlaybookCache(t);
+  const st=document.getElementById('pbStatus'); st.textContent='✓ Saved'; setTimeout(()=>st.textContent='',2500);
+}
+let PB_SUG=[];
+async function pbSuggest(){
+  const notes=document.getElementById('pbNotes').value.trim(); if(!notes) return;
+  const btn=document.getElementById('pbSuggestBtn'), box=document.getElementById('pbSuggestions');
+  btn.disabled=true; btn.textContent='Reading…'; box.innerHTML='';
+  try{
+    const current=document.getElementById('pbText').value;
+    const res=await fetch('https://take24-scout.kortnycall5.workers.dev/?service=gemini&model=gemini-2.5-flash',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:`From these TikTok Shop coaching call notes, extract ONLY concrete advice about writing or filming shoppable video scripts (hooks, triggers, body, CTA, formats, retargeting, brand-specific selling points, policy/violation rules). Skip housekeeping, contests, tools, mindset, cross-posting.
+Skip anything already covered by the current playbook. If advice conflicts with a HARD RULE, either skip it or rewrite it into the safer version. Each rule: one short, actionable line. Also say which playbook section it belongs in.
+CURRENT PLAYBOOK:\n${current.slice(0,20000)}\n\nCALL NOTES:\n${notes.slice(0,120000)}`}]}],
+        generationConfig:{responseMimeType:'application/json',temperature:0.3,responseSchema:{type:'OBJECT',properties:{rules:{type:'ARRAY',items:{type:'OBJECT',properties:{rule:{type:'STRING'},section:{type:'STRING'}},required:['rule','section']}}},required:['rules']}}})});
+    const data=await res.json(); if(!res.ok) throw new Error(data?.error?.message||res.status);
+    PB_SUG=JSON.parse(data.candidates[0].content.parts.map(p=>p.text||'').join('')).rules||[];
+    const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    box.innerHTML=PB_SUG.length?PB_SUG.map((r,i)=>`<label style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer"><input type="checkbox" checked data-i="${i}" style="margin-top:4px"><span><b>${esc(r.rule)}</b><br><span class="form-hint">${esc(r.section)}</span></span></label>`).join('')+`<button class="btn btn-primary" style="margin-top:12px" onclick="pbAddPicked()">Add selected to playbook</button>`
+      :'<div class="form-hint">Nothing new — your playbook already covers what was in these notes.</div>';
+  }catch(e){ box.innerHTML=`<div class="form-hint">Couldn't read those notes: ${e.message}</div>`; }
+  btn.disabled=false; btn.textContent='✦ Suggest new rules';
+}
+function pbAddPicked(){
+  const picked=[...document.querySelectorAll('#pbSuggestions input[type=checkbox]:checked')].map(c=>PB_SUG[+c.dataset.i]).filter(Boolean);
+  if(!picked.length) return;
+  const ta=document.getElementById('pbText'); let t=ta.value.trimEnd();
+  const head='## 10. Added from calls';
+  const lines=picked.map(r=>`- ${r.rule} *(${r.section})*`).join('\n');
+  if(t.includes(head)){ const i=t.indexOf(head)+head.length; const end=t.indexOf('\n## ',i); const at=end<0?t.length:end; t=t.slice(0,at).trimEnd()+'\n'+lines+'\n'+t.slice(at); }
+  else { const at=t.search(/\n### Decisions/); t=at<0?t+`\n\n${head}\n${lines}\n`:t.slice(0,at)+`\n${head}\n${lines}\n`+t.slice(at); }
+  ta.value=t; pbSave(); document.getElementById('pbSuggestions').innerHTML='<div class="form-hint">✓ Added and saved.</div>'; document.getElementById('pbNotes').value='';
+}
 </script>
 </body>
 </html>
