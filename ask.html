@@ -51,7 +51,7 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 <script src="layout.js?v=260"></script>
 <script>
 const WORKER='https://take24-scout.kortnycall5.workers.dev';
-const SUGGEST=["Why were my sales up or down this week?","Which products make me the most per video?","Which products have I stopped posting?","What do my best videos have in common?","What should I film tomorrow?","Which links are underpaying me?","What's my best day to post?","What's trending in my category right now?"];
+const SUGGEST=["Why were my sales up or down this week?","Which products make me the most per video?","Which products have I stopped posting?","What do my best videos have in common?","What should I film tomorrow?","How can I do better?","What's my best day to post?","What's trending in my category right now?"];
 const CHAT=[]; let DATA=null, DATA_AT=0;
 const pad=n=>String(n).padStart(2,'0'), ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
@@ -93,10 +93,10 @@ async function gather(){
   lines.push(`ACCOUNTS: ${accts.map(a=>`${A(a.tiktok_open_id)} (${a.follower_count||0} followers)`).join(', ')||'none connected'}`);
   lines.push(`\nDAILY SALES (date | account | gmv | commission | units) last 120 days:`);
   sales.forEach(s=>lines.push(`${s.date} | ${A(s.tiktok_account_id)} | ${Number(s.gmv||0).toFixed(2)} | ${Number(s.comm||0).toFixed(2)} | ${s.units||0}`));
-  lines.push(`\nVIDEOS (date | account | views | units | gmv | title | linked product/brand):`);
-  vids.slice(0,250).forEach(v=>lines.push(`${String(v.date||'').slice(0,10)}${v.posted_time?' '+String(v.posted_time).slice(0,5):''} | ${A(v.tiktok_account_id)} | ${v.views||0} | ${v.units||0} | ${v.gmv??''} | ${String(v.title||'').replace(/\s+/g,' ').slice(0,90)} | ${v.brand||''}`));
-  lines.push(`\nPRODUCTS (name | brand | status | units sold | gmv | commission % | free sample? | last filmed):`);
-  prods.slice(0,300).forEach(p=>lines.push(`${p.name} | ${p.brand||''} | ${p.status||''} | ${p.units_sold||0} | ${p.gmv??''} | ${p.commission_rate??'not set'} | ${/FREE_SAMPLE/.test(p.notes||'')?'yes':'no'} | ${lastFilmed[p.id]||'never'}`));
+  lines.push(`\nVIDEOS (date | account | views | title | brand) — sales are tracked per DAY in DAILY SALES, not per video:`);
+  vids.slice(0,250).forEach(v=>lines.push(`${String(v.date||'').slice(0,10)}${v.posted_time?' '+String(v.posted_time).slice(0,5):''} | ${A(v.tiktok_account_id)} | ${v.views||0} | ${String(v.title||'').replace(/\s+/g,' ').slice(0,90)} | ${v.brand||''}`));
+  lines.push(`\nPRODUCTS (name | brand | status | units sold | gmv | free sample? | last filmed):`);
+  prods.slice(0,300).forEach(p=>lines.push(`${p.name} | ${p.brand||''} | ${p.status||''} | ${p.units_sold||0} | ${p.gmv??''} | ${/FREE_SAMPLE/.test(p.notes||'')?'yes':'no'} | ${lastFilmed[p.id]||'never'}`));
   lines.push(`\nSHARK & NINJA PROMOS (product | line | deal | start | end | ★ focus):`);
   promos.forEach(p=>lines.push(`${p.product} | ${p.line||''} | ${p.deal||''} | ${p.start_date||''} | ${p.end_date||''} | ${p.priority?'★':''}`));
   lines.push(`\nTO-DO / FILMING LOG last 90 days (date | product | filmed?):`);
@@ -141,7 +141,10 @@ async function send(){
     const sys=`You are Ask Take24, a sharp, friendly TikTok Shop analyst for Kourtney, an affiliate creator. Answer ONLY from the data below — her own Take24 data${extra?' plus the public search results':''}. Rules:
 - Be specific: name products, dates, accounts and real numbers from the data. Do the math (totals, averages, % changes) carefully.
 - Short and scannable: a direct 1–2 sentence answer first, then up to 5 bullets with **bold** key numbers, then one concrete next step.
-- If the data can't answer something, say exactly what's missing (e.g. "commission % isn't set for these products — add it in Products") instead of guessing.
+- Give CREATOR advice (what to film, post, repeat, or stop), not bookkeeping advice. NEVER tell her to fill in data, set commission rates, link videos to products, or fix tracking — she doesn't want that. Missing or blank fields simply mean "not tracked"; ignore them and work with what's there.
+- Product status "shelved"/"paused"/"inactive" is her own choice (out of stock, deal ended, etc.) — don't push her to un-shelve them unless she asks.
+- For "how can I do better" style questions, look at: posting consistency (days with/without posts vs. sales), which products and videos got the most views, which days had the best sales and what was posted around them, account-by-account trends, promos coming up, and unfilmed samples. Give 3–5 specific, doable moves.
+- Only if a question truly can't be answered from the data, say so in one short line.
 - Public search results are VIEWS, not sales — say so if you use them.
 - Don't write video scripts; if asked, say the script writer is in Video Feedback → Write a script.
 - Don't open with "Okay" or "Great question".
