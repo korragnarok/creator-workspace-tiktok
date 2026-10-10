@@ -127,6 +127,9 @@ textarea{resize:vertical;min-height:60px;}
 .swtabs{display:flex;background:var(--bg);border-radius:12px;padding:3px;gap:3px;margin:8px 0;}
 .swtabs button{flex:1;border:none;background:none;color:var(--text-muted);padding:9px;border-radius:9px;font:700 13px 'Nunito Sans',sans-serif;cursor:pointer;}
 .swtabs button.on{background:var(--surface);color:var(--rust);}
+.swtabs{flex-wrap:wrap;}
+.swtabs button{flex:1 1 auto;white-space:nowrap;}
+@media(max-width:600px){.swtabs button{flex:1 1 30%;padding:9px 6px;font-size:12.5px;}}
 .swextra{font-size:13.5px;line-height:1.6;color:var(--ink);white-space:pre-wrap;}
 .swtwo{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 @media(max-width:760px){.swopts,.swangles,.swseg2,.swtwo,.swgrid{grid-template-columns:1fr;}}
