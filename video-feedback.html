@@ -711,7 +711,7 @@ function swRenderAngles(){
   document.getElementById('swFlow').innerHTML=swBar()+`<div class="card swc"><div class="swh">Why people justify buying it. Pick your angles.</div>
     <div class="swangles">${SW.angles.map((a,i)=>`<div class="swang${SW.picked.includes(i)?' on':''}" onclick="SW.picked=SW.picked.includes(${i})?SW.picked.filter(x=>x!==${i}):[...SW.picked,${i}];swRenderAngles()"><b>${esc(a.title)}</b><p>${esc(a.why)}</p></div>`).join('')}</div>
     <div class="swrow" style="margin-top:12px"><input id="swMyAngle" placeholder="Or type your own angle… (e.g. it saves me 20 minutes every morning)" onkeydown="if(event.key==='Enter')swAddAngle()"><button class="btn sm" onclick="swAddAngle()">+ Add</button></div>
-    <div class="swacts" style="margin-top:12px"><button class="btn sm" ${SW.picked.length?'':'disabled'} onclick="swWrite()">${SW.picked.length?`Continue with ${SW.picked.length}`:'Pick at least one'}</button><button class="tc-btn copy" onclick="swStart()">↻ Show different reasons</button></div></div>`;
+    <div class="swacts" style="margin-top:12px"><button class="btn sm" ${SW.picked.length?'':'disabled'} onclick="SW.only=false;swWrite()">${SW.picked.length?`Write script with ${SW.picked.length}`:'Pick at least one'}</button><button class="tc-btn copy" ${SW.picked.length?'':'disabled'} onclick="swExtrasOnly()">Just the extras (no script)</button><button class="tc-btn copy" onclick="swStart()">↻ Show different reasons</button></div></div>`;
 }
 const SCRIPT1={type:'OBJECT',properties:{title:{type:'STRING'},paragraphs:{type:'ARRAY',items:{type:'STRING'}}},required:['title','paragraphs']};
 function swAddAngle(){
@@ -742,11 +742,28 @@ Open with a relatable real-life moment as the hook. Use real product details. En
     const pol=await swPolicy(sc);
     SW.script={title:pol.title||sc.title,paragraphs:pol.paragraphs?.length?pol.paragraphs:sc.paragraphs,passed:pol.passed,issues:pol.issues||[]};
     SW.script.paragraphs=swNoOkay(SW.script.paragraphs);
-    SW.extras={}; SW.seo=null; swRenderScript();
+    SW.only=false; SW.extras={}; SW.seo=null; swRenderScript();
   }catch(e){ flow.innerHTML=head+`<div class="card swc">Couldn't write the script: ${esc(e.message)}</div>`; }
+}
+async function swExtrasOnly(){
+  SW.only=true; SW.rage=null; SW.extras={}; SW.seo=null; SW.tab='seo';
+  // no spoken script — the extras are written from the product + chosen angles
+  SW.script={title:SW.product, passed:true, issues:[], paragraphs:[
+    `Video about ${SW.product}${SW.brand?` by ${SW.brand}`:''} (${SW.film||'any style'}, ${SW.fmt||'standard'} format).`,
+    `Angles to cover:\n${swAngleText()}`]};
+  await swExtra('seo'); await swExtra('caption'); swRenderScript('seo');
 }
 function swRenderScript(tab){
   const sc=SW.script; if(!sc) return;
+  if(SW.only){
+    const t=tab||SW.tab||'seo';
+    const head=swBar()+`<div class="card swc"><div class="swh" style="margin-bottom:6px">${esc(SW.product)} · your angles</div><div class="swbar">${SW.picked.map(i=>`<span class="chip">${esc(SW.angles[i].title)}</span>`).join('')}</div></div>`;
+    document.getElementById('swFlow').innerHTML=head+`<div class="card swc"><div class="swh">Your extras <small style="float:right;color:var(--text-muted);font-weight:600">No script — built from your angles</small></div>
+      <div class="swtabs">${[['seo','SEO words'],['caption','Caption'],['hooks','Text hooks'],['thumb','Thumbnail'],['sound','Sounds'],['shots','Shot ideas']].map(([k,l])=>`<button class="${t===k?'on':''}" onclick="swExtra('${k}')">${l}</button>`).join('')}</div>
+      <div class="swextra" id="swExtra">${SW.extras[t]?esc(SW.extras[t]):''}</div>${SW.extras[t]?`<button class="copy" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('swExtra').innerText);this.textContent='✓ Copied'">${t==='seo'?'Copy all words':'Copy'}</button>`:''}</div>
+      <div class="swacts"><button class="copy" onclick="SW.only=false;swWrite()">Write the full script too</button><a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer;align-self:center" onclick="swReset()">Start over</a></div>`;
+    return;
+  }
   const head=swBar()+(SW.picked.length?`<div class="card swc"><div class="swh" style="margin-bottom:6px">Why people justify buying it</div><div class="swbar">${SW.picked.map(i=>`<span class="chip">${esc(SW.angles[i].title)}</span>`).join('')}</div></div>`:'');
   const block=(s,label)=>`<div class="card swc"><div class="swh">${esc(s.title)} ${label}</div>${s.issues?.length&&!s.passed?`<div class="flag" style="margin-bottom:10px"><b>Fixed for TikTok policy:</b><br>${s.issues.map(esc).join('<br>')}</div>`:''}<div class="swscript">${s.paragraphs.map(p=>`<p>${esc(p)}</p>`).join('')}</div>`;
   const pol=sc.passed?'<span class="swpol ok" style="float:right">✓ Policy check passed</span>':'<span class="swpol fix" style="float:right">Policy fixes applied</span>';
