@@ -33,13 +33,14 @@
 
   async function gather(uid){
     const today=new Date(), t=ymd(today), y=ymd(addDays(today,-1)), y2=ymd(addDays(today,-2));
-    const [promos,vids,sales,queue,prods,accts]=await Promise.all([
+    const [promos,vids,sales,queue,prods,accts,allVids]=await Promise.all([
       db.from('promos').select('product,line,deal,start_date,end_date,priority').eq('user_id',uid).gte('end_date',t).lte('start_date',ymd(addDays(today,2))),
       db.from('videos').select('*').eq('user_id',uid).gte('date',ymd(addDays(today,-30))),
       db.from('sales').select('date,gmv,comm,units').eq('user_id',uid).in('date',[y,y2]),
       db.from('queue').select('date,prod_id,name,script,done').eq('user_id',uid).gte('date',ymd(addDays(today,-120))),
-      db.from('products').select('id,name,notes,created_at').eq('user_id',uid),
-      db.from('tiktok_accounts').select('tiktok_open_id,username,display_name,stats_updated_at').eq('user_id',uid)
+      db.from('products').select('id,name,notes,status,created_at').eq('user_id',uid),
+      db.from('tiktok_accounts').select('tiktok_open_id,username,display_name,stats_updated_at').eq('user_id',uid),
+      db.from('videos').select('prod_id,title,brand').eq('user_id',uid)
     ]);
     const out={t};
     const P=promos.data||[];
@@ -68,8 +69,14 @@
     let s=0, d=days.has(t)?today:addDays(today,-1); while(days.has(ymd(d))){ s++; d=addDays(d,-1); }
     out.streak={n:s, postedToday:days.has(t), missedYest:!days.has(y)&&!days.has(t)};
     // 7. free samples not filmed, waiting 7+ days
-    const filmed=new Set(Q.filter(q=>q.done&&q.prod_id).map(q=>q.prod_id));
-    out.samples=(prods.data||[]).filter(p=>/FREE_SAMPLE/.test(p.notes||'')&&!filmed.has(p.id)&&p.created_at&&daysBetween(p.created_at.slice(0,10),t)>=7)
+    // a sample counts as done if: any Content Tracker video is linked to it or mentions its name,
+    // it was ticked filmed on any to-do, or it's no longer active
+    const AV=allVids.data||[], low=x=>String(x||'').toLowerCase();
+    const filmedIds=new Set([...AV.map(v=>v.prod_id),...Q.filter(q=>q.done).map(q=>q.prod_id)].filter(Boolean));
+    const filmedNames=new Set(Q.filter(q=>q.done).map(q=>low(q.name)));
+    const vidText=AV.map(v=>low(v.title)+' '+low(v.brand)).join(' | ');
+    const isDone=p=>filmedIds.has(p.id)||filmedNames.has(low(p.name))||(low(p.name).length>3&&vidText.includes(low(p.name)))||!['active','promote',''].includes(low(p.status||'active'));
+    out.samples=(prods.data||[]).filter(p=>/FREE_SAMPLE/.test(p.notes||'')&&!isDone(p)&&p.created_at&&daysBetween(p.created_at.slice(0,10),t)>=7)
       .map(p=>({name:p.name,wait:daysBetween(p.created_at.slice(0,10),t)})).sort((a,b)=>b.wait-a.wait).slice(0,5);
     // 8. stale TikTok connection (stats not refreshed in 3+ days)
     out.stale=(accts.data||[]).filter(a=>!a.stats_updated_at||daysBetween(a.stats_updated_at.slice(0,10),t)>=3).map(a=>'@'+(a.username||a.display_name||'account'));
