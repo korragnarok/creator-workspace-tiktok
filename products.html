@@ -761,7 +761,7 @@ async function init() {
   await initCore5(user.id, prefs);
   await initTheme(user.id, prefs);
   initProfilePopover(user.id);
-  renderAccountTabs(document.getElementById('acctTabs'), user.id);
+  // one combined product list for all accounts — no account tabs here
   
   window._user = user;
   _coreNames = (prefs.core5 || []).map(value => String(value || '').trim().toLowerCase()).filter(Boolean);
@@ -769,7 +769,7 @@ async function init() {
   const activeAccount = await getActiveAccount(user.id);
   const activeAccountId = activeAccount?.tiktok_open_id || null;
   const badge = document.getElementById('activeAccountBadge');
-  if (badge && activeAccount) {
+  if (false && badge && activeAccount) {
     badge.textContent = '· @' + (activeAccount.display_name || activeAccount.username || 'account');
     badge.style.display = '';
   }
@@ -778,8 +778,7 @@ async function init() {
   async function renderProducts() {
     const q = document.getElementById('searchBox').value.toLowerCase();
     let prodQuery = db.from('products').select('*').eq('user_id', user.id);
-    // this account's products, plus products shared with all accounts (no account set)
-    if (activeAccountId) prodQuery = prodQuery.or(`tiktok_account_id.eq.${activeAccountId},tiktok_account_id.is.null,tiktok_account_id.eq.`);
+    // all products from every account in one list
     const { data: prods } = await prodQuery.order('created_at', {ascending: false});
     _allProducts = prods || [];
     _videoCountsByProduct = await loadVideoCounts(_allProducts);
@@ -1502,7 +1501,7 @@ async function init() {
       if (document.getElementById('fAllAccounts').checked) return null;
       // editing keeps the product on its own account; new products (or ones leaving "all accounts") go to the account you're viewing
       const orig = window._editingProductOriginal?.tiktok_account_id;
-      return (window._editId && orig) ? orig : (activeAccountId || null);
+      return (window._editId && orig) ? orig : null;   // new products belong to all accounts
     })() };
     const { error: dbErr } = window._editId
       ? await db.from('products').update(fields).eq('id', window._editId).eq('user_id', user.id)
