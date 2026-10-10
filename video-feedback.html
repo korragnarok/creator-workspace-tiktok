@@ -673,6 +673,8 @@ function swContext(){
   if(sp.length) bits.push(`Open the script with this: it's a ${sp.join(' and ')}`);
   if(SW.special.includes('On sale')){ const deal=document.getElementById('swDeal').value.trim(), end=document.getElementById('swDealEnd').value;
     bits.push(`It's ON SALE right now${deal?`: ${deal}`:''}${end?` (deal ends ${new Date(end+'T00:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'})})`:''}. Mention the sale early and naturally as a natural reason to buy now ("it's on sale right now, fyi", "this is the lowest I've seen it"). Only state the deal exactly as given — never invent prices, percentages or end dates.`); }
+  const saleAngle=(SW.picked||[]).some(i=>/sale|deal|promo|discount|price|% off|percent off|markdown|clearance/i.test(((SW.angles||[])[i]?.title||'')+' '+((SW.angles||[])[i]?.why||'')));
+  if(SW.special.includes('On sale')||saleAngle) bits.push(`SALE OPENING (required): the very FIRST line of the script must be about the price/deal, e.g. "Have you seen the price on ${SW.product} today?" or "${SW.product} is on sale right now and I had to tell you." Vary the wording, but the price/sale must be the hook — don't open with anything else. Never invent a specific price or percentage that wasn't given.`);
   return bits.join('\n');
 }
 async function swProductParts(){
