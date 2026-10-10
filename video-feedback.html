@@ -229,7 +229,7 @@ textarea{resize:vertical;min-height:60px;}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=235"></script>
 <script src="planner-sync.js?v=238"></script>
-<script src="playbook.js?v=287"></script>
+<script src="playbook.js?v=288"></script>
 <script src="layout.js?v=235"></script>
 <script>
 const WORKER = 'https://take24-scout.kortnycall5.workers.dev';
@@ -297,6 +297,12 @@ let USER_TONE='';
 function voiceGuide(){
   // Your own tone from Settings is added as extra flavour (the old default "lazy mom energy" note is skipped — it made scripts sound bored)
   const custom = USER_TONE && !/lazy mom energy/i.test(USER_TONE) ? `\nExtra notes on her style: ${USER_TONE}` : '';
+  const real = typeof voicePromptSync==='function' ? voicePromptSync() : '';
+  if (real) return `${real}
+ALWAYS (even if her examples do something different):
+- Avoid cringe ad-speak: "game changer", "holy grail", "you NEED this", "run don't walk", "life-changing", all-caps hype, stacked exclamation points.
+- NEVER say a price, dollar amount, or discount % — say "it's on sale", "the price right now is crazy", "check the price in the cart".
+- NEVER use the word "okay" anywhere, and never open with "Okay", "Ok so", "So," or "Alright".${custom}${typeof playbookPromptSync==='function'?playbookPromptSync():''}`;
   return `VOICE (very important): half real conversation, half confident recommendation — like a friend who genuinely loves this thing and is excited to tell you about it.
 - Warm, upbeat and natural. Energy should feel genuinely excited, NOT bored, sighing, sarcastic or "whatever".
 - Sound like a real person talking: contractions, short sentences, everyday words, a real-life moment or two.

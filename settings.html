@@ -69,7 +69,7 @@ body{overflow-x:hidden;}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=181"></script>
 <script src="planner-sync.js?v=238"></script>
-<script src="playbook.js?v=287"></script>
+<script src="playbook.js?v=288"></script>
 </head>
 <body>
 <nav>
@@ -157,6 +157,22 @@ body{overflow-x:hidden;}
     </div>
     <button class="btn btn-ghost" id="pbSuggestBtn" onclick="pbSuggest()">✦ Suggest new rules</button>
     <div id="pbSuggestions" style="margin-top:14px"></div>
+  </div>
+
+  <!-- My Voice (private) -->
+  <div class="settings-section">
+    <div class="section-title">My Voice</div>
+    <div class="form-hint" style="margin-top:-8px;margin-bottom:16px">Pulls the transcripts from your top-performing TikToks (both accounts) so Gemini writes scripts that sound like you. Music-only videos are skipped. Private — saved only to your account.</div>
+    <button class="btn btn-primary" id="vcLearnBtn" onclick="vcLearn()">✦ Learn my voice</button>
+    <span id="vcStatus" class="form-hint" style="margin-left:10px"></span>
+    <div id="vcList" style="margin-top:14px"></div>
+    <div class="form-group" style="margin-top:22px">
+      <label class="form-label">Your voice profile</label>
+      <textarea class="form-input" id="vcProfile" rows="12" placeholder="Tap “Learn my voice” to build this, or write it yourself…"></textarea>
+      <div class="form-hint" id="vcMeta">Every script uses this instead of the generic voice rules. The playbook's hard rules (no prices, no "okay"…) still always apply.</div>
+    </div>
+    <button class="btn btn-primary" onclick="vcSaveProfile()">Save Voice</button>
+    <span id="vcSaved" class="form-hint" style="margin-left:10px"></span>
   </div>
 
   <!-- TikTok Integration — multi-account -->
@@ -618,6 +634,83 @@ function pbSave(){
   const t=document.getElementById('pbText').value;
   plannerSet('playbook',{text:t,updated:new Date().toISOString()},true); setPlaybookCache(t);
   const st=document.getElementById('pbStatus'); st.textContent='✓ Saved'; setTimeout(()=>st.textContent='',2500);
+}
+// ── My Voice ──
+const VC_WORKER='https://take24-scout.kortnycall5.workers.dev';
+let VC_ITEMS=[], VC_VOICE={};
+const vcEsc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+(async function(){ try{ VC_VOICE=await getVoice(); document.getElementById('vcProfile').value=VC_VOICE.profile||'';
+  if(VC_VOICE.updated) document.getElementById('vcMeta').textContent=`Built from ${VC_VOICE.count||'your'} videos · ${new Date(VC_VOICE.updated).toLocaleDateString()} · ${(VC_VOICE.examples||[]).length} example scripts saved. The playbook's hard rules still always apply.`; }catch(e){} })();
+function vcClean(t){ // strip WEBVTT / SRT timing
+  return String(t||'').replace(/^WEBVTT.*$/gim,'').replace(/^\d+\s*$/gm,'').replace(/^[\d:.,]+\s*-->\s*[\d:.,]+.*$/gm,'').replace(/<[^>]+>/g,'').replace(/\n{2,}/g,'\n').split('\n').map(x=>x.trim()).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+}
+function vcFindTranscript(o,d=0){ if(!o||d>6) return ''; if(typeof o==='string') return '';
+  for(const k of Object.keys(o)){ const v=o[k]; if(typeof v==='string'&&/transcript|subtitle|caption_text|text$/i.test(k)&&v.length>40) return v; }
+  for(const k of Object.keys(o)){ const r=vcFindTranscript(o[k],d+1); if(r) return r; } return ''; }
+async function vcTranscript(link){
+  for(const ep of ['v1/tiktok/video/transcript','v2/tiktok/video/transcript']){
+    try{ const r=await fetch(`${VC_WORKER}/?endpoint=${encodeURIComponent(ep)}&url=${encodeURIComponent(link)}`); if(!r.ok) continue;
+      const t=vcClean(vcFindTranscript(await r.json())); if(t) return t; }catch(e){}
+  }
+  return '';
+}
+async function vcLearn(){
+  const btn=document.getElementById('vcLearnBtn'), st=document.getElementById('vcStatus'), list=document.getElementById('vcList');
+  btn.disabled=true; st.textContent='Finding your top videos…'; list.innerHTML='';
+  try{
+    const { data:{ session } }=await db.auth.getSession(); if(!session) throw new Error('Please sign in.');
+    const { data:vids }=await db.from('videos').select('title,link,views').eq('user_id',session.user.id).order('views',{ascending:false}).limit(80);
+    const top=(vids||[]).filter(v=>/tiktok\.com/i.test(v.link||'')).filter((v,i,a)=>a.findIndex(x=>x.link===v.link)===i).slice(0,30);
+    VC_ITEMS=[];
+    // transcripts already saved by Video Feedback
+    try{ (await plannerGet('feedback',[])||[]).forEach(h=>{ const t=h?.fb?.transcript; if(t&&t.length>60) VC_ITEMS.push({title:'Video Feedback: '+(h.product||h.name||''),views:null,text:t}); }); }catch(e){}
+    let done=0;
+    const queue=[...top];
+    async function worker(){ while(queue.length){ const v=queue.shift(); const t=await vcTranscript(v.link); done++; st.textContent=`Reading transcripts… ${done}/${top.length}`;
+      if(t&&t.split(' ').length>=15) VC_ITEMS.push({title:v.title||v.link,views:v.views,text:t}); } }
+    await Promise.all([worker(),worker(),worker(),worker()]);
+    if(!VC_ITEMS.length) throw new Error("Couldn't get any transcripts — your top videos may be music-only, or the transcript lookup isn't available.");
+    st.textContent=`Found ${VC_ITEMS.length} videos with your voice. Uncheck any that don't sound like you.`;
+    list.innerHTML=VC_ITEMS.map((it,i)=>`<label style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer"><input type="checkbox" checked data-i="${i}" style="margin-top:4px"><span><b>${vcEsc(String(it.title).slice(0,80))}</b>${it.views!=null?` <span class="form-hint">· ${Number(it.views).toLocaleString()} views</span>`:''}<br><span class="form-hint">${vcEsc(it.text.slice(0,160))}…</span></span></label>`).join('')+
+      `<button class="btn btn-primary" style="margin-top:12px" id="vcBuildBtn" onclick="vcBuild()">Build my voice profile</button>`;
+  }catch(e){ st.textContent=e.message; }
+  btn.disabled=false;
+}
+async function vcBuild(){
+  const picked=[...document.querySelectorAll('#vcList input[type=checkbox]:checked')].map(c=>VC_ITEMS[+c.dataset.i]).filter(Boolean);
+  if(!picked.length) return;
+  const b=document.getElementById('vcBuildBtn'); b.disabled=true; b.textContent='Studying your voice…';
+  try{
+    const res=await fetch(`${VC_WORKER}/?service=gemini&model=gemini-2.5-flash`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:`These are transcripts of a TikTok Shop creator's (Kourtney's) top-performing videos, in her own words. Study how she actually talks and write a voice profile another AI can follow to write NEW scripts that sound exactly like her.
+Cover, with short bullet points and real quoted examples from the transcripts:
+- How she opens videos (first lines / hook style)
+- Words, phrases and filler she naturally uses (and how often)
+- Sentence length, rhythm and pacing
+- Energy, humor, attitude, how she talks to the viewer
+- How she describes products and benefits
+- How she closes / calls to action
+- Things she never does or says
+Keep it under 350 words. Ignore any song lyrics or other people talking.
+Also pick the 4 transcripts that best show her voice and return them cleaned up as examples (fix transcription errors only, keep her wording).
+
+TRANSCRIPTS:
+${picked.map((p,i)=>`--- ${i+1}${p.views!=null?` (${p.views} views)`:''} ---\n${p.text.slice(0,2500)}`).join('\n')}`}]}],
+        generationConfig:{responseMimeType:'application/json',temperature:0.3,responseSchema:{type:'OBJECT',properties:{profile:{type:'STRING'},examples:{type:'ARRAY',items:{type:'STRING'}}},required:['profile','examples']}}})});
+    const data=await res.json(); if(!res.ok) throw new Error(data?.error?.message||res.status);
+    const o=JSON.parse(data.candidates[0].content.parts.map(p=>p.text||'').join(''));
+    VC_VOICE={profile:o.profile,examples:(o.examples||[]).slice(0,5),count:picked.length,updated:new Date().toISOString()};
+    plannerSet('voice',VC_VOICE,true); setVoiceCache(VC_VOICE);
+    document.getElementById('vcProfile').value=o.profile;
+    document.getElementById('vcMeta').textContent=`Built from ${picked.length} videos just now · ${VC_VOICE.examples.length} example scripts saved. Edit below if anything's off, then Save.`;
+    document.getElementById('vcList').innerHTML='<div class="form-hint">✓ Voice profile saved — every new script will use it.</div>';
+    document.getElementById('vcStatus').textContent='';
+  }catch(e){ b.disabled=false; b.textContent='Build my voice profile'; alert("Couldn't build the profile: "+e.message); }
+}
+function vcSaveProfile(){
+  VC_VOICE={...VC_VOICE,profile:document.getElementById('vcProfile').value,updated:VC_VOICE.updated||new Date().toISOString()};
+  plannerSet('voice',VC_VOICE,true); setVoiceCache(VC_VOICE);
+  const s=document.getElementById('vcSaved'); s.textContent='✓ Saved'; setTimeout(()=>s.textContent='',2500);
 }
 let PB_SUG=[];
 async function pbSuggest(){

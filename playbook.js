@@ -32,3 +32,19 @@ function playbookRulesSync(){
   const t = _pbCache || ''; const m = t.match(/##[^\n]*HARD RULES[\s\S]*?(?=\n## |\n### Decisions|\n---\s*\n#|$)/i);
   return m ? `\nHER HARD RULES:\n${m[0].trim()}\n` : '';
 }
+
+// ─── Kourtney's voice profile (also private — Supabase key "voice") ───────────
+let _voiceCache = null;
+async function getVoice(){
+  if (_voiceCache !== null) return _voiceCache;
+  try { const v = await plannerGet('voice', null); _voiceCache = (v && typeof v === 'object') ? v : {}; }
+  catch(e) { _voiceCache = {}; }
+  return _voiceCache;
+}
+function setVoiceCache(v){ _voiceCache = v || {}; }
+function voicePromptSync(){
+  const v = _voiceCache || {}; if (!v.profile) return '';
+  const ex = (v.examples || []).filter(Boolean).slice(0, 5);
+  return `\n=== KOURTNEY'S REAL VOICE (write exactly like her — word choice, rhythm, energy, how she opens and closes; never copy the examples word for word) ===\n${v.profile.trim()}\n${ex.length ? `\nHER REAL SCRIPTS (transcribed from her top videos, for tone only):\n${ex.map((e, i) => `--- Example ${i + 1} ---\n${String(e).trim()}`).join('\n')}\n` : ''}=== END VOICE ===\n`;
+}
+try { setTimeout(() => getVoice(), 350); } catch(e) {}
