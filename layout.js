@@ -84,7 +84,7 @@
     ['promos.html','Shark & Ninja',16],
     ['scripts.html','Script Vault',6], ['sales-calendar.html','Sales Log',10],
     ['https://a.co/d/0aN0vMFu','Storefront',11], ['https://affiliate-program.amazon.com/home','Associates',12],
-    ['video-feedback.html','Video Feedback',14], ['settings.html','Settings',15]
+    ['video-feedback.html','Video Feedback',14], ['ask.html','Ask Take24',7], ['settings.html','Settings',15]
   ];
   // folder image number: 1, 2, 3… but skips 13 (that's the black "you are here" folder)
   const folderNum = i => FOLDERS[i][2];

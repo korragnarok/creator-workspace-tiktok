@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ask Take24</title>
+<script src="theme-init.js?v=260"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Bad+Script&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font:14px 'Nunito Sans',sans-serif;padding:26px;padding-top:max(26px,env(safe-area-inset-top));}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;min-height:calc(100vh - 52px);}
+h1{font:300 40px 'Cormorant Garamond',serif;color:var(--ink);line-height:1;}
+h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
+.sub{color:var(--text-muted);margin:6px 0 18px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.chip{border:1px solid var(--border-mid);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 14px;font:700 12.5px 'Nunito Sans',sans-serif;cursor:pointer;}
+.chip:hover{border-color:var(--tan);color:var(--ink);}
+.log{flex:1;display:flex;flex-direction:column;gap:12px;margin-bottom:14px;}
+.msg{max-width:88%;padding:12px 16px;border-radius:18px;line-height:1.6;white-space:pre-wrap;}
+.msg.me{align-self:flex-end;background:var(--rust);color:#fff;border-bottom-right-radius:6px;}
+.msg.ai{align-self:flex-start;background:var(--surface);border:1px solid var(--border-mid);color:var(--text);border-bottom-left-radius:6px;white-space:normal;}
+.msg.ai b{color:var(--ink);} .msg.ai ul{margin:6px 0 6px 18px;} .msg.ai p{margin:0 0 8px;} .msg.ai p:last-child{margin:0;}
+.msg.ai .note{font-size:11.5px;color:var(--text-muted);margin-top:8px;}
+.msg.wait{color:var(--text-muted);font-style:italic;}
+.ask{position:sticky;bottom:0;display:flex;gap:8px;background:var(--bg);padding:10px 0 max(10px,env(safe-area-inset-bottom));}
+.ask textarea{flex:1;resize:none;height:48px;max-height:140px;background:var(--surface);border:1px solid var(--border-mid);border-radius:14px;padding:13px 14px;color:var(--ink);font:14px 'Nunito Sans',sans-serif;outline:none;}
+.ask textarea:focus{border-color:var(--tan);}
+.ask button{border:0;border-radius:14px;background:var(--rust);color:#fff;font:800 12px 'Nunito Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:0 20px;cursor:pointer;}
+.ask button:disabled{opacity:.5;cursor:wait;}
+.foot{font-size:11px;color:var(--text-muted);text-align:center;}
+@media(max-width:768px){body{padding:16px;padding-top:88px;} h1{font-size:32px;} .msg{max-width:96%;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ask <em>Take24</em></h1>
+  <div class="sub">Ask anything about your account. It answers from your own sales, videos, products, promos and feedback history.</div>
+  <div class="chips" id="chips"></div>
+  <div class="log" id="log"></div>
+  <div class="ask">
+    <textarea id="q" placeholder="e.g. Why were my sales down this week?" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}"></textarea>
+    <button id="go" onclick="send()">Ask</button>
+  </div>
+  <div class="foot">Uses your Take24 data only. "Trending" answers use public TikTok views, not sales. It can make mistakes.</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=260"></script>
+<script src="planner-sync.js?v=238"></script>
+<script src="layout.js?v=260"></script>
+<script>
+const WORKER='https://take24-scout.kortnycall5.workers.dev';
+const SUGGEST=["Why were my sales up or down this week?","Which products make me the most per video?","Which products have I stopped posting?","What do my best videos have in common?","What should I film tomorrow?","Which links are underpaying me?","What's my best day to post?","What's trending in my category right now?"];
+const CHAT=[]; let DATA=null, DATA_AT=0;
+const pad=n=>String(n).padStart(2,'0'), ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+document.getElementById('chips').innerHTML=SUGGEST.map(s=>`<button class="chip" onclick="document.getElementById('q').value=this.textContent;send()">${esc(s)}</button>`).join('');
+
+function md(t){ // tiny markdown: **bold**, bullets, paragraphs
+  const lines=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split('\n'); let out='',inList=false;
+  for(const l of lines){ const m=l.match(/^\s*[-*•]\s+(.*)/);
+    if(m){ if(!inList){out+='<ul>';inList=true;} out+=`<li>${m[1]}</li>`; }
+    else { if(inList){out+='</ul>';inList=false;} if(l.trim()) out+=`<p>${l}</p>`; } }
+  return out+(inList?'</ul>':'');
+}
+function add(role,html,cls=''){ const el=document.createElement('div'); el.className=`msg ${role} ${cls}`; el.innerHTML=html; document.getElementById('log').appendChild(el); el.scrollIntoView({behavior:'smooth',block:'end'}); return el; }
+
+async function q(table,cols,build){ try{ let x=db.from(table).select(cols); x=build?build(x):x; const {data,error}=await x; if(error) throw error; return data||[]; }catch(e){ console.warn(table,e.message); return []; } }
+
+async function gather(){
+  if(DATA&&Date.now()-DATA_AT<5*60e3) return DATA;
+  const { data:{ session } }=await db.auth.getSession(); if(!session) throw new Error('Please sign in first.');
+  const uid=session.user.id, today=new Date(), t=ymd(today), since=ymd(addDays(today,-120));
+  const [accts,prods,sales,vids,promos,queue,scripts]=await Promise.all([
+    q('tiktok_accounts','tiktok_open_id,username,display_name,follower_count',x=>x.eq('user_id',uid)),
+    q('products','*',x=>x.eq('user_id',uid)),
+    q('sales','date,gmv,comm,units,tiktok_account_id,video_sales',x=>x.eq('user_id',uid).gte('date',since).order('date')),
+    q('videos','*',x=>x.eq('user_id',uid).gte('date',since).order('date',{ascending:false})),
+    q('promos','product,line,deal,start_date,end_date,priority',x=>x.eq('user_id',uid).gte('end_date',ymd(addDays(today,-14)))),
+    q('queue','date,name,brand,done,prod_id',x=>x.eq('user_id',uid).gte('date',ymd(addDays(today,-90)))),
+    q('scripts','title,brand,cat',x=>x.eq('user_id',uid).limit(60))
+  ]);
+  let fb=[]; try{ fb=await plannerGet('feedback',[])||[]; }catch(e){}
+  const acct={}; accts.forEach(a=>acct[a.tiktok_open_id]='@'+(a.username||a.display_name||'account'));
+  const A=id=>acct[id]||'';
+  // per-product video stats
+  const pv={}; vids.forEach(v=>{ const k=(v.prod_id||v.brand||v.title||'').toString(); });
+  const lastFilmed={}; queue.filter(x=>x.done&&x.prod_id).forEach(x=>{ if(!lastFilmed[x.prod_id]||x.date>lastFilmed[x.prod_id]) lastFilmed[x.prod_id]=x.date; });
+  const lines=[];
+  lines.push(`TODAY: ${t} (${today.toLocaleDateString(undefined,{weekday:'long'})})`);
+  lines.push(`ACCOUNTS: ${accts.map(a=>`${A(a.tiktok_open_id)} (${a.follower_count||0} followers)`).join(', ')||'none connected'}`);
+  lines.push(`\nDAILY SALES (date | account | gmv | commission | units) last 120 days:`);
+  sales.forEach(s=>lines.push(`${s.date} | ${A(s.tiktok_account_id)} | ${Number(s.gmv||0).toFixed(2)} | ${Number(s.comm||0).toFixed(2)} | ${s.units||0}`));
+  lines.push(`\nVIDEOS (date | account | views | units | gmv | title | linked product/brand):`);
+  vids.slice(0,250).forEach(v=>lines.push(`${String(v.date||'').slice(0,10)}${v.posted_time?' '+String(v.posted_time).slice(0,5):''} | ${A(v.tiktok_account_id)} | ${v.views||0} | ${v.units||0} | ${v.gmv??''} | ${String(v.title||'').replace(/\s+/g,' ').slice(0,90)} | ${v.brand||''}`));
+  lines.push(`\nPRODUCTS (name | brand | status | units sold | gmv | commission % | free sample? | last filmed):`);
+  prods.slice(0,300).forEach(p=>lines.push(`${p.name} | ${p.brand||''} | ${p.status||''} | ${p.units_sold||0} | ${p.gmv??''} | ${p.commission_rate??'not set'} | ${/FREE_SAMPLE/.test(p.notes||'')?'yes':'no'} | ${lastFilmed[p.id]||'never'}`));
+  lines.push(`\nSHARK & NINJA PROMOS (product | line | deal | start | end | ★ focus):`);
+  promos.forEach(p=>lines.push(`${p.product} | ${p.line||''} | ${p.deal||''} | ${p.start_date||''} | ${p.end_date||''} | ${p.priority?'★':''}`));
+  lines.push(`\nTO-DO / FILMING LOG last 90 days (date | product | filmed?):`);
+  queue.slice(-200).forEach(x=>lines.push(`${x.date} | ${x.name} | ${x.done?'filmed':'not filmed'}`));
+  lines.push(`\nSCRIPT VAULT TITLES: ${scripts.map(s=>s.title).join('; ')}`);
+  lines.push(`\nVIDEO FEEDBACK HISTORY (what she said in reviewed videos):`);
+  fb.slice(0,20).forEach(h=>{ const f=h.fb||{}; lines.push(`- ${new Date(h.at).toISOString().slice(0,10)} ${h.product||h.name||''}: score ${f.score??''}; ${String(f.summary||f.why_it_worked||'').slice(0,200)}${f.transcript?` | SAID: "${String(f.transcript).slice(0,600)}"`:''}`); });
+  DATA=lines.join('\n').slice(0,180000); DATA_AT=Date.now();
+  return DATA;
+}
+
+function findVideos(o,out=[]){ if(!o||typeof o!=='object'||out.length>40) return out;
+  if(Array.isArray(o)){ o.forEach(x=>findVideos(x,out)); return out; }
+  const views=o.play_count??o.playCount??o.stats?.playCount??o.statistics?.play_count;
+  const desc=o.desc??o.description??o.title;
+  if(views!=null&&desc){ out.push({desc:String(desc).slice(0,140),views:Number(views)||0,author:o.author?.unique_id||o.author?.uniqueId||''}); return out; }
+  Object.values(o).forEach(v=>findVideos(v,out)); return out; }
+async function trending(question){
+  try{
+    const kw=await gemText(`From this question, give 1–3 short TikTok search keywords for her product category (use her product list if the category isn't named). Reply with only the keywords, comma-separated.\nQUESTION: ${question}\n\nHER PRODUCTS:\n${(DATA||'').split('PRODUCTS')[1]?.slice(0,3000)||''}`);
+    const words=kw.split(',').map(s=>s.trim()).filter(Boolean).slice(0,3); const found=[];
+    for(const w of words){ const r=await fetch(`${WORKER}/?endpoint=${encodeURIComponent('tiktok/search/keyword')}&query=${encodeURIComponent(w)}`); if(!r.ok) continue;
+      findVideos(await r.json().catch(()=>({}))).forEach(v=>found.push({...v,kw:w})); }
+    if(!found.length) return '';
+    found.sort((a,b)=>b.views-a.views);
+    return `\nPUBLIC TIKTOK SEARCH RESULTS (views only — NOT sales data) for: ${words.join(', ')}\n`+found.slice(0,25).map(v=>`${v.views} views | @${v.author} | ${v.desc}`).join('\n');
+  }catch(e){ console.warn('trending',e); return ''; }
+}
+async function gemText(prompt,history=[]){
+  const res=await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[...history,{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0.4}})});
+  const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
+  return (data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').trim();
+}
+async function send(){
+  const box=document.getElementById('q'), btn=document.getElementById('go'), question=box.value.trim(); if(!question) return;
+  box.value=''; btn.disabled=true; add('me',esc(question));
+  const w=add('ai','Looking at your numbers…','wait');
+  try{
+    const data=await gather(); const isTrend=/trend|viral|popular|what.*(working|selling).*(right now|lately)|category/i.test(question);
+    const extra=isTrend?await trending(question):'';
+    const sys=`You are Ask Take24, a sharp, friendly TikTok Shop analyst for Kourtney, an affiliate creator. Answer ONLY from the data below — her own Take24 data${extra?' plus the public search results':''}. Rules:
+- Be specific: name products, dates, accounts and real numbers from the data. Do the math (totals, averages, % changes) carefully.
+- Short and scannable: a direct 1–2 sentence answer first, then up to 5 bullets with **bold** key numbers, then one concrete next step.
+- If the data can't answer something, say exactly what's missing (e.g. "commission % isn't set for these products — add it in Products") instead of guessing.
+- Public search results are VIEWS, not sales — say so if you use them.
+- Don't write video scripts; if asked, say the script writer is in Video Feedback → Write a script.
+- Don't open with "Okay" or "Great question".
+
+=== HER DATA ===
+${data}${extra}`;
+    const history=CHAT.slice(-8);
+    const ans=await gemText(`${sys}\n\n=== QUESTION ===\n${question}`,history);
+    CHAT.push({role:'user',parts:[{text:question}]},{role:'model',parts:[{text:ans}]});
+    w.classList.remove('wait'); w.innerHTML=md(ans)+(extra?'<div class="note">Includes public TikTok search results (views, not sales).</div>':'');
+  }catch(e){ w.classList.remove('wait'); w.innerHTML=`Couldn't answer that: ${esc(e.message)}`; }
+  btn.disabled=false; box.focus();
+}
+</script>
+</body>
+</html>

@@ -320,6 +320,7 @@ tr.select-mode .tbl-action{display:none;}
     <div class="form-row"><label class="form-label">Product Name *</label><input type="text" class="form-input" id="fName" oninput="toggleSkuRow()" placeholder="e.g. PetLab ProBright Dental Powder"></div>
     <div class="form-row"><label class="form-label">Brand</label><input type="text" class="form-input" id="fBrand" placeholder="e.g. PetLab Co." oninput="toggleSkuRow()"></div>
     <div class="form-row" id="skuRow" style="display:none"><label class="form-label">SKU <span style="text-transform:none;letter-spacing:0;color:var(--text-muted);font-weight:600">· Shark / Ninja</span></label><input type="text" class="form-input" id="fSku" placeholder="e.g. HT302"></div>
+    <div class="form-row"><label class="form-label">Commission % <span style="text-transform:none;letter-spacing:0;color:var(--text-muted);font-weight:600">· what this product pays you</span></label><input type="number" step="0.1" min="0" max="100" class="form-input" id="fComm" placeholder="e.g. 15"></div>
     <div class="form-row"><label class="form-label">Tags (comma separated)</label><input type="text" class="form-input" id="fTags" placeholder="e.g. pet, dental, supplement"></div>
     <div class="form-row"><label class="form-label">TikTok Shop Link</label><input type="url" class="form-input" id="fLink" placeholder="https://..."></div>
     <div class="form-row"><label class="form-label">Other Links <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text-muted);">(tap-to-copy badges)</span></label>
@@ -672,6 +673,7 @@ window.importProduct = async function(index) {
   document.getElementById('fTags').value = '';
   document.getElementById('fLink').value = p.link || '';
   document.getElementById('fSku').value = '';
+  document.getElementById('fComm').value = '';
   window.toggleSkuRow && toggleSkuRow();
   document.getElementById('fUnitsSold').value = '';
   document.getElementById('fStatus').value = 'active';
@@ -1445,6 +1447,7 @@ async function init() {
     document.getElementById('fTags').value = p?.tags || '';
     document.getElementById('fLink').value = p?.link || '';
     document.getElementById('fSku').value = p?.sku || '';
+    document.getElementById('fComm').value = (p?.commission_rate ?? '') === null ? '' : (p?.commission_rate ?? '');
     toggleSkuRow();
     document.getElementById('fUnitsSold').value = p?.units_sold || '';
     document.getElementById('fStatus').value = p?.status || 'active';
@@ -1495,7 +1498,7 @@ async function init() {
     notesVal = notesVal.replace(/\nFREE_SAMPLE|FREE_SAMPLE\n|FREE_SAMPLE/g, '').trim();
     if(isFreeSample) notesVal = notesVal ? notesVal + '\nFREE_SAMPLE' : 'FREE_SAMPLE';
 
-    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), ...(document.getElementById('skuRow').style.display !== 'none' || document.getElementById('fSku').value.trim() ? { sku: document.getElementById('fSku').value.trim() } : {}), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: notesVal, image_url, links: readProdLinks(), tiktok_account_id: (() => {
+    const fields = { name, brand: document.getElementById('fBrand').value.trim(), tags: document.getElementById('fTags').value.trim(), link: document.getElementById('fLink').value.trim(), ...(document.getElementById('skuRow').style.display !== 'none' || document.getElementById('fSku').value.trim() ? { sku: document.getElementById('fSku').value.trim() } : {}), ...(document.getElementById('fComm').value.trim() !== '' ? { commission_rate: parseFloat(document.getElementById('fComm').value) } : {}), units_sold: parseInt(document.getElementById('fUnitsSold').value)||0, status: document.getElementById('fStatus').value, notes: notesVal, image_url, links: readProdLinks(), tiktok_account_id: (() => {
       if (document.getElementById('fAllAccounts').checked) return null;
       // editing keeps the product on its own account; new products (or ones leaving "all accounts") go to the account you're viewing
       const orig = window._editingProductOriginal?.tiktok_account_id;

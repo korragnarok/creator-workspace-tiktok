@@ -269,6 +269,7 @@ const SCHEMA = {
   type: 'OBJECT',
   properties: {
     score: { type: 'INTEGER', description: 'Overall 1-10' },
+    transcript: { type: 'STRING', description: "Word-for-word transcript of what the creator SAYS (voiceover or talking). Empty string if there is no creator voice — never transcribe song lyrics." },
     summary: { type: 'STRING' },
     hook: { type: 'OBJECT', properties: {
       score: { type: 'INTEGER' },
@@ -311,6 +312,7 @@ const AUDIO_NOTES = {
   'text-music': 'The audio is MUSIC ONLY with the message told through ON-SCREEN TEXT. Any singing in the audio is the song, not the creator. Judge the text (readability, length, timing on screen) and how well the visuals sync to the music.'
 };
 const FW_SCHEMA = { type:'OBJECT', properties:{
+  transcript:{type:'STRING',description:"Word-for-word transcript of what the creator says. Empty if no creator voice; never song lyrics."},
   why_it_worked:{type:'STRING'},
   hook:{type:'OBJECT',properties:{what_happens:{type:'STRING'},why_it_stops_scroll:{type:'STRING'}},required:['what_happens','why_it_stops_scroll']},
   framework:{type:'ARRAY',items:{type:'OBJECT',properties:{time:{type:'STRING'},beat:{type:'STRING'},purpose:{type:'STRING'}},required:['time','beat','purpose']}},
