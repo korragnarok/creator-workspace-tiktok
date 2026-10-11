@@ -402,7 +402,7 @@ async function analyze(){
   const btn = document.getElementById('goBtn'); btn.disabled = true;
   // remember what this run is about, then clear the form for the next video
   CTX = { video: VIDEO, link: LINK, name: VIDEO ? VIDEO.name : LINK, product: document.getElementById('product').value.trim(),
-          audio: document.getElementById('audio').value, goal: document.getElementById('goal').selectedOptions[0].textContent, prompt: buildPrompt(), mode, fileUri: '', fileMime: '' };
+          audio: document.getElementById('audio').value, goal: document.getElementById('goal').selectedOptions[0].textContent, prompt: buildPrompt()+(factsFor(document.getElementById('product').value)?`\n\nPRODUCT FACTS:\n${factsFor(document.getElementById('product').value)}\n${PF_RULE}`:''), mode, fileUri: '', fileMime: '' };
   const vid = VIDEO, link = LINK;
   resetForm();
   try {
@@ -637,6 +637,47 @@ async function gem(parts,schema,temperature=0.6){
   return JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
 }
 let SW_PRODUCTS=[];
+// ── Real product details so Gemini doesn't guess ──
+// Uses what's saved in your Products (brand, SKU, tags, notes) + the TikTok Shop listing (title, description, specs) when the product has a shop link.
+const PF_CACHE={};
+function pfShopLink(p){
+  const all=[p.link,...(Array.isArray(p.links)?p.links.map(l=>l?.url||l):[])].filter(Boolean).map(String);
+  return all.find(u=>/tiktok\.com\/.*(product|shop|view\/product)|shop\.tiktok|vm\.tiktok/i.test(u))||'';
+}
+function pfCollect(o,out,d=0){
+  if(!o||d>7||out.len>4000) return;
+  if(Array.isArray(o)){ o.forEach(x=>pfCollect(x,out,d+1)); return; }
+  if(typeof o!=='object') return;
+  for(const [k,v] of Object.entries(o)){
+    if(typeof v==='string'){
+      const t=v.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+      if(/title|name|desc|highlight|spec|feature|selling|bullet|attr|value|benefit|detail|ingredient|material|size|capacity|dimension|weight|color|include/i.test(k)&&t.length>=3&&t.length<=900&&!/^https?:|^[\d.,$%\s-]+$/.test(t)&&!out.seen.has(t)){
+        out.seen.add(t); out.lines.push(t); out.len+=t.length; }
+    } else if(typeof v==='object') pfCollect(v,out,d+1);
+  }
+}
+async function productFacts(p){
+  if(!p) return '';
+  if(PF_CACHE[p.id]!==undefined) return PF_CACHE[p.id];
+  const lines=[`Name: ${p.name}`];
+  if(p.brand) lines.push(`Brand: ${p.brand}`);
+  if(p.sku) lines.push(`SKU: ${p.sku}`);
+  if(p.tags) lines.push(`Tags: ${p.tags}`);
+  const notes=String(p.notes||'').replace(/FREE_SAMPLE/g,'').replace(/TikTok Shop (price|sold count) seen:.*$/gim,'').replace(/Imported from TikTok Shop search\./g,'').trim();
+  if(notes) lines.push(`Her notes: ${notes.slice(0,800)}`);
+  PF_CACHE[p.id]=lines.join('\n');   // usable right away; shop details get added below
+  const link=pfShopLink(p);
+  if(link){
+    try{
+      const r=await fetch(`${WORKER}/?endpoint=tiktok/product&url=${encodeURIComponent(link)}&region=US`);
+      if(r.ok){ const out={lines:[],seen:new Set(),len:0}; pfCollect(await r.json(),out);
+        if(out.lines.length) PF_CACHE[p.id]+=`\nFrom the TikTok Shop listing:\n- ${out.lines.slice(0,40).join('\n- ')}`; }
+    }catch(e){}
+  }
+  return PF_CACHE[p.id];
+}
+function factsFor(name){ const p=SW_PRODUCTS.find(x=>String(x.name).toLowerCase()===String(name||'').trim().toLowerCase()); return p?(PF_CACHE[p.id]||''):''; }
+const PF_RULE='Use these REAL product details. Do not invent features, specs, sizes, ingredients or claims that are not listed here — if something isn\'t listed, keep it general. Never quote prices from the listing.';
 // Searchable dropdown of your products on any input. Typing filters by name or brand; you can still type a name that isn't in your list.
 function pcAttach(id, onPick){
   const inp=document.getElementById(id); if(!inp||inp.dataset.pc) return; inp.dataset.pc=1;
@@ -671,8 +712,11 @@ document.addEventListener('click',e=>{ const b=e.target.closest('.seg button'); 
 function swUseProduct(){
   const v=document.getElementById('swProduct').value.trim(); if(!v){ document.getElementById('swProduct').focus(); return; }
   const p=SW_PRODUCTS.find(x=>String(x.name).toLowerCase()===v.toLowerCase());
-  SW.product=p?.name||v; SW.brand=p?.brand||''; SW.image=p?.image_url||''; SW.shots=[]; swShowPicked();
-  if(p?.id) swCheckPromo(p.id);
+  SW.product=p?.name||v; SW.brand=p?.brand||''; SW.image=p?.image_url||''; SW.shots=[]; SW.imgPart=false; swShowPicked();
+  if(p?.id){ swCheckPromo(p.id);
+    const small=()=>document.querySelector('#swProdPicked small');
+    if(small()) small().textContent=(p.brand?p.brand+' · ':'')+'loading product details…';
+    productFacts(p).then(t=>{ if(small()) small().textContent=(p.brand?p.brand+' · ':'')+(/TikTok Shop listing/.test(t)?'✓ product details + TikTok Shop listing loaded':'✓ product details loaded (add a TikTok Shop link in Products for more)'); }); }
 }
 async function swPickShots(files){
   const list=[...(files||[])].slice(0,5); document.getElementById('swShots').value=''; if(!list.length) return;
@@ -732,6 +776,7 @@ function swContext(){
     bits.push(`It's ON SALE right now${deal?`: ${deal}`:''}${end?` (deal ends ${new Date(end+'T00:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'})})`:''}. Do NOT say the price or % in the script — just that it's on sale. Mention the sale early and naturally as a natural reason to buy now ("it's on sale right now, fyi", "this is the lowest I've seen it"). Only state the deal exactly as given — never invent prices, percentages or end dates.`); }
   const saleAngle=(SW.picked||[]).some(i=>/sale|deal|promo|discount|price|% off|percent off|markdown|clearance/i.test(((SW.angles||[])[i]?.title||'')+' '+((SW.angles||[])[i]?.why||'')));
   if(SW.special.includes('On sale')||saleAngle) bits.push(`SALE OPENING (required): the very FIRST line of the script must be about the price/deal, e.g. "Have you seen the price on ${SW.product} today?" or "${SW.product} is on sale right now and I had to tell you." Vary the wording, but the price/sale must be the hook — don't open with anything else. Never say any price, dollar amount, or percentage — not even one from the deal info — because TikTok Shop doesn't allow it; hint at the deal instead ("you have to check the price", "it's on sale right now").`);
+  const f=factsFor(SW.product); if(f) bits.push(`PRODUCT FACTS:\n${f}\n${PF_RULE}`);
   return bits.join('\n');
 }
 async function swProductParts(){
@@ -739,6 +784,13 @@ async function swProductParts(){
   for(const f of SW.shots){ const r=await fetch(`${WORKER}/?service=gemini-upload`,{method:'POST',headers:{'Content-Type':f.type||'image/png'},body:f});
     const j=await r.json().catch(()=>({})); if(!r.ok||!j.uri) throw new Error(j.error||'Upload failed'); parts.push({file_data:{mime_type:j.mime_type,file_uri:j.uri}}); }
   SW.shots=[]; SW.shotParts=[...(SW.shotParts||[]),...parts];
+  // also show Gemini the product photo from your Products list
+  if(!SW.imgPart&&SW.image&&/^https?:/.test(SW.image)&&!(SW.shotParts||[]).length){
+    SW.imgPart=true;
+    try{ const b=await (await fetch(SW.image)).blob();
+      const r=await fetch(`${WORKER}/?service=gemini-upload`,{method:'POST',headers:{'Content-Type':b.type||'image/jpeg'},body:b});
+      const j=await r.json().catch(()=>({})); if(r.ok&&j.uri) SW.shotParts=[{file_data:{mime_type:j.mime_type,file_uri:j.uri}}]; }catch(e){}
+  }
   return SW.shotParts||[];
 }
 function swBar(){ return `<div class="card swc swbar">${SW.image?`<img src="${esc(SW.image)}" style="width:30px;height:30px;border-radius:6px;object-fit:cover">`:''}<b style="color:var(--ink);margin-right:4px">${esc(SW.product||'Your product')}</b>
@@ -957,10 +1009,11 @@ async function swSave(btn,sc){
   try { USER_TONE = session.user.user_metadata?.ai_tone || ''; } catch (e) {}
   try { const prefs = await loadUserPrefs(session.user.id); await initTheme(session.user.id, prefs); await initDisplayName(session.user, prefs); initProfilePopover(session.user.id); } catch (e) {}
   // product suggestions
-  try { SW_PRODUCTS = (await db.from('products').select('id,name,brand,image_url').eq('user_id', session.user.id)).data || []; } catch (e) {}
+  try { SW_PRODUCTS = (await db.from('products').select('*').eq('user_id', session.user.id)).data || []; } catch (e) {}
   try { if (localStorage.getItem('take24:vfPane') === 'sw') setPane('sw'); } catch (e) {}
   SW_PRODUCTS.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
-  pcAttach('product'); pcAttach('swProduct', ()=>swUseProduct());
+  pcAttach('product', p=>{ productFacts(p); }); pcAttach('swProduct', ()=>swUseProduct());
+  document.getElementById('product').addEventListener('change',e=>{ const p=SW_PRODUCTS.find(x=>String(x.name).toLowerCase()===e.target.value.trim().toLowerCase()); if(p) productFacts(p); });
   try { const a = localStorage.getItem('take24:fbAudio'); if (a) document.getElementById('audio').value = a; } catch (e) {}
   try { const m = localStorage.getItem('take24:fbMode'); if (m) document.getElementById('goal').value = m; } catch (e) {}
   onMode();
