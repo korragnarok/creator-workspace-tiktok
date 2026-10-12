@@ -254,7 +254,7 @@ details.bdx[open]>summary{margin-bottom:12px;}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=235"></script>
 <script src="planner-sync.js?v=238"></script>
-<script src="playbook.js?v=288"></script>
+<script src="playbook.js?v=314"></script>
 <script src="policy.js?v=297"></script>
 <script src="layout.js?v=235"></script>
 <script>
@@ -329,7 +329,7 @@ ALWAYS (even if her examples do something different):
 - Avoid cringe ad-speak: "game changer", "holy grail", "you NEED this", "run don't walk", "life-changing", all-caps hype, stacked exclamation points.
 - NEVER say a price, dollar amount, or discount % — say "it's on sale", "the price right now is crazy", "check the price in the cart".
 - NEVER use these words/phrases: "okay", "honestly", "you guys", or "like" as filler ("it's like, so good", "like, I can't") — only use "like" for a real comparison ("looks like new"). Never open with "Okay", "Ok so", "So," or "Alright".
-${typeof TTS_POLICY_SHORT!=='undefined'?'- '+TTS_POLICY_SHORT:''}${custom}${typeof playbookPromptSync==='function'?playbookPromptSync():''}`;
+${typeof TTS_POLICY_SHORT!=='undefined'?'- '+TTS_POLICY_SHORT:''}${custom}${typeof playbookPromptSync==='function'?playbookPromptSync():''}${typeof voiceEditsPromptSync==='function'?voiceEditsPromptSync():''}`;
   return `VOICE (very important): half real conversation, half confident recommendation — like a friend who genuinely loves this thing and is excited to tell you about it.
 - Warm, upbeat and natural. Energy should feel genuinely excited, NOT bored, sighing, sarcastic or "whatever".
 - Sound like a real person talking: contractions, short sentences, everyday words, a real-life moment or two.
@@ -339,7 +339,7 @@ ${typeof TTS_POLICY_SHORT!=='undefined'?'- '+TTS_POLICY_SHORT:''}${custom}${type
 - NEVER say a price, dollar amount, or discount % (no "under $50", "only 29 bucks", "40% off") — TikTok Shop doesn't allow it. Talk about the deal without numbers: "the price right now is crazy", "it's on sale", "check the price in the cart".
 - NEVER use these words/phrases: "okay", "honestly", "you guys", or "like" as filler ("it's like, so good", "like, I can't") — only use "like" for a real comparison ("looks like new"). Never open with "Okay", "Ok so", "So," or "Alright". Open straight into the moment, the problem, or the product.
 - Every line should earn its place: specific > generic. Cut filler sentences ("this is amazing", "I love it so much") unless they're followed by the concrete reason why.
-${typeof TTS_POLICY_SHORT!=='undefined'?'- '+TTS_POLICY_SHORT:''}${custom}${typeof playbookPromptSync==='function'?playbookPromptSync():''}`;
+${typeof TTS_POLICY_SHORT!=='undefined'?'- '+TTS_POLICY_SHORT:''}${custom}${typeof playbookPromptSync==='function'?playbookPromptSync():''}${typeof voiceEditsPromptSync==='function'?voiceEditsPromptSync():''}`;
 }
 const AUDIO_NOTES = {
   'voiceover': 'The audio is the creator\'s OWN VOICEOVER talking about the product (no song). Judge the voiceover: clarity, energy, whether it sounds genuine, and whether the words and visuals match.',
@@ -949,7 +949,9 @@ function swRenderScript(tab){
   const main=block(sc,pol)+`<div class="swacts"><button class="copy" onclick="navigator.clipboard.writeText(SW.script.paragraphs.join('\\n\\n'));this.textContent='✓ Copied'">Copy</button><select id="swCat" class="copy" style="padding-right:6px" onchange="SW.cat=this.value">${[['review','Review'],['tutorial','Tutorial'],['unboxing','Unboxing'],['storytime','Storytime'],['live','Live']].map(([v,l])=>`<option value="${v}"${(SW.cat||'review')===v?' selected':''}>${l}</option>`).join('')}</select><button class="copy" onclick="swSave(this,SW.script)">Save to Script Vault</button>${document.getElementById('swRage').checked||SW.rage?'':`<button class="copy" onclick="swRage()">Rage bait version</button>`}</div></div>`;
   const rage=SW.rage?block(SW.rage,'<span class="swpol wait" style="float:right">Rage bait</span>')+`<div class="swacts"><button class="copy" onclick="navigator.clipboard.writeText(SW.rage.paragraphs.join('\\n\\n'));this.textContent='✓ Copied'">Copy</button><button class="copy" onclick="swSave(this,SW.rage)">Save to Script Vault</button></div></div>`:'';
   const t=tab||SW.tab||'';
-  document.getElementById('swFlow').innerHTML=head+(rage?`<div class="swtwo">${main}${rage}</div>`:main)+
+  const teach=`<div class="card swc"><div class="swh">Teach it how you'd say it</div>${SW.teach?`<div class="sub" style="margin-bottom:8px">Rewrite any lines the way you'd actually say them. Leave the rest alone — only changed lines are saved.</div>${sc.paragraphs.map((p,i)=>`<textarea class="swteach" data-i="${i}" rows="3" style="width:100%;margin-bottom:8px">${esc(p)}</textarea>`).join('')}<div class="swacts"><button class="btn sm" onclick="swTeachSave(this)">Save my version</button><button class="copy" onclick="SW.teach=false;swRenderScript()">Cancel</button></div>`
+    :`<div class="sub" style="margin-bottom:8px">Every line you rewrite teaches future scripts to sound more like you${typeof _veCache!=='undefined'&&_veCache?.length?` · ${_veCache.length} lines learned so far`:''}.</div><button class="copy" onclick="SW.teach=true;swRenderScript()">✎ Rewrite in my words</button>`}</div>`;
+  document.getElementById('swFlow').innerHTML=head+(rage?`<div class="swtwo">${main}${rage}</div>`:main)+teach+
     `<div class="card swc"><div class="swh">Make the rest of your video <small style="float:right;color:var(--text-muted);font-weight:600">Written for this script</small></div>
       <div class="swtabs">${[['shots','Shot by shot'],['hooks','Text hooks'],['thumb','Thumbnail'],['sound','Sounds'],['seo','SEO words'],['caption','Caption']].map(([k,l])=>`<button class="${t===k?'on':''}" onclick="swExtra('${k}')">${l}</button>`).join('')}</div>
       <div class="swextra" id="swExtra">${t&&SW.extras[t]?esc(SW.extras[t]):''}</div>${t&&SW.extras[t]?`<button class="copy" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('swExtra').innerText);this.textContent='✓ Copied'">${t==='seo'?'Copy all words':'Copy'}</button>`:''}</div>
@@ -995,6 +997,14 @@ SCRIPT (for context only):\n${txt}`}],{type:'OBJECT',properties:{caption:{type:'
       SW.extras.caption=`${o.caption}\n\n${o.hashtags.map(h=>'#'+String(h).replace(/^#/,'').replace(/\s+/g,'')).join(' ')}`; }
   }catch(e){ SW.extras[k]=''; alert('Could not write that: '+e.message); }
   swRenderScript(k);
+}
+async function swTeachSave(btn){
+  const sc=SW.script, pairs=[], mine=[...sc.paragraphs];
+  document.querySelectorAll('.swteach').forEach(t=>{ const i=+t.dataset.i, v=t.value.trim(); if(v&&v!==sc.paragraphs[i].trim()){ pairs.push({ai:sc.paragraphs[i],mine:v,product:SW.product,funnel:SW.funnel||'Top'}); mine[i]=v; } });
+  if(!pairs.length){ SW.teach=false; swRenderScript(); return; }
+  btn.disabled=true; btn.textContent='Saving…';
+  try{ await addVoiceEdits(pairs); sc.paragraphs=mine; SW.teach=false; swRenderScript(); }
+  catch(e){ btn.disabled=false; btn.textContent='Save my version'; alert('Could not save: '+e.message); }
 }
 function swNoOkay(ps){
   return (ps||[]).map(p=>{ const t=String(p).replace(/^\s*(okay|ok|alright|all right)\b[\s,.!…-]*(so\b[\s,]*)?/i,'')

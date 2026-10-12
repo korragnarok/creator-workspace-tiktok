@@ -48,3 +48,22 @@ function voicePromptSync(){
   return `\n=== KOURTNEY'S REAL VOICE (write exactly like her — word choice, rhythm, energy, how she opens and closes; never copy the examples word for word) ===\n${v.profile.trim()}\n${ex.length ? `\nHER REAL SCRIPTS (transcribed from her top videos, for tone only):\n${ex.map((e, i) => `--- Example ${i + 1} ---\n${String(e).trim()}`).join('\n')}\n` : ''}=== END VOICE ===\n`;
 }
 try { setTimeout(() => getVoice(), 350); } catch(e) {}
+
+// ─── Her rewrites of AI lines ("how I'd actually say it") — private, Supabase key "voiceEdits" ───
+let _veCache = null;
+async function getVoiceEdits(){
+  if (_veCache !== null) return _veCache;
+  try { const v = await plannerGet('voiceEdits', []); _veCache = Array.isArray(v) ? v : []; } catch(e) { _veCache = []; }
+  return _veCache;
+}
+async function addVoiceEdits(pairs){
+  const cur = await getVoiceEdits();
+  _veCache = [...pairs.map(x => ({...x, at: Date.now()})), ...cur].slice(0, 60);
+  await plannerSet('voiceEdits', _veCache);
+  return _veCache.length;
+}
+function voiceEditsPromptSync(){
+  const e = (_veCache || []).slice(0, 15); if (!e.length) return '';
+  return `\n=== HOW SHE REWRITES AI LINES (most important voice signal — study the difference and write like the "SHE SAYS" side from the start; never reuse these lines word for word) ===\n${e.map(x => `AI WROTE: ${x.ai}\nSHE SAYS: ${x.mine}`).join('\n\n')}\n=== END ===\n`;
+}
+try { setTimeout(() => getVoiceEdits(), 400); } catch(e) {}
