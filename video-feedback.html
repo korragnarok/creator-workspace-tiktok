@@ -378,7 +378,7 @@ ${voiceGuide()}
    - Same number of beats, same order, same timing, same hook structure, same sentence shapes, same rhythm and length per line, same emotional turn and payoff, same kind of CTA.
    - Keep the original's signature phrases and patterns where they're generic (e.g. "nobody talks about…", "not one, not two…"), swapping in the new product's details and benefits.
    - It must NOT be an exact copy: change every product-specific word, reword each line enough that no full sentence is identical, and use the new product's real details. Never copy a distinctive line verbatim (that can get flagged as unoriginal).
-   - Think "same song, new lyrics" — someone who saw both should recognize the format, not the words. ${noVoice ? 'Keep the same audio style: NO voiceover — "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.' : voiceGuide()} In each scene's "change", name the framework beat it matches. No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). Include 3–5 filming tips, a caption and 5–8 hashtags.`;
+   - Think "same song, new lyrics" — someone who saw both should recognize the format, not the words. ${noVoice ? 'Keep the same audio style: NO voiceover — "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.' : voiceGuide()} In each scene's "change", name the framework beat it matches. No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). Include 3–5 filming tips, a caption and exactly 5 hashtags (TikTok's max), most relevant first.`;
 }
 function buildPrompt(){
   if (document.getElementById('goal').value === 'framework') return buildFrameworkPrompt();
@@ -407,7 +407,7 @@ Rules:
 - sections (use exactly these names): "Pacing & length", "On-screen text & captions", "${audioSection}", "Product showcase", "Urgency & desire". Each: rating 1–10, 1–3 things working, 1–3 specific improvements. Do not repeat the hook here.
 - top_fixes: the 3 changes that would help this video most, most important first.
 - compliance_flags: anything that could break TikTok Shop content rules (unverifiable/medical/health claims, before-after promises, off-platform links, misleading pricing). Empty list if none.
-- caption: a ready-to-post caption in the creator's voice; hashtags separately (5–8).
+- caption: a ready-to-post caption in the creator's voice; hashtags separately — exactly 5 (TikTok's max), most relevant first.
 
 ${voiceGuide()}`;
 }
@@ -480,7 +480,7 @@ function renderFramework(fw){
 let CURRENT=null, FW_CURRENT=null;
 function render(fb, name, fresh){
   CURRENT=fb; FW_CURRENT=null; NEW_SCRIPT=null;
-  const tags = (fb.hashtags || []).map(h => '#' + String(h).replace(/^#/, '')).join(' ');
+  const tags = (fb.hashtags || []).slice(0,5).map(h => '#' + String(h).replace(/^#/, '')).join(' ');
   document.getElementById('results').innerHTML = `
     ${name ? `<div class="sub" style="margin-top:0">Last feedback · ${esc(name)}</div>` : ''}
     <div class="actions-row">
@@ -555,7 +555,7 @@ async function makeScript(btn){
   const fwPrompt=FW_CURRENT&&!CURRENT?`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Write a DIFFERENT new script for "${CTX.product||'the product'}" that still CLOSELY mirrors the original video (same beats, order, timing, hook structure, sentence shapes and rhythm — "same song, new lyrics"), but reworded so it isn't a copy of the original or of the previous version. Vary the wording and the specific hook line, not the structure.
 Audio style: ${AUDIO_NOTES[audio]||''}
 ${noVoice?'NO voiceover: "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.\n'+voiceGuide():voiceGuide()}
-No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). In each scene's "change", name the framework beat it matches. Include 3–5 filming tips, a caption and 5–8 hashtags.
+No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). In each scene's "change", name the framework beat it matches. Include 3–5 filming tips, a caption and exactly 5 hashtags (TikTok's max), most relevant first.
 
 WHY THE ORIGINAL WORKED: ${FW_CURRENT.why_it_worked}
 FRAMEWORK: ${JSON.stringify(FW_CURRENT.framework)}
@@ -622,7 +622,7 @@ function renderScript(sc){
 async function saveNewScript(btn){
   if(!NEW_SCRIPT) return;
   const { data:{ session } }=await db.auth.getSession(); if(!session) return;
-  const tags=(NEW_SCRIPT.hashtags||[]).map(h=>'#'+String(h).replace(/^#/,'')).join(' ');
+  const tags=(NEW_SCRIPT.hashtags||[]).slice(0,5).map(h=>'#'+String(h).replace(/^#/,'')).join(' ');
   const { error }=await db.from('scripts').insert({ user_id:session.user.id, title:NEW_SCRIPT.title||((CTX.product||'Video')+' — new script'), brand:CTX.product||'', cat:'review',
     script:scriptText(NEW_SCRIPT), notes:[`Urgency: ${NEW_SCRIPT.urgency}`, (NEW_SCRIPT.filming_tips||[]).length?`Filming tips:\n${NEW_SCRIPT.filming_tips.join('\n')}`:'', NEW_SCRIPT.caption?`Caption:\n${NEW_SCRIPT.caption}`:'', tags?`Hashtags:\n${tags}`:''].filter(Boolean).join('\n\n') });
   if(error){ alert('Could not save: '+error.message); return; }
@@ -641,7 +641,7 @@ async function sendToScripts(btn){
   if(!CURRENT) return;
   const { data:{ session } }=await db.auth.getSession(); if(!session) return;
   const product=CTX.product||'';
-  const tags=(CURRENT.hashtags||[]).map(h=>'#'+String(h).replace(/^#/,'')).join(' ');
+  const tags=(CURRENT.hashtags||[]).slice(0,5).map(h=>'#'+String(h).replace(/^#/,'')).join(' ');
   const { error }=await db.from('scripts').insert({ user_id:session.user.id, title:(product||'Video')+' — caption', brand:product, cat:'review',
     script:CURRENT.caption||'', notes:[tags?`Hashtags:\n${tags}`:'', (CURRENT.top_fixes||[]).length?`Video feedback fixes:\n${CURRENT.top_fixes.join('\n')}`:''].filter(Boolean).join('\n\n') });
   if(error){ alert('Could not save: '+error.message); return; }
@@ -792,7 +792,7 @@ function swRenderHolidays(){
 function swContext(){
   const bits=[`Filming: ${SW.film}${SW.film==='Faceless'?' (voiceover over hands/product/B-roll shots, creator never on camera)':''}`,
     `Format: ${SW.fmt}${SW.fmt==='Aesthetic'?' (calm, visual, minimal words — short lines that work as on-screen text or a soft voiceover)':''}`];
-  bits.push(SW.funnel==='Middle'?`FUNNEL: MIDDLE OF FUNNEL — the viewer already knows this product and has been thinking about it. Don't re-explain it or list features (one quick reminder of the main benefit at most). The whole script is about getting them to finally buy NOW: the current deal/sale (described without numbers), that it won't stay like this, handle the one objection stopping them ("if you've been waiting for a sign", "if you've had it in your cart"), what it's like once you have it, and a clear-but-soft push to grab it today. Short, direct, confident — about 20–30 seconds.`
+  bits.push(SW.funnel==='Middle'?`FUNNEL: MIDDLE OF FUNNEL — the viewer already knows this product and has been thinking about it. Don't re-explain it or list features (one quick reminder of the main benefit at most). The whole script is about getting them to finally pull the trigger: name the one hesitation stopping them and answer it ("if you've had it in your cart", "if you've been going back and forth"), what life is like once you have it, real reassurance (how much you use it, how it's held up, what you'd tell a friend), and a confident-but-soft push to grab it. ${SW.special.includes('On sale')?'It IS on a promo right now, so the deal can be one reason to buy now (no numbers).':'It is NOT on a promo — do NOT talk about sales, discounts, deals, coupons or "the price right now". The reason to buy is the product and the payoff, not a deal. No fake urgency ("selling out", "won\'t last").'} Short, direct, confident — about 20–30 seconds.`
     :`FUNNEL: TOP OF FUNNEL — the viewer has never seen this product. Hook them with a relatable problem or a strong visual moment, then really SHOW and EXPLAIN the product: what it is, how it works, 2–3 specific features tied to the real benefit for her life, what makes it different from what she uses now, and a quick real-life use. Use the real product facts — specific, concrete details, not vague praise. Deal talk is optional and brief.`);
   if(document.getElementById('swHoliday').checked&&SW.holiday) bits.push(`Work in this holiday/event naturally: ${SW.holiday}`);
   const sp=SW.special.filter(x=>x!=='On sale');
@@ -955,9 +955,6 @@ function swRenderScript(tab){
     `<div class="card swc"><div class="swh">Make the rest of your video <small style="float:right;color:var(--text-muted);font-weight:600">Written for this script</small></div>
       <div class="swtabs">${[['shots','Shot by shot'],['hooks','Text hooks'],['thumb','Thumbnail'],['sound','Sounds'],['seo','SEO words'],['caption','Caption']].map(([k,l])=>`<button class="${t===k?'on':''}" onclick="swExtra('${k}')">${l}</button>`).join('')}</div>
       <div class="swextra" id="swExtra">${t&&SW.extras[t]?esc(SW.extras[t]):''}</div>${t&&SW.extras[t]?`<button class="copy" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('swExtra').innerText);this.textContent='✓ Copied'">${t==='seo'?'Copy all words':'Copy'}</button>`:''}</div>
-    <div class="card swc"><div class="swh">Redo just one part</div><div class="sub" style="margin-bottom:8px">Everything else stays word-for-word.</div>
-      <div class="swacts">${[['the hook','opening hook (the first paragraph)'],['the middle','middle paragraphs (keep the first and last paragraph exactly)'],['the ending','closing (the last paragraph) — keep it a soft, casual close']].map(([l,h])=>`<button class="copy" onclick="swRedoPart('${h}')">Redo ${l}</button>`).join('')}</div>
-      <div class="swtabs" style="margin-top:8px">${sc.paragraphs.map((_,i)=>`<button onclick="swRedoPart('paragraph ${i+1} only')">¶${i+1}</button>`).join('')}</div></div>
     <div class="card swc"><div class="swh">Add to my to-do</div><div class="swrow"><input type="date" id="swTodoDate" value="${swDateKey(new Date())}"><button class="btn sm" id="swTodoBtn" onclick="swToTodo(this)">Add to to-do</button></div></div>
     <div class="swacts">${['Shorter','Funnier','Stronger hook','More casual'].map(x=>`<button class="copy" onclick="swWrite({from:SW.script,how:'${x.toLowerCase()}'})">${x}</button>`).join('')}<a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer;align-self:center" onclick="swReset()">Start over</a></div>
     <div class="swrow"><input id="swAsk" placeholder="Or tell it what to change…" onkeydown="if(event.key==='Enter'&&this.value.trim())swWrite({from:SW.script,how:this.value.trim()})"><button class="btn sm" onclick="const v=document.getElementById('swAsk').value.trim();if(v)swWrite({from:SW.script,how:v})">↑</button></div>`;
@@ -991,10 +988,10 @@ async function swExtra(k){
       const o=await gem([{text:`Write the TikTok CAPTION for this video — the short text that goes under the post. It is NOT the script: do not repeat or summarize the script line by line.
 - 1–3 short sentences, under 150 characters before the hashtags.
 - Naturally include 2–4 of these SEO keywords so the post shows up in search: ${SW.seo.slice(0,12).join(', ')}
-- Then 5–8 hashtags (mix of broad and specific).
+- Then exactly 5 hashtags — TikTok only allows 5. Pick the 5 strongest, most relevant first (mix of specific product/problem tags and 1–2 broader ones).
 ${voiceGuide()}
 SCRIPT (for context only):\n${txt}`}],{type:'OBJECT',properties:{caption:{type:'STRING'},hashtags:{type:'ARRAY',items:{type:'STRING'}}},required:['caption','hashtags']},0.7);
-      SW.extras.caption=`${o.caption}\n\n${o.hashtags.map(h=>'#'+String(h).replace(/^#/,'').replace(/\s+/g,'')).join(' ')}`; }
+      SW.extras.caption=`${o.caption}\n\n${o.hashtags.slice(0,5).map(h=>'#'+String(h).replace(/^#/,'').replace(/\s+/g,'')).join(' ')}`; }
   }catch(e){ SW.extras[k]=''; alert('Could not write that: '+e.message); }
   swRenderScript(k);
 }
