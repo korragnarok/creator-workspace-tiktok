@@ -29,7 +29,10 @@ textarea{resize:vertical;line-height:1.55;}
 .col.over{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 8%,var(--surface));}
 .col-h{position:sticky;top:0;z-index:3;background:inherit;border-radius:12px;display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);}
 .col-h span{background:var(--surface-2);color:var(--ink);border-radius:999px;padding:2px 9px;letter-spacing:0;}
-.card{background:var(--surface);border:1px solid var(--border-mid);border-radius:14px;padding:10px;margin-bottom:10px;cursor:grab;}
+.card{background:var(--surface);border:1px solid var(--border-mid);border-radius:14px;padding:10px;margin-bottom:10px;cursor:grab;position:relative;}
+.cx{position:absolute;top:6px;right:6px;width:24px;height:24px;border:none;border-radius:50%;background:var(--surface-2);color:var(--ink-3,#888);font-size:15px;line-height:24px;cursor:pointer;padding:0;}
+.cx:hover{background:#fde2e2;color:#c0392b;}
+.ctop{padding-right:26px;}
 .card.done{opacity:.55;} .card.dragging{opacity:.4;}
 .ctop{display:flex;gap:10px;align-items:center;}
 .ctop img,.ctop .ph{width:46px;height:46px;border-radius:10px;object-fit:cover;background:var(--surface-2);flex-shrink:0;}
@@ -151,6 +154,7 @@ function card(g){
   const shots=g.meta.shots||[], sDone=shots.filter(s=>s.done).length;
   const acct=ACCTS[g.acct]||'';
   return `<div class="card${g.done?' done':''}" data-key="${esc(g.key)}" draggable="true" ondragstart="dragStart(event,'${esc(g.key)}')" ondragend="this.classList.remove('dragging')" ondragover="this.classList.add('dropbefore')" ondragleave="this.classList.remove('dropbefore')">
+    <button class="cx" title="Remove" onclick="removeCard('${esc(g.key)}')">×</button>
     <div class="ctop">${img?`<img src="${esc(img)}" alt="">`:'<span class="ph"></span>'}<div style="min-width:0"><div class="cname">${esc(g.name)}</div><div class="cmeta">${esc(g.brand||g.p?.brand||'')}${acct?` · ${esc(acct)}`:''}</div></div></div>
     <div class="badges">${promo?'<span class="bd promo">★ Promo</span>':''}${sample?'<span class="bd sample">Free sample</span>':''}${noScript?'<span class="bd warn">No script yet</span>':''}${g.done?'<span class="bd ok">✓ Filmed</span>':''}${shots.length?`<span class="bd" style="background:var(--surface-2);color:var(--ink)">📷 ${sDone}/${shots.length} shots</span>`:''}</div>
     <div class="takes">${g.rows.map((r,i)=>`<label><input type="checkbox" ${r.done?'checked':''} onchange="toggleTake('${r.id}',this.checked)">Take ${i+1}</label>`).join('')}<button class="btn sm" style="padding:4px 9px" onclick="addTake('${esc(g.key)}')">+</button></div>
@@ -208,6 +212,17 @@ async function copyCard(k){
   META={...META,[k]:{...(META[k]||{}),style:g.style},[nk]:{style:g.style,shots:(m.shots||[]).map(s=>({...s,done:false})),seo:m.seo||'',caption:m.caption||''}};
   const list=colList(G,g.style), i=list.findIndex(x=>x.key===k);
   placeCard(nk,g.style,list[i+1]?.key||null);
+}
+async function removeCard(k){
+  const g=groups().find(x=>x.key===k); if(!g) return;
+  if(!confirm(`Remove ${g.name} from today? This also removes it from your Home to-do.`)) return;
+  const ids=g.rows.map(r=>r.id);
+  const {error}=await db.from('queue').delete().in('id',ids).eq('user_id',USER.id);
+  if(error){ alert(error.message); return; }
+  ROWS=ROWS.filter(r=>!ids.includes(r.id));
+  const all={...META}; delete all[k]; META=all;
+  const day=ymd(DAY); plannerGet('filmBoard',{}).then(b=>{ b=b||{}; b[day]=META; plannerSet('filmBoard',b); });
+  render();
 }
 async function toggleTake(id,done){
   const r=ROWS.find(x=>x.id===id); if(r) r.done=done;
