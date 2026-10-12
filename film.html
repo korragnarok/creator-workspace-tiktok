@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Film Board — Take24</title>
+<script src="theme-init.js?v=260"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font:14px 'Nunito Sans',sans-serif;padding:26px;padding-top:max(26px,env(safe-area-inset-top));}
+.wrap{max-width:1320px;margin:0 auto;}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+h1{font:300 40px 'Cormorant Garamond',serif;color:var(--ink);line-height:1;}
+.sub{color:var(--text-muted);font-size:13px;margin-top:4px;}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.btn{border:1px solid var(--border-mid);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 16px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}
+.btn:hover{border-color:var(--tan);} .btn.primary{background:var(--rust);border-color:var(--rust);color:#fff;} .btn.sm{padding:6px 11px;font-size:10px;}
+.dnav{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border-mid);border-radius:999px;padding:4px 6px;}
+.dnav button{background:none;border:none;color:var(--ink);font-size:18px;cursor:pointer;padding:0 8px;}
+.dnav b{font:400 19px 'Cormorant Garamond',serif;color:var(--ink);min-width:150px;text-align:center;cursor:pointer;}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--border-mid);border-radius:10px;padding:9px 11px;color:var(--ink);font:13.5px 'Nunito Sans',sans-serif;outline:none;}
+input:focus,textarea:focus,select:focus{border-color:var(--tan);}
+textarea{resize:vertical;line-height:1.55;}
+/* board */
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start;}
+.col{background:color-mix(in srgb,var(--surface) 55%,var(--bg));border:1px solid var(--border);border-radius:18px;padding:10px;min-height:220px;}
+.col.over{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 8%,var(--surface));}
+.col-h{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);}
+.col-h span{background:var(--surface-2);color:var(--ink);border-radius:999px;padding:2px 9px;letter-spacing:0;}
+.card{background:var(--surface);border:1px solid var(--border-mid);border-radius:14px;padding:10px;margin-bottom:10px;cursor:grab;}
+.card.done{opacity:.55;} .card.dragging{opacity:.4;}
+.ctop{display:flex;gap:10px;align-items:center;}
+.ctop img,.ctop .ph{width:46px;height:46px;border-radius:10px;object-fit:cover;background:var(--surface-2);flex-shrink:0;}
+.cname{font-weight:800;color:var(--ink);font-size:14px;line-height:1.25;}
+.cmeta{font-size:11.5px;color:var(--text-muted);margin-top:2px;}
+.badges{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 2px;}
+.bd{font:800 9.5px 'Nunito Sans',sans-serif;letter-spacing:.04em;border-radius:999px;padding:3px 8px;}
+.bd.promo{background:#D9A441;color:#2a1d07;} .bd.sample{background:#6E5AA8;color:#fff;} .bd.warn{background:transparent;border:1px solid var(--rust);color:var(--rust);} .bd.ok{background:#2E9E5B;color:#fff;}
+.takes{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+.takes label{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--text);border:1px solid var(--border-mid);border-radius:999px;padding:4px 10px;cursor:pointer;}
+.takes input{width:auto;accent-color:#2E9E5B;}
+.cbtns{display:flex;gap:6px;flex-wrap:wrap;}
+.cbtns .btn{flex:1;min-width:0;}
+.mv{margin-top:8px;font-size:12px;padding:6px 8px;display:none;}
+.empty{color:var(--text-muted);font-size:12.5px;text-align:center;padding:24px 8px;border:1px dashed var(--border-mid);border-radius:12px;}
+.tabs{display:none;gap:6px;margin-bottom:12px;overflow-x:auto;}
+.tab{border:1px solid var(--border-mid);background:transparent;color:var(--text-muted);border-radius:999px;padding:8px 13px;font:800 11px 'Nunito Sans',sans-serif;white-space:nowrap;cursor:pointer;}
+.tab.on{background:var(--rust);border-color:var(--rust);color:#fff;}
+/* modal */
+.modal{position:fixed;inset:0;z-index:700;background:rgba(10,8,7,.72);display:none;align-items:center;justify-content:center;padding:18px;}
+.modal.open{display:flex;}
+.mcard{width:100%;max-width:640px;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--border-mid);border-radius:22px;padding:20px;}
+.mh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;}
+.mh h2{font:400 26px 'Cormorant Garamond',serif;color:var(--ink);line-height:1.1;}
+.x{background:none;border:none;color:var(--text-muted);font-size:26px;cursor:pointer;line-height:1;}
+.mtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.lbl{font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);margin:12px 0 6px;display:flex;justify-content:space-between;align-items:center;}
+.script-view{font-size:17px;line-height:1.7;color:var(--ink);white-space:pre-wrap;background:var(--bg-lift);border:1px solid var(--border);border-radius:14px;padding:14px;}
+.shot{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
+.shot input[type=checkbox]{width:auto;accent-color:#2E9E5B;} .shot span{flex:1;} .shot.done span{text-decoration:line-through;color:var(--text-muted);}
+.row{display:flex;gap:8px;align-items:center;}
+.pl{max-height:300px;overflow:auto;border:1px solid var(--border);border-radius:12px;margin-top:8px;}
+.pi{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;}
+.pi:hover{background:color-mix(in srgb,var(--rust) 12%,var(--surface));} .pi img,.pi .ph{width:30px;height:30px;border-radius:7px;object-fit:cover;background:var(--surface-2);}
+.saved{font-size:11.5px;color:#2E9E5B;font-weight:700;}
+@media(max-width:1000px){.board{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:700px){
+  body{padding:16px;padding-top:88px;} h1{font-size:32px;}
+  .tabs{display:flex;} .board{grid-template-columns:1fr;} .col{display:none;} .col.show{display:block;}
+  .mv{display:block;} .card{cursor:default;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div><h1>Film Board</h1><div class="sub" id="sum">Loading…</div></div>
+    <div class="bar">
+      <div class="dnav"><button onclick="shiftDay(-1)">‹</button><b id="dayLbl" onclick="goToday()" title="Back to today"></b><button onclick="shiftDay(1)">›</button></div>
+      <button class="btn primary" onclick="openAdd()">+ Add product</button>
+    </div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="board" id="board"></div>
+</div>
+
+<div class="modal" id="m" onclick="if(event.target===this)closeM()"><div class="mcard" id="mc"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=260"></script>
+<script src="planner-sync.js?v=238"></script>
+<script src="layout.js?v=260"></script>
+<script>
+const COLS=[['talking','🗣 Talking head'],['faceless','🙌 Faceless'],['vacuum','🧹 Vacuum / demo'],['car','🚗 Car']];
+let USER=null, DAY=new Date(), ROWS=[], PRODS=[], ACCTS={}, META={}, STYLEMEM={}, MOBILECOL='talking', CUR=null, MTAB='script';
+const pad=n=>String(n).padStart(2,'0'), ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const keyOf=r=>String(r.prod_id||String(r.name||'').toLowerCase());
+try{ MOBILECOL=localStorage.getItem('take24:filmTab')||'talking'; }catch(e){}
+
+function guessStyle(name,brand){
+  const t=(name+' '+brand).toLowerCase();
+  if(/vacuum|vac\b|mop|stain|carpet|robot|wet ?dry|steam|shark home|cordless|power detect|hydro|clean/.test(t)) return 'vacuum';
+  return 'talking';
+}
+function groups(){
+  const m={}, out=[];
+  ROWS.forEach(r=>{ const k=keyOf(r); if(!m[k]){ m[k]={key:k,name:r.name,brand:r.brand,prod_id:r.prod_id,acct:r.tiktok_account_id,rows:[]}; out.push(m[k]); } m[k].rows.push(r); });
+  out.forEach(g=>{ g.p=PRODS.find(p=>p.id===g.prod_id)||PRODS.find(p=>String(p.name).toLowerCase()===String(g.name).toLowerCase())||null;
+    const meta=META[g.key]||{}; g.meta=meta;
+    g.style=meta.style||STYLEMEM[g.prod_id||g.key]||guessStyle(g.name||'',g.brand||g.p?.brand||'');
+    g.done=g.rows.every(r=>r.done); });
+  return out;
+}
+function metaSave(k,patch){
+  const all={...(META)}; all[k]={...(all[k]||{}),...patch}; META=all;
+  const day=ymd(DAY); plannerGet('filmBoard',{}).then(b=>{ b=b||{}; b[day]=META; plannerSet('filmBoard',b); });
+}
+
+async function load(){
+  document.getElementById('dayLbl').textContent=ymd(DAY)===ymd(new Date())?'Today · '+DAY.toLocaleDateString(undefined,{month:'short',day:'numeric'}):DAY.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+  const day=ymd(DAY);
+  const [{data:rows},board,mem]=await Promise.all([
+    db.from('queue').select('*').eq('user_id',USER.id).eq('date',day).order('sort_order'),
+    plannerGet('filmBoard',{}), plannerGet('filmStyleMem',{})
+  ]);
+  ROWS=rows||[]; META=(board||{})[day]||{}; STYLEMEM=mem||{};
+  render();
+}
+function render(){
+  const G=groups();
+  const takesTotal=ROWS.length, takesDone=ROWS.filter(r=>r.done).length;
+  document.getElementById('sum').textContent=G.length?`${G.length} product${G.length===1?'':'s'} · ${takesDone}/${takesTotal} takes filmed`:'Nothing planned yet — add a product, or plan takes from Home.';
+  document.getElementById('tabs').innerHTML=COLS.map(([k,l])=>`<button class="tab${MOBILECOL===k?' on':''}" onclick="setTab('${k}')">${l} (${G.filter(g=>g.style===k).length})</button>`).join('');
+  document.getElementById('board').innerHTML=COLS.map(([k,l])=>{
+    const list=G.filter(g=>g.style===k).sort((a,b)=>a.done-b.done);
+    return `<div class="col${MOBILECOL===k?' show':''}" data-col="${k}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropOn(event,'${k}')">
+      <div class="col-h">${l}<span>${list.length}</span></div>
+      ${list.length?list.map(card).join(''):`<div class="empty">Drag products here</div>`}</div>`;
+  }).join('');
+}
+function card(g){
+  const img=g.p?.image_url, notes=g.rows.map(r=>r.notes||'').join(' ');
+  const promo=/Promo:/i.test(notes), sample=/FREE_SAMPLE/.test(g.p?.notes||'');
+  const noScript=g.rows.every(r=>!String(r.script||'').trim());
+  const shots=g.meta.shots||[], sDone=shots.filter(s=>s.done).length;
+  const acct=ACCTS[g.acct]||'';
+  return `<div class="card${g.done?' done':''}" draggable="true" ondragstart="dragStart(event,'${esc(g.key)}')" ondragend="this.classList.remove('dragging')">
+    <div class="ctop">${img?`<img src="${esc(img)}" alt="">`:'<span class="ph"></span>'}<div style="min-width:0"><div class="cname">${esc(g.name)}</div><div class="cmeta">${esc(g.brand||g.p?.brand||'')}${acct?` · ${esc(acct)}`:''}</div></div></div>
+    <div class="badges">${promo?'<span class="bd promo">★ Promo</span>':''}${sample?'<span class="bd sample">Free sample</span>':''}${noScript?'<span class="bd warn">No script yet</span>':''}${g.done?'<span class="bd ok">✓ Filmed</span>':''}${shots.length?`<span class="bd" style="background:var(--surface-2);color:var(--ink)">📷 ${sDone}/${shots.length} shots</span>`:''}</div>
+    <div class="takes">${g.rows.map((r,i)=>`<label><input type="checkbox" ${r.done?'checked':''} onchange="toggleTake('${r.id}',this.checked)">Take ${i+1}</label>`).join('')}<button class="btn sm" style="padding:4px 9px" onclick="addTake('${esc(g.key)}')">+</button></div>
+    <div class="cbtns"><button class="btn sm" onclick="openItem('${esc(g.key)}','script')">Script</button><button class="btn sm" onclick="openItem('${esc(g.key)}','shots')">Shots</button><button class="btn sm" onclick="openItem('${esc(g.key)}','seo')">SEO &amp; caption</button></div>
+    <select class="mv" onchange="moveTo('${esc(g.key)}',this.value)">${COLS.map(([k,l])=>`<option value="${k}"${g.style===k?' selected':''}>Move to: ${l}</option>`).join('')}</select>
+  </div>`;
+}
+function setTab(k){ MOBILECOL=k; try{ localStorage.setItem('take24:filmTab',k); }catch(e){} render(); }
+function dragStart(e,k){ e.dataTransfer.setData('text/plain',k); e.currentTarget.classList.add('dragging'); }
+function dropOn(e,col){ e.preventDefault(); document.querySelectorAll('.col').forEach(c=>c.classList.remove('over')); const k=e.dataTransfer.getData('text/plain'); if(k) moveTo(k,col); }
+function moveTo(k,col){
+  const g=groups().find(x=>x.key===k); if(!g) return;
+  metaSave(k,{style:col});
+  STYLEMEM[g.prod_id||k]=col; plannerSet('filmStyleMem',STYLEMEM);   // remember for next time
+  render();
+}
+async function toggleTake(id,done){
+  const r=ROWS.find(x=>x.id===id); if(r) r.done=done;
+  await db.from('queue').update({done}).eq('id',id).eq('user_id',USER.id); render();
+}
+async function addTake(k){
+  const g=groups().find(x=>x.key===k); if(!g) return;
+  const base=g.rows[0];
+  const {data,error}=await db.from('queue').insert({user_id:USER.id,tiktok_account_id:base.tiktok_account_id,date:ymd(DAY),prod_id:base.prod_id,name:base.name,brand:base.brand||'',notes:'',script:'',done:false,sort_order:(base.sort_order||0)}).select().single();
+  if(error){ alert(error.message); return; } ROWS.push(data); render();
+}
+
+// ── item modal: Script / Shots / SEO & caption ──
+function openItem(k,tab){ CUR=k; MTAB=tab; CUR_TAKE=0; drawM(); document.getElementById('m').classList.add('open'); }
+function closeM(){ document.getElementById('m').classList.remove('open'); render(); }
+let CUR_TAKE=0, EDITING=false;
+function drawM(){
+  const g=groups().find(x=>x.key===CUR); if(!g){ closeM(); return; }
+  const tabs=[['script','Script'],['shots','Shots'],['seo','SEO & caption']];
+  let body='';
+  if(MTAB==='script'){
+    const r=g.rows[CUR_TAKE]||g.rows[0]; const txt=String(r.script||'');
+    body=`${g.rows.length>1?`<div class="mtabs">${g.rows.map((x,i)=>`<button class="tab${i===CUR_TAKE?' on':''}" onclick="CUR_TAKE=${i};EDITING=false;drawM()">Take ${i+1}${x.done?' ✓':''}</button>`).join('')}</div>`:''}
+      ${EDITING||!txt.trim()?`<textarea id="scTxt" rows="12" placeholder="Paste or type the script for this take… (write scripts in Video Feedback → Write a script, then paste here)">${esc(txt)}</textarea>
+        <div class="row" style="margin-top:10px;justify-content:flex-end"><span class="saved" id="sv"></span>${txt.trim()?`<button class="btn sm" onclick="EDITING=false;drawM()">Cancel</button>`:''}<button class="btn sm primary" onclick="saveScript('${r.id}')">Save script</button></div>`
+      :`<div class="script-view">${esc(txt)}</div>
+        <div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn sm" onclick="navigator.clipboard.writeText(document.querySelector('.script-view').innerText);this.textContent='✓ Copied'">Copy</button><button class="btn sm" onclick="EDITING=true;drawM()">Edit</button></div>`}`;
+  } else if(MTAB==='shots'){
+    const shots=g.meta.shots||[];
+    body=`<div class="lbl">Shots to get <span style="letter-spacing:0;text-transform:none;font-weight:600;color:var(--text-muted)">${shots.filter(s=>s.done).length}/${shots.length} done</span></div>
+      ${shots.length?shots.map((s,i)=>`<div class="shot${s.done?' done':''}"><input type="checkbox" ${s.done?'checked':''} onchange="shotTog(${i},this.checked)"><span>${esc(s.t)}</span><button class="x" style="font-size:18px" onclick="shotDel(${i})">×</button></div>`).join(''):'<div class="sub" style="padding:6px 0">No shots yet — add the ones you want to remember.</div>'}
+      <div class="row" style="margin-top:10px"><input id="shotNew" placeholder="e.g. close-up of hair wrapping on the brush" onkeydown="if(event.key==='Enter')shotAdd()"><button class="btn sm primary" onclick="shotAdd()">Add</button></div>`;
+  } else {
+    body=`<div class="lbl">SEO words <button class="btn sm" onclick="navigator.clipboard.writeText(document.getElementById('seoTxt').value);this.textContent='✓ Copied'">Copy</button></div>
+      <textarea id="seoTxt" rows="4" placeholder="Paste your SEO words (comma separated)">${esc(g.meta.seo||'')}</textarea>
+      <div class="lbl">Caption <button class="btn sm" onclick="navigator.clipboard.writeText(document.getElementById('capTxt').value);this.textContent='✓ Copied'">Copy</button></div>
+      <textarea id="capTxt" rows="5" placeholder="Paste the caption + hashtags">${esc(g.meta.caption||'')}</textarea>
+      <div class="row" style="margin-top:10px;justify-content:flex-end"><span class="saved" id="sv"></span><button class="btn sm primary" onclick="saveSeo()">Save</button></div>`;
+  }
+  document.getElementById('mc').innerHTML=`<div class="mh"><div><h2>${esc(g.name)}</h2><div class="sub">${esc(g.brand||g.p?.brand||'')}${ACCTS[g.acct]?` · ${esc(ACCTS[g.acct])}`:''}</div></div><button class="x" onclick="closeM()">×</button></div>
+    <div class="mtabs">${tabs.map(([k,l])=>`<button class="tab${MTAB===k?' on':''}" onclick="MTAB='${k}';EDITING=false;drawM()">${l}</button>`).join('')}</div>${body}`;
+}
+async function saveScript(id){
+  const v=document.getElementById('scTxt').value; const r=ROWS.find(x=>x.id===id); if(r) r.script=v;
+  const {error}=await db.from('queue').update({script:v}).eq('id',id).eq('user_id',USER.id);
+  if(error){ alert(error.message); return; } EDITING=false; drawM();
+}
+function curMeta(){ return META[CUR]||{}; }
+function shotAdd(){ const v=document.getElementById('shotNew').value.trim(); if(!v) return; metaSave(CUR,{shots:[...(curMeta().shots||[]),{t:v,done:false}]}); drawM(); setTimeout(()=>document.getElementById('shotNew')?.focus(),0); }
+function shotTog(i,d){ const s=[...(curMeta().shots||[])]; s[i]={...s[i],done:d}; metaSave(CUR,{shots:s}); drawM(); }
+function shotDel(i){ const s=[...(curMeta().shots||[])]; s.splice(i,1); metaSave(CUR,{shots:s}); drawM(); }
+function saveSeo(){ metaSave(CUR,{seo:document.getElementById('seoTxt').value,caption:document.getElementById('capTxt').value}); const sv=document.getElementById('sv'); sv.textContent='✓ Saved'; setTimeout(()=>sv.textContent='',2000); }
+
+// ── add product ──
+function openAdd(){
+  document.getElementById('mc').innerHTML=`<div class="mh"><h2>Add to ${ymd(DAY)===ymd(new Date())?'today':DAY.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</h2><button class="x" onclick="closeM()">×</button></div>
+    <input id="addQ" placeholder="Search your products…" oninput="drawAdd()" autocomplete="off">
+    <div class="lbl">Column</div><select id="addCol"><option value="">Auto</option>${COLS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select>
+    <div class="pl" id="addList"></div>`;
+  document.getElementById('m').classList.add('open'); drawAdd(); setTimeout(()=>document.getElementById('addQ').focus(),50);
+}
+function drawAdd(){
+  const q=(document.getElementById('addQ').value||'').toLowerCase();
+  const list=PRODS.filter(p=>!q||(p.name+' '+(p.brand||'')).toLowerCase().includes(q)).slice(0,60);
+  document.getElementById('addList').innerHTML=list.map(p=>`<div class="pi" onclick="addProd('${p.id}')">${p.image_url?`<img src="${esc(p.image_url)}">`:'<span class="ph"></span>'}<div><b style="color:var(--ink)">${esc(p.name)}</b><div class="cmeta">${esc(p.brand||'')}</div></div></div>`).join('')
+    +(q&&!list.some(p=>p.name.toLowerCase()===q)?`<div class="pi" onclick="addProd(null)"><span class="ph"></span><div><b style="color:var(--ink)">+ Add “${esc(document.getElementById('addQ').value)}”</b><div class="cmeta">Not in your products</div></div></div>`:'');
+}
+async function addProd(id){
+  const p=id?PRODS.find(x=>x.id===id):null; const name=p?p.name:document.getElementById('addQ').value.trim(); if(!name) return;
+  const col=document.getElementById('addCol').value;
+  const acct=p?.tiktok_account_id||(typeof getActiveAccount==='function'?(await getActiveAccount(USER.id))?.tiktok_open_id:null)||null;
+  const {data,error}=await db.from('queue').insert({user_id:USER.id,tiktok_account_id:acct,date:ymd(DAY),prod_id:p?.id||null,name,brand:p?.brand||'',notes:'',script:'',done:false,sort_order:ROWS.length+1}).select().single();
+  if(error){ alert(error.message); return; }
+  ROWS.push(data); if(col) moveTo(keyOf(data),col); closeM();
+}
+function shiftDay(n){ DAY=new Date(DAY.getFullYear(),DAY.getMonth(),DAY.getDate()+n); load(); }
+function goToday(){ DAY=new Date(); load(); }
+
+(async()=>{
+  const {data:{session}}=await db.auth.getSession(); if(!session){ location.href='auth.html'; return; }
+  USER=session.user;
+  try{ const prefs=await loadUserPrefs(USER.id); await initTheme(USER.id,prefs); await initDisplayName(USER,prefs); initProfilePopover(USER.id); }catch(e){}
+  const [{data:prods},{data:accts}]=await Promise.all([
+    db.from('products').select('id,name,brand,image_url,notes,tiktok_account_id').eq('user_id',USER.id).order('name'),
+    db.from('tiktok_accounts').select('tiktok_open_id,username,display_name').eq('user_id',USER.id)
+  ]);
+  PRODS=prods||[]; (accts||[]).forEach(a=>ACCTS[a.tiktok_open_id]='@'+(a.username||a.display_name||'account'));
+  load();
+})();
+</script>
+</body>
+</html>

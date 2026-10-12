@@ -79,7 +79,7 @@
   // ── New planner sidebar: wordmark, mini calendar, ombre folders, profile ──
   // [page, label, folder image number] — image numbers stay fixed so your folder pictures never shuffle
   const FOLDERS = [
-    ['video-tracker.html','Content Tracker',2],
+    ['video-tracker.html','Content Tracker',2], ['film.html','Film Board',8],
     ['products.html','Products',3], ['brand-deals.html','Brand Deals',4],
     ['promos.html','Shark & Ninja',16],
     ['scripts.html','Script Vault',6], ['sales-calendar.html','Sales Log',10],
