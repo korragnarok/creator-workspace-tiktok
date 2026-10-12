@@ -86,6 +86,7 @@ textarea{resize:vertical;line-height:1.55;}
     <div><h1>Film Board</h1><div class="sub" id="sum">Loading…</div></div>
     <div class="bar">
       <div class="dnav"><button onclick="shiftDay(-1)">‹</button><b id="dayLbl" onclick="goToday()" title="Back to today"></b><button onclick="shiftDay(1)">›</button></div>
+      <button class="btn" onclick="moveDay()" title="Move everything on this day to another day">Move day →</button>
       <button class="btn primary" onclick="openAdd()">+ Add product</button>
     </div>
   </div>
@@ -312,6 +313,18 @@ async function addProd(id){
   const {data,error}=await db.from('queue').insert({user_id:USER.id,tiktok_account_id:acct,date:ymd(DAY),prod_id:p?.id||null,name,brand:p?.brand||'',notes:'',script:'',done:false,sort_order:ROWS.length+1}).select().single();
   if(error){ alert(error.message); return; }
   ROWS.push(data); if(col) placeCard(keyOf(data),col,null); closeM();
+}
+// move every product/take (and its shots, SEO, caption, column) from this day to another day
+async function moveDay(){
+  if(!ROWS.length){ alert('Nothing on this day to move.'); return; }
+  const from=ymd(DAY), t=new Date(DAY.getFullYear(),DAY.getMonth(),DAY.getDate()+1);
+  const to=(prompt('Move everything from '+from+' to which day? (YYYY-MM-DD)',ymd(t))||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(to)||to===from) return;
+  const {error}=await db.from('queue').update({date:to}).eq('user_id',USER.id).eq('date',from);
+  if(error){ alert(error.message); return; }
+  const b=(await plannerGet('filmBoard',{}))||{};
+  b[to]={...(b[to]||{}),...(b[from]||META)}; delete b[from]; await plannerSet('filmBoard',b);
+  const [Y,M,D]=to.split('-').map(Number); DAY=new Date(Y,M-1,D); load();
 }
 function shiftDay(n){ DAY=new Date(DAY.getFullYear(),DAY.getMonth(),DAY.getDate()+n); load(); }
 function goToday(){ DAY=new Date(); load(); }
