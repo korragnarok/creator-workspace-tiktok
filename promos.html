@@ -208,7 +208,7 @@ function render(){
     const today=promoYmd(new Date()), dayN=k=>Number(k.slice(8,10));
     // one row per product — every promo window for it becomes a bar on that row
     const groups=[], gmap={};
-    items.filter(p=>p.start_date).forEach(p=>{ const k=p.prod_id||norm(p.product); if(!gmap[k]){ gmap[k]={key:k,p,items:[]}; groups.push(gmap[k]); } gmap[k].items.push(p); if(p.priority) gmap[k].p=p; });
+    items.filter(p=>p.start_date&&(p.end_date||p.start_date)>=first&&p.start_date<=last).forEach(p=>{ const k=p.prod_id||norm(p.product); if(!gmap[k]){ gmap[k]={key:k,p,items:[]}; groups.push(gmap[k]); } gmap[k].items.push(p); if(p.priority) gmap[k].p=p; });
     groups.forEach(g=>g.items.sort((a,b)=>String(a.start_date).localeCompare(String(b.start_date))));
     groups.sort((a,b)=>(b.items.some(x=>x.priority)?1:0)-(a.items.some(x=>x.priority)?1:0)||String(a.items[0].start_date).localeCompare(String(b.items[0].start_date)));
     const head=`<div class="tl-row tl-head"><div class="tl-name"></div><div class="tl-days">${[...Array(days)].map((_,i)=>{ const k=`${MONTH}-${String(i+1).padStart(2,'0')}`, d=new Date(y,m-1,i+1); return `<div class="tl-d${k===today?' today':''}${d.getDay()===0||d.getDay()===6?' wk':''}"><span>${'SMTWTFS'[d.getDay()]}</span>${i+1}</div>`; }).join('')}</div></div>`;
