@@ -99,7 +99,8 @@ const COLS=[['talking','🗣 Talking head'],['faceless','🙌 Faceless'],['vacuu
 let USER=null, DAY=new Date(), ROWS=[], PRODS=[], ACCTS={}, META={}, STYLEMEM={}, MOBILECOL='talking', CUR=null, MTAB='script';
 const pad=n=>String(n).padStart(2,'0'), ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const keyOf=r=>String(r.prod_id||String(r.name||'').toLowerCase());
+const CPY=/\[copy:(\w+)\]/;
+const keyOf=r=>{ const c=String(r.notes||'').match(CPY); return String(r.prod_id||String(r.name||'').toLowerCase())+(c?'#'+c[1]:''); };
 try{ MOBILECOL=localStorage.getItem('take24:filmTab')||'talking'; }catch(e){}
 
 function guessStyle(name,brand){
@@ -153,7 +154,7 @@ function card(g){
     <div class="ctop">${img?`<img src="${esc(img)}" alt="">`:'<span class="ph"></span>'}<div style="min-width:0"><div class="cname">${esc(g.name)}</div><div class="cmeta">${esc(g.brand||g.p?.brand||'')}${acct?` · ${esc(acct)}`:''}</div></div></div>
     <div class="badges">${promo?'<span class="bd promo">★ Promo</span>':''}${sample?'<span class="bd sample">Free sample</span>':''}${noScript?'<span class="bd warn">No script yet</span>':''}${g.done?'<span class="bd ok">✓ Filmed</span>':''}${shots.length?`<span class="bd" style="background:var(--surface-2);color:var(--ink)">📷 ${sDone}/${shots.length} shots</span>`:''}</div>
     <div class="takes">${g.rows.map((r,i)=>`<label><input type="checkbox" ${r.done?'checked':''} onchange="toggleTake('${r.id}',this.checked)">Take ${i+1}</label>`).join('')}<button class="btn sm" style="padding:4px 9px" onclick="addTake('${esc(g.key)}')">+</button></div>
-    <div class="cbtns"><button class="btn sm" onclick="openItem('${esc(g.key)}','script')">Script</button><button class="btn sm" onclick="openItem('${esc(g.key)}','shots')">Shots</button><button class="btn sm" onclick="openItem('${esc(g.key)}','seo')">SEO &amp; caption</button></div>
+    <div class="cbtns"><button class="btn sm" onclick="openItem('${esc(g.key)}','script')">Script</button><button class="btn sm" onclick="openItem('${esc(g.key)}','shots')">Shots</button><button class="btn sm" onclick="openItem('${esc(g.key)}','seo')">SEO &amp; caption</button><button class="btn sm" onclick="copyCard('${esc(g.key)}')" title="Make a copy under this one">⧉ Copy</button></div>
     <div class="mv-row"><button class="btn sm" onclick="nudge('${esc(g.key)}',-1)" title="Move up">↑</button><button class="btn sm" onclick="nudge('${esc(g.key)}',1)" title="Move down">↓</button>
     <select class="mv" onchange="placeCard('${esc(g.key)}',this.value,null)">${COLS.map(([k,l])=>`<option value="${k}"${g.style===k?' selected':''}>Move to: ${l}</option>`).join('')}</select></div>
   </div>`;
@@ -165,7 +166,7 @@ function colList(G,k){
 // put `k` into column `col`, right before card `beforeKey` (or at the end), and save the new order
 function placeCard(k,col,beforeKey){
   const G=groups(); const g=G.find(x=>x.key===k); if(!g) return;
-  if(g.style!==col){ STYLEMEM[g.prod_id||k]=col; plannerSet('filmStyleMem',STYLEMEM); g.style=col; }
+  if(g.style!==col){ if(!k.includes('#')) STYLEMEM[g.prod_id||k]=col; plannerSet('filmStyleMem',STYLEMEM); g.style=col; }
   let list=colList(G.map(x=>x.key===k?{...x,style:col}:x),col).filter(x=>x.key!==k);
   const at=beforeKey?list.findIndex(x=>x.key===beforeKey):-1;
   list.splice(at<0?list.length:at,0,g);
@@ -195,6 +196,19 @@ function moveTo(k,col){
   STYLEMEM[g.prod_id||k]=col; plannerSet('filmStyleMem',STYLEMEM);   // remember for next time
   render();
 }
+// duplicate a product card right under the original (same scripts, shots, SEO) so it can go in another column
+async function copyCard(k){
+  const G=groups(); const g=G.find(x=>x.key===k); if(!g) return;
+  const id=Date.now().toString(36), tag=`[copy:${id}]`;
+  const ins=g.rows.map(r=>({user_id:USER.id,tiktok_account_id:r.tiktok_account_id,date:ymd(DAY),prod_id:r.prod_id,name:r.name,brand:r.brand||'',notes:tag,script:r.script||'',done:false,sort_order:(r.sort_order||0)}));
+  const {data,error}=await db.from('queue').insert(ins).select();
+  if(error){ alert(error.message); return; }
+  ROWS.push(...data);
+  const nk=keyOf(data[0]), m=g.meta||{};
+  META={...META,[k]:{...(META[k]||{}),style:g.style},[nk]:{style:g.style,shots:(m.shots||[]).map(s=>({...s,done:false})),seo:m.seo||'',caption:m.caption||''}};
+  const list=colList(G,g.style), i=list.findIndex(x=>x.key===k);
+  placeCard(nk,g.style,list[i+1]?.key||null);
+}
 async function toggleTake(id,done){
   const r=ROWS.find(x=>x.id===id); if(r) r.done=done;
   await db.from('queue').update({done}).eq('id',id).eq('user_id',USER.id); render();
@@ -202,7 +216,8 @@ async function toggleTake(id,done){
 async function addTake(k){
   const g=groups().find(x=>x.key===k); if(!g) return;
   const base=g.rows[0];
-  const {data,error}=await db.from('queue').insert({user_id:USER.id,tiktok_account_id:base.tiktok_account_id,date:ymd(DAY),prod_id:base.prod_id,name:base.name,brand:base.brand||'',notes:'',script:'',done:false,sort_order:(base.sort_order||0)}).select().single();
+  const tag=(String(base.notes||'').match(CPY)||[''])[0];
+  const {data,error}=await db.from('queue').insert({user_id:USER.id,tiktok_account_id:base.tiktok_account_id,date:ymd(DAY),prod_id:base.prod_id,name:base.name,brand:base.brand||'',notes:tag,script:'',done:false,sort_order:(base.sort_order||0)}).select().single();
   if(error){ alert(error.message); return; } ROWS.push(data); render();
 }
 
