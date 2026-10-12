@@ -599,6 +599,10 @@ SCRIPT: ${JSON.stringify(sc)}`}]}],generationConfig:{responseMimeType:'applicati
     return {...(fixed.scenes?.length?fixed:sc),_policy:{passed:!!policy_passed,issues:policy_issues||[]}};
   }catch(e){ return {...sc,_policy:{passed:null,issues:[]}}; }   // check couldn't run — show the script anyway
 }
+// just the spoken lines, one paragraph each — for reading on camera / teleprompter
+function spokenText(sc){
+  return [sc.hook?.spoken,...(sc.scenes||[]).map(x=>x.spoken)].map(t=>String(t||'').trim()).filter(Boolean).join('\n\n');
+}
 function scriptText(sc){
   return [`HOOK (0:00–0:03)`,`Visual: ${sc.hook.visual}`,`On-screen: ${sc.hook.on_screen_text}`,sc.hook.spoken?`Say: ${sc.hook.spoken}`:'',
     ...sc.scenes.map(x=>[``,`[${x.time}]`,`Visual: ${x.visual}`,x.on_screen_text?`On-screen: ${x.on_screen_text}`:'',x.spoken?`Say: ${x.spoken}`:''].filter(v=>v!=='' || v===``).join('\n'))].filter(Boolean).join('\n');
@@ -611,7 +615,7 @@ function renderScript(sc){
     ${sc.scenes.map(x=>`<div class="scene"><div class="st">${esc(x.time)}</div><p><b>Film:</b> ${esc(x.visual)}</p>${x.on_screen_text?`<p><b>On-screen:</b> ${esc(x.on_screen_text)}</p>`:''}${x.spoken?`<p><b>Say:</b> ${esc(x.spoken)}</p>`:''}${x.change?`<p class="chg">↻ ${esc(x.change)}</p>`:''}</div>`).join('')}
     <p style="margin-top:10px"><b>Urgency:</b> ${esc(sc.urgency)}</p>
     ${(sc.filming_tips||[]).length?`<p style="margin-top:6px"><b>Filming tips:</b></p><ul style="padding-left:18px;font-size:13px;line-height:1.5">${sc.filming_tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}
-    <div class="actions-row" style="margin:12px 0 0"><button class="copy" onclick="navigator.clipboard.writeText(scriptText(NEW_SCRIPT));this.textContent='✓ Copied'">Copy script</button><button class="copy" onclick="saveNewScript(this)">+ Save to Script Vault</button><button class="copy" onclick="makeScript(this)">↻ Write another</button></div></div>`;
+    <div class="actions-row" style="margin:12px 0 0"><button class="copy" onclick="navigator.clipboard.writeText(scriptText(NEW_SCRIPT));this.textContent='✓ Copied'">Copy full script</button><button class="copy" onclick="navigator.clipboard.writeText(spokenText(NEW_SCRIPT));this.textContent='✓ Copied'">Copy just what I say</button><button class="copy" onclick="saveNewScript(this)">+ Save to Script Vault</button><button class="copy" onclick="makeScript(this)">↻ Write another</button></div></div>`;
 }
 async function saveNewScript(btn){
   if(!NEW_SCRIPT) return;
