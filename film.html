@@ -28,6 +28,7 @@ textarea{resize:vertical;line-height:1.55;}
 .col{background:color-mix(in srgb,var(--surface) 55%,var(--bg));border:1px solid var(--border);border-radius:18px;padding:10px;min-height:220px;}
 .col.over{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 8%,var(--surface));}
 .col-h{position:sticky;top:0;z-index:3;background:inherit;border-radius:12px;display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);}
+.col-h .cht{background:none;color:inherit;padding:0;letter-spacing:.12em;cursor:pointer;} .col-h .cht i{font-style:normal;opacity:0;transition:opacity .15s;} .col-h:hover .cht i{opacity:.7;} @media (hover:none){.col-h .cht i{opacity:.6;}}
 .col-h span{background:var(--surface-2);color:var(--ink);border-radius:999px;padding:2px 9px;letter-spacing:0;}
 .card{background:var(--surface);border:1px solid var(--border-mid);border-radius:14px;padding:10px;margin-bottom:10px;cursor:grab;position:relative;}
 .cx{position:absolute;top:6px;right:6px;width:24px;height:24px;border:none;border-radius:50%;background:var(--surface-2);color:var(--ink-3,#888);font-size:15px;line-height:24px;cursor:pointer;padding:0;}
@@ -102,7 +103,17 @@ textarea{resize:vertical;line-height:1.55;}
 <script src="planner-sync.js?v=238"></script>
 <script src="layout.js?v=260"></script>
 <script>
-const COLS=[['talking','🗣 Talking head'],['vacuum','🎬 Demo / voiceover'],['faceless','✨ Aesthetic / faceless'],['car','🚗 Car']];
+const COL_DEFAULT={talking:'🗣 Talking head',vacuum:'🎬 Demo / voiceover',faceless:'✨ Aesthetic / faceless',car:'🚗 Car'};
+const COLS=Object.entries(COL_DEFAULT).map(([k,l])=>[k,l]);
+let COLNAMES={};
+function applyColNames(){ COLS.forEach(c=>{ c[1]=(COLNAMES[c[0]]||'').trim()||COL_DEFAULT[c[0]]; }); }
+// rename a column (saved to your account, stays until you change it; blank = back to default)
+async function renameCol(k){
+  const cur=COLS.find(c=>c[0]===k)[1];
+  const v=prompt('Rename this column (leave blank to reset to "'+COL_DEFAULT[k]+'")',cur); if(v===null) return;
+  COLNAMES={...COLNAMES,[k]:v.trim()}; if(!v.trim()) delete COLNAMES[k];
+  applyColNames(); plannerSet('filmColNames',COLNAMES); render();
+}
 let USER=null, DAY=new Date(), ROWS=[], PRODS=[], ACCTS={}, META={}, STYLEMEM={}, PROMOS=[], VIEW='todo', MOBILECOL='talking', CUR=null, MTAB='script';
 const pad=n=>String(n).padStart(2,'0'), ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -132,9 +143,9 @@ function metaSave(k,patch){
 async function load(){
   document.getElementById('dayLbl').textContent=ymd(DAY)===ymd(new Date())?'Today · '+DAY.toLocaleDateString(undefined,{month:'short',day:'numeric'}):DAY.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
   const day=ymd(DAY);
-  const [{data:rows},board,mem,promoRes]=await Promise.all([
+  const [{data:rows},board,mem,,promoRes]=await Promise.all([
     db.from('queue').select('*').eq('user_id',USER.id).eq('date',day).order('sort_order'),
-    plannerGet('filmBoard',{}), plannerGet('filmStyleMem',{}),
+    plannerGet('filmBoard',{}), plannerGet('filmStyleMem',{}), plannerGet('filmColNames',{}).then(v=>{ COLNAMES=v||{}; applyColNames(); }),
     db.from('promos').select('product,deal,start_date,end_date').eq('user_id',USER.id).lte('start_date',day).gte('end_date',day).then(r=>r,()=>({data:[]}))
   ]);
   PROMOS=promoRes?.data||[];
@@ -151,7 +162,7 @@ function render(){
   document.getElementById('board').innerHTML=COLS.map(([k,l])=>{
     const list=colList(G,k).filter(g=>VIEW==='done'?g.rows.some(r=>r.done):!g.done);
     return `<div class="col${MOBILECOL===k?' show':''}" data-col="${k}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropOn(event,'${k}')">
-      <div class="col-h">${l}<span>${list.length}</span></div>
+      <div class="col-h"><span class="cht" onclick="renameCol('${k}')" title="Rename column">${esc(l)} <i>✎</i></span><span>${list.length}</span></div>
       ${list.length?list.map(card).join(''):`<div class="empty">${VIEW==='done'?'Nothing filmed here yet':'Drag products here'}</div>`}</div>`;
   }).join('');
 }
