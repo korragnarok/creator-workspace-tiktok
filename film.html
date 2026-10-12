@@ -52,6 +52,8 @@ textarea{resize:vertical;line-height:1.55;}
 .empty{color:var(--text-muted);font-size:12.5px;text-align:center;padding:24px 8px;border:1px dashed var(--border-mid);border-radius:12px;}
 .tabs{display:none;gap:6px;margin-bottom:12px;overflow-x:auto;}
 .tab{border:1px solid var(--border-mid);background:transparent;color:var(--text-muted);border-radius:999px;padding:8px 13px;font:800 11px 'Nunito Sans',sans-serif;white-space:nowrap;cursor:pointer;}
+.vtabs{display:flex;gap:6px;margin-bottom:12px;}
+.vtabs .tab{font-size:12px;padding:9px 16px;}
 .tab.on{background:var(--rust);border-color:var(--rust);color:#fff;}
 /* modal */
 .modal{position:fixed;inset:0;z-index:700;background:rgba(10,8,7,.72);display:none;align-items:center;justify-content:center;padding:18px;}
@@ -87,6 +89,7 @@ textarea{resize:vertical;line-height:1.55;}
       <button class="btn primary" onclick="openAdd()">+ Add product</button>
     </div>
   </div>
+  <div class="vtabs" id="vtabs"></div>
   <div class="tabs" id="tabs"></div>
   <div class="board" id="board"></div>
 </div>
@@ -99,7 +102,7 @@ textarea{resize:vertical;line-height:1.55;}
 <script src="layout.js?v=260"></script>
 <script>
 const COLS=[['talking','🗣 Talking head'],['vacuum','🎬 Demo / voiceover'],['faceless','✨ Aesthetic / faceless'],['car','🚗 Car']];
-let USER=null, DAY=new Date(), ROWS=[], PRODS=[], ACCTS={}, META={}, STYLEMEM={}, PROMOS=[], MOBILECOL='talking', CUR=null, MTAB='script';
+let USER=null, DAY=new Date(), ROWS=[], PRODS=[], ACCTS={}, META={}, STYLEMEM={}, PROMOS=[], VIEW='todo', MOBILECOL='talking', CUR=null, MTAB='script';
 const pad=n=>String(n).padStart(2,'0'), ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const CPY=/\[copy:(\w+)\]/;
@@ -141,12 +144,14 @@ function render(){
   const G=groups();
   const takesTotal=ROWS.length, takesDone=ROWS.filter(r=>r.done).length;
   document.getElementById('sum').textContent=G.length?`${G.length} product${G.length===1?'':'s'} · ${takesDone}/${takesTotal} takes filmed`:'Nothing planned yet — add a product, or plan takes from Home.';
-  document.getElementById('tabs').innerHTML=COLS.map(([k,l])=>`<button class="tab${MOBILECOL===k?' on':''}" onclick="setTab('${k}')">${l} (${G.filter(g=>g.style===k).length})</button>`).join('');
+  document.getElementById('tabs').innerHTML=COLS.map(([k,l])=>`<button class="tab${MOBILECOL===k?' on':''}" onclick="setTab('${k}')">${l} (${G.filter(g=>g.style===k&&(VIEW==='done'?g.rows.some(r=>r.done):!g.done)).length})</button>`).join('');
+  const nTodo=G.filter(g=>!g.done).length, nDone=G.filter(g=>g.rows.some(r=>r.done)).length;
+  document.getElementById('vtabs').innerHTML=`<button class="tab${VIEW==='todo'?' on':''}" onclick="setView('todo')">To film (${nTodo})</button><button class="tab${VIEW==='done'?' on':''}" onclick="setView('done')">✓ Filmed (${nDone})</button>`;
   document.getElementById('board').innerHTML=COLS.map(([k,l])=>{
-    const list=colList(G,k);
+    const list=colList(G,k).filter(g=>VIEW==='done'?g.rows.some(r=>r.done):!g.done);
     return `<div class="col${MOBILECOL===k?' show':''}" data-col="${k}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropOn(event,'${k}')">
       <div class="col-h">${l}<span>${list.length}</span></div>
-      ${list.length?list.map(card).join(''):`<div class="empty">Drag products here</div>`}</div>`;
+      ${list.length?list.map(card).join(''):`<div class="empty">${VIEW==='done'?'Nothing filmed here yet':'Drag products here'}</div>`}</div>`;
   }).join('');
 }
 // is this product on a live promo today (from the Promos page)? loose name match
@@ -193,6 +198,7 @@ function nudge(k,dir){
   if(j<0||j>=list.length) return;
   placeCard(k,g.style,dir<0?list[j].key:(list[j+1]?.key||null));
 }
+function setView(v){ VIEW=v; render(); }
 function setTab(k){ MOBILECOL=k; try{ localStorage.setItem('take24:filmTab',k); }catch(e){} render(); }
 function dragStart(e,k){ e.dataTransfer.setData('text/plain',k); e.currentTarget.classList.add('dragging'); }
 function dropOn(e,col){
