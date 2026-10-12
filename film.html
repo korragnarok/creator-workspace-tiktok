@@ -43,7 +43,9 @@ textarea{resize:vertical;line-height:1.55;}
 .takes input{width:auto;accent-color:#2E9E5B;}
 .cbtns{display:flex;gap:6px;flex-wrap:wrap;}
 .cbtns .btn{flex:1;min-width:0;}
-.mv{margin-top:8px;font-size:12px;padding:6px 8px;display:none;}
+.mv-row{display:none;gap:6px;margin-top:8px;align-items:center;}
+.mv{font-size:12px;padding:6px 8px;flex:1;}
+.card.dropbefore{box-shadow:0 -3px 0 var(--rust);}
 .empty{color:var(--text-muted);font-size:12.5px;text-align:center;padding:24px 8px;border:1px dashed var(--border-mid);border-radius:12px;}
 .tabs{display:none;gap:6px;margin-bottom:12px;overflow-x:auto;}
 .tab{border:1px solid var(--border-mid);background:transparent;color:var(--text-muted);border-radius:999px;padding:8px 13px;font:800 11px 'Nunito Sans',sans-serif;white-space:nowrap;cursor:pointer;}
@@ -69,7 +71,7 @@ textarea{resize:vertical;line-height:1.55;}
 @media(max-width:700px){
   body{padding:16px;padding-top:88px;} h1{font-size:32px;}
   .tabs{display:flex;} .board{grid-template-columns:1fr;} .col{display:none;} .col.show{display:block;}
-  .mv{display:block;} .card{cursor:default;}
+  .mv-row{display:flex;} .card{cursor:default;}
 }
 </style>
 </head>
@@ -135,7 +137,7 @@ function render(){
   document.getElementById('sum').textContent=G.length?`${G.length} product${G.length===1?'':'s'} · ${takesDone}/${takesTotal} takes filmed`:'Nothing planned yet — add a product, or plan takes from Home.';
   document.getElementById('tabs').innerHTML=COLS.map(([k,l])=>`<button class="tab${MOBILECOL===k?' on':''}" onclick="setTab('${k}')">${l} (${G.filter(g=>g.style===k).length})</button>`).join('');
   document.getElementById('board').innerHTML=COLS.map(([k,l])=>{
-    const list=G.filter(g=>g.style===k).sort((a,b)=>a.done-b.done);
+    const list=colList(G,k);
     return `<div class="col${MOBILECOL===k?' show':''}" data-col="${k}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropOn(event,'${k}')">
       <div class="col-h">${l}<span>${list.length}</span></div>
       ${list.length?list.map(card).join(''):`<div class="empty">Drag products here</div>`}</div>`;
@@ -147,17 +149,46 @@ function card(g){
   const noScript=g.rows.every(r=>!String(r.script||'').trim());
   const shots=g.meta.shots||[], sDone=shots.filter(s=>s.done).length;
   const acct=ACCTS[g.acct]||'';
-  return `<div class="card${g.done?' done':''}" draggable="true" ondragstart="dragStart(event,'${esc(g.key)}')" ondragend="this.classList.remove('dragging')">
+  return `<div class="card${g.done?' done':''}" data-key="${esc(g.key)}" draggable="true" ondragstart="dragStart(event,'${esc(g.key)}')" ondragend="this.classList.remove('dragging')" ondragover="this.classList.add('dropbefore')" ondragleave="this.classList.remove('dropbefore')">
     <div class="ctop">${img?`<img src="${esc(img)}" alt="">`:'<span class="ph"></span>'}<div style="min-width:0"><div class="cname">${esc(g.name)}</div><div class="cmeta">${esc(g.brand||g.p?.brand||'')}${acct?` · ${esc(acct)}`:''}</div></div></div>
     <div class="badges">${promo?'<span class="bd promo">★ Promo</span>':''}${sample?'<span class="bd sample">Free sample</span>':''}${noScript?'<span class="bd warn">No script yet</span>':''}${g.done?'<span class="bd ok">✓ Filmed</span>':''}${shots.length?`<span class="bd" style="background:var(--surface-2);color:var(--ink)">📷 ${sDone}/${shots.length} shots</span>`:''}</div>
     <div class="takes">${g.rows.map((r,i)=>`<label><input type="checkbox" ${r.done?'checked':''} onchange="toggleTake('${r.id}',this.checked)">Take ${i+1}</label>`).join('')}<button class="btn sm" style="padding:4px 9px" onclick="addTake('${esc(g.key)}')">+</button></div>
     <div class="cbtns"><button class="btn sm" onclick="openItem('${esc(g.key)}','script')">Script</button><button class="btn sm" onclick="openItem('${esc(g.key)}','shots')">Shots</button><button class="btn sm" onclick="openItem('${esc(g.key)}','seo')">SEO &amp; caption</button></div>
-    <select class="mv" onchange="moveTo('${esc(g.key)}',this.value)">${COLS.map(([k,l])=>`<option value="${k}"${g.style===k?' selected':''}>Move to: ${l}</option>`).join('')}</select>
+    <div class="mv-row"><button class="btn sm" onclick="nudge('${esc(g.key)}',-1)" title="Move up">↑</button><button class="btn sm" onclick="nudge('${esc(g.key)}',1)" title="Move down">↓</button>
+    <select class="mv" onchange="placeCard('${esc(g.key)}',this.value,null)">${COLS.map(([k,l])=>`<option value="${k}"${g.style===k?' selected':''}>Move to: ${l}</option>`).join('')}</select></div>
   </div>`;
+}
+function colList(G,k){
+  return G.map((g,i)=>({g,i})).filter(x=>x.g.style===k)
+    .sort((a,b)=>(a.g.done-b.g.done)||((a.g.meta.order??1e6+a.i)-(b.g.meta.order??1e6+b.i))).map(x=>x.g);
+}
+// put `k` into column `col`, right before card `beforeKey` (or at the end), and save the new order
+function placeCard(k,col,beforeKey){
+  const G=groups(); const g=G.find(x=>x.key===k); if(!g) return;
+  if(g.style!==col){ STYLEMEM[g.prod_id||k]=col; plannerSet('filmStyleMem',STYLEMEM); g.style=col; }
+  let list=colList(G.map(x=>x.key===k?{...x,style:col}:x),col).filter(x=>x.key!==k);
+  const at=beforeKey?list.findIndex(x=>x.key===beforeKey):-1;
+  list.splice(at<0?list.length:at,0,g);
+  const all={...META};
+  list.forEach((x,i)=>{ all[x.key]={...(all[x.key]||{}),order:i,...(x.key===k?{style:col}:{})}; });
+  META=all; const day=ymd(DAY); plannerGet('filmBoard',{}).then(b=>{ b=b||{}; b[day]=META; plannerSet('filmBoard',b); });
+  render();
+}
+function nudge(k,dir){
+  const G=groups(); const g=G.find(x=>x.key===k); if(!g) return;
+  const list=colList(G,g.style); const i=list.findIndex(x=>x.key===k), j=i+dir;
+  if(j<0||j>=list.length) return;
+  placeCard(k,g.style,dir<0?list[j].key:(list[j+1]?.key||null));
 }
 function setTab(k){ MOBILECOL=k; try{ localStorage.setItem('take24:filmTab',k); }catch(e){} render(); }
 function dragStart(e,k){ e.dataTransfer.setData('text/plain',k); e.currentTarget.classList.add('dragging'); }
-function dropOn(e,col){ e.preventDefault(); document.querySelectorAll('.col').forEach(c=>c.classList.remove('over')); const k=e.dataTransfer.getData('text/plain'); if(k) moveTo(k,col); }
+function dropOn(e,col){
+  e.preventDefault(); document.querySelectorAll('.col,.card').forEach(c=>c.classList.remove('over','dropbefore'));
+  const k=e.dataTransfer.getData('text/plain'); if(!k) return;
+  const target=e.target.closest('.card'); let before=target?target.dataset.key:null;
+  if(target){ const r=target.getBoundingClientRect(); if(e.clientY>r.top+r.height/2){ const nx=target.nextElementSibling; before=nx&&nx.classList.contains('card')?nx.dataset.key:null; } }
+  if(before===k) return; placeCard(k,col,before);
+}
 function moveTo(k,col){
   const g=groups().find(x=>x.key===k); if(!g) return;
   metaSave(k,{style:col});
@@ -236,7 +267,7 @@ async function addProd(id){
   const acct=p?.tiktok_account_id||(typeof getActiveAccount==='function'?(await getActiveAccount(USER.id))?.tiktok_open_id:null)||null;
   const {data,error}=await db.from('queue').insert({user_id:USER.id,tiktok_account_id:acct,date:ymd(DAY),prod_id:p?.id||null,name,brand:p?.brand||'',notes:'',script:'',done:false,sort_order:ROWS.length+1}).select().single();
   if(error){ alert(error.message); return; }
-  ROWS.push(data); if(col) moveTo(keyOf(data),col); closeM();
+  ROWS.push(data); if(col) placeCard(keyOf(data),col,null); closeM();
 }
 function shiftDay(n){ DAY=new Date(DAY.getFullYear(),DAY.getMonth(),DAY.getDate()+n); load(); }
 function goToday(){ DAY=new Date(); load(); }
