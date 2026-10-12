@@ -159,6 +159,8 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .video-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;}
 .video-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;min-height:100%;}
 .video-card-thumb{position:relative;aspect-ratio:9/13;background:color-mix(in srgb,var(--surface) 70%,var(--bg) 30%);overflow:hidden;}
+.hq-badge{position:absolute;left:8px;bottom:8px;background:#2E9E5B;color:#fff;font:800 10.5px 'Nunito Sans',sans-serif;letter-spacing:.04em;padding:4px 8px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);}
+.hq-dot{position:absolute;right:4px;bottom:2px;background:#2E9E5B;color:#fff;font:800 8.5px 'Nunito Sans',sans-serif;padding:2px 4px;border-radius:5px;}
 .video-card-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .video-card-thumb.placeholder img{object-fit:contain;padding:28px;opacity:0.7;}
 .video-card-date{position:absolute;left:10px;top:10px;border-radius:7px;background:color-mix(in srgb,var(--ink) 72%,transparent);color:var(--bg);font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:4px 8px;}
@@ -355,6 +357,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
       <div class="form-row" style="margin-bottom:0"><label class="form-label">Units Sold</label><input type="number" class="form-input" id="fUnits" placeholder="0" min="0"></div>
       <div class="form-row" style="margin-bottom:0;grid-column:1/-1"><label class="form-label">GMV ($)</label><input type="number" class="form-input" id="fGmv" placeholder="0.00" min="0" step="0.01"></div>
     </div>
+    <label class="form-row" style="margin-top:16px;display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="fHQ" style="width:18px;height:18px;accent-color:#2E9E5B"><span><b style="color:var(--ink)">Got the High Quality mark</b><br><small style="color:var(--text-muted)">Shows a green High Quality badge on the thumbnail</small></span></label>
     <div class="form-row" style="margin-top:16px"><label class="form-label">Notes / What Worked</label><textarea class="form-input form-textarea" id="fNotes" placeholder="What performed well?"></textarea></div>
     <div class="form-row"><label class="form-label">TikTok Link</label><input type="url" class="form-input" id="fLink" placeholder="https://www.tiktok.com/..."></div>
     <div class="form-row"><label class="form-label">Tag to Brand Deals <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);font-family:'IBM Plex Serif',serif;">(optional)</span></label><select class="form-input" id="fCampaign" multiple size="4"></select><div class="form-hint">Select one or more deals. Hold Command/Ctrl on desktop to choose multiples.</div></div>
@@ -879,6 +882,7 @@ function renderGrid(){
       <div class="video-card-thumb${placeholder?' placeholder':''}">
         <img src="${esc(cover)}" alt="" onerror="refreshThumb(this,'${v.id}')">
         <span class="video-card-date">${esc(fmtDate(v.date).replace(/, \d{4}$/,''))}</span>
+        ${v.high_quality?'<span class="hq-badge">✓ High Quality</span>':''}
       </div>
       <div class="video-card-body">
         <div>
@@ -930,7 +934,7 @@ function renderTable(){
     const productBrand=String(v._productBrand||'').trim();
     return `<tr class="${_editVideosMode?'select-mode ':''}${selected?'selected':''}" onclick="handleVideoRowClick('${v.id}')">
       <td class="muted"><span class="tbl-posted"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','date')">${fmtDate(v.date)}</span><span class="editable-cell tbl-time" onclick="beginVideoInlineEdit(event,'${v.id}','posted_time')">${fmtTime(v.posted_time)||'Add time'}</span></span></td>
-      <td class="product-thumb-cell">${productThumbHtml(v)}</td>
+      <td class="product-thumb-cell" style="position:relative">${productThumbHtml(v)}${v.high_quality?'<span class="hq-dot" title="High Quality">HQ</span>':''}</td>
       <td><div class="tbl-product"><span class="video-select" aria-hidden="true"></span><span class="editable-cell product-name-cell" title="Click to change product" onclick="beginProductInlineEdit(event,'${v.id}')">${esc(v.brand||'No product')}</span>${linkedDealTagsHtml(v)}</div>${productBrand?`<div class="tbl-hook">${esc(productBrand)}</div>`:''}</td>
       <td><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','hook')">${esc(hook||'-')}</span></td>
       <td class="num"><span class="editable-cell" onclick="beginVideoInlineEdit(event,'${v.id}','views')">${fmtNum(v.views)}</span></td>
@@ -2321,6 +2325,7 @@ async function openModal(id){
   document.getElementById('fUnits').value=v?.units||'';
   document.getElementById('fGmv').value=v?.gmv||'';
   document.getElementById('fNotes').value=notesWithoutDealIds(v?.notes||'');
+  document.getElementById('fHQ').checked=!!v?.high_quality;
   document.getElementById('fLink').value=v?.link||'';
   await loadCampaignOptions(selectedDealIdsFromVideo(v));
   // Populate account dropdown
@@ -2355,7 +2360,7 @@ async function saveVideo(){
   const notes=notesWithDealIds(document.getElementById('fNotes').value.trim(),campaignIds);
   const selectedAccountId = document.getElementById('fTiktokAccount')?.value || getActiveAccountId() || null;
   if(!selectedAccountId){showToast('Choose a TikTok account for this video.','error');return;}
-  const row={user_id:user.id,title,brand:selectedProduct?.name||productName,date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,ctr:parseFloat(document.getElementById('fCtr').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes,link:document.getElementById('fLink').value.trim(),campaign_id:campaignIds[0]||null,prod_id:selectedProduct?.id||null,tiktok_account_id:selectedAccountId};
+  const row={user_id:user.id,title,brand:selectedProduct?.name||productName,date:document.getElementById('fDate').value||null,posted_time:document.getElementById('fTime').value||null,status:document.getElementById('fStatus').value,views:parseInt(document.getElementById('fViews').value)||0,ctr:parseFloat(document.getElementById('fCtr').value)||0,units:parseInt(document.getElementById('fUnits').value)||0,gmv:parseFloat(document.getElementById('fGmv').value)||0,notes,link:document.getElementById('fLink').value.trim(),campaign_id:campaignIds[0]||null,prod_id:selectedProduct?.id||null,tiktok_account_id:selectedAccountId,high_quality:document.getElementById('fHQ').checked};
   let result=window._editId?await db.from('videos').update(row).eq('id',window._editId):await db.from('videos').insert(row);
   if(result.error&&/(posted_time|prod_id|ctr)/i.test(result.error.message||'')){
     if(/ctr/i.test(result.error.message||'')&&(Number(row.ctr)||0)>0){
