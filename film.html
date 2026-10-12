@@ -24,10 +24,10 @@ input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--bor
 input:focus,textarea:focus,select:focus{border-color:var(--tan);}
 textarea{resize:vertical;line-height:1.55;}
 /* board */
-.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start;}
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:stretch;}
 .col{background:color-mix(in srgb,var(--surface) 55%,var(--bg));border:1px solid var(--border);border-radius:18px;padding:10px;min-height:220px;}
 .col.over{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 8%,var(--surface));}
-.col-h{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);}
+.col-h{position:sticky;top:0;z-index:3;background:inherit;border-radius:12px;display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tan);}
 .col-h span{background:var(--surface-2);color:var(--ink);border-radius:999px;padding:2px 9px;letter-spacing:0;}
 .card{background:var(--surface);border:1px solid var(--border-mid);border-radius:14px;padding:10px;margin-bottom:10px;cursor:grab;}
 .card.done{opacity:.55;} .card.dragging{opacity:.4;}
