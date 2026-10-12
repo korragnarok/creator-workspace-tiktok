@@ -99,7 +99,7 @@ textarea{resize:vertical;line-height:1.55;}
 <script src="layout.js?v=260"></script>
 <script>
 const COLS=[['talking','🗣 Talking head'],['vacuum','🎬 Demo / voiceover'],['faceless','✨ Aesthetic / faceless'],['car','🚗 Car']];
-let USER=null, DAY=new Date(), ROWS=[], PRODS=[], ACCTS={}, META={}, STYLEMEM={}, MOBILECOL='talking', CUR=null, MTAB='script';
+let USER=null, DAY=new Date(), ROWS=[], PRODS=[], ACCTS={}, META={}, STYLEMEM={}, PROMOS=[], MOBILECOL='talking', CUR=null, MTAB='script';
 const pad=n=>String(n).padStart(2,'0'), ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const CPY=/\[copy:(\w+)\]/;
@@ -128,10 +128,12 @@ function metaSave(k,patch){
 async function load(){
   document.getElementById('dayLbl').textContent=ymd(DAY)===ymd(new Date())?'Today · '+DAY.toLocaleDateString(undefined,{month:'short',day:'numeric'}):DAY.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
   const day=ymd(DAY);
-  const [{data:rows},board,mem]=await Promise.all([
+  const [{data:rows},board,mem,promoRes]=await Promise.all([
     db.from('queue').select('*').eq('user_id',USER.id).eq('date',day).order('sort_order'),
-    plannerGet('filmBoard',{}), plannerGet('filmStyleMem',{})
+    plannerGet('filmBoard',{}), plannerGet('filmStyleMem',{}),
+    db.from('promos').select('product,deal,start_date,end_date').eq('user_id',USER.id).lte('start_date',day).gte('end_date',day).then(r=>r,()=>({data:[]}))
   ]);
+  PROMOS=promoRes?.data||[];
   ROWS=rows||[]; META=(board||{})[day]||{}; STYLEMEM=mem||{};
   render();
 }
@@ -147,9 +149,15 @@ function render(){
       ${list.length?list.map(card).join(''):`<div class="empty">Drag products here</div>`}</div>`;
   }).join('');
 }
+// is this product on a live promo today (from the Promos page)? loose name match
+const normP=t=>String(t||'').toLowerCase().replace(/shark|ninja|beauty|home|®|™/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+function promoFor(g){
+  const n=normP(g.name); if(!n) return null;
+  return PROMOS.find(p=>{ const q=normP(p.product); return q&&(n.includes(q)||q.includes(n)); })||null;
+}
 function card(g){
   const img=g.p?.image_url, notes=g.rows.map(r=>r.notes||'').join(' ');
-  const promo=/Promo:/i.test(notes), sample=/FREE_SAMPLE/.test(g.p?.notes||'');
+  const promo=/Promo:/i.test(notes)||!!promoFor(g), sample=/FREE_SAMPLE/.test(g.p?.notes||'');
   const noScript=g.rows.every(r=>!String(r.script||'').trim());
   const shots=g.meta.shots||[], sDone=shots.filter(s=>s.done).length;
   const acct=ACCTS[g.acct]||'';
