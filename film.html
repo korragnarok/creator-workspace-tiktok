@@ -95,7 +95,7 @@ textarea{resize:vertical;line-height:1.55;}
 <script src="planner-sync.js?v=238"></script>
 <script src="layout.js?v=260"></script>
 <script>
-const COLS=[['talking','🗣 Talking head'],['faceless','🙌 Faceless'],['vacuum','🧹 Vacuum / demo'],['car','🚗 Car']];
+const COLS=[['talking','🗣 Talking head'],['vacuum','🎬 Demo / voiceover'],['faceless','✨ Aesthetic / faceless'],['car','🚗 Car']];
 let USER=null, DAY=new Date(), ROWS=[], PRODS=[], ACCTS={}, META={}, STYLEMEM={}, MOBILECOL='talking', CUR=null, MTAB='script';
 const pad=n=>String(n).padStart(2,'0'), ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
