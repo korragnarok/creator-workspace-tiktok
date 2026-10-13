@@ -9,7 +9,7 @@ const ACT_COLS_DEFAULT = { talking: '🗣 Talking head', vacuum: '🎬 Demo / vo
 
 // quick gate so plain questions skip the extra AI call
 function actLooksLikeAction(t) {
-  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality)\b/i.test(t);
+  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|hashtags?|hook|write)\b/i.test(t);
 }
 
 async function actContext() {
@@ -48,7 +48,7 @@ const actProd = (c, name) => actFind(c.prods, name, p => `${p.name} ${p.brand ||
 const ACT_SCHEMA = { type: 'OBJECT', properties: {
   is_action: { type: 'BOOLEAN' },
   actions: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
-    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video'] },
+    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script'] },
     date: { type: 'STRING' }, to_date: { type: 'STRING' },
     source: { type: 'STRING', enum: ['video', 'showcase'] },
     caption: { type: 'STRING' }, product: { type: 'STRING' }, account: { type: 'STRING' },
@@ -56,6 +56,7 @@ const ACT_SCHEMA = { type: 'OBJECT', properties: {
     note: { type: 'STRING' }, count: { type: 'NUMBER' },
     columns: { type: 'ARRAY', items: { type: 'OBJECT', properties: { column: { type: 'STRING', enum: ['talking', 'vacuum', 'faceless', 'car'] }, takes: { type: 'NUMBER' } }, required: ['column', 'takes'] } },
     link: { type: 'STRING' }, high_quality: { type: 'BOOLEAN' }, column: { type: 'STRING' },
+    funnel: { type: 'STRING', enum: ['Top', 'Middle'] }, on_sale: { type: 'BOOLEAN' }, angle: { type: 'STRING' },
     focus: { type: 'ARRAY', items: { type: 'STRING', enum: ['promos', 'outliers', 'video_sales', 'showcase_sales', 'samples', 'not_filmed_lately'] } }, days: { type: 'NUMBER' },
     line: { type: 'STRING' }, deal: { type: 'STRING' }, start_date: { type: 'STRING' }, end_date: { type: 'STRING' }
   }, required: ['type'] } }
@@ -79,6 +80,7 @@ Action types:
 - product_note: product, note.
 - plan_day: she wants the app to PLAN/FILL her filming day for her ("plan my day", "what should I film today, add it", "fill my board for tomorrow"). date, count = how many products if she says (else 0). focus = ONLY if she says what to base it on, in her order: promos, outliers (high-view / viral / outlier videos), video_sales (products that sold from videos), showcase_sales, samples (free samples), not_filmed_lately. "based on what sold from videos recently" → ["video_sales"]. "promos and outliers" → ["promos","outliers"]. "what's been selling" (no source) → ["video_sales","showcase_sales"]. days = lookback if she says ("this week" → 7, "recently" → 0 = default, "this month" → 30).
 - whats_left: she asks what's left / still to film / to do today (date). Not a general strategy question.
+- write_script: she wants a video SCRIPT written (or a caption/hashtags for a product). product, funnel ("Middle" if she says middle of funnel / push the sale / get them to buy, else "Top"), on_sale true only if she says it's on sale/promo, column = the filming style if she says it, angle = any specific idea/angle/hook she mentions, date if she says one.
 - log_video: she POSTED a video ("posted the Glossi car video on @thecozyko, caption '...'"). caption = the caption/description she gives, product, account, date, link if given, high_quality true only if she says HQ/high quality, column = which style it was if she says it.
 One message can have several actions. Never invent numbers she didn't say — leave them 0.
 
@@ -166,7 +168,7 @@ async function actTry(text, waitEl) {
     }
   }
   if (!actLooksLikeAction(text)) return false;
-  const strong = /\b(made|log|logged|sold)\b.*\b(sale|sales|gmv|commission)\b|\b(add|put)\b.*\b(film ?board|board|to-?do)\b|\bplan my\b|\bposted\b/i.test(text);
+  const strong = /\b(made|log|logged|sold)\b.*\b(sale|sales|gmv|commission)\b|\b(add|put)\b.*\b(film ?board|board|to-?do)\b|\bplan my\b|\bposted\b|\bwrite\b.*\bscript\b/i.test(text);
   waitEl.textContent = 'Reading that…';
   let parsed; try { parsed = await actTimeout(actParse(text), 30000, 'Understanding your message'); }
   catch (e) { console.warn('actParse', e); if (!strong) return false; waitEl.classList.remove('wait'); waitEl.innerHTML = `I couldn't set that up just now (${esc(e.message)}). Try sending it again.`; return true; }
@@ -179,7 +181,7 @@ async function actTry(text, waitEl) {
   let html = '';
   for (const a of left) html += await actWhatsLeft(c, dOk(a.date));
   const cards = [];
-  for (let i = 0; i < rest.length; i++) cards.push(rest[i].type === 'plan_day' ? await actPlanDayCard(rest[i], i, c) : actCardHtml(rest[i], i, c));
+  for (let i = 0; i < rest.length; i++) { const t = rest[i].type; if (t === 'write_script') waitEl.textContent = 'Writing your script…'; cards.push(t === 'plan_day' ? await actPlanDayCard(rest[i], i, c) : t === 'write_script' ? await actScriptCard(rest[i], i, c) : actCardHtml(rest[i], i, c)); }
   if (cards.length) html += `<p>Here's what I'll do — check it and tap <b>Save</b>:</p>` + cards.join('');
   waitEl.classList.remove('wait');
   waitEl.innerHTML = html;
@@ -192,7 +194,7 @@ async function actRun(k, btn) {
   const a = ACT.cards[k], c = await actContext(), stat = document.querySelector(`#${k} .astat`);
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    const msg = await ({ plan_day: actPlanDaySave, log_video: actVideo, log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
+    const msg = await ({ write_script: actScriptSave, plan_day: actPlanDaySave, log_video: actVideo, log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
     const el = document.getElementById(k); el.querySelector('.abtns').remove(); el.classList.add('done');
     el.querySelectorAll('input,select,textarea').forEach(x => x.disabled = true);
     stat.innerHTML = '✓ ' + msg;
@@ -401,4 +403,105 @@ async function actVideo(k, a, c) {
     else extra = ' (no unfilmed take for it on that day to check off)';
   }
   return `Added to your Content Tracker on ${esc(c.acctName(acct))}${extra}.`;
+}
+
+// ─── Scripts from Ask ───────────────────────────────────────────────────────────
+async function actGemJSON(prompt, schema, temp = 0.7, ms = 60000) {
+  const res = await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature: temp, responseMimeType: 'application/json', responseSchema: schema } }),
+    signal: AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined });
+  const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(data?.error?.message || `Gemini error (${res.status})`);
+  return JSON.parse((data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join(''));
+}
+function actVoice() {
+  const ban = `- NEVER use: "okay", "honestly", "you guys", or "like" as filler (only for real comparisons). Never open with "Okay", "Ok so", "So," or "Alright".
+- No cringe ad-speak: "game changer", "holy grail", "you NEED this", "run don't walk", "life-changing", all-caps hype.
+- NEVER say a price, dollar amount, or % off. Talk about a deal without numbers.
+- Every line earns its place: specific > generic.`;
+  const real = typeof voicePromptSync === 'function' ? voicePromptSync() : '';
+  return `${real || 'VOICE: warm, natural, confident — a real person talking to a friend, short sentences, contractions, real-life moments.'}\n${ban}\n${typeof TTS_POLICY_SHORT !== 'undefined' ? '- ' + TTS_POLICY_SHORT : ''}${typeof playbookPromptSync === 'function' ? playbookPromptSync() : ''}${typeof voiceEditsPromptSync === 'function' ? voiceEditsPromptSync() : ''}`;
+}
+function actClean(ps) {
+  return (ps || []).map(p => { const t = String(p).replace(/^\s*(okay|ok|alright|all right)\b[\s,.!…-]*(so\b[\s,]*)?/i, '')
+    .replace(/,?\s*\bhonestly\b,?/gi, '').replace(/,?\s*\byou guys\b,?/gi, '').replace(/,\s*like,/gi, ',').replace(/(^|[.!?]\s+)like,\s*/gi, '$1')
+    .replace(/\s+([,.!?])/g, '$1').replace(/\s{2,}/g, ' ').trim(); return t ? t.charAt(0).toUpperCase() + t.slice(1) : p; }).filter(Boolean);
+}
+async function actWriteScript(c, p, a) {
+  const funnel = a.funnel === 'Middle' ? 'Middle' : 'Top';
+  const facts = [`Name: ${p.name}`, p.brand ? `Brand: ${p.brand}` : '', String(p.notes || '').replace(/FREE_SAMPLE/g, '').replace(/TikTok Shop (price|sold count) seen:.*$/gim, '').trim() ? `Her notes: ${String(p.notes).replace(/FREE_SAMPLE/g, '').slice(0, 800)}` : ''].filter(Boolean).join('\n');
+  const style = { talking: 'talking to camera', vacuum: 'demo / voiceover over the product in use', faceless: 'aesthetic / faceless — voiceover over hands, product and B-roll, she is never on camera', car: 'filmed in her car, talking to camera' }[a.column] || 'talking to camera';
+  const fun = funnel === 'Middle'
+    ? `FUNNEL: MIDDLE — the viewer already knows this product. Don't re-explain it or list features (one quick reminder of the main benefit at most). Get them to finally buy: name the hesitation and answer it, what life is like once you have it, real reassurance, a confident-but-soft push. ${a.on_sale ? 'It IS on a promo right now, so the deal can be one reason to buy now (no numbers).' : 'It is NOT on a promo — do NOT mention sales, discounts, deals, coupons or "the price right now". No fake urgency.'} About 20–30 seconds.`
+    : `FUNNEL: TOP — the viewer has never seen this product. Hook with a relatable problem or strong visual moment, then really show and explain it: what it is, how it works, 2–3 specific features tied to a real benefit, what makes it different, a quick real-life use. ${a.on_sale ? 'It is on sale right now — mention it briefly, no numbers.' : ''} About 30–45 seconds.`;
+  const sc = await actGemJSON(`Write a TikTok Shop video script (spoken lines only, 5–8 short paragraphs) for ${p.name}${p.brand ? ' by ' + p.brand : ''}.
+${actVoice()}
+Filming style: ${style}.
+${fun}
+${a.angle ? `Her idea / angle for this one: ${a.angle}` : 'Pick the most convincing everyday angle yourself.'}
+PRODUCT FACTS (use these; don't invent features, specs or claims that aren't here; never quote prices):
+${facts}
+End with a soft, casual close like "I tagged it below" — never "click the link" or "tap the orange cart".
+Also write: a short title (3–6 words), and a ready-to-post caption in her voice (1–3 short sentences, under 150 characters) plus exactly 5 hashtags, most relevant first.`,
+    { type: 'OBJECT', properties: { title: { type: 'STRING' }, paragraphs: { type: 'ARRAY', items: { type: 'STRING' } }, caption: { type: 'STRING' }, hashtags: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['title', 'paragraphs', 'caption', 'hashtags'] });
+  let pol = null;
+  try {
+    pol = await actGemJSON(`Check this TikTok Shop affiliate script and caption against TikTok Shop content policy and her hard rules.${typeof playbookRulesSync === 'function' ? playbookRulesSync() : ''}
+${typeof TTS_POLICY !== 'undefined' ? TTS_POLICY : ''}
+Also: NO prices, dollar amounts or % of any kind; no "free"; no directing people off TikTok; no medical/cure claims; no "best/#1/guaranteed". If it's fine return passed=true, issues=[] and everything unchanged. If not, return passed=false, list each issue in plain words, and return FIXED versions with the smallest possible changes, same voice.
+SCRIPT:
+${sc.paragraphs.join('\n\n')}
+CAPTION: ${sc.caption}`, { type: 'OBJECT', properties: { passed: { type: 'BOOLEAN' }, issues: { type: 'ARRAY', items: { type: 'STRING' } }, paragraphs: { type: 'ARRAY', items: { type: 'STRING' } }, caption: { type: 'STRING' } }, required: ['passed', 'issues', 'paragraphs', 'caption'] }, 0.2, 45000);
+  } catch (e) { console.warn('policy check', e); }
+  const paragraphs = actClean(pol?.paragraphs?.length ? pol.paragraphs : sc.paragraphs);
+  const tags = (sc.hashtags || []).slice(0, 5).map(h => '#' + String(h).replace(/^#/, '').replace(/\s+/g, ''));
+  return { title: sc.title || p.name, paragraphs, caption: `${(pol?.caption || sc.caption || '').trim()}\n\n${tags.join(' ')}`.trim(), passed: pol ? pol.passed : null, issues: pol?.issues || [], funnel };
+}
+async function actScriptCard(a, i, c) {
+  const p = actProd(c, a.product || '')[0];
+  const k = `a${Date.now().toString(36)}${i}`;
+  if (!p) return `<div class="acard done" id="${k}"><div class="atitle">✍️ Script</div><div class="astat">I couldn't find "${esc(a.product || '')}" in your Products. Check the name and ask again.</div></div>`;
+  let sc; try { sc = await actTimeout(actWriteScript(c, p, a), 110000, 'Writing the script'); }
+  catch (e) { return `<div class="acard done" id="${k}"><div class="atitle">✍️ Script for ${esc(p.name)}</div><div class="astat">Couldn't write it: ${esc(e.message)}. Try again.</div></div>`; }
+  const date = dOk(a.date);
+  const [{ data: q }, mem] = await Promise.all([db.from('queue').select('id').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).limit(1), plannerGet('filmStyleMem', {}).catch(() => ({}))]);
+  ACT.cards[k] = { ...a, type: 'write_script', pid: p.id, sc };
+  const col = a.column || (mem || {})[p.id] || ACT_GUESS(p.name, p.brand || '');
+  const pol = sc.passed === true ? '<span class="apol ok">✓ Policy check passed</span>' : sc.passed === false ? '<span class="apol fix">Policy fixes applied</span>' : '';
+  return `<div class="acard" id="${k}"><div class="atitle">✍️ ${esc(sc.title)} <small style="font-weight:600;color:var(--text-muted)">· ${esc(p.name)} · ${sc.funnel} of funnel</small> ${pol}</div>
+    ${sc.passed === false && sc.issues.length ? `<div class="awarn" style="margin-bottom:8px">Fixed: ${sc.issues.map(esc).join(' · ')}</div>` : ''}
+    <div class="arow"><label>Script — edit any line; your changes teach it your voice</label><textarea id="${k}_s" rows="${Math.min(16, sc.paragraphs.length * 2 + 2)}">${esc(sc.paragraphs.join('\n\n'))}</textarea></div>
+    <div class="arow"><label>Caption + hashtags</label><textarea id="${k}_cap" rows="3">${esc(sc.caption)}</textarea></div>
+    <div class="arow3" style="grid-template-columns:1fr 1fr"><div class="arow"><label>Film Board day</label><input type="date" id="${k}_d" value="${date}"></div><div class="arow"><label>Column ${q?.length ? '(already on the board)' : ''}</label>${actSel(k + '_col', Object.entries(c.cols), col)}</div></div>
+    <label class="achk"><input type="checkbox" id="${k}_fb" checked> Put it on my Film Board ${q?.length ? '(fills the next take with no script)' : '(adds the product with 1 take)'}</label>
+    <label class="achk"><input type="checkbox" id="${k}_v"> Also save to Script Vault</label>
+    <div class="abtns"><button class="abtn primary" onclick="actRun('${k}',this)">Save</button><button class="abtn" onclick="navigator.clipboard.writeText(document.getElementById('${k}_s').value);this.textContent='✓ Copied'">Copy script</button><button class="abtn" onclick="actSkip('${k}')">Skip</button></div><div class="astat"></div></div>`;
+}
+async function actScriptSave(k, a, c) {
+  const p = c.prods.find(x => x.id === a.pid), date = v$(k, '_d'), script = v$(k, '_s').trim(), caption = v$(k, '_cap').trim();
+  if (!script) throw new Error('the script is empty');
+  const done = [];
+  // learn from her edits (paragraph by paragraph)
+  const mine = script.split(/\n\s*\n/).map(x => x.trim()).filter(Boolean);
+  if (typeof addVoiceEdits === 'function' && mine.length === a.sc.paragraphs.length) {
+    const pairs = mine.map((m, j) => ({ ai: a.sc.paragraphs[j], mine: m, product: p.name, funnel: a.sc.funnel })).filter(x => x.ai.trim() !== x.mine);
+    if (pairs.length) { try { await addVoiceEdits(pairs); done.push(`learned ${pairs.length} rewritten line${pairs.length === 1 ? '' : 's'}`); } catch (e) {} }
+  }
+  if (document.getElementById(k + '_fb')?.checked) {
+    let { data: rows } = await db.from('queue').select('id,notes,script').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).order('sort_order');
+    const board = (await plannerGet('filmBoard', {})) || {};
+    if (!rows?.length) { await actAddToBoard(c, date, p, [{ col: v$(k, '_col'), n: 1 }], board); ({ data: rows } = await db.from('queue').select('id,notes,script').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).order('sort_order')); }
+    const target = (rows || []).find(r => !String(r.script || '').trim()) || (rows || [])[0];
+    if (!target) throw new Error('could not find a take to attach it to');
+    const { error } = await db.from('queue').update({ script }).eq('id', target.id).eq('user_id', c.uid); if (error) throw error;
+    const tag = (String(target.notes || '').match(/\[copy:(\w+)\]/) || [])[1], key = String(p.id) + (tag ? '#' + tag : '');
+    board[date] = { ...(board[date] || {}) }; board[date][key] = { ...(board[date][key] || {}), caption, style: board[date][key]?.style || v$(k, '_col') };
+    await plannerSet('filmBoard', board);
+    done.push(`on your Film Board for ${esc(prettyD(date))} with the caption`);
+  }
+  if (document.getElementById(k + '_v')?.checked) {
+    const { error } = await db.from('scripts').insert({ user_id: c.uid, title: a.sc.title, brand: p.name, cat: 'review', script, notes: caption ? `Caption:\n${caption}` : '' });
+    if (error) throw error; done.push('saved to Script Vault');
+  }
+  if (!done.length) throw new Error('tick at least one place to save it');
+  return `Script for <b>${esc(p.name)}</b>: ${done.join(' · ')}.`;
 }

@@ -38,6 +38,7 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 .abtn.primary{background:var(--rust);border-color:var(--rust);color:#fff;} .abtn:disabled{opacity:.6;cursor:wait;} .astat{font-size:12.5px;color:var(--text-mid,var(--text));margin-top:6px;}
 .achk{display:flex;align-items:center;gap:8px;font-size:13px;margin:6px 0;cursor:pointer;} .achk input{width:auto;}
 .aplan{border-top:1px solid var(--border-mid);padding:8px 0;} .awhy{font-size:12px;color:var(--text-muted);margin:2px 0 6px 24px;} .aplanrow{display:flex;gap:8px;align-items:center;margin-left:24px;font-size:12.5px;} .aplanrow select,.aplanrow input{background:var(--surface);border:1px solid var(--border-mid);border-radius:10px;padding:7px 9px;color:var(--ink);font:13px 'Nunito Sans',sans-serif;}
+.apol{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;} .apol.ok{background:#2e7d4f22;color:#4caf7a;} .apol.fix{background:#c8792022;color:#d9a441;}
 .foot{font-size:11px;color:var(--text-muted);text-align:center;}
 @media(max-width:768px){body{padding:16px;padding-top:88px;} h1{font-size:32px;} .msg{max-width:96%;}}
 </style>
@@ -59,9 +60,11 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 <script src="planner-sync.js?v=238"></script>
 <script src="layout.js?v=260"></script>
 <script src="promos-sync.js?v=319"></script>
+<script src="playbook.js?v=314"></script>
+<script src="policy.js?v=297"></script>
 <script>
 const WORKER='https://take24-scout.kortnycall5.workers.dev';
-const SUGGEST=["Plan my day","What's left today?","I made a sale from my showcase on the FlexStyle — $X GMV, $X commission","Add 2 talking head and 3 car videos for the Glossi today","Why were my sales up or down this week?","Which products make me the most per video?","Which products have I stopped posting?","What do my best videos have in common?","What should I film tomorrow?","How can I do better?","What's my best day to post?","What's trending in my category right now?"];
+const SUGGEST=["Plan my day","What's left today?","Write a middle of funnel script for the FlexStyle","I made a sale from my showcase on the FlexStyle — $X GMV, $X commission","Add 2 talking head and 3 car videos for the Glossi today","Why were my sales up or down this week?","Which products make me the most per video?","Which products have I stopped posting?","What do my best videos have in common?","What should I film tomorrow?","How can I do better?","What's my best day to post?","What's trending in my category right now?"];
 const CHAT=[]; let DATA=null, DATA_AT=0;
 const pad=n=>String(n).padStart(2,'0'), ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
@@ -157,7 +160,6 @@ async function send(){
 - For "how can I do better" style questions, look at: posting consistency (days with/without posts vs. sales), which products and videos got the most views, which days had the best sales and what was posted around them, account-by-account trends, promos coming up, and unfilmed samples. Give 3–5 specific, doable moves.
 - Only if a question truly can't be answered from the data, say so in one short line.
 - Public search results are VIEWS, not sales — say so if you use them.
-- Don't write video scripts; if asked, say the script writer is in Video Feedback → Write a script.
 - Don't open with "Okay" or "Great question".
 - Never say you can't log sales, add notes, or change her Film Board — the app can. If she asked for that and you're seeing this, tell her to rephrase it like "log a sale on my '…' video, $X GMV, $X commission".
 
@@ -172,6 +174,6 @@ ${data}${extra}`;
 }
 (function(){ const v=new URLSearchParams(location.search).get('q'); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
 </script>
-<script src="ask-actions.js?v=325"></script>
+<script src="ask-actions.js?v=326"></script>
 </body>
 </html>
