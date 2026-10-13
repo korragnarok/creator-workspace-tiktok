@@ -383,6 +383,14 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .b-quote .qs{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;opacity:.85;margin-top:4px;}
 .b-quote button{position:absolute;right:12px;bottom:10px;background:none;border:none;color:#fff;opacity:.6;cursor:pointer;font-size:15px;}
 /* folders = navigation */
+.hexgrid{--hw:62px;--hh:calc(var(--hw)*1.1547);--hg:5px;display:flex;flex-direction:column;align-items:center;padding:4px 0 2px;}
+.hexrow{display:flex;gap:var(--hg);justify-content:center;}
+.hexrow+.hexrow{margin-top:calc(var(--hh)*-0.25 + var(--hg)*0.87);}
+.hex{width:var(--hw);height:var(--hh);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:var(--hb);color:var(--hf);display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;padding:0 7px;transition:transform .18s ease,filter .18s ease;}
+.hex span{font:800 9.5px/1.15 'Nunito Sans',sans-serif;letter-spacing:.01em;}
+.hex:hover{transform:scale(1.08);filter:brightness(1.08);position:relative;z-index:2;}
+.hex:active{transform:scale(.97);}
+@media(max-width:1180px) and (min-width:769px){.hexgrid{--hw:70px;}}
 .b-folders .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 4px;}
 .b-folder{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--text-mid);font-family:'Stack Sans Notch',sans-serif;font-size:10.5px;font-weight:700;text-align:center;line-height:1.2;}
 .b-folder:hover{color:var(--ink);}
@@ -1173,9 +1181,14 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   // Ombre: each folder a shade lighter than the one before (deep rust → soft tan)
   const shade = i => { const t = FOLDERS.length > 1 ? i / (FOLDERS.length - 1) : 0, a = [110,63,40], b = [222,196,170];
     return `rgb(${a.map((c,k) => Math.round(c + (b[k]-c) * t)).join(',')})`; };
-  document.getElementById('bFolders').innerHTML = FOLDERS.map(([href, label], i) =>
-    `<a class="b-folder" href="${href}"${/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : ''} style="--f:${shade(i)}">
-       <img class="ic" src="icons/folder-${FOLDERS[i][2]}.png" alt="" onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src='icons/folder-12.png';}else{this.outerHTML='<span class=&quot;ic fallback&quot;></span>';}">${label}</a>`).join('');
+  // Honeycomb: tall hexagons in rows of 3 and 2, light → dark brown ombre
+  const hexShade = i => { const t = FOLDERS.length > 1 ? i / (FOLDERS.length - 1) : 0, a = [226,201,176], b = [92,52,34];
+    const c = a.map((v,k) => Math.round(v + (b[k]-v) * t)); return { bg: `rgb(${c.join(',')})`, fg: (c[0]*.299 + c[1]*.587 + c[2]*.114) > 150 ? '#3b2418' : '#fbefe3' }; };
+  const hex = (f, i) => { const [href, label] = f, s = hexShade(i);
+    return `<a class="hex" href="${href}"${/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : ''} style="--hb:${s.bg};--hf:${s.fg}" title="${label}"><span>${label.replace('Shark & Ninja','Shark &amp; Ninja')}</span></a>`; };
+  const rows = []; for (let k = 0, big = false; k < FOLDERS.length; big = !big) { const n = big ? 3 : 2; rows.push(FOLDERS.slice(k, k + n).map((f, j) => hex(f, k + j))); k += n; }
+  const bf = document.getElementById('bFolders'); bf.className = 'hexgrid';
+  bf.innerHTML = rows.map(r => `<div class="hexrow">${r.join('')}</div>`).join('');
 
 
   // Today's date on the filming card
