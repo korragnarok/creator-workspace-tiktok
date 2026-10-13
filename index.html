@@ -994,7 +994,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                 </div>
               </div>
               <div class="card meta-spare"><div class="b-title">Ask Take24</div><div class="spare-sub">Ask anything about your sales, videos and products.</div>
-                <form onsubmit="event.preventDefault();const v=this.q.value.trim();location.href='ask.html'+(v?'?q='+encodeURIComponent(v):'');" style="display:flex;gap:6px;margin-top:10px">
+                <form onsubmit="event.preventDefault();const v=this.q.value.trim();(window.T24Shell?T24Shell.open:(u=>location.href=u))('ask.html'+(v?'?q='+encodeURIComponent(v):''));" style="display:flex;gap:6px;margin-top:10px">
                   <input name="q" placeholder="e.g. What should I film tomorrow?" style="flex:1;min-width:0;background:var(--bg);border:1px solid var(--border-mid);border-radius:10px;padding:9px 11px;color:var(--ink);font:13px 'Nunito Sans',sans-serif;outline:none">
                   <button style="border:0;border-radius:10px;background:var(--rust);color:#fff;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:0 14px;cursor:pointer">Ask</button>
                 </form>
@@ -1119,9 +1119,10 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 <script src="planner-sync.js?v=238"></script>
 <script src="playbook.js?v=314"></script>
 <script src="policy.js?v=297"></script>
-<script src="layout.js?v=260"></script>
+<script src="layout.js?v=342"></script>
 <script src="celebrate.js?v=338"></script>
 <script src="insights.js?v=339"></script>
+<script src="shell.js?v=342"></script>
 <script src="morning-brief.js?v=283"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
@@ -2933,7 +2934,7 @@ async function renderLineup(userId) {
       || 'icons/default-product.png';
     const done = q.done;
     const brandParam = q.brand ? `?brand=${encodeURIComponent(q.brand)}` : '';
-    return `<div class="lineup-card${done?' done':''}" onclick="window.location='daily-todo.html${brandParam}'" title="${esc(q.name)}">
+    return `<div class="lineup-card${done?' done':''}" onclick="(window.T24Shell?T24Shell.open:(u=>location.href=u))('daily-todo.html${brandParam}')" title="${esc(q.name)}">
       <img class="lineup-img" src="${img}" alt="" onerror="this.src='icons/default-product.png'">
       <div class="lineup-name">${esc(q.name)}</div>
       ${q.brand ? `<div class="lineup-brand">${esc(q.brand)}</div>` : ''}

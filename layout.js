@@ -1,3 +1,17 @@
+// ── Inside Home's middle panel: hide this page's own sidebar / phone nav ──
+(function () {
+  let inShell = false; try { inShell = window.self !== window.top && !!window.parent.T24Shell; } catch (e) {}
+  if (!inShell) return;
+  document.documentElement.classList.add('embedded');
+  const st = document.createElement('style');
+  st.textContent = `html.embedded .desktop-sidebar,html.embedded .sidebar.desktop-sidebar,html.embedded .tab-bar,html.embedded .m-top,html.embedded .mobile-more-sheet,html.embedded .mobile-more-backdrop{display:none!important;}
+    html.embedded body,html.embedded body:not(.has-app-shell){padding-left:20px!important;padding-right:20px!important;padding-top:16px!important;padding-bottom:20px!important;}
+    html.embedded .app-shell{grid-template-columns:minmax(0,1fr)!important;}`;
+  document.head.appendChild(st);
+  // links back to Home close the panel instead of loading Home inside it
+  document.addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a || a.target === '_blank') return;
+    const h = a.getAttribute('href') || ''; if (/^(\.\/)?(index\.html)?(\?.*)?$/i.test(h) && !/^#/.test(h)) { e.preventDefault(); try { window.parent.T24Shell.home(); } catch (_) { location.href = h; } } }, true);
+})();
 (function () {
   const NAV_ITEMS = [
     { href: 'index.html', label: 'Home', icon: 'home', aliases: [''] },
