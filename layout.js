@@ -12,6 +12,8 @@
   document.addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a || a.target === '_blank') return;
     const h = a.getAttribute('href') || ''; if (/^(\.\/)?(index\.html)?(\?.*)?$/i.test(h) && !/^#/.test(h)) { e.preventDefault(); try { window.parent.T24Shell.home(); } catch (_) { location.href = h; } } }, true);
 })();
+// motion + texture layer on every page
+(function () { if (document.querySelector('link[href^="alive.css"]')) return; const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'alive.css?v=346'; document.head.appendChild(l); })();
 (function () {
   const NAV_ITEMS = [
     { href: 'index.html', label: 'Home', icon: 'home', aliases: [''] },
