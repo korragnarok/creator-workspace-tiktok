@@ -54,7 +54,7 @@ const ACT_SCHEMA = { type: 'OBJECT', properties: {
     units: { type: 'NUMBER' }, gmv: { type: 'NUMBER' }, comm: { type: 'NUMBER' },
     note: { type: 'STRING' }, count: { type: 'NUMBER' },
     columns: { type: 'ARRAY', items: { type: 'OBJECT', properties: { column: { type: 'STRING', enum: ['talking', 'vacuum', 'faceless', 'car'] }, takes: { type: 'NUMBER' } }, required: ['column', 'takes'] } },
-    link: { type: 'STRING' }, high_quality: { type: 'BOOLEAN' }, column: { type: 'STRING', enum: ['', 'talking', 'vacuum', 'faceless', 'car'] },
+    link: { type: 'STRING' }, high_quality: { type: 'BOOLEAN' }, column: { type: 'STRING' },
     line: { type: 'STRING' }, deal: { type: 'STRING' }, start_date: { type: 'STRING' }, end_date: { type: 'STRING' }
   }, required: ['type'] } }
 }, required: ['is_action', 'actions'] };
@@ -164,7 +164,9 @@ async function actTry(text, waitEl) {
     }
   }
   if (!actLooksLikeAction(text)) return false;
-  let parsed; try { parsed = await actParse(text); } catch (e) { return false; }
+  const strong = /\b(made|log|logged|sold)\b.*\b(sale|sales|gmv|commission)\b|\b(add|put)\b.*\b(film ?board|board|to-?do)\b|\bplan my\b|\bposted\b/i.test(text);
+  let parsed; try { parsed = await actParse(text); }
+  catch (e) { console.warn('actParse', e); if (!strong) return false; waitEl.classList.remove('wait'); waitEl.innerHTML = `I couldn't set that up just now (${esc(e.message)}). Try sending it again.`; return true; }
   const acts = (parsed.actions || []).filter(a => a && a.type);
   if (!parsed.is_action || !acts.length) return false;
   const c = await actContext();

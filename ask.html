@@ -159,6 +159,7 @@ async function send(){
 - Public search results are VIEWS, not sales — say so if you use them.
 - Don't write video scripts; if asked, say the script writer is in Video Feedback → Write a script.
 - Don't open with "Okay" or "Great question".
+- Never say you can't log sales, add notes, or change her Film Board — the app can. If she asked for that and you're seeing this, tell her to rephrase it like "log a sale on my '…' video, $X GMV, $X commission".
 
 === HER DATA ===
 ${data}${extra}`;
@@ -171,6 +172,6 @@ ${data}${extra}`;
 }
 (function(){ const v=new URLSearchParams(location.search).get('q'); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
 </script>
-<script src="ask-actions.js?v=320"></script>
+<script src="ask-actions.js?v=321"></script>
 </body>
 </html>
