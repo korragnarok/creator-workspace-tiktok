@@ -140,6 +140,15 @@ const THEMES = {
       '--shadow-md':   '0 4px 20px rgba(1,51,40,0.12)',
     }
   },
+  notebook: {
+    label: 'Notebook',
+    swatch: ['#f3ead9','#c9a47c','#2b211b'],
+    vars: { '--bg':'#f3ead9','--bg-lift':'#f8f1e4','--surface':'#f8f1e4','--surface-2':'#e8dcc7',
+      '--border':'rgba(43,33,27,0.28)','--border-mid':'rgba(43,33,27,0.45)',
+      '--text':'#2b211b','--text-mid':'#4a3a2f','--text-muted':'#6e5a4a','--ink':'#2b211b',
+      '--sage':'#8a6a4f','--rose':'#b98f66','--rust':'#8a6446','--tan':'#8a6a4f','--sand':'#e8dcc7',
+      '--shadow-sm':'2px 3px 0 rgba(43,33,27,0.15)','--shadow-md':'3px 5px 0 rgba(43,33,27,0.18)' }
+  },
   // Rust · tan · charcoal · black — matches the Meta side
   espresso: {
     label: 'Espresso',

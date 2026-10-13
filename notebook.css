@@ -1,0 +1,102 @@
+/* ─── Notebook theme: hand-drawn sketchbook look. Only active when <html data-theme="notebook"> ─── */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Patrick+Hand&display=swap');
+
+html[data-theme="notebook"]{
+  --nb-paper:#f3ead9; --nb-paper-2:#f8f1e4; --nb-line:rgba(120,140,160,.22); --nb-margin:rgba(196,92,80,.28);
+  --nb-ink:#2b211b; --nb-ink-soft:#4a3a2f; --nb-kraft:#c9a47c; --nb-kraft-2:#b98f66; --nb-kraft-dark:#8a6446;
+  --nb-tape:rgba(214,186,140,.78); --nb-sketch:255px 12px 225px 14px/14px 225px 12px 255px;
+  --nb-hand:'Patrick Hand','Comic Neue',cursive; --nb-title:'Caveat','Patrick Hand',cursive;
+}
+
+/* paper, ruled lines, spiral binding */
+html[data-theme="notebook"] body{
+  background:
+    linear-gradient(90deg,transparent 0 62px,var(--nb-margin) 62px 63.5px,transparent 63.5px),
+    repeating-linear-gradient(180deg,transparent 0 27px,var(--nb-line) 27px 28px),
+    radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.55),transparent 60%),
+    var(--nb-paper)!important;
+  color:var(--nb-ink)!important;font-family:var(--nb-hand)!important;}
+html[data-theme="notebook"] body::before{content:"";position:fixed;left:0;top:0;bottom:0;width:30px;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(circle at 18px 50%,#2b211b 0 2.6px,transparent 3.2px) 0 0/30px 26px repeat-y,
+    radial-gradient(ellipse at 9px 50%,transparent 0 6px,#6f6f74 6.5px 8px,#3d3d42 8.5px 9.4px,transparent 10px) 0 0/30px 26px repeat-y;}
+html.embedded[data-theme="notebook"] body::before{display:none;}
+html[data-theme="notebook"] body,html[data-theme="notebook"] button,html[data-theme="notebook"] input,html[data-theme="notebook"] select,html[data-theme="notebook"] textarea,
+html[data-theme="notebook"] .b-folder,html[data-theme="notebook"] .card,html[data-theme="notebook"] [class*="label"],html[data-theme="notebook"] [class*="sub"]{font-family:var(--nb-hand)!important;}
+
+/* headings in marker handwriting */
+html[data-theme="notebook"] h1,html[data-theme="notebook"] h2,html[data-theme="notebook"] h3,html[data-theme="notebook"] .b-title,html[data-theme="notebook"] .card-title,
+html[data-theme="notebook"] .welcome,html[data-theme="notebook"] .core-sidebar-head,html[data-theme="notebook"] .col-h .cht,html[data-theme="notebook"] .swh,html[data-theme="notebook"] .atitle,
+html[data-theme="notebook"] .ins-head h2,html[data-theme="notebook"] .recap-hero .big,html[data-theme="notebook"] .shell-title{
+  font-family:var(--nb-title)!important;font-weight:700!important;color:var(--nb-ink)!important;letter-spacing:.2px!important;
+  -webkit-text-fill-color:var(--nb-ink)!important;background:none!important;animation:none!important;}
+html[data-theme="notebook"] .b-title,html[data-theme="notebook"] .card-title{font-size:30px!important;line-height:1.05!important;}
+html[data-theme="notebook"] h1{font-size:46px!important;}
+/* little doodles after section titles */
+html[data-theme="notebook"] .card-title::after,html[data-theme="notebook"] .b-title::after{content:" ♡";font-family:var(--nb-title);font-size:.8em;opacity:.8;}
+html[data-theme="notebook"] .card:nth-of-type(3n) .card-title::after{content:" ☆";}
+html[data-theme="notebook"] .col-h .cht{font-size:22px!important;text-transform:none!important;letter-spacing:0!important;}
+
+/* sketchy hand-drawn boxes */
+html[data-theme="notebook"] .card,html[data-theme="notebook"] .b-card,html[data-theme="notebook"] .stat-card,html[data-theme="notebook"] .level-feature,
+html[data-theme="notebook"] .col,html[data-theme="notebook"] .wday,html[data-theme="notebook"] .acard,html[data-theme="notebook"] .msg.ai,html[data-theme="notebook"] .mcard,
+html[data-theme="notebook"] .ins-card,html[data-theme="notebook"] .ins-t,html[data-theme="notebook"] .tc-card,html[data-theme="notebook"] .shell-wrap,html[data-theme="notebook"] .swc,html[data-theme="notebook"] .sec{
+  background:linear-gradient(rgba(255,255,255,.25),rgba(255,255,255,.25)),var(--nb-paper-2)!important;
+  border:1.8px solid var(--nb-ink)!important;border-radius:var(--nb-sketch)!important;
+  box-shadow:2px 3px 0 rgba(43,33,27,.18),inset 0 0 0 1px rgba(43,33,27,.05)!important;color:var(--nb-ink)!important;}
+html[data-theme="notebook"] .card:nth-child(even),html[data-theme="notebook"] .col:nth-child(even){border-radius:12px 225px 14px 255px/225px 14px 255px 12px!important;}
+html[data-theme="notebook"] .card:hover,html[data-theme="notebook"] .b-card:hover{box-shadow:3px 5px 0 rgba(43,33,27,.22)!important;}
+
+/* kraft paper pieces: calendar + folder card */
+html[data-theme="notebook"] .b-cal,html[data-theme="notebook"] .b-folders{
+  background:
+    radial-gradient(circle at 20% 30%,rgba(255,255,255,.18),transparent 40%),
+    radial-gradient(circle at 80% 70%,rgba(0,0,0,.07),transparent 45%),
+    var(--nb-kraft)!important;border:1.8px solid var(--nb-ink)!important;transform:rotate(-.6deg);}
+html[data-theme="notebook"] .b-folders{transform:rotate(.5deg);}
+html[data-theme="notebook"] .b-cal *{color:var(--nb-ink)!important;}
+html[data-theme="notebook"] .b-cal .today,html[data-theme="notebook"] .b-cal [class*="has"]{background:var(--nb-ink)!important;color:var(--nb-paper)!important;}
+
+/* honeycomb as cut-out kraft hexagons with a pen outline */
+html[data-theme="notebook"] .hex{background:var(--nb-ink)!important;color:var(--nb-ink)!important;position:relative;isolation:isolate;}
+html[data-theme="notebook"] .hex::before{content:"";position:absolute;inset:2px;z-index:-1;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+  background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.35),transparent 55%),#efe2cc;}
+html[data-theme="notebook"] .hexrow:nth-child(even) .hex:nth-child(2)::before,html[data-theme="notebook"] .hexrow:last-child .hex:last-child::before{background:var(--nb-kraft-2);}
+html[data-theme="notebook"] .hex span{font:400 13px/1.05 var(--nb-title)!important;font-weight:700!important;text-shadow:none!important;}
+
+/* tape on photos */
+html[data-theme="notebook"] .tops-tile,html[data-theme="notebook"] .lineup-card,html[data-theme="notebook"] .tc-prod,html[data-theme="notebook"] .card .ctop{position:relative;}
+html[data-theme="notebook"] .tops-tile::before,html[data-theme="notebook"] .lineup-card::before,html[data-theme="notebook"] .tc-prod::before{content:"";position:absolute;top:-7px;left:50%;width:38px;height:14px;z-index:3;
+  background:var(--nb-tape);transform:translateX(-50%) rotate(-4deg);box-shadow:0 1px 1px rgba(0,0,0,.12);pointer-events:none;
+  -webkit-mask:linear-gradient(90deg,transparent 0 2px,#000 2px calc(100% - 2px),transparent calc(100% - 2px));}
+html[data-theme="notebook"] .tops-tile:nth-child(even)::before,html[data-theme="notebook"] .lineup-card:nth-child(even)::before{transform:translateX(-50%) rotate(5deg);}
+html[data-theme="notebook"] .tops-tile img,html[data-theme="notebook"] .lineup-card img,html[data-theme="notebook"] .tc-prod img,html[data-theme="notebook"] .ctop img{border:1.5px solid var(--nb-ink)!important;border-radius:6px!important;}
+
+/* text colors */
+html[data-theme="notebook"] [style*="color:var(--text-muted)"],html[data-theme="notebook"] .sub,html[data-theme="notebook"] .cmeta{color:var(--nb-ink-soft)!important;}
+
+/* buttons: kraft paper with pen outline, no shine */
+html[data-theme="notebook"] .btn,html[data-theme="notebook"] button.btn,html[data-theme="notebook"] .abtn,html[data-theme="notebook"] .tab,html[data-theme="notebook"] .chip,
+html[data-theme="notebook"] .copy,html[data-theme="notebook"] .tbl-action,html[data-theme="notebook"] .shell-bar button,html[data-theme="notebook"] .vmode button,html[data-theme="notebook"] .qa button,
+html[data-theme="notebook"] .acct-tab,html[data-theme="notebook"] .takes label,html[data-theme="notebook"] .seg button,html[data-theme="notebook"] .swtabs button,html[data-theme="notebook"] .ins-btns a,html[data-theme="notebook"] .ins-btns button{
+  background:var(--nb-paper-2)!important;color:var(--nb-ink)!important;border:1.6px solid var(--nb-ink)!important;border-radius:var(--nb-sketch)!important;
+  box-shadow:1.5px 2px 0 rgba(43,33,27,.2)!important;font-family:var(--nb-hand)!important;text-transform:none!important;letter-spacing:.2px!important;}
+html[data-theme="notebook"] .btn.primary,html[data-theme="notebook"] .btn-primary,html[data-theme="notebook"] .abtn.primary,html[data-theme="notebook"] .tab.on,html[data-theme="notebook"] .vmode button.on,
+html[data-theme="notebook"] .seg button.on,html[data-theme="notebook"] .swtabs button.on,html[data-theme="notebook"] .acct-tab.active,html[data-theme="notebook"] .ask button#go,html[data-theme="notebook"] .ins-btns .pri,
+html[data-theme="notebook"] .takes label:has(input:checked){background:var(--nb-kraft)!important;color:var(--nb-ink)!important;}
+html[data-theme="notebook"] .btn::after,html[data-theme="notebook"] .abtn::after,html[data-theme="notebook"] #go::after{display:none!important;}
+html[data-theme="notebook"] .takes label.has-script{border-color:#8a4a2a!important;box-shadow:inset 0 0 0 1px #8a4a2a,1.5px 2px 0 rgba(43,33,27,.2)!important;}
+
+/* inputs look like pen-on-paper fields */
+html[data-theme="notebook"] input:not([type="checkbox"]):not([type="radio"]),html[data-theme="notebook"] select,html[data-theme="notebook"] textarea{
+  background:rgba(255,255,255,.55)!important;color:var(--nb-ink)!important;border:1.5px solid var(--nb-ink)!important;border-radius:10px 14px 9px 13px!important;}
+html[data-theme="notebook"] input[type="checkbox"]{accent-color:var(--nb-ink);}
+
+/* chart + badges */
+html[data-theme="notebook"] canvas{filter:sepia(.35) saturate(.8);}
+html[data-theme="notebook"] .bd,html[data-theme="notebook"] .badge,html[data-theme="notebook"] [class*="badge"]{border:1.3px solid var(--nb-ink)!important;border-radius:var(--nb-sketch)!important;}
+
+/* turn off the dark-theme effects that don't fit paper */
+html[data-theme="notebook"] body::after{opacity:.06!important;}
+html[data-theme="notebook"] .msg.me{background:var(--nb-kraft)!important;color:var(--nb-ink)!important;border:1.6px solid var(--nb-ink);}
+html[data-theme="notebook"] *{scrollbar-color:rgba(43,33,27,.35) transparent;}

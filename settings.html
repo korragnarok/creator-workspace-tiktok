@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=Stack+Sans+Text:wght@200..700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-<script src="theme-init.js?v=181"></script>
+<script src="theme-init.js?v=352"></script>
 <link rel="stylesheet" href="layout.css?v=145">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -67,7 +67,7 @@ body{overflow-x:hidden;}
 @media(max-width:768px){.page{padding:80px 16px 24px;}.page-title{font-size:36px;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js?v=181"></script>
+<script src="supabase.js?v=352"></script>
 <script src="planner-sync.js?v=238"></script>
 <script src="playbook.js?v=288"></script>
 </head>
@@ -90,6 +90,22 @@ body{overflow-x:hidden;}
     <div class="page-eyebrow">Your Account</div>
     <div class="page-title">Set<em>tings</em></div>
   </div>
+
+  <!-- Look -->
+  <div class="settings-section">
+    <div class="section-title">Look</div>
+    <div class="form-hint" style="margin-bottom:10px">Pick how Take24 looks on all your devices.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button type="button" class="btn look-btn" data-look="espresso" onclick="setLook('espresso')" style="display:flex;align-items:center;gap:8px"><span style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#1F1F1E 50%,#955B3B 50%);border:1px solid #888"></span>Espresso (dark)</button>
+      <button type="button" class="btn look-btn" data-look="notebook" onclick="setLook('notebook')" style="display:flex;align-items:center;gap:8px"><span style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#f3ead9 50%,#c9a47c 50%);border:1px solid #888"></span>Notebook (sketchbook)</button>
+    </div>
+  </div>
+  <script>
+    function markLook(){ const t=document.documentElement.dataset.theme; document.querySelectorAll('.look-btn').forEach(b=>b.style.outline=b.dataset.look===t?'2px solid var(--rust)':'none'); }
+    async function setLook(k){ applyTheme(k); markLook(); try{ const {data:{session}}=await db.auth.getSession(); if(session){ await saveUserPrefs(session.user.id,{theme:k}); await db.auth.updateUser({data:{theme:k}}); } }catch(e){}
+      try{ window.parent!==window && window.parent.applyTheme && window.parent.applyTheme(k); }catch(e){} }
+    setTimeout(markLook,800);
+  </script>
 
   <!-- Profile Photo -->
   <div class="settings-section">
@@ -232,7 +248,7 @@ body{overflow-x:hidden;}
 </div>
 
 <script src="meta-api.js?v=197"></script>
-<script src="layout.js?v=351"></script>
+<script src="layout.js?v=352"></script>
 <script>
 let _user = null, _prefs = null;
 
