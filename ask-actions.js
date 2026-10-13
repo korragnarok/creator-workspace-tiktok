@@ -8,7 +8,7 @@ const ACT_COLS_DEFAULT = { talking: '🗣 Talking head', vacuum: '🎬 Demo / vo
 
 // quick gate so plain questions skip the extra AI call
 function actLooksLikeAction(t) {
-  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?)\b/i.test(t);
+  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality)\b/i.test(t);
 }
 
 async function actContext() {
@@ -17,7 +17,7 @@ async function actContext() {
   const uid = session.user.id, since = ymd(addDays(new Date(), -180));
   const [{ data: accts }, { data: prods }, { data: vids }, colNames] = await Promise.all([
     db.from('tiktok_accounts').select('tiktok_open_id,username,display_name').eq('user_id', uid).order('created_at', { ascending: true }),
-    db.from('products').select('id,name,brand,notes,tiktok_account_id').eq('user_id', uid).order('name'),
+    db.from('products').select('id,name,brand,notes,tiktok_account_id,status,units_sold').eq('user_id', uid).order('name'),
     db.from('videos').select('id,title,date,tiktok_account_id,views').eq('user_id', uid).gte('date', since).order('date', { ascending: false }).limit(800),
     plannerGet('filmColNames', {}).catch(() => ({}))
   ]);
@@ -47,13 +47,14 @@ const actProd = (c, name) => actFind(c.prods, name, p => `${p.name} ${p.brand ||
 const ACT_SCHEMA = { type: 'OBJECT', properties: {
   is_action: { type: 'BOOLEAN' },
   actions: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
-    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note'] },
+    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video'] },
     date: { type: 'STRING' }, to_date: { type: 'STRING' },
     source: { type: 'STRING', enum: ['video', 'showcase'] },
     caption: { type: 'STRING' }, product: { type: 'STRING' }, account: { type: 'STRING' },
     units: { type: 'NUMBER' }, gmv: { type: 'NUMBER' }, comm: { type: 'NUMBER' },
     note: { type: 'STRING' }, count: { type: 'NUMBER' },
     columns: { type: 'ARRAY', items: { type: 'OBJECT', properties: { column: { type: 'STRING', enum: ['talking', 'vacuum', 'faceless', 'car'] }, takes: { type: 'NUMBER' } }, required: ['column', 'takes'] } },
+    link: { type: 'STRING' }, high_quality: { type: 'BOOLEAN' }, column: { type: 'STRING', enum: ['', 'talking', 'vacuum', 'faceless', 'car'] },
     line: { type: 'STRING' }, deal: { type: 'STRING' }, start_date: { type: 'STRING' }, end_date: { type: 'STRING' }
   }, required: ['type'] } }
 }, required: ['is_action', 'actions'] };
@@ -74,6 +75,9 @@ Action types:
 - mark_filmed: mark takes filmed (product, date, count — 0 means all).
 - add_promo: product, line (Shark / Ninja / Shark Beauty), deal (as she says it), start_date, end_date.
 - product_note: product, note.
+- plan_day: she wants the app to PLAN/FILL her filming day for her ("plan my day", "what should I film today, add it", "fill my board for tomorrow"). date, count = how many products if she says (else 0).
+- whats_left: she asks what's left / still to film / to do today (date). Not a general strategy question.
+- log_video: she POSTED a video ("posted the Glossi car video on @thecozyko, caption '...'"). caption = the caption/description she gives, product, account, date, link if given, high_quality true only if she says HQ/high quality, column = which style it was if she says it.
 One message can have several actions. Never invent numbers she didn't say — leave them 0.
 
 MESSAGE: ${text}`;
@@ -131,6 +135,16 @@ function actCardHtml(a, i, c) {
     title = '★ Add a promo';
     body = row('Product', `<input id="${k}_p" value="${esc(a.product || '')}">`) + row('Line', actSel(k + '_l', [['Shark', 'Shark'], ['Ninja', 'Ninja'], ['Shark Beauty', 'Shark Beauty']], /beauty/i.test(a.line) ? 'Shark Beauty' : /ninja/i.test(a.line) ? 'Ninja' : 'Shark'))
       + row('Deal', `<input id="${k}_deal" value="${esc(a.deal || '')}">`) + row('Starts', `<input type="date" id="${k}_s" value="${dOk(a.start_date || a.date)}">`) + row('Ends', `<input type="date" id="${k}_e" value="${/^\d{4}-\d{2}-\d{2}$/.test(a.end_date || '') ? a.end_date : ''}">`);
+  } else if (a.type === 'log_video') {
+    title = '📹 Log a posted video';
+    const p = actProd(c, a.product || a.caption || '')[0];
+    body = row('Caption', `<textarea id="${k}_t" rows="2">${esc(a.caption || '')}</textarea>`)
+      + row('Product', actSel(k + '_p', [['', '— no product —'], ...c.prods.map(x => [x.id, `${x.name}${x.brand ? ' — ' + x.brand : ''}`])], p?.id || ''))
+      + row('Account', actAcctSel(c, k + '_acct', actAcctGuess(c, a.account) || p?.tiktok_account_id))
+      + row('Posted', `<input type="date" id="${k}_d" value="${date}">`)
+      + row('Link (optional)', `<input id="${k}_l" value="${esc(a.link || '')}" placeholder="https://www.tiktok.com/…">`)
+      + `<label class="achk"><input type="checkbox" id="${k}_hq"${a.high_quality ? ' checked' : ''}> High quality</label>`
+      + `<label class="achk"><input type="checkbox" id="${k}_m" checked> Mark a take filmed on the Film Board</label>`;
   } else if (a.type === 'product_note') {
     title = '🏷 Add a product note';
     body = row('Product', actProdSel(c, k + '_p', a.product)) + row('Note', `<textarea id="${k}_n" rows="2">${esc(a.note || '')}</textarea>`);
@@ -154,8 +168,14 @@ async function actTry(text, waitEl) {
   const acts = (parsed.actions || []).filter(a => a && a.type);
   if (!parsed.is_action || !acts.length) return false;
   const c = await actContext();
+  const left = acts.filter(a => a.type === 'whats_left'), rest = acts.filter(a => a.type !== 'whats_left');
+  let html = '';
+  for (const a of left) html += await actWhatsLeft(c, dOk(a.date));
+  const cards = [];
+  for (let i = 0; i < rest.length; i++) cards.push(rest[i].type === 'plan_day' ? await actPlanDayCard(rest[i], i, c) : actCardHtml(rest[i], i, c));
+  if (cards.length) html += `<p>Here's what I'll do — check it and tap <b>Save</b>:</p>` + cards.join('');
   waitEl.classList.remove('wait');
-  waitEl.innerHTML = `<p>Here's what I'll do — check it and tap <b>Save</b>:</p>` + acts.map((a, i) => actCardHtml(a, i, c)).join('');
+  waitEl.innerHTML = html;
   return true;
 }
 function actSkip(k) { const el = document.getElementById(k); el.querySelector('.abtns').remove(); el.querySelector('.astat').textContent = 'Skipped.'; el.classList.add('done'); }
@@ -165,7 +185,7 @@ async function actRun(k, btn) {
   const a = ACT.cards[k], c = await actContext(), stat = document.querySelector(`#${k} .astat`);
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    const msg = await ({ log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
+    const msg = await ({ plan_day: actPlanDaySave, log_video: actVideo, log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
     const el = document.getElementById(k); el.querySelector('.abtns').remove(); el.classList.add('done');
     el.querySelectorAll('input,select,textarea').forEach(x => x.disabled = true);
     stat.innerHTML = '✓ ' + msg;
@@ -223,19 +243,8 @@ async function actFilm(k, a, c) {
   const p = c.prods.find(x => x.id === pid);
   const plan = Object.keys(c.cols).map(col => ({ col, n: Math.min(20, +v$(k, '_col_' + col) || 0) })).filter(x => x.n > 0);
   if (!plan.length) throw new Error('add at least 1 take');
-  const { data: existing } = await db.from('queue').select('id,notes,prod_id').eq('user_id', c.uid).eq('date', date).eq('prod_id', pid);
-  const hasBase = (existing || []).some(r => !/\[copy:\w+\]/.test(r.notes || ''));
-  const board = (await plannerGet('filmBoard', {})) || {}; const day = { ...(board[date] || {}) };
-  const acct = p.tiktok_account_id || c.active; const rows = [], keys = [];
-  plan.forEach((x, i) => {
-    const useBase = i === 0 && !hasBase, tag = useBase ? '' : `[copy:${Date.now().toString(36)}${i}]`;
-    const key = String(pid) + (tag ? '#' + tag.slice(6, -1) : '');
-    keys.push([key, x.col]);
-    for (let t = 0; t < x.n; t++) rows.push({ user_id: c.uid, tiktok_account_id: acct, date, prod_id: pid, name: p.name, brand: p.brand || '', notes: tag, script: '', done: false, sort_order: 900 + i });
-  });
-  const { error } = await db.from('queue').insert(rows); if (error) throw error;
-  keys.forEach(([key, col], i) => { day[key] = { ...(day[key] || {}), style: col, order: 900 + i }; });
-  board[date] = day; await plannerSet('filmBoard', board);
+  const board = (await plannerGet('filmBoard', {})) || {};
+  await actAddToBoard(c, date, p, plan, board); await plannerSet('filmBoard', board);
   return `Added <b>${esc(p.name)}</b> to your Film Board for ${esc(prettyD(date))}: ${plan.map(x => `${x.n} × ${esc(c.cols[x.col])}`).join(', ')}.`;
 }
 async function actMove(k, a, c) {
@@ -265,4 +274,103 @@ async function actProdNote(k, a, c) {
   const p = c.prods.find(x => x.id === pid);
   const { error } = await db.from('products').update({ notes: [String(p.notes || '').trim(), note].filter(Boolean).join('\n') }).eq('id', pid).eq('user_id', c.uid);
   if (error) throw error; return `Note added to <b>${esc(p.name)}</b>.`;
+}
+
+// ─── Daily workflow ────────────────────────────────────────────────────────────
+const ACT_GUESS = (n, b) => /vacuum|vac\b|mop|stain|carpet|robot|wet ?dry|steam|cordless|power detect|hydro|clean/i.test(`${n} ${b}`) ? 'vacuum' : 'talking';
+
+// shared: put a product on the Film Board with takes per column (used by film_plan + plan_day)
+async function actAddToBoard(c, date, p, plan, board) {
+  const { data: existing } = await db.from('queue').select('id,notes').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id);
+  const hasBase = (existing || []).some(r => !/\[copy:\w+\]/.test(r.notes || ''));
+  const day = { ...(board[date] || {}) }, acct = p.tiktok_account_id || c.active, rows = [], keys = [];
+  plan.forEach((x, i) => {
+    const tag = (i === 0 && !hasBase) ? '' : `[copy:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}${i}]`;
+    keys.push([String(p.id) + (tag ? '#' + tag.slice(6, -1) : ''), x.col]);
+    for (let t = 0; t < x.n; t++) rows.push({ user_id: c.uid, tiktok_account_id: acct, date, prod_id: p.id, name: p.name, brand: p.brand || '', notes: tag, script: '', done: false, sort_order: 900 + i });
+  });
+  const { error } = await db.from('queue').insert(rows); if (error) throw error;
+  keys.forEach(([key, col], i) => { day[key] = { ...(day[key] || {}), style: col, order: 900 + Object.keys(day).length + i }; });
+  board[date] = day;
+}
+
+async function actPlanDayCard(a, i, c) {
+  const date = dOk(a.date), want = Math.min(10, a.count || 5);
+  const [{ data: promos }, { data: q90 }, { data: dayQ }, mem, { data: vids }] = await Promise.all([
+    db.from('promos').select('product,prod_id,deal,start_date,end_date,priority').eq('user_id', c.uid).lte('start_date', date).gte('end_date', date),
+    db.from('queue').select('prod_id,date,done').eq('user_id', c.uid).gte('date', ymd(addDays(new Date(), -120))),
+    db.from('queue').select('prod_id').eq('user_id', c.uid).eq('date', date),
+    plannerGet('filmStyleMem', {}).catch(() => ({})),
+    db.from('videos').select('prod_id').eq('user_id', c.uid).not('prod_id', 'is', null)
+  ]);
+  const onDay = new Set((dayQ || []).map(r => r.prod_id)), posted = new Set((vids || []).map(v => v.prod_id));
+  const last = {}; (q90 || []).filter(r => r.done && r.prod_id).forEach(r => { if (!last[r.prod_id] || r.date > last[r.prod_id]) last[r.prod_id] = r.date; });
+  const active = c.prods.filter(p => !/shelved|paused|inactive|archived/i.test(p.status || '') && !onDay.has(p.id));
+  const picks = [], seen = new Set(), push = (p, why, takes) => { if (p && !seen.has(p.id) && !onDay.has(p.id)) { seen.add(p.id); picks.push({ p, why, takes }); } };
+  const days = d => Math.round((new Date(d + 'T00:00:00') - new Date(date + 'T00:00:00')) / 864e5);
+  (promos || []).sort((x, y) => (y.priority ? 1 : 0) - (x.priority ? 1 : 0) || String(x.end_date).localeCompare(String(y.end_date))).forEach(pr => {
+    const p = c.prods.find(x => x.id === pr.prod_id) || actProd(c, pr.product)[0]; const d = days(pr.end_date);
+    push(p, `${pr.priority ? '★ ' : ''}Promo ${d <= 0 ? 'ends today' : d === 1 ? 'ends tomorrow' : `ends in ${d} days`}`, d <= 2 ? 2 : 1);
+  });
+  active.filter(p => /FREE_SAMPLE/.test(p.notes || '') && !last[p.id] && !posted.has(p.id)).forEach(p => push(p, 'Free sample — not filmed yet', 1));
+  active.filter(p => (+p.units_sold || 0) > 0).map(p => ({ p, gap: last[p.id] ? days(last[p.id]) * -1 : 999 })).filter(x => x.gap >= 7)
+    .sort((x, y) => (+y.p.units_sold || 0) - (+x.p.units_sold || 0)).forEach(x => push(x.p, x.gap >= 999 ? `Has sold ${x.p.units_sold} — no recent filming` : `Has sold ${x.p.units_sold} — last filmed ${x.gap} days ago`, 1));
+  const list = picks.slice(0, want);
+  const k = `a${Date.now().toString(36)}${i}`; ACT.cards[k] = { ...a, type: 'plan_day', list };
+  if (!list.length) return `<div class="acard done" id="${k}"><div class="atitle">🗓 Plan ${esc(prettyD(date))}</div><div class="astat">Nothing urgent to add — no live promos, unfilmed samples or best-sellers you've skipped lately.</div></div>`;
+  const colSel = (id, sel) => actSel(id, Object.entries(c.cols), sel);
+  return `<div class="acard" id="${k}"><div class="atitle">🗓 Plan ${esc(prettyD(date))}</div><input type="hidden" id="${k}_d" value="${date}">
+    <div class="sub" style="margin:0 0 8px;font-size:12.5px">Untick anything you don't want, and change the column or takes.</div>
+    ${list.map((x, j) => `<div class="aplan"><label class="achk" style="margin:0"><input type="checkbox" id="${k}_on${j}" checked> <b>${esc(x.p.name)}</b></label><div class="awhy">${esc(x.why)}</div>
+      <div class="aplanrow">${colSel(`${k}_c${j}`, (mem || {})[x.p.id] || ACT_GUESS(x.p.name, x.p.brand || ''))}<input type="number" min="1" max="10" id="${k}_n${j}" value="${x.takes}" style="max-width:70px"> takes</div></div>`).join('')}
+    <div class="abtns"><button class="abtn primary" onclick="actRun('${k}',this)">Add to Film Board</button><button class="abtn" onclick="actSkip('${k}')">Skip</button></div><div class="astat"></div></div>`;
+}
+async function actPlanDaySave(k, a, c) {
+  const date = v$(k, '_d'), board = (await plannerGet('filmBoard', {})) || {}; let n = 0, names = [];
+  for (let j = 0; j < a.list.length; j++) {
+    if (!document.getElementById(`${k}_on${j}`)?.checked) continue;
+    const takes = Math.max(1, Math.min(10, +v$(k, `_n${j}`) || 1));
+    await actAddToBoard(c, date, a.list[j].p, [{ col: v$(k, `_c${j}`), n: takes }], board); n += takes; names.push(a.list[j].p.name);
+  }
+  if (!names.length) throw new Error('nothing ticked');
+  await plannerSet('filmBoard', board);
+  return `Added ${names.length} product${names.length === 1 ? '' : 's'} (${n} takes) to your Film Board for ${esc(prettyD(date))}: ${names.map(esc).join(', ')}.`;
+}
+
+async function actWhatsLeft(c, date) {
+  const [{ data: q }, { data: promos }, board] = await Promise.all([
+    db.from('queue').select('prod_id,name,done,script,notes').eq('user_id', c.uid).eq('date', date),
+    db.from('promos').select('product,end_date,priority').eq('user_id', c.uid).lte('start_date', date).gte('end_date', date),
+    plannerGet('filmBoard', {}).catch(() => ({}))
+  ]);
+  const rows = q || [], meta = (board || {})[date] || {};
+  const g = {}; rows.forEach(r => { const tag = (String(r.notes || '').match(/\[copy:(\w+)\]/) || [])[1]; const key = String(r.prod_id || String(r.name || '').toLowerCase()) + (tag ? '#' + tag : '');
+    (g[key] = g[key] || { name: r.name, key, rows: [] }).rows.push(r); });
+  const groups = Object.values(g), open = groups.filter(x => x.rows.some(r => !r.done));
+  const left = open.reduce((s, x) => s + x.rows.filter(r => !r.done).length, 0), doneN = rows.filter(r => r.done).length;
+  const ending = (promos || []).filter(p => Math.round((new Date(p.end_date + 'T00:00:00') - new Date(date + 'T00:00:00')) / 864e5) <= 2);
+  const col = x => c.cols[meta[x.key]?.style] || '';
+  if (!rows.length) return `<p><b>${esc(prettyD(date))}</b>: nothing on your Film Board yet. Say <b>"plan my day"</b> and I'll fill it.</p>`;
+  if (!left) return `<p>🎉 Everything on <b>${esc(prettyD(date))}</b> is filmed — ${doneN} take${doneN === 1 ? '' : 's'} done.</p>`;
+  return `<p><b>${left} take${left === 1 ? '' : 's'} left</b> on ${esc(prettyD(date))} (${doneN} done):</p><ul>${open.map(x => { const n = x.rows.filter(r => !r.done).length, noScript = x.rows.every(r => !String(r.script || '').trim());
+      const pr = (promos || []).find(p => actScore(x.name, p.product) >= 60);
+      return `<li><b>${esc(x.name)}</b> — ${n} take${n === 1 ? '' : 's'}${col(x) ? ` · ${esc(col(x))}` : ''}${noScript ? ' · <i>no script yet</i>' : ''}${pr ? ` · ★ promo` : ''}</li>`; }).join('')}</ul>`
+    + (ending.length ? `<p class="note">⏳ Ending in 2 days or less: ${ending.map(p => esc(p.product)).join(', ')}</p>` : '');
+}
+
+async function actVideo(k, a, c) {
+  const title = v$(k, '_t').trim(), pid = v$(k, '_p'), acct = v$(k, '_acct'), date = v$(k, '_d') || ymd(new Date());
+  if (!title) throw new Error('add the caption'); if (!acct) throw new Error('pick the account');
+  const p = c.prods.find(x => x.id === pid);
+  const row = { user_id: c.uid, title, brand: p?.name || '', date, status: 'live', views: 0, units: 0, gmv: 0, notes: '', link: v$(k, '_l').trim(), prod_id: p?.id || null, tiktok_account_id: acct, high_quality: !!document.getElementById(k + '_hq')?.checked };
+  let { error } = await db.from('videos').insert(row);
+  if (error && /(prod_id|high_quality|link)/i.test(error.message || '')) { const f = { ...row }; ['prod_id', 'high_quality', 'link'].forEach(x => { if (new RegExp(x, 'i').test(error.message)) delete f[x]; }); ({ error } = await db.from('videos').insert(f)); }
+  if (error) throw error;
+  let extra = '';
+  if (p && document.getElementById(k + '_m')?.checked) {
+    const { data } = await db.from('queue').select('id').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).eq('done', false).order('sort_order').limit(1);
+    if (data?.[0]) { await db.from('queue').update({ done: true }).eq('id', data[0].id).eq('user_id', c.uid); extra = ' and marked a take filmed'; }
+    else extra = ' (no unfilmed take for it on that day to check off)';
+  }
+  return `Added to your Content Tracker on ${esc(c.acctName(acct))}${extra}.`;
 }
