@@ -56,6 +56,7 @@ const ACT_SCHEMA = { type: 'OBJECT', properties: {
     note: { type: 'STRING' }, count: { type: 'NUMBER' },
     columns: { type: 'ARRAY', items: { type: 'OBJECT', properties: { column: { type: 'STRING', enum: ['talking', 'vacuum', 'faceless', 'car'] }, takes: { type: 'NUMBER' } }, required: ['column', 'takes'] } },
     link: { type: 'STRING' }, high_quality: { type: 'BOOLEAN' }, column: { type: 'STRING' },
+    focus: { type: 'ARRAY', items: { type: 'STRING', enum: ['promos', 'outliers', 'video_sales', 'showcase_sales', 'samples', 'not_filmed_lately'] } }, days: { type: 'NUMBER' },
     line: { type: 'STRING' }, deal: { type: 'STRING' }, start_date: { type: 'STRING' }, end_date: { type: 'STRING' }
   }, required: ['type'] } }
 }, required: ['is_action', 'actions'] };
@@ -76,7 +77,7 @@ Action types:
 - mark_filmed: mark takes filmed (product, date, count — 0 means all).
 - add_promo: product, line (Shark / Ninja / Shark Beauty), deal (as she says it), start_date, end_date.
 - product_note: product, note.
-- plan_day: she wants the app to PLAN/FILL her filming day for her ("plan my day", "what should I film today, add it", "fill my board for tomorrow"). date, count = how many products if she says (else 0).
+- plan_day: she wants the app to PLAN/FILL her filming day for her ("plan my day", "what should I film today, add it", "fill my board for tomorrow"). date, count = how many products if she says (else 0). focus = ONLY if she says what to base it on, in her order: promos, outliers (high-view / viral / outlier videos), video_sales (products that sold from videos), showcase_sales, samples (free samples), not_filmed_lately. "based on what sold from videos recently" → ["video_sales"]. "promos and outliers" → ["promos","outliers"]. "what's been selling" (no source) → ["video_sales","showcase_sales"]. days = lookback if she says ("this week" → 7, "recently" → 0 = default, "this month" → 30).
 - whats_left: she asks what's left / still to film / to do today (date). Not a general strategy question.
 - log_video: she POSTED a video ("posted the Glossi car video on @thecozyko, caption '...'"). caption = the caption/description she gives, product, account, date, link if given, high_quality true only if she says HQ/high quality, column = which style it was if she says it.
 One message can have several actions. Never invent numbers she didn't say — leave them 0.
@@ -301,45 +302,53 @@ async function actAddToBoard(c, date, p, plan, board) {
 }
 
 async function actPlanDayCard(a, i, c) {
-  const date = dOk(a.date), want = Math.min(10, a.count || 5);
-  const [{ data: promos }, { data: q90 }, { data: dayQ }, mem, { data: vids }] = await Promise.all([
+  const date = dOk(a.date), want = Math.min(10, a.count || 5), look = Math.min(365, Math.max(3, a.days || 60));
+  const FOCUS = ['promos', 'outliers', 'video_sales', 'showcase_sales', 'samples', 'not_filmed_lately'];
+  const focus = (a.focus || []).filter(f => FOCUS.includes(f));
+  const since = ymd(addDays(new Date(), -look));
+  const [{ data: promos }, { data: q90 }, { data: dayQ }, mem, { data: vids }, { data: sales }] = await Promise.all([
     db.from('promos').select('product,prod_id,deal,start_date,end_date,priority').eq('user_id', c.uid).lte('start_date', date).gte('end_date', date),
     db.from('queue').select('prod_id,date,done').eq('user_id', c.uid).gte('date', ymd(addDays(new Date(), -120))),
     db.from('queue').select('prod_id').eq('user_id', c.uid).eq('date', date),
     plannerGet('filmStyleMem', {}).catch(() => ({})),
-    db.from('videos').select('id,prod_id,title,brand,views,units,gmv,date').eq('user_id', c.uid).gte('date', ymd(addDays(new Date(), -60))),
+    db.from('videos').select('id,prod_id,title,brand,views,units,gmv,date').eq('user_id', c.uid).gte('date', since),
+    db.from('sales').select('video_sales,date').eq('user_id', c.uid).gte('date', since)
   ]);
-  const { data: sales } = await db.from('sales').select('video_sales,date').eq('user_id', c.uid).gte('date', ymd(addDays(new Date(), -60)));
-  const onDay = new Set((dayQ || []).map(r => r.prod_id)), posted = new Set((vids || []).filter(v => v.prod_id).map(v => v.prod_id));
+  const allVids = [...(vids || []), ...c.vids.filter(v => !(vids || []).some(x => x.id === v.id))];
+  const onDay = new Set((dayQ || []).map(r => r.prod_id)), posted = new Set(allVids.filter(v => v.prod_id).map(v => v.prod_id));
+  const off = p => /shelved|paused|inactive|archived/i.test(p?.status || '');
   const vidProd = v => c.prods.find(p => p.id === v.prod_id) || (v.brand ? c.prods.find(p => actNorm(p.name) === actNorm(v.brand)) : null) || actProd(c, `${v.brand || ''} ${v.title || ''}`)[0] || null;
   const last = {}; (q90 || []).filter(r => r.done && r.prod_id).forEach(r => { if (!last[r.prod_id] || r.date > last[r.prod_id]) last[r.prod_id] = r.date; });
-  const active = c.prods.filter(p => !/shelved|paused|inactive|archived/i.test(p.status || '') && !onDay.has(p.id));
-  const picks = [], seen = new Set(), push = (p, why, takes) => { if (p && !seen.has(p.id) && !onDay.has(p.id)) { seen.add(p.id); picks.push({ p, why, takes }); } };
   const days = d => Math.round((new Date(d + 'T00:00:00') - new Date(date + 'T00:00:00')) / 864e5);
+  const src = {}; FOCUS.forEach(f => src[f] = []);
+  const add = (f, p, why, takes) => { if (p && !off(p) && !onDay.has(p.id)) src[f].push({ p, why, takes }); };
   (promos || []).sort((x, y) => (y.priority ? 1 : 0) - (x.priority ? 1 : 0) || String(x.end_date).localeCompare(String(y.end_date))).forEach(pr => {
-    const p = c.prods.find(x => x.id === pr.prod_id) || actProd(c, pr.product)[0]; const d = days(pr.end_date);
-    push(p, `${pr.priority ? '★ ' : ''}Promo ${d <= 0 ? 'ends today' : d === 1 ? 'ends tomorrow' : `ends in ${d} days`}`, d <= 2 ? 2 : 1);
-  });
-  // videos that beat her average views (last 60 days)
+    const d = days(pr.end_date); add('promos', c.prods.find(x => x.id === pr.prod_id) || actProd(c, pr.product)[0], `${pr.priority ? '★ ' : ''}Promo ${d <= 0 ? 'ends today' : d === 1 ? 'ends tomorrow' : `ends in ${d} days`}`, d <= 2 ? 2 : 1); });
   const vv = (vids || []).filter(v => +v.views > 0), avg = vv.length ? vv.reduce((s, v) => s + +v.views, 0) / vv.length : 0;
-  vv.filter(v => avg && +v.views >= avg * 1.5).sort((a, b) => b.views - a.views).forEach(v => {
-    const p = vidProd(v); if (p && !/shelved|paused|inactive|archived/i.test(p.status || '')) push(p, `Outlier video — ${Number(v.views).toLocaleString()} views (${(v.views / avg).toFixed(1)}× your average)`, 2); });
-  // products on videos (or showcase) that made sales
-  const sold = {}; (sales || []).forEach(d => { let r = d.video_sales; if (typeof r === 'string') { try { r = JSON.parse(r); } catch (e) { r = []; } }
-    (Array.isArray(r) ? r : []).forEach(x => { const p = x.source === 'showcase' ? c.prods.find(pp => pp.id === x.product_id) : (() => { const v = (vids || []).find(vv => String(vv.id) === String(x.video_id)); return v ? vidProd(v) : null; })();
-      if (p) { sold[p.id] = sold[p.id] || { p, u: 0, g: 0 }; sold[p.id].u += +x.units || 0; sold[p.id].g += +x.gmv || 0; } }); });
-  (vids || []).filter(v => (+v.units || 0) > 0 || (+v.gmv || 0) > 0).forEach(v => { const p = vidProd(v); if (p && !sold[p.id]) sold[p.id] = { p, u: +v.units || 0, g: +v.gmv || 0 }; });
-  Object.values(sold).filter(x => !/shelved|paused|inactive|archived/i.test(x.p.status || '')).sort((a, b) => b.g - a.g || b.u - a.u)
-    .forEach(x => push(x.p, `Made sales lately — ${x.u} sold${x.g ? `, $${x.g.toFixed(0)} GMV` : ''} in the last 60 days`, 1));
-  active.filter(p => /FREE_SAMPLE/.test(p.notes || '') && !last[p.id] && !posted.has(p.id)).forEach(p => push(p, 'Free sample — not filmed yet', 1));
-  active.filter(p => (+p.units_sold || 0) > 0).map(p => ({ p, gap: last[p.id] ? days(last[p.id]) * -1 : 999 })).filter(x => x.gap >= 7)
-    .sort((x, y) => (+y.p.units_sold || 0) - (+x.p.units_sold || 0)).forEach(x => push(x.p, x.gap >= 999 ? `Has sold ${x.p.units_sold} — no recent filming` : `Has sold ${x.p.units_sold} — last filmed ${x.gap} days ago`, 1));
+  vv.filter(v => avg && +v.views >= avg * 1.5).sort((x, y) => y.views - x.views)
+    .forEach(v => add('outliers', vidProd(v), `Outlier video — ${Number(v.views).toLocaleString()} views (${(v.views / avg).toFixed(1)}× your average)`, 2));
+  const sold = { video: {}, showcase: {} };
+  (sales || []).forEach(d => { let r = d.video_sales; if (typeof r === 'string') { try { r = JSON.parse(r); } catch (e) { r = []; } }
+    (Array.isArray(r) ? r : []).forEach(x => { const sc = x.source === 'showcase';
+      const p = sc ? c.prods.find(pp => pp.id === x.product_id) : (() => { const v = allVids.find(vv => String(vv.id) === String(x.video_id)); return v ? vidProd(v) : null; })();
+      if (!p) return; const m = sold[sc ? 'showcase' : 'video']; m[p.id] = m[p.id] || { p, u: 0, g: 0, n: 0 }; m[p.id].u += +x.units || 0; m[p.id].g += +x.gmv || 0; m[p.id].n++; }); });
+  (vids || []).filter(v => (+v.units || 0) > 0 || (+v.gmv || 0) > 0).forEach(v => { const p = vidProd(v); if (p && !sold.video[p.id]) sold.video[p.id] = { p, u: +v.units || 0, g: +v.gmv || 0 }; });
+  Object.values(sold.video).sort((x, y) => y.g - x.g || y.u - x.u).forEach(x => add('video_sales', x.p, `Sold from videos — ${x.u} sold${x.g ? `, $${x.g.toFixed(0)} GMV` : ''} in the last ${look} days`, x.u >= 1 || x.g > 0 ? 2 : 1));
+  Object.values(sold.showcase).sort((x, y) => y.g - x.g || y.u - x.u).forEach(x => add('showcase_sales', x.p, `Sold from your showcase — ${x.u} sold${x.g ? `, $${x.g.toFixed(0)} GMV` : ''} in the last ${look} days`, 1));
+  c.prods.filter(p => /FREE_SAMPLE/.test(p.notes || '') && !last[p.id] && !posted.has(p.id)).forEach(p => add('samples', p, 'Free sample — not filmed yet', 1));
+  c.prods.filter(p => (+p.units_sold || 0) > 0).map(p => ({ p, gap: last[p.id] ? -days(last[p.id]) : 999 })).filter(x => x.gap >= 7)
+    .sort((x, y) => (+y.p.units_sold || 0) - (+x.p.units_sold || 0)).forEach(x => add('not_filmed_lately', x.p, x.gap >= 999 ? `Has sold ${x.p.units_sold} — no recent filming` : `Has sold ${x.p.units_sold} — last filmed ${x.gap} days ago`, 1));
+  // order: what she asked for, otherwise the default priority
+  const order = focus.length ? focus : ['promos', 'outliers', 'video_sales', 'showcase_sales', 'samples', 'not_filmed_lately'];
+  const picks = [], seen = new Set();
+  order.forEach(f => src[f].forEach(x => { if (!seen.has(x.p.id)) { seen.add(x.p.id); picks.push(x); } }));
   const list = picks.slice(0, want);
   const k = `a${Date.now().toString(36)}${i}`; ACT.cards[k] = { ...a, type: 'plan_day', list };
-  if (!list.length) return `<div class="acard done" id="${k}"><div class="atitle">🗓 Plan ${esc(prettyD(date))}</div><div class="astat">Nothing urgent to add — no live promos, unfilmed samples or best-sellers you've skipped lately.</div></div>`;
+  const focusLbl = { promos: 'promos', outliers: 'outlier videos', video_sales: 'products selling from videos', showcase_sales: 'showcase sales', samples: 'free samples', not_filmed_lately: "best sellers you haven't filmed lately" };
+  if (!list.length) return `<div class="acard done" id="${k}"><div class="atitle">🗓 Plan ${esc(prettyD(date))}</div><div class="astat">${focus.length ? `Couldn't find any ${focus.map(f => focusLbl[f]).join(' or ')} to add${focus.some(f => /sales|outliers/.test(f)) ? ` in the last ${look} days` : ''} (that aren't already on the board).` : "Nothing urgent to add — no live promos, outliers, recent sellers or unfilmed samples."}</div></div>`;
   const colSel = (id, sel) => actSel(id, Object.entries(c.cols), sel);
   return `<div class="acard" id="${k}"><div class="atitle">🗓 Plan ${esc(prettyD(date))}</div><input type="hidden" id="${k}_d" value="${date}">
-    <div class="sub" style="margin:0 0 8px;font-size:12.5px">Untick anything you don't want, and change the column or takes.</div>
+    <div class="sub" style="margin:0 0 8px;font-size:12.5px">${focus.length ? `Based on ${focus.map(f => focusLbl[f]).join(' + ')}${focus.some(f => /sales|outliers/.test(f)) ? ` (last ${look} days)` : ''}. ` : ''}Untick anything you don't want, and change the column or takes.</div>
     ${list.map((x, j) => `<div class="aplan"><label class="achk" style="margin:0"><input type="checkbox" id="${k}_on${j}" checked> <b>${esc(x.p.name)}</b></label><div class="awhy">${esc(x.why)}</div>
       <div class="aplanrow">${colSel(`${k}_c${j}`, (mem || {})[x.p.id] || ACT_GUESS(x.p.name, x.p.brand || ''))}<input type="number" min="1" max="10" id="${k}_n${j}" value="${x.takes}" style="max-width:70px"> takes</div></div>`).join('')}
     <div class="abtns"><button class="abtn primary" onclick="actRun('${k}',this)">Add to Film Board</button><button class="abtn" onclick="actSkip('${k}')">Skip</button></div><div class="astat"></div></div>`;
