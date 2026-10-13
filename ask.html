@@ -29,6 +29,13 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 .ask textarea:focus{border-color:var(--tan);}
 .ask button{border:0;border-radius:14px;background:var(--rust);color:#fff;font:800 12px 'Nunito Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:0 20px;cursor:pointer;}
 .ask button:disabled{opacity:.5;cursor:wait;}
+.acard{background:var(--bg);border:1px solid var(--border-mid);border-radius:14px;padding:12px 14px;margin-top:10px;}
+.acard.done{opacity:.85;} .atitle{font:800 13px 'Nunito Sans',sans-serif;color:var(--ink);margin-bottom:8px;}
+.arow{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;} .arow label{font:800 10px 'Nunito Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tan);}
+.arow input,.arow select,.arow textarea{background:var(--surface);border:1px solid var(--border-mid);border-radius:10px;padding:8px 10px;color:var(--ink);font:13px 'Nunito Sans',sans-serif;width:100%;}
+.arow3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;} .awarn{font-size:12px;color:var(--rust);}
+.abtns{display:flex;gap:8px;margin-top:4px;} .abtn{border:1px solid var(--border-mid);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 16px;font:800 12px 'Nunito Sans',sans-serif;cursor:pointer;}
+.abtn.primary{background:var(--rust);border-color:var(--rust);color:#fff;} .abtn:disabled{opacity:.6;cursor:wait;} .astat{font-size:12.5px;color:var(--text-mid,var(--text));margin-top:6px;}
 .foot{font-size:11px;color:var(--text-muted);text-align:center;}
 @media(max-width:768px){body{padding:16px;padding-top:88px;} h1{font-size:32px;} .msg{max-width:96%;}}
 </style>
@@ -36,11 +43,11 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 <body>
 <div class="wrap">
   <h1>Ask <em>Take24</em></h1>
-  <div class="sub">Ask anything about your account. It answers from your own sales, videos, products, promos and feedback history.</div>
+  <div class="sub">Ask anything about your account — or tell it what happened ("made a sale on my sock drawer video, $40 GMV, $6 comm") or what to plan ("3 car videos on the Glossi tomorrow"). It always shows you what it'll save first.</div>
   <div class="chips" id="chips"></div>
   <div class="log" id="log"></div>
   <div class="ask">
-    <textarea id="q" placeholder="e.g. Why were my sales down this week?" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}"></textarea>
+    <textarea id="q" placeholder="Ask a question, log a sale, or plan your filming…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}"></textarea>
     <button id="go" onclick="send()">Ask</button>
   </div>
   <div class="foot">Uses your Take24 data only. "Trending" answers use public TikTok views, not sales. It can make mistakes.</div>
@@ -49,9 +56,10 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 <script src="supabase.js?v=260"></script>
 <script src="planner-sync.js?v=238"></script>
 <script src="layout.js?v=260"></script>
+<script src="promos-sync.js?v=319"></script>
 <script>
 const WORKER='https://take24-scout.kortnycall5.workers.dev';
-const SUGGEST=["Why were my sales up or down this week?","Which products make me the most per video?","Which products have I stopped posting?","What do my best videos have in common?","What should I film tomorrow?","How can I do better?","What's my best day to post?","What's trending in my category right now?"];
+const SUGGEST=["I made a sale from my showcase on the FlexStyle — $X GMV, $X commission","Add 2 talking head and 3 car videos for the Glossi today","Why were my sales up or down this week?","Which products make me the most per video?","Which products have I stopped posting?","What do my best videos have in common?","What should I film tomorrow?","How can I do better?","What's my best day to post?","What's trending in my category right now?"];
 const CHAT=[]; let DATA=null, DATA_AT=0;
 const pad=n=>String(n).padStart(2,'0'), ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
@@ -136,6 +144,7 @@ async function send(){
   box.value=''; btn.disabled=true; add('me',esc(question));
   const w=add('ai','Looking at your numbers…','wait');
   try{
+    if(typeof actTry==='function'&&await actTry(question,w)){ CHAT.push({role:'user',parts:[{text:question}]},{role:'model',parts:[{text:'(showed a confirm card to save that)'}]}); btn.disabled=false; box.focus(); return; }
     const data=await gather(); const isTrend=/trend|viral|popular|what.*(working|selling).*(right now|lately)|category/i.test(question);
     const extra=isTrend?await trending(question):'';
     const sys=`You are Ask Take24, a sharp, friendly TikTok Shop analyst for Kourtney, an affiliate creator. Answer ONLY from the data below — her own Take24 data${extra?' plus the public search results':''}. Rules:
@@ -160,5 +169,6 @@ ${data}${extra}`;
 }
 (function(){ const v=new URLSearchParams(location.search).get('q'); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
 </script>
+<script src="ask-actions.js?v=319"></script>
 </body>
 </html>
