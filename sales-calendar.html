@@ -264,10 +264,7 @@ async function loadProductOptions(){
   let query = db.from('products')
     .select('id,name,brand')
     .eq('user_id',_user.id)
-    .order('name');
-  if(_activeAccountId){
-    query = query.eq("tiktok_account_id", _activeAccountId);
-  }
+    .order('name');   // one product list for both accounts (new products have no account)
   const {data,error}=await query;
   if(error){console.warn('Could not load products for sales attribution',error);_productOptions=[];return;}
   _productOptions=(data||[]).map(p=>{
