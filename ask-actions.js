@@ -4,6 +4,7 @@
 // Needs supabase.js (db), planner-sync.js, promos-sync.js and ask.html's gemText/add/esc/ymd/addDays.
 
 const ACT = { ctx: null, pendingNote: null, cards: {} };
+const actTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(what + ' took too long')), ms))]);
 const ACT_COLS_DEFAULT = { talking: '🗣 Talking head', vacuum: '🎬 Demo / voiceover', faceless: '✨ Aesthetic / faceless', car: '🚗 Car' };
 
 // quick gate so plain questions skip the extra AI call
@@ -82,7 +83,7 @@ One message can have several actions. Never invent numbers she didn't say — le
 
 MESSAGE: ${text}`;
   const res = await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: 'application/json', responseSchema: ACT_SCHEMA } }) });
+    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: 'application/json', responseSchema: ACT_SCHEMA, thinkingConfig: { thinkingBudget: 0 } } }), signal: AbortSignal.timeout ? AbortSignal.timeout(25000) : undefined });
   const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(data?.error?.message || `Gemini error (${res.status})`);
   try { return JSON.parse((data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('')); } catch (e) { return { is_action: false, actions: [] }; }
 }
@@ -165,11 +166,14 @@ async function actTry(text, waitEl) {
   }
   if (!actLooksLikeAction(text)) return false;
   const strong = /\b(made|log|logged|sold)\b.*\b(sale|sales|gmv|commission)\b|\b(add|put)\b.*\b(film ?board|board|to-?do)\b|\bplan my\b|\bposted\b/i.test(text);
-  let parsed; try { parsed = await actParse(text); }
+  waitEl.textContent = 'Reading that…';
+  let parsed; try { parsed = await actTimeout(actParse(text), 30000, 'Understanding your message'); }
   catch (e) { console.warn('actParse', e); if (!strong) return false; waitEl.classList.remove('wait'); waitEl.innerHTML = `I couldn't set that up just now (${esc(e.message)}). Try sending it again.`; return true; }
   const acts = (parsed.actions || []).filter(a => a && a.type);
   if (!parsed.is_action || !acts.length) return false;
-  const c = await actContext();
+  waitEl.textContent = 'Getting it ready…';
+  let c; try { c = await actTimeout(actContext(), 20000, 'Loading your videos and products'); }
+  catch (e) { waitEl.classList.remove('wait'); waitEl.innerHTML = `Couldn't load your data: ${esc(e.message)}. Try again.`; return true; }
   const left = acts.filter(a => a.type === 'whats_left'), rest = acts.filter(a => a.type !== 'whats_left');
   let html = '';
   for (const a of left) html += await actWhatsLeft(c, dOk(a.date));
