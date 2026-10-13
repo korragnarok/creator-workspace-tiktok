@@ -1,7 +1,7 @@
 /* ─── Take24 "alive" layer — subtle motion + texture on every page ─────────────── */
 
 /* 1. Film-grain texture over the whole app (very faint, warm) */
-body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:2147483000;opacity:.045;mix-blend-mode:overlay;
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:2147483000;opacity:.035;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
 
 /* 2. Cards float in one after another when a page opens */
@@ -37,14 +37,7 @@ button:active,.btn:active,.abtn:active{transform:scale(.97);}
 /* 7. Honeycomb glow + gentle breathing on hover */
 .hex{transition:transform .2s ease,filter .2s ease;}
 .hex:hover{filter:brightness(1.08);}
-/* glass hexagons: a light rim + shiny top half over each hex's ombre color */
-html .hex{position:relative;isolation:isolate;
-  background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.12) 50%,rgba(0,0,0,.25)),var(--hb)!important;}
-html .hex::before{content:"";position:absolute;inset:1.5px;z-index:-1;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
-  background:linear-gradient(180deg,rgba(255,255,255,.30) 0%,rgba(255,255,255,.10) 38%,rgba(255,255,255,0) 52%,rgba(0,0,0,.10) 100%),var(--hb);}
-html .hex::after{content:"";position:absolute;left:18%;right:18%;top:9%;height:22%;z-index:-1;border-radius:50%;
-  background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.35),rgba(255,255,255,0) 70%);pointer-events:none;}
-html .hex span{text-shadow:0 1px 1px rgba(0,0,0,.18);}
+
 
 /* 8. Loading shimmer for anything still loading */
 @keyframes t24skel{0%{background-position:-200px 0}100%{background-position:calc(200px + 100%) 0}}
@@ -60,34 +53,3 @@ html .hex span{text-shadow:0 1px 1px rgba(0,0,0,.18);}
 
 /* Respect "reduce motion" */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
-
-/* ─── Glass pills — clear frosted glass at rest, warm amber glow when active ─── */
-html .tab,html .chip,html .vmode button,html .shell-bar button,html .qa button,html .abtn,html .btn.sm,html .takes label,html .acct-tab,
-html .seg button,html .ins-btns a,html .ins-btns button,html .swtabs button,html .copy,html .tbl-action,html .mb-btn,html .alink.pill{
-  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.025)),color-mix(in srgb,var(--surface) 72%,transparent)!important;
-  border:1px solid color-mix(in srgb,var(--ink) 16%,transparent)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.22),0 6px 16px -10px rgba(0,0,0,.55)!important;
-  -webkit-backdrop-filter:blur(10px) saturate(140%);backdrop-filter:blur(10px) saturate(140%);
-  color:var(--ink);border-radius:999px;transition:background .25s ease,box-shadow .25s ease,border-color .25s ease,transform .15s ease,color .2s ease;}
-html .tab:hover,html .chip:hover,html .vmode button:hover,html .shell-bar button:hover,html .qa button:hover,html .abtn:hover,html .btn.sm:hover,
-html .takes label:hover,html .acct-tab:hover,html .seg button:hover,html .ins-btns a:hover,html .ins-btns button:hover,html .swtabs button:hover,html .copy:hover,html .tbl-action:hover{
-  border-color:rgba(232,170,120,.55)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.2),0 0 14px -4px rgba(232,150,90,.45)!important;}
-/* active / selected / primary → glowing amber glass */
-html .tab.on,html .vmode button.on,html .acct-tab.active,html .seg button.on,html .swtabs button.on,html .abtn.primary,html .ins-btns .pri,
-html .takes label:has(input:checked),html .mb-btn,html .chip.on,html .chip.active{
-  background:linear-gradient(180deg,rgba(255,226,196,.55),rgba(214,132,78,.55) 55%,rgba(181,104,63,.6))!important;
-  border-color:rgba(255,214,176,.7)!important;color:#fff!important;text-shadow:0 1px 1px rgba(90,40,15,.25);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 6px rgba(120,55,20,.3),0 4px 10px -6px rgba(0,0,0,.5)!important;}
-html .takes label:has(input:checked) input{accent-color:#fff;}
-/* keep the brown "has a script" outline visible on glass takes */
-html .takes label.has-script{border-color:var(--rust)!important;box-shadow:inset 0 0 0 1px var(--rust),inset 0 1px 0 rgba(255,255,255,.22)!important;}
-html .takes label.has-script:has(input:checked){box-shadow:inset 0 0 0 1px var(--rust),inset 0 1px 0 rgba(255,255,255,.45)!important;}
-/* big primary buttons get the amber glass too */
-html .btn.primary,html .btn-primary,html .ask button#go{
-  background:linear-gradient(180deg,rgba(255,226,196,.45),rgba(214,132,78,.75) 55%,rgba(160,88,50,.9))!important;border:1px solid rgba(255,214,176,.6)!important;color:#fff!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 8px rgba(110,50,18,.3),0 4px 12px -6px rgba(0,0,0,.5)!important;}
-html .btn.primary:hover,html .btn-primary:hover,html .ask button#go:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -2px 8px rgba(110,50,18,.25),0 5px 14px -6px rgba(0,0,0,.55)!important;filter:brightness(1.06);}
-/* the tray behind grouped pills (Day/Week, segmented choices) becomes a glass plate */
-html .vmode,html .seg{background:color-mix(in srgb,var(--surface) 55%,transparent)!important;border:1px solid color-mix(in srgb,var(--ink) 12%,transparent);
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.25);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:999px!important;padding:3px!important;gap:3px;}
-html .vmode button:not(.on),html .seg button:not(.on){background:transparent!important;border-color:transparent!important;box-shadow:none!important;}
