@@ -144,7 +144,7 @@ async function load(){
   document.getElementById('dayLbl').textContent=ymd(DAY)===ymd(new Date())?'Today · '+DAY.toLocaleDateString(undefined,{month:'short',day:'numeric'}):DAY.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
   const day=ymd(DAY);
   const [{data:rows},board,mem,,promoRes]=await Promise.all([
-    db.from('queue').select('*').eq('user_id',USER.id).eq('date',day).order('sort_order'),
+    db.from('queue').select('*').eq('user_id',USER.id).eq('date',day).order('sort_order').order('id'),
     plannerGet('filmBoard',{}), plannerGet('filmStyleMem',{}), plannerGet('filmColNames',{}).then(v=>{ COLNAMES=v||{}; applyColNames(); }),
     db.from('promos').select('product,deal,start_date,end_date').eq('user_id',USER.id).lte('start_date',day).gte('end_date',day).then(r=>r,()=>({data:[]}))
   ]);

@@ -264,7 +264,7 @@ async function actMove(k, a, c) {
 }
 async function actMark(k, a, c) {
   const pid = v$(k, '_p'), date = v$(k, '_d'), n = +v$(k, '_n') || 0; if (!pid) throw new Error('pick the product');
-  const { data } = await db.from('queue').select('id').eq('user_id', c.uid).eq('date', date).eq('prod_id', pid).eq('done', false).order('sort_order');
+  const { data } = await db.from('queue').select('id').eq('user_id', c.uid).eq('date', date).eq('prod_id', pid).eq('done', false).order('sort_order').order('id');
   const ids = (data || []).slice(0, n || undefined).map(r => r.id); if (!ids.length) throw new Error('no unfilmed takes for that product on that day');
   const { error } = await db.from('queue').update({ done: true }).in('id', ids).eq('user_id', c.uid); if (error) throw error;
   return `Marked ${ids.length} take${ids.length === 1 ? '' : 's'} filmed.`;
@@ -398,7 +398,7 @@ async function actVideo(k, a, c) {
   if (error) throw error;
   let extra = '';
   if (p && document.getElementById(k + '_m')?.checked) {
-    const { data } = await db.from('queue').select('id').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).eq('done', false).order('sort_order').limit(1);
+    const { data } = await db.from('queue').select('id').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).eq('done', false).order('sort_order').order('id').limit(1);
     if (data?.[0]) { await db.from('queue').update({ done: true }).eq('id', data[0].id).eq('user_id', c.uid); extra = ' and marked a take filmed'; }
     else extra = ' (no unfilmed take for it on that day to check off)';
   }
@@ -441,8 +441,8 @@ ${a.angle ? `Her idea / angle for this one: ${a.angle}` : 'Pick the most convinc
 PRODUCT FACTS (use these; don't invent features, specs or claims that aren't here; never quote prices):
 ${facts}
 End with a soft, casual close like "I tagged it below" — never "click the link" or "tap the orange cart".
-Also write: a short title (3–6 words), and a ready-to-post caption in her voice (1–3 short sentences, under 150 characters) plus exactly 5 hashtags, most relevant first.`,
-    { type: 'OBJECT', properties: { title: { type: 'STRING' }, paragraphs: { type: 'ARRAY', items: { type: 'STRING' } }, caption: { type: 'STRING' }, hashtags: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['title', 'paragraphs', 'caption', 'hashtags'] });
+Also write: a short title (3–6 words), and a ready-to-post caption in her voice (1–3 short sentences, under 150 characters) plus exactly 5 hashtags, most relevant first. Also 10–15 SEO words: short lowercase search phrases people would actually type into TikTok search to find this video (product name/type, brand, the problem it solves, who it's for), no hashtags.`,
+    { type: 'OBJECT', properties: { title: { type: 'STRING' }, paragraphs: { type: 'ARRAY', items: { type: 'STRING' } }, caption: { type: 'STRING' }, hashtags: { type: 'ARRAY', items: { type: 'STRING' } }, seo: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['title', 'paragraphs', 'caption', 'hashtags', 'seo'] });
   let pol = null;
   try {
     pol = await actGemJSON(`Check this TikTok Shop affiliate script and caption against TikTok Shop content policy and her hard rules.${typeof playbookRulesSync === 'function' ? playbookRulesSync() : ''}
@@ -454,7 +454,7 @@ CAPTION: ${sc.caption}`, { type: 'OBJECT', properties: { passed: { type: 'BOOLEA
   } catch (e) { console.warn('policy check', e); }
   const paragraphs = actClean(pol?.paragraphs?.length ? pol.paragraphs : sc.paragraphs);
   const tags = (sc.hashtags || []).slice(0, 5).map(h => '#' + String(h).replace(/^#/, '').replace(/\s+/g, ''));
-  return { title: sc.title || p.name, paragraphs, caption: `${(pol?.caption || sc.caption || '').trim()}\n\n${tags.join(' ')}`.trim(), passed: pol ? pol.passed : null, issues: pol?.issues || [], funnel };
+  return { title: sc.title || p.name, paragraphs, caption: `${(pol?.caption || sc.caption || '').trim()}\n\n${tags.join(' ')}`.trim(), passed: pol ? pol.passed : null, issues: pol?.issues || [], funnel, seo: (sc.seo || []).map(w => String(w).replace(/^#/, '').trim().toLowerCase()).filter(Boolean).slice(0, 15).join(', ') };
 }
 async function actScriptCard(a, i, c) {
   const p = actProd(c, a.product || '')[0];
@@ -471,13 +471,14 @@ async function actScriptCard(a, i, c) {
     ${sc.passed === false && sc.issues.length ? `<div class="awarn" style="margin-bottom:8px">Fixed: ${sc.issues.map(esc).join(' · ')}</div>` : ''}
     <div class="arow"><label>Script — edit any line; your changes teach it your voice</label><textarea id="${k}_s" rows="${Math.min(16, sc.paragraphs.length * 2 + 2)}">${esc(sc.paragraphs.join('\n\n'))}</textarea></div>
     <div class="arow"><label>Caption + hashtags</label><textarea id="${k}_cap" rows="3">${esc(sc.caption)}</textarea></div>
+    <div class="arow"><label>SEO words</label><textarea id="${k}_seo" rows="2">${esc(sc.seo || '')}</textarea></div>
     <div class="arow3" style="grid-template-columns:1fr 1fr"><div class="arow"><label>Film Board day</label><input type="date" id="${k}_d" value="${date}"></div><div class="arow"><label>Column ${q?.length ? '(already on the board)' : ''}</label>${actSel(k + '_col', Object.entries(c.cols), col)}</div></div>
     <label class="achk"><input type="checkbox" id="${k}_fb" checked> Put it on my Film Board ${q?.length ? '(fills the next take with no script)' : '(adds the product with 1 take)'}</label>
     <label class="achk"><input type="checkbox" id="${k}_v"> Also save to Script Vault</label>
     <div class="abtns"><button class="abtn primary" onclick="actRun('${k}',this)">Save</button><button class="abtn" onclick="navigator.clipboard.writeText(document.getElementById('${k}_s').value);this.textContent='✓ Copied'">Copy script</button><button class="abtn" onclick="actSkip('${k}')">Skip</button></div><div class="astat"></div></div>`;
 }
 async function actScriptSave(k, a, c) {
-  const p = c.prods.find(x => x.id === a.pid), date = v$(k, '_d'), script = v$(k, '_s').trim(), caption = v$(k, '_cap').trim();
+  const p = c.prods.find(x => x.id === a.pid), date = v$(k, '_d'), script = v$(k, '_s').trim(), caption = v$(k, '_cap').trim(), seo = v$(k, '_seo').trim();
   if (!script) throw new Error('the script is empty');
   const done = [];
   // learn from her edits (paragraph by paragraph)
@@ -487,19 +488,20 @@ async function actScriptSave(k, a, c) {
     if (pairs.length) { try { await addVoiceEdits(pairs); done.push(`learned ${pairs.length} rewritten line${pairs.length === 1 ? '' : 's'}`); } catch (e) {} }
   }
   if (document.getElementById(k + '_fb')?.checked) {
-    let { data: rows } = await db.from('queue').select('id,notes,script').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).order('sort_order');
+    let { data: rows } = await db.from('queue').select('id,notes,script').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).order('sort_order').order('id');
     const board = (await plannerGet('filmBoard', {})) || {};
-    if (!rows?.length) { await actAddToBoard(c, date, p, [{ col: v$(k, '_col'), n: 1 }], board); ({ data: rows } = await db.from('queue').select('id,notes,script').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).order('sort_order')); }
-    const target = (rows || []).find(r => !String(r.script || '').trim()) || (rows || [])[0];
+    if (!rows?.length) { await actAddToBoard(c, date, p, [{ col: v$(k, '_col'), n: 1 }], board); ({ data: rows } = await db.from('queue').select('id,notes,script').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).order('sort_order').order('id')); }
+    const isBase = r => !/\[copy:\w+\]/.test(r.notes || ''), empty = r => !String(r.script || '').trim();
+    const target = (rows || []).find(r => isBase(r) && empty(r)) || (rows || []).find(empty) || (rows || [])[0];
     if (!target) throw new Error('could not find a take to attach it to');
     const { error } = await db.from('queue').update({ script }).eq('id', target.id).eq('user_id', c.uid); if (error) throw error;
     const tag = (String(target.notes || '').match(/\[copy:(\w+)\]/) || [])[1], key = String(p.id) + (tag ? '#' + tag : '');
-    board[date] = { ...(board[date] || {}) }; board[date][key] = { ...(board[date][key] || {}), caption, style: board[date][key]?.style || v$(k, '_col') };
+    board[date] = { ...(board[date] || {}) }; board[date][key] = { ...(board[date][key] || {}), caption, seo, style: board[date][key]?.style || v$(k, '_col') };
     await plannerSet('filmBoard', board);
-    done.push(`on your Film Board for ${esc(prettyD(date))} with the caption`);
+    done.push(`on your Film Board for ${esc(prettyD(date))} (take ${(rows || []).indexOf(target) + 1}) with the caption + SEO words`);
   }
   if (document.getElementById(k + '_v')?.checked) {
-    const { error } = await db.from('scripts').insert({ user_id: c.uid, title: a.sc.title, brand: p.name, cat: 'review', script, notes: caption ? `Caption:\n${caption}` : '' });
+    const { error } = await db.from('scripts').insert({ user_id: c.uid, title: a.sc.title, brand: p.name, cat: 'review', script, notes: [caption ? `Caption:\n${caption}` : '', seo ? `SEO words:\n${seo}` : ''].filter(Boolean).join('\n\n') });
     if (error) throw error; done.push('saved to Script Vault');
   }
   if (!done.length) throw new Error('tick at least one place to save it');
