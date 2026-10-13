@@ -9,7 +9,7 @@ const ACT_COLS_DEFAULT = { talking: '🗣 Talking head', vacuum: '🎬 Demo / vo
 
 // quick gate so plain questions skip the extra AI call
 function actLooksLikeAction(t) {
-  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|hashtags?|hook|write)\b/i.test(t);
+  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|hashtags?|hook|write|product|products|sample|samples|got|stock|restock|shelve|shelved|promote)\b/i.test(t);
 }
 
 async function actContext() {
@@ -48,7 +48,7 @@ const actProd = (c, name) => actFind(c.prods, name, p => `${p.name} ${p.brand ||
 const ACT_SCHEMA = { type: 'OBJECT', properties: {
   is_action: { type: 'BOOLEAN' },
   actions: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
-    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script'] },
+    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script', 'add_product', 'set_status', 'mark_hq'] },
     date: { type: 'STRING' }, to_date: { type: 'STRING' },
     source: { type: 'STRING', enum: ['video', 'showcase'] },
     caption: { type: 'STRING' }, product: { type: 'STRING' }, account: { type: 'STRING' },
@@ -56,6 +56,7 @@ const ACT_SCHEMA = { type: 'OBJECT', properties: {
     note: { type: 'STRING' }, count: { type: 'NUMBER' },
     columns: { type: 'ARRAY', items: { type: 'OBJECT', properties: { column: { type: 'STRING', enum: ['talking', 'vacuum', 'faceless', 'car'] }, takes: { type: 'NUMBER' } }, required: ['column', 'takes'] } },
     link: { type: 'STRING' }, high_quality: { type: 'BOOLEAN' }, column: { type: 'STRING' },
+    brand: { type: 'STRING' }, free_sample: { type: 'BOOLEAN' }, status: { type: 'STRING', enum: ['active', 'paused', 'shelved', 'promote'] }, hq: { type: 'BOOLEAN' },
     funnel: { type: 'STRING', enum: ['Top', 'Middle'] }, on_sale: { type: 'BOOLEAN' }, angle: { type: 'STRING' },
     focus: { type: 'ARRAY', items: { type: 'STRING', enum: ['promos', 'outliers', 'video_sales', 'showcase_sales', 'samples', 'not_filmed_lately'] } }, days: { type: 'NUMBER' },
     line: { type: 'STRING' }, deal: { type: 'STRING' }, start_date: { type: 'STRING' }, end_date: { type: 'STRING' }
@@ -80,6 +81,9 @@ Action types:
 - product_note: product, note.
 - plan_day: she wants the app to PLAN/FILL her filming day for her ("plan my day", "what should I film today, add it", "fill my board for tomorrow"). date, count = how many products if she says (else 0). focus = ONLY if she says what to base it on, in her order: promos, outliers (high-view / viral / outlier videos), video_sales (products that sold from videos), showcase_sales, samples (free samples), not_filmed_lately. "based on what sold from videos recently" → ["video_sales"]. "promos and outliers" → ["promos","outliers"]. "what's been selling" (no source) → ["video_sales","showcase_sales"]. days = lookback if she says ("this week" → 7, "recently" → 0 = default, "this month" → 30).
 - whats_left: she asks what's left / still to film / to do today (date). Not a general strategy question.
+- add_product: she got / wants to add a NEW product ("I got a free sample of the X from Y", "add the X to my products"). product = product name as she says it, brand, link if she pastes one, free_sample true if she says free sample / sample / they sent it, note = anything else she says about it.
+- set_status: change a product's stock status. product, status: "active" (back in stock / restock / unshelve), "paused" (out of stock), "shelved" (shelve / stop promoting / done with it), "promote" (push it / promote now).
+- mark_hq: mark a posted video high quality (or not). caption = words from the caption/description she gives, product if she names it, hq = false only if she says NOT high quality.
 - write_script: she wants a video SCRIPT written (or a caption/hashtags for a product). product, funnel ("Middle" if she says middle of funnel / push the sale / get them to buy, else "Top"), on_sale true only if she says it's on sale/promo, column = the filming style if she says it, angle = any specific idea/angle/hook she mentions, date if she says one.
 - log_video: she POSTED a video ("posted the Glossi car video on @thecozyko, caption '...'"). caption = the caption/description she gives, product, account, date, link if given, high_quality true only if she says HQ/high quality, column = which style it was if she says it.
 One message can have several actions. Never invent numbers she didn't say — leave them 0.
@@ -149,6 +153,16 @@ function actCardHtml(a, i, c) {
       + row('Link (optional)', `<input id="${k}_l" value="${esc(a.link || '')}" placeholder="https://www.tiktok.com/…">`)
       + `<label class="achk"><input type="checkbox" id="${k}_hq"${a.high_quality ? ' checked' : ''}> High quality</label>`
       + `<label class="achk"><input type="checkbox" id="${k}_m" checked> Mark a take filmed on the Film Board</label>`;
+  } else if (a.type === 'set_status') {
+    title = '📦 Change stock status';
+    const st = a.status || 'active';
+    body = row('Product', actProdSel(c, k + '_p', a.product)) + row('Status', actSel(k + '_st', [['active', 'In stock'], ['paused', 'Out of stock'], ['promote', 'Promote now'], ['shelved', 'Shelved']], st));
+  } else if (a.type === 'mark_hq') {
+    title = a.hq === false ? '☆ Remove high quality' : '★ Mark high quality';
+    const m = actFind(c.vids, `${a.caption || ''} ${a.product || ''}`.trim(), 'title', 30);
+    const opts = (m.length ? m : c.vids.slice(0, 40)).map(v => [v.id, `${String(v.title || 'Untitled').slice(0, 60)} · ${String(v.date || '').slice(5, 10)} · ${c.acctName(v.tiktok_account_id)}`]);
+    body = row('Video', (m.length ? '' : `<div class="awarn">Couldn't find "${esc(a.caption || a.product || '')}" — pick it:</div>`) + actSel(k + '_v', opts, m[0]?.id))
+      + `<label class="achk"><input type="checkbox" id="${k}_hq"${a.hq === false ? '' : ' checked'}> High quality</label>`;
   } else if (a.type === 'product_note') {
     title = '🏷 Add a product note';
     body = row('Product', actProdSel(c, k + '_p', a.product)) + row('Note', `<textarea id="${k}_n" rows="2">${esc(a.note || '')}</textarea>`);
@@ -181,7 +195,7 @@ async function actTry(text, waitEl) {
   let html = '';
   for (const a of left) html += await actWhatsLeft(c, dOk(a.date));
   const cards = [];
-  for (let i = 0; i < rest.length; i++) { const t = rest[i].type; if (t === 'write_script') waitEl.textContent = 'Writing your script…'; cards.push(t === 'plan_day' ? await actPlanDayCard(rest[i], i, c) : t === 'write_script' ? await actScriptCard(rest[i], i, c) : actCardHtml(rest[i], i, c)); }
+  for (let i = 0; i < rest.length; i++) { const t = rest[i].type; if (t === 'write_script') waitEl.textContent = 'Writing your script…'; if (t === 'add_product') waitEl.textContent = 'Looking it up on TikTok Shop…'; cards.push(t === 'plan_day' ? await actPlanDayCard(rest[i], i, c) : t === 'write_script' ? await actScriptCard(rest[i], i, c) : t === 'add_product' ? await actAddProductCard(rest[i], i, c) : actCardHtml(rest[i], i, c)); }
   if (cards.length) html += `<p>Here's what I'll do — check it and tap <b>Save</b>:</p>` + cards.join('');
   waitEl.classList.remove('wait');
   waitEl.innerHTML = html;
@@ -194,7 +208,7 @@ async function actRun(k, btn) {
   const a = ACT.cards[k], c = await actContext(), stat = document.querySelector(`#${k} .astat`);
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    const msg = await ({ write_script: actScriptSave, plan_day: actPlanDaySave, log_video: actVideo, log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
+    const msg = await ({ add_product: actAddProductSave, set_status: actStatus, mark_hq: actHQ, write_script: actScriptSave, plan_day: actPlanDaySave, log_video: actVideo, log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
     const el = document.getElementById(k); el.querySelector('.abtns').remove(); el.classList.add('done');
     el.querySelectorAll('input,select,textarea').forEach(x => x.disabled = true);
     stat.innerHTML = '✓ ' + msg;
@@ -506,4 +520,46 @@ async function actScriptSave(k, a, c) {
   }
   if (!done.length) throw new Error('tick at least one place to save it');
   return `Script for <b>${esc(p.name)}</b>: ${done.join(' · ')}.`;
+}
+
+// ─── Products from Ask ──────────────────────────────────────────────────────────
+async function actAddProductCard(a, i, c) {
+  const k = `a${Date.now().toString(36)}${i}`, name = String(a.product || '').trim();
+  const dupe = name ? actProd(c, name)[0] : null;
+  let found = [], err = '';
+  try {
+    if (/^https?:\/\//i.test(a.link || '')) { const p = typeof shopFromLink === 'function' ? await shopFromLink(a.link) : null; if (p) found = [p]; }
+    if (!found.length && name && typeof shopSearch === 'function') found = await shopSearch(`${a.brand || ''} ${name}`.trim());
+  } catch (e) { err = e.message; }
+  ACT.cards[k] = { ...a, type: 'add_product', found };
+  const opt = (p, j) => `<label class="ashop"><input type="radio" name="${k}_pick" value="${j}"${j === 0 ? ' checked' : ''}><img src="${esc(p.image_url || 'icons/default-product.png')}" onerror="this.src='icons/default-product.png'"><span><b>${esc(p.name)}</b><small>${esc(p.brand || 'TikTok Shop')}${p.sold ? ` · ${Number(p.sold).toLocaleString()} sold` : ''}</small></span></label>`;
+  return `<div class="acard" id="${k}"><div class="atitle">➕ Add a product</div>
+    ${dupe ? `<div class="awarn" style="margin-bottom:8px">You already have <b>${esc(dupe.name)}</b> in Products — still add a new one?</div>` : ''}
+    ${found.length ? `<div class="arow"><label>Pick the TikTok Shop listing (fills in the photo + link)</label>${found.map(opt).join('')}<label class="ashop"><input type="radio" name="${k}_pick" value="-1"><span><b>None of these</b><small>just add it with the name below</small></span></label></div>`
+      : `<div class="awarn" style="margin-bottom:8px">${err ? `TikTok Shop search didn't work (${esc(err)}) — ` : "Couldn't find it on TikTok Shop — "}I'll add it with just the name. You can add the photo later.</div>`}
+    <div class="arow3" style="grid-template-columns:1fr 1fr"><div class="arow"><label>Name ${found.length ? '(blank = use the listing name)' : ''}</label><input id="${k}_n" value="${found.length ? '' : esc(name)}" placeholder="${esc(name)}"></div><div class="arow"><label>Brand ${found.length ? '(blank = listing)' : ''}</label><input id="${k}_b" value="${found.length ? '' : esc(a.brand || '')}" placeholder="${esc(a.brand || '')}"></div></div>
+    <div class="arow"><label>Notes (optional)</label><textarea id="${k}_note" rows="2">${esc(a.note || '')}</textarea></div>
+    <label class="achk"><input type="checkbox" id="${k}_fs"${a.free_sample ? ' checked' : ''}> Free sample</label>
+    <div class="abtns"><button class="abtn primary" onclick="actRun('${k}',this)">Add product</button><button class="abtn" onclick="actSkip('${k}')">Skip</button></div><div class="astat"></div></div>`;
+}
+async function actAddProductSave(k, a, c) {
+  const pick = +(document.querySelector(`input[name="${k}_pick"]:checked`)?.value ?? -1), sp = pick >= 0 ? a.found[pick] : null;
+  const name = v$(k, '_n').trim() || sp?.name || String(a.product || '').trim(); if (!name) throw new Error('add a name');
+  const brand = v$(k, '_b').trim() || sp?.brand || a.brand || '';
+  let notes = v$(k, '_note').trim();
+  if (sp) notes = [notes, sp.price ? `TikTok Shop price seen: ${sp.price}` : '', sp.sold ? `TikTok Shop sold count seen: ${Number(sp.sold).toLocaleString()}` : '', 'Imported from TikTok Shop search.'].filter(Boolean).join('\n');
+  if (document.getElementById(k + '_fs')?.checked) notes = notes ? notes + '\nFREE_SAMPLE' : 'FREE_SAMPLE';
+  const row = { user_id: c.uid, name, brand, link: sp?.link || (/^https?:/.test(a.link || '') ? a.link : ''), image_url: sp?.image_url || '', notes, status: 'active', tiktok_account_id: null };
+  const { error } = await db.from('products').insert(row); if (error) throw error;
+  return `Added <b>${esc(name)}</b> to Products${sp?.image_url ? ' with its photo and link' : ' (no photo yet — add it on the Products page)'}${/FREE_SAMPLE/.test(notes) ? ' as a free sample' : ''}.`;
+}
+async function actStatus(k, a, c) {
+  const pid = v$(k, '_p'), st = v$(k, '_st'); if (!pid) throw new Error('pick the product');
+  const { error } = await db.from('products').update({ status: st }).eq('id', pid).eq('user_id', c.uid); if (error) throw error;
+  return `<b>${esc(c.prods.find(p => p.id === pid)?.name || 'Product')}</b> is now <b>${{ active: 'in stock', paused: 'out of stock', promote: 'promote now', shelved: 'shelved' }[st]}</b>.`;
+}
+async function actHQ(k, a, c) {
+  const vid = v$(k, '_v'), hq = !!document.getElementById(k + '_hq')?.checked; if (!vid) throw new Error('pick the video');
+  const { error } = await db.from('videos').update({ high_quality: hq }).eq('id', vid).eq('user_id', c.uid); if (error) throw error;
+  return `${hq ? 'Marked' : 'Unmarked'} <b>${esc(String(c.vids.find(v => String(v.id) === String(vid))?.title || 'video').slice(0, 50))}</b> as high quality.`;
 }

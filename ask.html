@@ -40,6 +40,7 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 .aplan{border-top:1px solid var(--border-mid);padding:8px 0;} .awhy{font-size:12px;color:var(--text-muted);margin:2px 0 6px 24px;} .aplanrow{display:flex;gap:8px;align-items:center;margin-left:24px;font-size:12.5px;} .aplanrow select,.aplanrow input{background:var(--surface);border:1px solid var(--border-mid);border-radius:10px;padding:7px 9px;color:var(--ink);font:13px 'Nunito Sans',sans-serif;}
 .apol{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;} .apol.ok{background:#2e7d4f22;color:#4caf7a;} .apol.fix{background:#c8792022;color:#d9a441;}
 .hint{font-size:13px;color:var(--text-muted);margin:-6px 0 16px;} .hint a{color:var(--rust);font-weight:800;cursor:pointer;}
+.ashop{display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid var(--border-mid);border-radius:10px;margin-bottom:6px;cursor:pointer;background:var(--surface);} .ashop input{width:auto;} .ashop img{width:40px;height:40px;object-fit:cover;border-radius:8px;} .ashop span{display:flex;flex-direction:column;font-size:13px;color:var(--ink);} .ashop small{color:var(--text-muted);font-size:11.5px;}
 .foot{font-size:11px;color:var(--text-muted);text-align:center;}
 @media(max-width:768px){body{padding:16px;padding-top:88px;} h1{font-size:32px;} .msg{max-width:96%;}}
 </style>
@@ -75,6 +76,7 @@ const HELP=`<p>Here's what I can do — just type it the way you'd say it:</p>
 <p><b>🗓 Plan your day</b></p><ul><li>"Plan my day" · "Plan tomorrow around promos and outliers"</li><li>"Plan my day based on what sold from videos recently"</li><li>"What's left today?"</li><li>"Add 2 talking head and 3 car videos for the Glossi today"</li><li>"Move today to Thursday" · "Mark 2 Glossi takes filmed"</li></ul>
 <p><b>✍️ Scripts &amp; captions</b></p><ul><li>"Write a middle of funnel script for the FlexStyle, it's on promo"</li><li>"Script for the Glossi in the car, angle: holiday party hair"</li><li>"Give me a caption for the Depuffi"</li></ul>
 <p><b>💰 Log things</b></p><ul><li>"Made a sale on my 'sock drawer' video, $40 GMV, $6 commission"</li><li>"Showcase sale on the FlexStyle yesterday, $X GMV, $X comm"</li><li>"Posted the Glossi car video on @thecozyko, caption '…', HQ"</li><li>"Add a promo for the CryoGlow Oct 20–26, Shark Beauty"</li><li>"Add a note to the Depuffi: ships slow"</li></ul>
+<p><b>📦 Products</b></p><ul><li>"I got a free sample of the CurlCharm from Shark Beauty"</li><li>"Glossi is out of stock" · "Restock the FlexStyle" · "Shelve the Depuffi"</li><li>"The sock drawer video was high quality"</li></ul>
 <p class="note">Anything that saves shows you a card to check first — nothing changes until you tap Save.</p>`;
 
 function md(t){ // tiny markdown: **bold**, bullets, paragraphs
@@ -183,6 +185,7 @@ ${data}${extra}`;
   const prefs=await loadUserPrefs(U.id); await initTheme(U.id,prefs); await initDisplayName(U,prefs); initProfilePopover(U.id); }catch(e){ console.warn('profile',e); } })();
 (function(){ const v=new URLSearchParams(location.search).get('q'); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
 </script>
-<script src="ask-actions.js?v=328"></script>
+<script src="shop-import.js?v=334"></script>
+<script src="ask-actions.js?v=334"></script>
 </body>
 </html>
