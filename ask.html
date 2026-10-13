@@ -179,6 +179,8 @@ ${data}${extra}`;
   }catch(e){ w.classList.remove('wait'); w.innerHTML=`Couldn't answer that: ${esc(e.message)}`; }
   btn.disabled=false; box.focus();
 }
+(async function(){ try{ const { data:{ session } }=await db.auth.getSession(); if(!session){ location.href='auth.html'; return; } const U=session.user;
+  const prefs=await loadUserPrefs(U.id); await initTheme(U.id,prefs); await initDisplayName(U,prefs); initProfilePopover(U.id); }catch(e){ console.warn('profile',e); } })();
 (function(){ const v=new URLSearchParams(location.search).get('q'); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
 </script>
 <script src="ask-actions.js?v=328"></script>
