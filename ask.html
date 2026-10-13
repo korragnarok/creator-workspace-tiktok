@@ -39,6 +39,7 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 .achk{display:flex;align-items:center;gap:8px;font-size:13px;margin:6px 0;cursor:pointer;} .achk input{width:auto;}
 .aplan{border-top:1px solid var(--border-mid);padding:8px 0;} .awhy{font-size:12px;color:var(--text-muted);margin:2px 0 6px 24px;} .aplanrow{display:flex;gap:8px;align-items:center;margin-left:24px;font-size:12.5px;} .aplanrow select,.aplanrow input{background:var(--surface);border:1px solid var(--border-mid);border-radius:10px;padding:7px 9px;color:var(--ink);font:13px 'Nunito Sans',sans-serif;}
 .apol{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;} .apol.ok{background:#2e7d4f22;color:#4caf7a;} .apol.fix{background:#c8792022;color:#d9a441;}
+.hint{font-size:13px;color:var(--text-muted);margin:-6px 0 16px;} .hint a{color:var(--rust);font-weight:800;cursor:pointer;}
 .foot{font-size:11px;color:var(--text-muted);text-align:center;}
 @media(max-width:768px){body{padding:16px;padding-top:88px;} h1{font-size:32px;} .msg{max-width:96%;}}
 </style>
@@ -47,7 +48,7 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 <div class="wrap">
   <h1>Ask <em>Take24</em></h1>
   <div class="sub">Ask anything about your account — or tell it what happened ("made a sale on my sock drawer video, $40 GMV, $6 comm") or what to plan ("3 car videos on the Glossi tomorrow"). It always shows you what it'll save first.</div>
-  <div class="chips" id="chips"></div>
+  <div class="hint">Not sure what to ask? Just ask <a onclick="document.getElementById('q').value='What can you do?';send()">"what can you do?"</a></div>
   <div class="log" id="log"></div>
   <div class="ask">
     <textarea id="q" placeholder="Ask a question, log a sale, or plan your filming…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}"></textarea>
@@ -69,7 +70,12 @@ const CHAT=[]; let DATA=null, DATA_AT=0;
 const pad=n=>String(n).padStart(2,'0'), ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-document.getElementById('chips').innerHTML=SUGGEST.map(s=>`<button class="chip" onclick="document.getElementById('q').value=this.textContent;send()">${esc(s)}</button>`).join('');
+const HELP=`<p>Here's what I can do — just type it the way you'd say it:</p>
+<p><b>📊 Answer questions about your account</b></p><ul><li>"Why were my sales down this week?"</li><li>"Which products make me the most per video?"</li><li>"What's my best day to post?"</li><li>"What's trending in my category right now?"</li></ul>
+<p><b>🗓 Plan your day</b></p><ul><li>"Plan my day" · "Plan tomorrow around promos and outliers"</li><li>"Plan my day based on what sold from videos recently"</li><li>"What's left today?"</li><li>"Add 2 talking head and 3 car videos for the Glossi today"</li><li>"Move today to Thursday" · "Mark 2 Glossi takes filmed"</li></ul>
+<p><b>✍️ Scripts &amp; captions</b></p><ul><li>"Write a middle of funnel script for the FlexStyle, it's on promo"</li><li>"Script for the Glossi in the car, angle: holiday party hair"</li><li>"Give me a caption for the Depuffi"</li></ul>
+<p><b>💰 Log things</b></p><ul><li>"Made a sale on my 'sock drawer' video, $40 GMV, $6 commission"</li><li>"Showcase sale on the FlexStyle yesterday, $X GMV, $X comm"</li><li>"Posted the Glossi car video on @thecozyko, caption '…', HQ"</li><li>"Add a promo for the CryoGlow Oct 20–26, Shark Beauty"</li><li>"Add a note to the Depuffi: ships slow"</li></ul>
+<p class="note">Anything that saves shows you a card to check first — nothing changes until you tap Save.</p>`;
 
 function md(t){ // tiny markdown: **bold**, bullets, paragraphs
   const lines=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split('\n'); let out='',inList=false;
@@ -147,6 +153,7 @@ async function gemText(prompt,history=[]){
 async function send(){
   const box=document.getElementById('q'), btn=document.getElementById('go'), question=box.value.trim(); if(!question) return;
   box.value=''; btn.disabled=true; add('me',esc(question));
+  if(/^\s*(what (else )?can (you|i) (do|ask|say)|help|what do you do|how do (i|you) use (this|you))\b/i.test(question)){ add('ai',HELP); btn.disabled=false; box.focus(); return; }
   const w=add('ai','Looking at your numbers…','wait');
   try{
     if(typeof actTry==='function'&&await actTry(question,w)){ CHAT.push({role:'user',parts:[{text:question}]},{role:'model',parts:[{text:'(showed a confirm card to save that)'}]}); btn.disabled=false; box.focus(); return; }
