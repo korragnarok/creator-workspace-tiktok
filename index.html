@@ -900,6 +900,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
             </div>
             <a class="card ideas-btn" href="ideas.html"><div class="b-title">Content Ideas</div><div class="ib-count" id="ideasCount"></div><div class="ib-go">Open ideas board →</div></a>
             <button type="button" class="card brief-btn" onclick="window.showMorningBrief&&showMorningBrief()" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;cursor:pointer;text-align:left;font:inherit;color:inherit"><span><span class="b-title" style="display:block">☀ Today's Brief</span><span style="font-size:12px;color:var(--text-muted)">Promos, outliers, sales &amp; more</span></span><span style="color:var(--tan);font-size:20px">→</span></button>
+            <button type="button" class="card brief-btn" onclick="window.openRecap&&openRecap()" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;cursor:pointer;text-align:left;font:inherit;color:inherit"><span><span class="b-title" style="display:block">📅 Monthly Recap</span><span style="font-size:12px;color:var(--text-muted)">Your month at a glance</span></span><span style="color:var(--tan);font-size:20px">→</span></button>
             </div>
           <div class="stats-grid mob-order-2">
             <div class="stat-card">
@@ -937,7 +938,6 @@ select.sched-location-tag:focus{border-color:var(--rust);}
           </button>
         </div>
 
-        <div id="glance"></div>
         <section class="top-layout">
         </section>
 
@@ -1513,7 +1513,6 @@ async function init() {
   const user = await requireAuth();
   if (!user) return;
   _dashboardUser=user;
-  setTimeout(()=>window.renderGlance&&renderGlance(document.getElementById('glance')),200);
   try{ await linkPromoProducts(user.id); await syncPromoTodos(user.id); }catch(e){}   // Shark/Ninja promo items land on the to-do 2 days early
   renderPromoHome(user.id);
   const prefs = await loadUserPrefs(user.id);
@@ -2640,7 +2639,6 @@ async function cycleSchedStatus(id){
   if(item.done)_doneToday++;
   else if(cur==='filmed')_doneToday=Math.max(0,_doneToday-1);
   renderTodayContent();
-  window.renderGlance&&renderGlance(document.getElementById('glance'));
   if(item.done&&_todayQueue.length&&_todayQueue.every(q=>q.done)&&typeof celebrate==='function') celebrate('To-do list done for today! 🎉',{count:200});
   renderLineup(_dashboardUser?.id);
 }
@@ -2882,7 +2880,6 @@ async function toggleTodayItem(id,button){
   item.done=nextDone;
   _doneToday+=nextDone?1:-1;
   renderTodayContent();
-  window.renderGlance&&renderGlance(document.getElementById('glance'));
   if(item.done&&_todayQueue.length&&_todayQueue.every(q=>q.done)&&typeof celebrate==='function') celebrate('To-do list done for today! 🎉',{count:200});
   renderLineup(_dashboardUser?.id);
 }
