@@ -56,7 +56,7 @@ const ACT_SCHEMA = { type: 'OBJECT', properties: {
     note: { type: 'STRING' }, count: { type: 'NUMBER' },
     columns: { type: 'ARRAY', items: { type: 'OBJECT', properties: { column: { type: 'STRING', enum: ['talking', 'vacuum', 'faceless', 'car'] }, takes: { type: 'NUMBER' } }, required: ['column', 'takes'] } },
     link: { type: 'STRING' }, high_quality: { type: 'BOOLEAN' }, column: { type: 'STRING' },
-    metric: { type: 'STRING', enum: ['gmv', 'comm', 'units'] }, amount: { type: 'NUMBER' }, period: { type: 'STRING', enum: ['month', 'week'] },
+    metric: { type: 'STRING', enum: ['gmv', 'comm', 'units', 'videos'] }, amount: { type: 'NUMBER' }, period: { type: 'STRING', enum: ['month', 'week', 'day'] },
     brand: { type: 'STRING' }, free_sample: { type: 'BOOLEAN' }, status: { type: 'STRING', enum: ['active', 'paused', 'shelved', 'promote'] }, hq: { type: 'BOOLEAN' },
     funnel: { type: 'STRING', enum: ['Top', 'Middle'] }, on_sale: { type: 'BOOLEAN' }, angle: { type: 'STRING' },
     focus: { type: 'ARRAY', items: { type: 'STRING', enum: ['promos', 'outliers', 'video_sales', 'showcase_sales', 'samples', 'not_filmed_lately'] } }, days: { type: 'NUMBER' },
@@ -82,7 +82,7 @@ Action types:
 - product_note: product, note.
 - plan_day: she wants the app to PLAN/FILL her filming day for her ("plan my day", "what should I film today, add it", "fill my board for tomorrow"). date, count = how many products if she says (else 0). focus = ONLY if she says what to base it on, in her order: promos, outliers (high-view / viral / outlier videos), video_sales (products that sold from videos), showcase_sales, samples (free samples), not_filmed_lately. "based on what sold from videos recently" → ["video_sales"]. "promos and outliers" → ["promos","outliers"]. "what's been selling" (no source) → ["video_sales","showcase_sales"]. days = lookback if she says ("this week" → 7, "recently" → 0 = default, "this month" → 30).
 - whats_left: she asks what's left / still to film / to do today (date). Not a general strategy question.
-- set_goal: she sets a goal ("my goal is $2k GMV this month", "I want $300 commission this week", "goal: 50 sales this month"). metric gmv / comm (commission) / units (sales/units), amount as a plain number, period month (default) or week. Asking HOW she's doing on a goal is NOT an action.
+- set_goal: she sets a goal ("my goal is $2k GMV this month", "I want $300 commission this week", "goal: 50 sales this month"). metric gmv / comm (commission) / units (sales/units) / videos (videos posted — "post 3 videos a day", "60 videos this month"), amount as a plain number, period month (default), week, or day ("a day" / "per day" / "daily"). Asking HOW she's doing on a goal is NOT an action.
 - add_reminder: a reminder or to-do that isn't filming a product ("remind me to repost the CryoGlow Friday", "remind me to email QVC tomorrow"). note = the reminder in short plain words, date.
 - add_product: she got / wants to add a NEW product ("I got a free sample of the X from Y", "add the X to my products"). product = product name as she says it, brand, link if she pastes one, free_sample true if she says free sample / sample / they sent it, note = anything else she says about it.
 - set_status: change a product's stock status. product, status: "active" (back in stock / restock / unshelve), "paused" (out of stock), "shelved" (shelve / stop promoting / done with it), "promote" (push it / promote now).
@@ -158,7 +158,7 @@ function actCardHtml(a, i, c) {
       + `<label class="achk"><input type="checkbox" id="${k}_m" checked> Mark a take filmed on the Film Board</label>`;
   } else if (a.type === 'set_goal') {
     title = '🎯 Set a goal';
-    body = `<div class="arow3">${row('Goal', actSel(k + '_m', [['gmv', 'GMV $'], ['comm', 'Commission $'], ['units', 'Units sold']], a.metric || 'gmv'))}${row('Amount', `<input type="number" min="0" id="${k}_amt" value="${a.amount || ''}">`)}${row('Per', actSel(k + '_per', [['month', 'Month'], ['week', 'Week']], a.period || 'month'))}</div><div class="sub" style="font-size:12px;margin:0">Counts both accounts. Ask "am I on pace?" anytime.</div>`;
+    body = `<div class="arow3">${row('Goal', actSel(k + '_m', [['gmv', 'GMV $'], ['comm', 'Commission $'], ['units', 'Units sold'], ['videos', 'Videos posted']], a.metric || 'gmv'))}${row('Amount', `<input type="number" min="0" id="${k}_amt" value="${a.amount || ''}">`)}${row('Per', actSel(k + '_per', [['month', 'Month'], ['week', 'Week'], ['day', 'Day']], a.period || 'month'))}</div><div class="sub" style="font-size:12px;margin:0">Counts both accounts. Ask "am I on pace?" anytime.</div>`;
   } else if (a.type === 'add_reminder') {
     title = '⏰ Add a reminder';
     body = row('Reminder', `<input id="${k}_n" value="${esc(a.note || '')}">`) + row('Day', `<input type="date" id="${k}_d" value="${date}">`) + `<div class="sub" style="font-size:12px;margin:0">Shows on your Home to-do that day (not on the Film Board).</div>`;
@@ -578,7 +578,7 @@ async function actHQ(k, a, c) {
 async function actGoal(k, a, c) {
   const m = v$(k, '_m'), amt = +v$(k, '_amt') || 0, per = v$(k, '_per'); if (!amt) throw new Error('add an amount');
   const g = (await plannerGet('goals', {})) || {}; g[per] = { ...(g[per] || {}), [m]: amt }; await plannerSet('goals', g);
-  return `Goal set: <b>${m === 'units' ? amt + ' units' : '$' + amt.toLocaleString()}${m === 'comm' ? ' commission' : m === 'gmv' ? ' GMV' : ''}</b> per ${per}. Ask "am I on pace?" anytime.`;
+  return `Goal set: <b>${m === 'units' ? amt + ' units' : m === 'videos' ? amt + ' video' + (amt === 1 ? '' : 's') + ' posted' : '$' + amt.toLocaleString()}${m === 'comm' ? ' commission' : m === 'gmv' ? ' GMV' : ''}</b> per ${per}. Ask "am I on pace?" anytime.`;
 }
 async function actReminder(k, a, c) {
   const note = v$(k, '_n').trim(), date = v$(k, '_d'); if (!note) throw new Error('write the reminder');
@@ -586,14 +586,16 @@ async function actReminder(k, a, c) {
   if (error) throw error; return `Reminder added for ${esc(prettyD(date))}: <b>${esc(note)}</b>.`;
 }
 // goal progress text for the analyst (used by ask.html gather)
-async function actGoalsSummary(sales) {
-  const g = (await plannerGet('goals', {}).catch(() => ({}))) || {}; if (!g.month && !g.week) return '';
+async function actGoalsSummary(sales, vids) {
+  const g = (await plannerGet('goals', {}).catch(() => ({}))) || {}; if (!g.month && !g.week && !g.day) return '';
   const t = new Date(), today = ymd(t), out = ['\nHER GOALS (both accounts combined; pace = projected total at the current daily rate):'];
-  const sum = (from, to) => (sales || []).filter(s => s.date >= from && s.date <= to).reduce((a, s) => ({ gmv: a.gmv + (+s.gmv || 0), comm: a.comm + (+s.comm || 0), units: a.units + (+s.units || 0) }), { gmv: 0, comm: 0, units: 0 });
+  const sum = (from, to) => ({ ...(sales || []).filter(s => s.date >= from && s.date <= to).reduce((a, s) => ({ gmv: a.gmv + (+s.gmv || 0), comm: a.comm + (+s.comm || 0), units: a.units + (+s.units || 0) }), { gmv: 0, comm: 0, units: 0 }),
+    videos: (vids || []).filter(v => { const d = String(v.date || '').slice(0, 10); return d >= from && d <= to; }).length });
   const line = (per, from, to, totalDays) => { const tot = sum(from, today), elapsed = Math.round((new Date(today) - new Date(from)) / 864e5) + 1;
     Object.entries(g[per] || {}).forEach(([m, goal]) => { const have = tot[m], pace = have / elapsed * totalDays;
-      out.push(`- ${per === 'month' ? 'This month' : 'This week'} ${m}: goal ${goal}, so far ${have.toFixed(m === 'units' ? 0 : 2)} (${Math.round(have / goal * 100)}%), day ${elapsed} of ${totalDays}, on pace for ${pace.toFixed(m === 'units' ? 0 : 2)} → ${pace >= goal ? 'ON PACE' : 'BEHIND — needs ' + ((goal - have) / Math.max(1, totalDays - elapsed)).toFixed(2) + ' per day for the rest of the ' + per}`); }); };
+      out.push(`- ${per === 'month' ? 'This month' : per === 'week' ? 'This week' : 'Today'} ${m}: goal ${goal}, so far ${have.toFixed(/units|videos/.test(m) ? 0 : 2)} (${Math.round(have / goal * 100)}%), day ${elapsed} of ${totalDays}, on pace for ${pace.toFixed(/units|videos/.test(m) ? 0 : 2)} → ${pace >= goal ? 'ON PACE' : 'BEHIND — needs ' + ((goal - have) / Math.max(1, totalDays - elapsed)).toFixed(2) + ' per day for the rest of the ' + per}`); }); };
   if (g.month) { const first = today.slice(0, 8) + '01', days = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate(); line('month', first, today, days); }
+  if (g.day) line('day', today, today, 1);
   if (g.week) { const d = new Date(t); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); line('week', ymd(d), today, 7); }
   return out.join('\n');
 }

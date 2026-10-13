@@ -77,7 +77,7 @@ const HELP=`<p>Here's what I can do — just type it the way you'd say it:</p>
 <p><b>✍️ Scripts &amp; captions</b></p><ul><li>"Write a middle of funnel script for the FlexStyle, it's on promo"</li><li>"Script for the Glossi in the car, angle: holiday party hair"</li><li>"Give me a caption for the Depuffi"</li></ul>
 <p><b>💰 Log things</b></p><ul><li>"Made a sale on my 'sock drawer' video, $40 GMV, $6 commission"</li><li>"Showcase sale on the FlexStyle yesterday, $X GMV, $X comm"</li><li>"Posted the Glossi car video on @thecozyko, caption '…', HQ"</li><li>"Add a promo for the CryoGlow Oct 20–26, Shark Beauty"</li><li>"Add a note to the Depuffi: ships slow"</li></ul>
 <p><b>📦 Products</b></p><ul><li>"I got a free sample of the CurlCharm from Shark Beauty"</li><li>"Glossi is out of stock" · "Restock the FlexStyle" · "Shelve the Depuffi"</li><li>"The sock drawer video was high quality"</li></ul>
-<p><b>🎯 Goals &amp; reminders</b></p><ul><li>"My goal is $2,000 GMV this month" · "Am I on pace?"</li><li>"How'd I do this week?"</li><li>"Remind me to repost the CryoGlow Friday"</li></ul>
+<p><b>🎯 Goals &amp; reminders</b></p><ul><li>"My goal is $2,000 GMV this month" · "Goal: post 3 videos a day" · "Am I on pace?"</li><li>"How'd I do this week?"</li><li>"Remind me to repost the CryoGlow Friday"</li></ul>
 <p class="note">Anything that saves shows you a card to check first — nothing changes until you tap Save.</p>`;
 
 function md(t){ // tiny markdown: **bold**, bullets, paragraphs
@@ -126,7 +126,7 @@ async function gather(){
   lines.push(`\nSCRIPT VAULT TITLES: ${scripts.map(s=>s.title).join('; ')}`);
   lines.push(`\nVIDEO FEEDBACK HISTORY (what she said in reviewed videos):`);
   fb.slice(0,20).forEach(h=>{ const f=h.fb||{}; lines.push(`- ${new Date(h.at).toISOString().slice(0,10)} ${h.product||h.name||''}: score ${f.score??''}; ${String(f.summary||f.why_it_worked||'').slice(0,200)}${f.transcript?` | SAID: "${String(f.transcript).slice(0,600)}"`:''}`); });
-  try{ if(typeof actGoalsSummary==='function'){ const gs=await actGoalsSummary(sales); if(gs) lines.splice(2,0,gs); } }catch(e){}
+  try{ if(typeof actGoalsSummary==='function'){ const gs=await actGoalsSummary(sales,vids); if(gs) lines.splice(2,0,gs); } }catch(e){}
   DATA=lines.join('\n').slice(0,180000); DATA_AT=Date.now();
   return DATA;
 }
@@ -189,6 +189,6 @@ ${data}${extra}`;
 (function(){ const v=new URLSearchParams(location.search).get('q'); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
 </script>
 <script src="shop-import.js?v=334"></script>
-<script src="ask-actions.js?v=335"></script>
+<script src="ask-actions.js?v=336"></script>
 </body>
 </html>
