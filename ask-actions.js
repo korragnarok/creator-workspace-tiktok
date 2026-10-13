@@ -307,9 +307,11 @@ async function actPlanDayCard(a, i, c) {
     db.from('queue').select('prod_id,date,done').eq('user_id', c.uid).gte('date', ymd(addDays(new Date(), -120))),
     db.from('queue').select('prod_id').eq('user_id', c.uid).eq('date', date),
     plannerGet('filmStyleMem', {}).catch(() => ({})),
-    db.from('videos').select('prod_id').eq('user_id', c.uid).not('prod_id', 'is', null)
+    db.from('videos').select('id,prod_id,title,brand,views,units,gmv,date').eq('user_id', c.uid).gte('date', ymd(addDays(new Date(), -60))),
   ]);
-  const onDay = new Set((dayQ || []).map(r => r.prod_id)), posted = new Set((vids || []).map(v => v.prod_id));
+  const { data: sales } = await db.from('sales').select('video_sales,date').eq('user_id', c.uid).gte('date', ymd(addDays(new Date(), -60)));
+  const onDay = new Set((dayQ || []).map(r => r.prod_id)), posted = new Set((vids || []).filter(v => v.prod_id).map(v => v.prod_id));
+  const vidProd = v => c.prods.find(p => p.id === v.prod_id) || (v.brand ? c.prods.find(p => actNorm(p.name) === actNorm(v.brand)) : null) || actProd(c, `${v.brand || ''} ${v.title || ''}`)[0] || null;
   const last = {}; (q90 || []).filter(r => r.done && r.prod_id).forEach(r => { if (!last[r.prod_id] || r.date > last[r.prod_id]) last[r.prod_id] = r.date; });
   const active = c.prods.filter(p => !/shelved|paused|inactive|archived/i.test(p.status || '') && !onDay.has(p.id));
   const picks = [], seen = new Set(), push = (p, why, takes) => { if (p && !seen.has(p.id) && !onDay.has(p.id)) { seen.add(p.id); picks.push({ p, why, takes }); } };
@@ -318,6 +320,17 @@ async function actPlanDayCard(a, i, c) {
     const p = c.prods.find(x => x.id === pr.prod_id) || actProd(c, pr.product)[0]; const d = days(pr.end_date);
     push(p, `${pr.priority ? '★ ' : ''}Promo ${d <= 0 ? 'ends today' : d === 1 ? 'ends tomorrow' : `ends in ${d} days`}`, d <= 2 ? 2 : 1);
   });
+  // videos that beat her average views (last 60 days)
+  const vv = (vids || []).filter(v => +v.views > 0), avg = vv.length ? vv.reduce((s, v) => s + +v.views, 0) / vv.length : 0;
+  vv.filter(v => avg && +v.views >= avg * 1.5).sort((a, b) => b.views - a.views).forEach(v => {
+    const p = vidProd(v); if (p && !/shelved|paused|inactive|archived/i.test(p.status || '')) push(p, `Outlier video — ${Number(v.views).toLocaleString()} views (${(v.views / avg).toFixed(1)}× your average)`, 2); });
+  // products on videos (or showcase) that made sales
+  const sold = {}; (sales || []).forEach(d => { let r = d.video_sales; if (typeof r === 'string') { try { r = JSON.parse(r); } catch (e) { r = []; } }
+    (Array.isArray(r) ? r : []).forEach(x => { const p = x.source === 'showcase' ? c.prods.find(pp => pp.id === x.product_id) : (() => { const v = (vids || []).find(vv => String(vv.id) === String(x.video_id)); return v ? vidProd(v) : null; })();
+      if (p) { sold[p.id] = sold[p.id] || { p, u: 0, g: 0 }; sold[p.id].u += +x.units || 0; sold[p.id].g += +x.gmv || 0; } }); });
+  (vids || []).filter(v => (+v.units || 0) > 0 || (+v.gmv || 0) > 0).forEach(v => { const p = vidProd(v); if (p && !sold[p.id]) sold[p.id] = { p, u: +v.units || 0, g: +v.gmv || 0 }; });
+  Object.values(sold).filter(x => !/shelved|paused|inactive|archived/i.test(x.p.status || '')).sort((a, b) => b.g - a.g || b.u - a.u)
+    .forEach(x => push(x.p, `Made sales lately — ${x.u} sold${x.g ? `, $${x.g.toFixed(0)} GMV` : ''} in the last 60 days`, 1));
   active.filter(p => /FREE_SAMPLE/.test(p.notes || '') && !last[p.id] && !posted.has(p.id)).forEach(p => push(p, 'Free sample — not filmed yet', 1));
   active.filter(p => (+p.units_sold || 0) > 0).map(p => ({ p, gap: last[p.id] ? days(last[p.id]) * -1 : 999 })).filter(x => x.gap >= 7)
     .sort((x, y) => (+y.p.units_sold || 0) - (+x.p.units_sold || 0)).forEach(x => push(x.p, x.gap >= 999 ? `Has sold ${x.p.units_sold} — no recent filming` : `Has sold ${x.p.units_sold} — last filmed ${x.gap} days ago`, 1));
