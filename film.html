@@ -79,7 +79,7 @@ textarea{resize:vertical;line-height:1.55;}
   .tabs{display:flex;} .board{grid-template-columns:1fr;} .col{display:none;} .col.show{display:block;}
   .mv-row{display:flex;} .card{cursor:default;}
 }
-.takes label.has-script{border-color:#1f6b45 !important;box-shadow:0 0 0 1px #1f6b45 inset;}
+.takes label.has-script{border-color:var(--rust) !important;box-shadow:0 0 0 1px var(--rust) inset;}
 </style>
 </head>
 <body>
@@ -181,7 +181,7 @@ function card(g){
   const acct=ACCTS[g.acct]||'';
   return `<div class="card${g.done?' done':''}" data-key="${esc(g.key)}" draggable="true" ondragstart="dragStart(event,'${esc(g.key)}')" ondragend="this.classList.remove('dragging')" ondragover="this.classList.add('dropbefore')" ondragleave="this.classList.remove('dropbefore')">
     <button class="cx" title="Remove" onclick="removeCard('${esc(g.key)}')">×</button>
-    <div class="ctop">${img?`<img src="${esc(img)}" alt="">`:'<span class="ph"></span>'}<div style="min-width:0"><div class="cname">${esc(g.name)}</div><div class="cmeta">${esc(g.brand||g.p?.brand||'')}${acct?` · ${esc(acct)}`:''}</div></div></div>
+    <div class="ctop">${img?`<img src="${esc(img)}" alt="">`:'<span class="ph"></span>'}<div style="min-width:0"><div class="cname">${esc(g.name)}</div><div class="cmeta">${esc(g.brand||g.p?.brand||'')}</div></div></div>
     <div class="badges">${promo?'<span class="bd promo">★ Promo</span>':''}${sample?'<span class="bd sample">Free sample</span>':''}${noScript?'<span class="bd warn">No script yet</span>':''}${g.done?'<span class="bd ok">✓ Filmed</span>':''}${shots.length?`<span class="bd" style="background:var(--surface-2);color:var(--ink)">📷 ${sDone}/${shots.length} shots</span>`:''}</div>
     <div class="takes">${g.rows.map((r,i)=>`<label${String(r.script||'').trim()?' class="has-script" title="Has a script"':''}><input type="checkbox" ${r.done?'checked':''} onchange="toggleTake('${r.id}',this.checked)">Take ${i+1}</label>`).join('')}${g.rows.length>1?`<button class="btn sm" style="padding:4px 10px" title="Remove last take" onclick="removeTake('${esc(g.key)}')">−</button>`:''}<button class="btn sm" style="padding:4px 9px" title="Add a take" onclick="addTake('${esc(g.key)}')">+</button></div>
     <div class="cbtns"><button class="btn sm" onclick="openItem('${esc(g.key)}','script')">Script</button><button class="btn sm" onclick="openItem('${esc(g.key)}','shots')">Shots</button><button class="btn sm" onclick="openItem('${esc(g.key)}','seo')">SEO &amp; caption</button><button class="btn sm" onclick="copyCard('${esc(g.key)}')" title="Make a copy under this one">⧉ Copy</button></div>
@@ -298,7 +298,7 @@ function drawM(){
       <textarea id="capTxt" rows="5" placeholder="Paste the caption + hashtags">${esc(g.meta.caption||'')}</textarea>
       <div class="row" style="margin-top:10px;justify-content:flex-end"><span class="saved" id="sv"></span><button class="btn sm primary" onclick="saveSeo()">Save</button></div>`;
   }
-  document.getElementById('mc').innerHTML=`<div class="mh"><div><h2>${esc(g.name)}</h2><div class="sub">${esc(g.brand||g.p?.brand||'')}${ACCTS[g.acct]?` · ${esc(ACCTS[g.acct])}`:''}</div></div><button class="x" onclick="closeM()">×</button></div>
+  document.getElementById('mc').innerHTML=`<div class="mh"><div><h2>${esc(g.name)}</h2><div class="sub">${esc(g.brand||g.p?.brand||'')}</div></div><button class="x" onclick="closeM()">×</button></div>
     <div class="mtabs">${tabs.map(([k,l])=>`<button class="tab${MTAB===k?' on':''}" onclick="MTAB='${k}';EDITING=false;drawM()">${l}</button>`).join('')}</div>${body}`;
 }
 async function saveScript(id){
