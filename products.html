@@ -365,6 +365,9 @@ tr.select-mode .tbl-action{display:none;}
 </div>
 <footer><div class="footer-brand">Creator Hub</div><div class="footer-note">TikTok Shop Creator Workspace</div></footer>
 <script src="layout.js?v=246"></script>
+<script src="planner-sync.js?v=238"></script>
+<script src="celebrate.js?v=338"></script>
+<script src="insights.js?v=339"></script>
 <script>
 function previewProductImg(input) {
   const file = input.files[0];
@@ -819,7 +822,7 @@ async function init() {
         '<td class="num"><span class="gmv-value">'+(gmv?fmtMoney(gmv):'-')+'</span></td>'+
         '<td style="display:none"><div class="features-cell"><span class="editable-cell" onclick="beginProductInlineEdit(event,\''+p.id+'\',\'notes\')">'+esc(productFeatures(p))+'</span></div></td>'+
         '<td>'+linkBadgesHtml(p)+'</td>'+
-        '<td><div class="tbl-actions"><button class="tbl-action" onclick="event.stopPropagation();makeContent(\''+p.id+'\')">Make Content</button><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button><button class="tbl-action" style="color:var(--sage)" onclick="event.stopPropagation();scoutProduct(\''+p.name+'\',\''+p.brand+'\')">Scout</button></div></td>'+
+        '<td><div class="tbl-actions"><button class="tbl-action" onclick="event.stopPropagation();openScorecard(\''+p.id+'\')">📊 Score</button><button class="tbl-action" onclick="event.stopPropagation();makeContent(\''+p.id+'\')">Make Content</button><button class="tbl-action" onclick="event.stopPropagation();openModal(\''+p.id+'\')">Edit</button><button class="tbl-action" style="color:var(--sage)" onclick="event.stopPropagation();scoutProduct(\''+p.name+'\',\''+p.brand+'\')">Scout</button></div></td>'+
       '</tr>';
     }).join('');
     updateSortHeaders();

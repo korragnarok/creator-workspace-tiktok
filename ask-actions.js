@@ -221,6 +221,7 @@ async function actRun(k, btn) {
     const el = document.getElementById(k); el.querySelector('.abtns').remove(); el.classList.add('done');
     el.querySelectorAll('input,select,textarea').forEach(x => x.disabled = true);
     stat.innerHTML = '✓ ' + msg;
+    if (typeof celebrate === 'function') { if (a.type === 'log_sale') celebrate('Sale logged! 💰', { count: 120 }); else if (a.type === 'set_goal') celebrate('Goal set — let\'s go! 🎯', { count: 80 }); else if (a.type === 'add_product') celebrate('', { count: 50 }); }
     ACT.ctx = null; if (typeof DATA !== 'undefined') { DATA = null; }
     if (a.type === 'log_sale' && ACT.pendingNote) add('ai', `Would you like to add any notes for <b>${esc(prettyD(ACT.pendingNote.date))}</b>? Just type them, or say "no".`);
   } catch (e) { btn.disabled = false; btn.textContent = 'Save'; stat.textContent = 'Could not save: ' + e.message; }

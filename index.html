@@ -937,6 +937,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
           </button>
         </div>
 
+        <div id="glance"></div>
         <section class="top-layout">
         </section>
 
@@ -1119,6 +1120,8 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 <script src="playbook.js?v=314"></script>
 <script src="policy.js?v=297"></script>
 <script src="layout.js?v=260"></script>
+<script src="celebrate.js?v=338"></script>
+<script src="insights.js?v=339"></script>
 <script src="morning-brief.js?v=283"></script>
 <script>
 // ─── Planner board extras ──────────────────────────────────────────────
@@ -1510,6 +1513,7 @@ async function init() {
   const user = await requireAuth();
   if (!user) return;
   _dashboardUser=user;
+  setTimeout(()=>window.renderGlance&&renderGlance(document.getElementById('glance')),200);
   try{ await linkPromoProducts(user.id); await syncPromoTodos(user.id); }catch(e){}   // Shark/Ninja promo items land on the to-do 2 days early
   renderPromoHome(user.id);
   const prefs = await loadUserPrefs(user.id);
@@ -2636,6 +2640,8 @@ async function cycleSchedStatus(id){
   if(item.done)_doneToday++;
   else if(cur==='filmed')_doneToday=Math.max(0,_doneToday-1);
   renderTodayContent();
+  window.renderGlance&&renderGlance(document.getElementById('glance'));
+  if(item.done&&_todayQueue.length&&_todayQueue.every(q=>q.done)&&typeof celebrate==='function') celebrate('To-do list done for today! 🎉',{count:200});
   renderLineup(_dashboardUser?.id);
 }
 // ── Bulk Edit ───────────────────────────────────────────────────────────────
@@ -2876,6 +2882,8 @@ async function toggleTodayItem(id,button){
   item.done=nextDone;
   _doneToday+=nextDone?1:-1;
   renderTodayContent();
+  window.renderGlance&&renderGlance(document.getElementById('glance'));
+  if(item.done&&_todayQueue.length&&_todayQueue.every(q=>q.done)&&typeof celebrate==='function') celebrate('To-do list done for today! 🎉',{count:200});
   renderLineup(_dashboardUser?.id);
 }
 async function renderLineup(userId) {

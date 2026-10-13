@@ -42,6 +42,11 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 .hint{font-size:13px;color:var(--text-muted);margin:-6px 0 16px;} .hint a{color:var(--rust);font-weight:800;cursor:pointer;}
 .ashop{display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid var(--border-mid);border-radius:10px;margin-bottom:6px;cursor:pointer;background:var(--surface);} .ashop input{width:auto;} .ashop img{width:40px;height:40px;object-fit:cover;border-radius:8px;} .ashop span{display:flex;flex-direction:column;font-size:13px;color:var(--ink);} .ashop small{color:var(--text-muted);font-size:11.5px;}
 .alink{background:none;border:0;padding:2px 0 0;color:var(--rust);font:700 11.5px 'Nunito Sans',sans-serif;cursor:pointer;text-align:left;}
+.ask .mic{background:var(--surface);border:1px solid var(--border-mid);color:var(--ink);padding:0 14px;display:flex;align-items:center;justify-content:center;}
+.ask .mic.on{background:#c0392b;border-color:#c0392b;color:#fff;animation:micpulse 1.2s infinite;}
+@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.5);}50%{box-shadow:0 0 0 8px rgba(192,57,43,0);}}
+.qa{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;} .qa button{border:1px solid var(--border-mid);background:var(--bg);color:var(--ink);border-radius:999px;padding:7px 13px;font:700 12.5px 'Nunito Sans',sans-serif;cursor:pointer;} .qa button:hover{border-color:var(--tan);}
+.clearchat{font-size:11px;color:var(--text-muted);text-align:center;cursor:pointer;margin-bottom:6px;} .clearchat:hover{color:var(--rust);}
 .foot{font-size:11px;color:var(--text-muted);text-align:center;}
 @media(max-width:768px){body{padding:16px;padding-top:88px;} h1{font-size:32px;} .msg{max-width:96%;}}
 </style>
@@ -52,8 +57,10 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
   <div class="sub">Ask anything about your account — or tell it what happened ("made a sale on my sock drawer video, $40 GMV, $6 comm") or what to plan ("3 car videos on the Glossi tomorrow"). It always shows you what it'll save first.</div>
   <div class="hint">Not sure what to ask? Just ask <a onclick="document.getElementById('q').value='What can you do?';send()">"what can you do?"</a></div>
   <div class="log" id="log"></div>
+  <div class="clearchat" id="clearchat" style="display:none" onclick="clearChat()">Clear today's chat</div>
   <div class="ask">
     <textarea id="q" placeholder="Ask a question, log a sale, or plan your filming…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}"></textarea>
+    <button id="mic" class="mic" type="button" title="Talk instead of typing" onclick="toggleMic()" aria-label="Voice input"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
     <button id="go" onclick="send()">Ask</button>
   </div>
   <div class="foot">Uses your Take24 data only. "Trending" answers use public TikTok views, not sales. It can make mistakes.</div>
@@ -62,6 +69,7 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 <script src="supabase.js?v=260"></script>
 <script src="planner-sync.js?v=238"></script>
 <script src="layout.js?v=260"></script>
+<script src="celebrate.js?v=338"></script>
 <script src="promos-sync.js?v=319"></script>
 <script src="playbook.js?v=314"></script>
 <script src="policy.js?v=297"></script>
@@ -185,11 +193,62 @@ ${data}${extra}`;
   }catch(e){ w.classList.remove('wait'); w.innerHTML=`Couldn't answer that: ${esc(e.message)}`; }
   btn.disabled=false; box.focus();
 }
+// ── voice input ──
+let REC=null;
+function toggleMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition, b=document.getElementById('mic'), box=document.getElementById('q');
+  if(!SR){ alert("Voice input isn't supported in this browser. Try Chrome or Safari, or use your keyboard's mic button."); return; }
+  if(REC){ REC.stop(); return; }
+  const base=box.value.trim(); REC=new SR(); REC.lang='en-US'; REC.interimResults=true; REC.continuous=true;
+  REC.onresult=e=>{ let t=''; for(let i=0;i<e.results.length;i++) t+=e.results[i][0].transcript; box.value=(base?base+' ':'')+t.trim(); };
+  REC.onend=()=>{ REC=null; b.classList.remove('on'); box.focus(); };
+  REC.onerror=e=>{ if(e.error==='not-allowed') alert('Allow microphone access for this site to use voice input.'); };
+  REC.start(); b.classList.add('on');
+}
+// ── remember today's chat ──
+const CHAT_KEY='take24:askChat';
+function saveChat(){ try{ const log=document.getElementById('log'); localStorage.setItem(CHAT_KEY,JSON.stringify({day:ymd(new Date()),html:log.innerHTML,chat:CHAT.slice(-20)})); document.getElementById('clearchat').style.display=log.children.length?'':'none'; }catch(e){} }
+function restoreChat(){
+  try{ const s=JSON.parse(localStorage.getItem(CHAT_KEY)||'null'); if(!s||s.day!==ymd(new Date())||!s.html) return false;
+    const log=document.getElementById('log'); log.innerHTML=s.html; (s.chat||[]).forEach(m=>CHAT.push(m));
+    log.querySelectorAll('.msg.wait').forEach(m=>{ m.classList.remove('wait'); m.innerHTML='<i>(interrupted — ask again)</i>'; });
+    log.querySelectorAll('.acard:not(.done)').forEach(c=>{ c.querySelector('.abtns')?.remove(); c.classList.add('done'); const st=c.querySelector('.astat'); if(st) st.textContent='Not saved — ask again to save this.'; });
+    document.getElementById('clearchat').style.display=''; setTimeout(()=>log.lastElementChild?.scrollIntoView({block:'end'}),50); return true; }catch(e){ return false; }
+}
+function clearChat(){ if(!confirm("Clear today's chat?")) return; CHAT.length=0; document.getElementById('log').innerHTML=''; try{ localStorage.removeItem(CHAT_KEY); }catch(e){} document.getElementById('clearchat').style.display='none'; nudge(); }
+let _saveT=null; new MutationObserver(()=>{ clearTimeout(_saveT); _saveT=setTimeout(saveChat,400); }).observe(document.getElementById('log'),{childList:true,subtree:true,attributes:true,characterData:true});
+function askThis(t){ document.getElementById('q').value=t; send(); }
+// ── daily nudge ──
+async function nudge(){
+  try{
+    const { data:{ session } }=await db.auth.getSession(); if(!session) return; const uid=session.user.id, t=new Date(), today=ymd(t), in2=ymd(addDays(t,2));
+    const hr=t.getHours(), hi=hr<12?'Good morning':hr<17?'Hey':'Evening';
+    const [{data:promos},{data:q},goals,{data:sales}]=await Promise.all([
+      db.from('promos').select('product,end_date,priority').eq('user_id',uid).lte('start_date',today).gte('end_date',today).lte('end_date',in2),
+      db.from('queue').select('done,notes,prod_id').eq('user_id',uid).eq('date',today),
+      plannerGet('goals',{}).catch(()=>({})),
+      db.from('sales').select('date,gmv,comm,units').eq('user_id',uid).gte('date',today.slice(0,8)+'01')
+    ]);
+    const lines=[], btns=[];
+    const takes=(q||[]).filter(r=>!/^REMINDER$/m.test(r.notes||'')), left=takes.filter(r=>!r.done).length, rem=(q||[]).filter(r=>/^REMINDER$/m.test(r.notes||'')&&!r.done).length;
+    if(promos?.length){ lines.push(`⏳ <b>${promos.length} promo${promos.length===1?'':'s'}</b> end${promos.length===1?'s':''} in the next 2 days: ${promos.slice(0,4).map(p=>esc(p.product)).join(', ')}${promos.length>4?'…':''}.`); btns.push(['Plan my day around them','Plan my day based on promos']); }
+    if(!takes.length){ lines.push('🎬 Nothing on your Film Board for today yet.'); btns.push(['Plan my day','Plan my day']); }
+    else if(left){ lines.push(`🎬 <b>${left} take${left===1?'':'s'}</b> left on today's board.`); btns.push(["What's left?","What's left today?"]); }
+    else lines.push('🎉 Every take on today\'s board is filmed.');
+    if(rem) lines.push(`⏰ ${rem} reminder${rem===1?'':'s'} for today.`);
+    const gm=(goals||{}).month||{}; const metric=Object.keys(gm).find(m=>m!=='videos');
+    if(metric){ const have=(sales||[]).reduce((s,x)=>s+(+x[metric]||0),0), days=new Date(t.getFullYear(),t.getMonth()+1,0).getDate(), pace=have/t.getDate()*days, goal=gm[metric];
+      const fmt=v=>metric==='units'?Math.round(v):'$'+Math.round(v).toLocaleString();
+      lines.push(`🎯 ${fmt(have)} of ${fmt(goal)} ${metric==='comm'?'commission':metric==='gmv'?'GMV':'units'} this month — ${pace>=goal?'<b>on pace</b> 🙌':'a little <b>behind</b> pace'}.`); btns.push(['Am I on pace?','Am I on pace for my goals?']); }
+    if(!lines.length) return;
+    add('ai',`<p>${hi}! Here's where things stand:</p>${lines.map(l=>`<p>${l}</p>`).join('')}<div class="qa">${btns.slice(0,3).map(([l,qq])=>`<button onclick="askThis('${qq.replace(/'/g,"\\'")}')">${esc(l)}</button>`).join('')}</div>`,'nudge');
+  }catch(e){ console.warn('nudge',e); }
+}
 (async function(){ try{ const { data:{ session } }=await db.auth.getSession(); if(!session){ location.href='auth.html'; return; } const U=session.user;
   const prefs=await loadUserPrefs(U.id); await initTheme(U.id,prefs); await initDisplayName(U,prefs); initProfilePopover(U.id); }catch(e){ console.warn('profile',e); } })();
-(function(){ const v=new URLSearchParams(location.search).get('q'); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
+(function(){ const v=new URLSearchParams(location.search).get('q'); const had=restoreChat(); if(!had&&!v) setTimeout(nudge,400); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
 </script>
 <script src="shop-import.js?v=334"></script>
-<script src="ask-actions.js?v=337"></script>
+<script src="ask-actions.js?v=338"></script>
 </body>
 </html>
