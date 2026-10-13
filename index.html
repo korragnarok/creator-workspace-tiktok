@@ -2518,7 +2518,7 @@ function renderTodayContent(){
     const allDone=items.every(x=>x.done), nScripts=items.filter(x=>String(x.script||'').trim()).length;
     const rawTime=parseSchedTime(q.notes);
     const timeLabel=rawTime?fmtSchedTime(rawTime):'+ time';
-    const cleanLine=String(q.notes||'').split('\n').find(l=>l.trim()&&!/^SCHED_TIME:/i.test(l)&&!/^STATUS:/i.test(l)&&!/^LOCATION:/i.test(l)&&!/^TYPE:/i.test(l)&&!/^ON_SCREEN_TEXT:/i.test(l)&&!/^SEO_STRATEGY:/i.test(l)&&!/^CAPTION:/i.test(l)&&!/^HASHTAGS:/i.test(l)&&!/^SUPPLIES_HAVE:/i.test(l)&&!/^SUPPLIES_NEED:/i.test(l)&&!/^\[copy:\w+\]$/.test(l.trim()))||'';
+    const cleanLine=String(q.notes||'').split('\n').find(l=>l.trim()&&!/^SCHED_TIME:/i.test(l)&&!/^STATUS:/i.test(l)&&!/^LOCATION:/i.test(l)&&!/^TYPE:/i.test(l)&&!/^ON_SCREEN_TEXT:/i.test(l)&&!/^SEO_STRATEGY:/i.test(l)&&!/^CAPTION:/i.test(l)&&!/^HASHTAGS:/i.test(l)&&!/^SUPPLIES_HAVE:/i.test(l)&&!/^SUPPLIES_NEED:/i.test(l)&&!/^\[copy:\w+\]$/.test(l.trim())&&!/^REMINDER$/.test(l.trim()))||'';
     const typeTag=parseSchedType(q.notes);
     const formatLabel=schedFormatLabel(typeTag);
     const angleLabel=schedAngleLabel(cleanLine);

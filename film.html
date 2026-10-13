@@ -150,7 +150,7 @@ async function load(){
     db.from('promos').select('product,deal,start_date,end_date').eq('user_id',USER.id).lte('start_date',day).gte('end_date',day).then(r=>r,()=>({data:[]}))
   ]);
   PROMOS=promoRes?.data||[];
-  ROWS=rows||[]; META=(board||{})[day]||{}; STYLEMEM=mem||{};
+  ROWS=(rows||[]).filter(r=>!/^REMINDER$/m.test(r.notes||'')); META=(board||{})[day]||{}; STYLEMEM=mem||{};
   render();
 }
 function render(){
