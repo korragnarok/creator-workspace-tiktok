@@ -79,6 +79,7 @@ textarea{resize:vertical;line-height:1.55;}
   .tabs{display:flex;} .board{grid-template-columns:1fr;} .col{display:none;} .col.show{display:block;}
   .mv-row{display:flex;} .card{cursor:default;}
 }
+.takes label.has-script{border-color:#4caf7a !important;box-shadow:0 0 0 1px #4caf7a inset;}
 </style>
 </head>
 <body>
@@ -182,7 +183,7 @@ function card(g){
     <button class="cx" title="Remove" onclick="removeCard('${esc(g.key)}')">×</button>
     <div class="ctop">${img?`<img src="${esc(img)}" alt="">`:'<span class="ph"></span>'}<div style="min-width:0"><div class="cname">${esc(g.name)}</div><div class="cmeta">${esc(g.brand||g.p?.brand||'')}${acct?` · ${esc(acct)}`:''}</div></div></div>
     <div class="badges">${promo?'<span class="bd promo">★ Promo</span>':''}${sample?'<span class="bd sample">Free sample</span>':''}${noScript?'<span class="bd warn">No script yet</span>':''}${g.done?'<span class="bd ok">✓ Filmed</span>':''}${shots.length?`<span class="bd" style="background:var(--surface-2);color:var(--ink)">📷 ${sDone}/${shots.length} shots</span>`:''}</div>
-    <div class="takes">${g.rows.map((r,i)=>`<label><input type="checkbox" ${r.done?'checked':''} onchange="toggleTake('${r.id}',this.checked)">Take ${i+1}</label>`).join('')}${g.rows.length>1?`<button class="btn sm" style="padding:4px 10px" title="Remove last take" onclick="removeTake('${esc(g.key)}')">−</button>`:''}<button class="btn sm" style="padding:4px 9px" title="Add a take" onclick="addTake('${esc(g.key)}')">+</button></div>
+    <div class="takes">${g.rows.map((r,i)=>`<label${String(r.script||'').trim()?' class="has-script" title="Has a script"':''}><input type="checkbox" ${r.done?'checked':''} onchange="toggleTake('${r.id}',this.checked)">Take ${i+1}</label>`).join('')}${g.rows.length>1?`<button class="btn sm" style="padding:4px 10px" title="Remove last take" onclick="removeTake('${esc(g.key)}')">−</button>`:''}<button class="btn sm" style="padding:4px 9px" title="Add a take" onclick="addTake('${esc(g.key)}')">+</button></div>
     <div class="cbtns"><button class="btn sm" onclick="openItem('${esc(g.key)}','script')">Script</button><button class="btn sm" onclick="openItem('${esc(g.key)}','shots')">Shots</button><button class="btn sm" onclick="openItem('${esc(g.key)}','seo')">SEO &amp; caption</button><button class="btn sm" onclick="copyCard('${esc(g.key)}')" title="Make a copy under this one">⧉ Copy</button></div>
     <div class="mv-row"><button class="btn sm" onclick="nudge('${esc(g.key)}',-1)" title="Move up">↑</button><button class="btn sm" onclick="nudge('${esc(g.key)}',1)" title="Move down">↓</button>
     <select class="mv" onchange="placeCard('${esc(g.key)}',this.value,null)">${COLS.map(([k,l])=>`<option value="${k}"${g.style===k?' selected':''}>Move to: ${l}</option>`).join('')}</select></div>
