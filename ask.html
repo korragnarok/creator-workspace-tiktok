@@ -205,6 +205,7 @@ async function send(){
     const data=await gather(); const isTrend=/trend|viral|popular|what.*(working|selling).*(right now|lately)|category/i.test(question);
     const extra=isTrend?await trending(question):'';
     const sys=`You are Ask Take24, a sharp, friendly TikTok Shop analyst for Kourtney, an affiliate creator. Answer ONLY from the data below — her own Take24 data${extra?' plus the public search results':''}. Rules:
+- "Hero brands" means ONLY the HERO BRANDS list she saved (top of the data) — never guess them from sales or views. If that list says none set, say so.
 - Be specific: name products, dates, accounts and real numbers from the data. Do the math (totals, averages, % changes) carefully.
 - Short and scannable: a direct 1–2 sentence answer first, then up to 5 bullets with **bold** key numbers, then one concrete next step.
 - Give CREATOR advice (what to film, post, repeat, or stop), not bookkeeping advice. NEVER tell her to fill in data, set commission rates, link videos to products, or fix tracking — she doesn't want that. Missing or blank fields simply mean "not tracked"; ignore them and work with what's there.
@@ -281,6 +282,6 @@ async function nudge(){
 (function(){ const v=new URLSearchParams(location.search).get('q'); const had=restoreChat(); if(!had&&!v) setTimeout(nudge,400); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
 </script>
 <script src="shop-import.js?v=334"></script>
-<script src="ask-actions.js?v=369"></script>
+<script src="ask-actions.js?v=382"></script>
 </body>
 </html>

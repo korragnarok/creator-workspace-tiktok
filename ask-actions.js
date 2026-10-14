@@ -9,7 +9,7 @@ const ACT_COLS_DEFAULT = { talking: '🗣 Talking head', vacuum: '🎬 Demo / vo
 
 // quick gate so plain questions skip the extra AI call
 function actLooksLikeAction(t) {
-  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|hashtags?|hook|write|product|products|sample|samples|got|stock|restock|shelve|shelved|promote|goal|goals|remind|reminder|reminders)\b/i.test(t);
+  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|hashtags?|hook|write|product|products|sample|samples|got|stock|restock|shelve|shelved|promote|goal|goals|remind|reminder|reminders|hero|heroes|swap)\b/i.test(t);
 }
 
 async function actContext() {
@@ -48,7 +48,7 @@ const actProd = (c, name) => actFind(c.prods, name, p => `${p.name} ${p.brand ||
 const ACT_SCHEMA = { type: 'OBJECT', properties: {
   is_action: { type: 'BOOLEAN' },
   actions: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
-    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script', 'add_product', 'set_status', 'mark_hq', 'set_goal', 'add_reminder', 'move_takes'] },
+    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script', 'add_product', 'set_status', 'mark_hq', 'set_goal', 'add_reminder', 'move_takes', 'set_hero'] },
     date: { type: 'STRING' }, to_date: { type: 'STRING' },
     source: { type: 'STRING', enum: ['video', 'showcase'] },
     caption: { type: 'STRING' }, product: { type: 'STRING' }, account: { type: 'STRING' },
@@ -61,6 +61,7 @@ const ACT_SCHEMA = { type: 'OBJECT', properties: {
     brand: { type: 'STRING' }, free_sample: { type: 'BOOLEAN' }, status: { type: 'STRING', enum: ['active', 'paused', 'shelved', 'promote'] }, hq: { type: 'BOOLEAN' },
     funnel: { type: 'STRING', enum: ['Top', 'Middle'] }, on_sale: { type: 'BOOLEAN' }, angle: { type: 'STRING' },
     focus: { type: 'ARRAY', items: { type: 'STRING', enum: ['promos', 'outliers', 'video_sales', 'showcase_sales', 'samples', 'not_filmed_lately'] } }, days: { type: 'NUMBER' },
+    hero_mode: { type: 'STRING', enum: ['set', 'add', 'remove', 'swap'] }, brands: { type: 'ARRAY', items: { type: 'STRING' } }, remove_brands: { type: 'ARRAY', items: { type: 'STRING' } },
     line: { type: 'STRING' }, deal: { type: 'STRING' }, start_date: { type: 'STRING' }, end_date: { type: 'STRING' }
   }, required: ['type'] } }
 }, required: ['is_action', 'actions'] };
@@ -88,6 +89,7 @@ Action types:
 - add_reminder: a reminder or to-do that isn't filming a product ("remind me to repost the CryoGlow Friday", "remind me to email QVC tomorrow"). note = the reminder in short plain words, date.
 - add_product: she got / wants to add a NEW product ("I got a free sample of the X from Y", "add the X to my products"). product = product name as she says it, brand, link if she pastes one, free_sample true if she says free sample / sample / they sent it, note = anything else she says about it.
 - set_status: change a product's stock status. product, status: "active" (back in stock / restock / unshelve), "paused" (out of stock), "shelved" (shelve / stop promoting / done with it), "promote" (push it / promote now).
+- set_hero: change her HERO BRANDS list (max 7). hero_mode: "set" = replace the whole list with brands; "add" = add brands; "remove" = remove remove_brands; "swap" = remove remove_brands and add brands ("swap PetLab for Jiyu" → remove_brands [PetLab], brands [Jiyu]).
 - mark_hq: mark a posted video high quality (or not). caption = words from the caption/description she gives, product if she names it, hq = false only if she says NOT high quality.
 - write_script: she wants a video SCRIPT written (or a caption/hashtags for a product). product, funnel ("Middle" if she says middle of funnel / push the sale / get them to buy, else "Top"), on_sale true only if she says it's on sale/promo, column = the filming style if she says it, angle = any specific idea/angle/hook she mentions, date if she says one.
 - log_video: she POSTED a video ("posted the Glossi car video on @thecozyko, caption '...'"). caption = the caption/description she gives, product, account, date, link if given, high_quality true only if she says HQ/high quality, column = which style it was if she says it.
@@ -168,6 +170,16 @@ function actCardHtml(a, i, c) {
     title = '📦 Change stock status';
     const st = a.status || 'active';
     body = row('Product', actProdSel(c, k + '_p', a.product)) + row('Status', actSel(k + '_st', [['active', 'In stock'], ['paused', 'Out of stock'], ['promote', 'Promote now'], ['shelved', 'Shelved']], st));
+  } else if (a.type === 'set_hero') {
+    title = '⭐ Update Hero Brands';
+    const acct = (typeof getActiveAccountId === 'function' ? getActiveAccountId() : null) || 'default';
+    let cur = []; try { cur = (typeof _cachedCore5 === 'function' ? _cachedCore5(c.uid, acct) : []).filter(Boolean); } catch (e) {}
+    const low = x => String(x).trim().toLowerCase(), rm = (a.remove_brands || []).map(low);
+    let list = a.hero_mode === 'set' ? [] : cur.filter(b => !rm.some(r => low(b).includes(r) || r.includes(low(b))));
+    if (a.hero_mode !== 'remove') (a.brands || []).forEach(b => { b = String(b).trim(); if (b && !list.some(x => low(x) === low(b))) list.push(b); });
+    const over = list.length > 7; list = list.slice(0, 7);
+    body = (over ? '<div class="awarn">Only 7 fit — I kept the first 7.</div>' : '') + `<div class="sub" style="font-size:12px;margin:0 0 6px">Was: ${esc(cur.join(', ') || 'none')}</div>`
+      + [0,1,2,3,4,5,6].map(i => row(`#${i + 1}`, `<input id="${k}_h${i}" value="${esc(list[i] || '')}" placeholder="—">`)).join('');
   } else if (a.type === 'mark_hq') {
     title = a.hq === false ? '☆ Remove high quality' : '★ Mark high quality';
     const m = actFind(c.vids, `${a.caption || ''} ${a.product || ''}`.trim(), 'title', 30);
@@ -241,7 +253,7 @@ async function actRun(k, btn) {
   const a = ACT.cards[k], c = await actContext(), stat = document.querySelector(`#${k} .astat`);
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    const msg = await ({ set_goal: actGoal, add_reminder: actReminder, add_product: actAddProductSave, set_status: actStatus, mark_hq: actHQ, write_script: actScriptSave, plan_day: actPlanDaySave, log_video: actVideo, log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
+    const msg = await ({ set_goal: actGoal, add_reminder: actReminder, add_product: actAddProductSave, set_status: actStatus, mark_hq: actHQ, set_hero: actHero, write_script: actScriptSave, plan_day: actPlanDaySave, log_video: actVideo, log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
     const el = document.getElementById(k); el.querySelector('.abtns').remove(); el.classList.add('done');
     el.querySelectorAll('input,select,textarea').forEach(x => x.disabled = true);
     stat.innerHTML = '✓ ' + msg;
@@ -593,6 +605,18 @@ async function actStatus(k, a, c) {
   const pid = v$(k, '_p'), st = v$(k, '_st'); if (!pid) throw new Error('pick the product');
   const { error } = await db.from('products').update({ status: st }).eq('id', pid).eq('user_id', c.uid); if (error) throw error;
   return `<b>${esc(c.prods.find(p => p.id === pid)?.name || 'Product')}</b> is now <b>${{ active: 'in stock', paused: 'out of stock', promote: 'promote now', shelved: 'shelved' }[st]}</b>.`;
+}
+async function actHero(k, a, c) {
+  const vals = [0,1,2,3,4,5,6].map(i => (document.getElementById(`${k}_h${i}`)?.value || '').trim());
+  const acct = (typeof getActiveAccountId === 'function' ? getActiveAccountId() : null) || 'default';
+  const { data } = await db.from('user_prefs').select('core5_by_account').eq('user_id', c.uid).maybeSingle();
+  const upd = { ...(data?.core5_by_account || {}), [acct]: vals };
+  if (typeof saveUserPrefs === 'function') await saveUserPrefs(c.uid, { core5_by_account: upd });
+  else { const { error } = await db.from('user_prefs').upsert({ user_id: c.uid, core5_by_account: upd }, { onConflict: 'user_id' }); if (error) throw error; }
+  try { _cacheCore5(c.uid, vals, acct); } catch (e) {}
+  try { const P = window.parent; if (P && P !== window && P._renderCore5Pills) { P._cacheCore5 && P._cacheCore5(c.uid, vals, acct); P._renderCore5Pills(vals); } } catch (e) {}
+  try { if (typeof DATA !== 'undefined') DATA = null; } catch (e) {}
+  return `Saved your Hero Brands: <b>${esc(vals.filter(Boolean).join(', ') || 'none')}</b>.`;
 }
 async function actHQ(k, a, c) {
   const vid = v$(k, '_v'), hq = !!document.getElementById(k + '_hq')?.checked; if (!vid) throw new Error('pick the video');
