@@ -760,7 +760,14 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .tp-s{text-align:left;border:1px solid var(--border);background:var(--bg-lift);border-radius:10px;padding:9px 12px;cursor:pointer;color:var(--ink);font:inherit;}
 .tp-s:hover{border-color:var(--tan);}
 .tp-s b{display:block;font-size:13px;} .tp-s small{display:block;color:var(--text-muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#heroBrandsSlot{display:none!important;}   /* Hero Brands now live on the Products page */
+#heroBrandsSlot{padding:12px 14px!important;margin-top:14px;}
+#heroBrandsSlot:empty{display:none;}
+#heroBrandsSlot .core-sidebar{border:0!important;background:none!important;padding:0!important;margin:0!important;box-shadow:none!important;}
+#heroBrandsSlot .core-sidebar-head{font-family:'Cormorant Garamond',serif;font-size:19px;text-align:center;margin-bottom:6px;color:var(--ink);}
+#heroBrandsSlot .core-mini-list{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;}
+#heroBrandsSlot .core-mini-item{display:flex;align-items:center;gap:6px;}
+#heroBrandsSlot .core-mini-num{font-size:10px;font-weight:800;color:var(--tan);width:12px;flex:none;}
+#heroBrandsSlot .core-mini-input{width:100%;min-width:0;border:0;border-bottom:1px dashed var(--border-mid);background:transparent;padding:3px 0;font-size:12.5px;color:var(--ink);}
 .tile-count{font-size:10px;color:var(--tan);margin-top:2px;}
 .tp-take{border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:10px;background:var(--bg-lift);}
 .tp-take.active{border-color:var(--tan);}
@@ -922,7 +929,6 @@ select.sched-location-tag:focus{border-color:var(--rust);}
             <div class="b-cal-head"><button type="button" class="b-cal-arrow" onclick="bCalShift(-1)" aria-label="Previous month">‹</button><div class="b-title" id="bCalMonth"></div><button type="button" class="b-cal-arrow" onclick="bCalShift(1)" aria-label="Next month">›</button></div>
             <div class="b-cal-grid" id="bCalGrid"></div>
           </div>
-          <div id="heroBrandsSlot"></div>
             <div class="goals-col left-goals">
             <div class="card ask-mini">
               <div class="b-title">Ask Take24</div>
@@ -1110,6 +1116,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
             </div>
           </div>
           </div>
+          <div class="card hero-card" id="heroBrandsSlot"></div>
         </aside>
       </div>
 
