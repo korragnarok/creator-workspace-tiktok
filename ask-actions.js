@@ -48,7 +48,7 @@ const actProd = (c, name) => actFind(c.prods, name, p => `${p.name} ${p.brand ||
 const ACT_SCHEMA = { type: 'OBJECT', properties: {
   is_action: { type: 'BOOLEAN' },
   actions: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
-    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script', 'add_product', 'set_status', 'mark_hq', 'set_goal', 'add_reminder'] },
+    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script', 'add_product', 'set_status', 'mark_hq', 'set_goal', 'add_reminder', 'move_takes'] },
     date: { type: 'STRING' }, to_date: { type: 'STRING' },
     source: { type: 'STRING', enum: ['video', 'showcase'] },
     caption: { type: 'STRING' }, product: { type: 'STRING' }, account: { type: 'STRING' },
@@ -56,6 +56,7 @@ const ACT_SCHEMA = { type: 'OBJECT', properties: {
     note: { type: 'STRING' }, count: { type: 'NUMBER' },
     columns: { type: 'ARRAY', items: { type: 'OBJECT', properties: { column: { type: 'STRING', enum: ['talking', 'vacuum', 'faceless', 'car'] }, takes: { type: 'NUMBER' } }, required: ['column', 'takes'] } },
     link: { type: 'STRING' }, high_quality: { type: 'BOOLEAN' }, column: { type: 'STRING' },
+    takes_list: { type: 'ARRAY', items: { type: 'NUMBER' } }, all_takes: { type: 'BOOLEAN' },
     metric: { type: 'STRING', enum: ['gmv', 'comm', 'units', 'videos'] }, amount: { type: 'NUMBER' }, period: { type: 'STRING', enum: ['month', 'week', 'day'] },
     brand: { type: 'STRING' }, free_sample: { type: 'BOOLEAN' }, status: { type: 'STRING', enum: ['active', 'paused', 'shelved', 'promote'] }, hq: { type: 'BOOLEAN' },
     funnel: { type: 'STRING', enum: ['Top', 'Middle'] }, on_sale: { type: 'BOOLEAN' }, angle: { type: 'STRING' },
@@ -76,7 +77,8 @@ Action types:
 - log_sale: a sale. source "video" (from a video — put the caption/description words she gives in "caption", and the product if she says it) or "showcase" (from her showcase — put the product in "product"). units (default 1 if she says "a sale"), gmv and comm as plain numbers (no $). account only if she names one.
 - day_note: a note for a sales day (note, date).
 - film_plan: filming plan / add a product to her Film Board or to-do ("add X to my to do", "put X on my board"). product, date, columns = list of {column, takes}. "5 videos, 2 talking head and 3 in the car" → [{talking,2},{car,3}]. If she gives no style, use one entry with column "talking".
-- move_day: move everything planned on "date" to "to_date".
+- move_day: move EVERYTHING planned on "date" to "to_date" (only when she means the whole day).
+- move_takes: move ONE product (or some of its takes) to another day ("move the jiyu toner pads, take 1, to tomorrow", "move all takes of the Glossi to Friday"). product, date = the day it's on now (default today), to_date = where it goes, takes_list = take numbers she names, all_takes = true if she says all / doesn't name takes.
 - mark_filmed: mark takes filmed (product, date, count — 0 means all).
 - add_promo: product, line (Shark / Ninja / Shark Beauty), deal (as she says it), start_date, end_date.
 - product_note: product, note.
@@ -198,7 +200,7 @@ async function actTry(text, waitEl) {
   const acts = (parsed.actions || []).filter(a => a && a.type);
   // trust the words she typed for the date ("tomorrow", "friday", "oct 15") over the AI's guess
   const ld = actLocalDate(text);
-  if (ld) acts.forEach(x => { if (x.type !== 'move_day' && x.type !== 'add_promo' && x.type !== 'set_goal') x.date = ld; });
+  if (ld) acts.forEach(x => { if (x.type === 'move_takes') { if (!/\bfrom\b/i.test(text)) x.to_date = ld; } else if (x.type !== 'move_day' && x.type !== 'add_promo' && x.type !== 'set_goal') x.date = ld; });
   if (!parsed.is_action || !acts.length) return false;
   waitEl.textContent = 'Getting it ready…';
   let c; try { c = await actTimeout(actContext(), 20000, 'Loading your videos and products'); }
@@ -207,8 +209,8 @@ async function actTry(text, waitEl) {
   let html = '';
   for (const a of left) html += await actWhatsLeft(c, dOk(a.date));
   const cards = [];
-  for (let i = 0; i < rest.length; i++) { const t = rest[i].type; if (t === 'write_script') waitEl.textContent = 'Writing your script…'; if (t === 'add_product') waitEl.textContent = 'Looking it up on TikTok Shop…'; cards.push(t === 'plan_day' ? await actPlanDayCard(rest[i], i, c) : t === 'write_script' ? await actScriptCard(rest[i], i, c) : t === 'add_product' ? await actAddProductCard(rest[i], i, c) : t === 'film_plan' ? await actFilmAuto(rest[i], i, c) : actCardHtml(rest[i], i, c)); }
-  if (cards.length) html += (rest.some(x => x.type !== 'film_plan') ? `<p>Here's what I'll do — check it and tap <b>Save</b>:</p>` : '') + cards.join('');
+  for (let i = 0; i < rest.length; i++) { const t = rest[i].type; if (t === 'write_script') waitEl.textContent = 'Writing your script…'; if (t === 'add_product') waitEl.textContent = 'Looking it up on TikTok Shop…'; cards.push(t === 'plan_day' ? await actPlanDayCard(rest[i], i, c) : t === 'write_script' ? await actScriptCard(rest[i], i, c) : t === 'add_product' ? await actAddProductCard(rest[i], i, c) : t === 'film_plan' ? await actFilmAuto(rest[i], i, c) : t === 'move_takes' ? await actMoveTakes(rest[i], i, c) : actCardHtml(rest[i], i, c)); }
+  if (cards.length) html += (rest.some(x => x.type !== 'film_plan' && x.type !== 'move_takes') ? `<p>Here's what I'll do — check it and tap <b>Save</b>:</p>` : '') + cards.join('');
   waitEl.classList.remove('wait');
   waitEl.innerHTML = html;
   return true;
@@ -669,4 +671,41 @@ function actLocalDate(text) {
   const sl = t.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
   if (sl && +sl[1] <= 12 && +sl[2] <= 31) { let y = sl[3] ? +sl[3] : base.getFullYear(); if (y < 100) y += 2000; return ymd(new Date(y, +sl[1] - 1, +sl[2])); }
   return '';
+}
+
+// ─── Move one product (or some takes) to another day ───
+async function actMoveTakes(a, i, c) {
+  const k = `a${Date.now().toString(36)}${i}`, from = dOk(a.date), to = /^\d{4}-\d{2}-\d{2}$/.test(a.to_date || '') ? a.to_date : ymd(addDays(new Date(from + 'T00:00:00'), 1));
+  const { data: rows } = await db.from('queue').select('id,prod_id,name,notes,done,sort_order').eq('user_id', c.uid).eq('date', from).order('sort_order').order('id');
+  const onDay = {}; (rows || []).filter(r => r.prod_id && !/^REMINDER$/m.test(r.notes || '')).forEach(r => (onDay[r.prod_id] = onDay[r.prod_id] || []).push(r));
+  const cand = Object.keys(onDay).map(pid => ({ p: c.prods.find(x => x.id === pid) || { id: pid, name: onDay[pid][0].name, brand: '' }, rows: onDay[pid] }))
+    .map(o => ({ ...o, s: actScore(`${o.p.name} ${o.p.brand || ''}`, a.product || '') })).filter(o => o.s >= 20).sort((x, y) => y.s - x.s);
+  ACT.cards[k] = { ...a, type: 'move_pick', from, to, cand };
+  if (!cand.length) return `<div class="acard done" id="${k}"><div class="astat">I couldn't find "${esc(a.product || '')}" on your Film Board for ${esc(prettyD(from))}.</div></div>`;
+  const sure = cand[0].s >= 100 || (cand[0].s >= 60 && (!cand[1] || cand[0].s - cand[1].s >= 25));
+  if (sure) return await actMoveDo(k, 0, c);
+  return `<div class="acard" id="${k}"><div class="atitle">📅 Which one?</div><div class="sub" style="margin:0 0 8px;font-size:12.5px">Tap the product to move to ${esc(prettyD(to))}:</div>
+    ${cand.slice(0, 6).map((o, j) => `<button type="button" class="ashop" style="width:100%;text-align:left" onclick="actMovePick('${k}',${j})">${o.p.image_url ? `<img src="${esc(o.p.image_url)}" alt="">` : ''}<span><b>${esc(o.p.name)}</b><small>${o.rows.length} take${o.rows.length === 1 ? '' : 's'}</small></span></button>`).join('')}
+    <div class="abtns"><button class="abtn" onclick="actSkip('${k}')">Never mind</button></div><div class="astat"></div></div>`;
+}
+async function actMovePick(k, j) { const c = await actContext(), el = document.getElementById(k); try { el.outerHTML = await actMoveDo(k, j, c); } catch (e) { el.querySelector('.astat').textContent = "Couldn't move it: " + e.message; } }
+async function actMoveDo(k, j, c) {
+  const a = ACT.cards[k], o = a.cand[j];
+  const nums = (a.takes_list || []).map(n => +n).filter(n => n >= 1 && n <= o.rows.length);
+  const pick = (a.all_takes || !nums.length) ? o.rows : nums.map(n => o.rows[n - 1]);
+  const ids = pick.map(r => r.id);
+  const { error } = await db.from('queue').update({ date: a.to }).in('id', ids).eq('user_id', c.uid); if (error) throw error;
+  const b = (await plannerGet('filmBoard', {})) || {}, keys = [...new Set(pick.map(r => String(r.prod_id) + ((String(r.notes || '').match(/\[copy:(\w+)\]/) || [])[1] ? '#' + String(r.notes).match(/\[copy:(\w+)\]/)[1] : '')))];
+  const all = ids.length === o.rows.length;
+  keys.forEach(key => { const m = (b[a.from] || {})[key]; if (m) { b[a.to] = { ...(b[a.to] || {}) }; b[a.to][key] = { ...m, ...(b[a.to][key] || {}), order: 999 }; if (all) delete b[a.from][key]; } });
+  await plannerSet('filmBoard', b);
+  a.undo = { ids, from: a.from, to: a.to, keys, all };
+  const which = all ? (ids.length === 1 ? 'its take' : `all ${ids.length} takes`) : `take${nums.length === 1 ? '' : 's'} ${nums.join(', ')}`;
+  return `<div class="acard done" id="${k}"><div class="astat">✓ Moved <b>${esc(o.p.name)}</b> (${which}) from ${esc(prettyD(a.from))} to <b>${esc(prettyD(a.to))}</b>. <a href="#" onclick="actMoveUndo('${k}');return false" style="color:var(--rust);font-weight:800;margin-left:6px">Undo</a></div></div>`;
+}
+async function actMoveUndo(k) {
+  const a = ACT.cards[k], u = a?.undo; if (!u) return; const c = await actContext();
+  await db.from('queue').update({ date: u.from }).in('id', u.ids).eq('user_id', c.uid);
+  const b = (await plannerGet('filmBoard', {})) || {}; u.keys.forEach(key => { const m = (b[u.to] || {})[key]; if (m) { b[u.from] = { ...(b[u.from] || {}) }; b[u.from][key] = m; if (u.all) delete b[u.to][key]; } }); await plannerSet('filmBoard', b);
+  a.undo = null; const st = document.querySelector(`#${k} .astat`); if (st) st.textContent = 'Undone — moved it back.';
 }

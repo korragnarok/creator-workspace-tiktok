@@ -97,7 +97,7 @@ const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const HELP=`<p>Here's what I can do — just type it the way you'd say it:</p>
 <p><b>📊 Answer questions about your account</b></p><ul><li>"Why were my sales down this week?"</li><li>"Which products make me the most per video?"</li><li>"What's my best day to post?"</li><li>"What's trending in my category right now?"</li></ul>
-<p><b>🗓 Plan your day</b></p><ul><li>"Plan my day" · "Plan tomorrow around promos and outliers"</li><li>"Plan my day based on what sold from videos recently"</li><li>"What's left today?"</li><li>"Add 2 talking head and 3 car videos for the Glossi today"</li><li>"Move today to Thursday" · "Mark 2 Glossi takes filmed"</li></ul>
+<p><b>🗓 Plan your day</b></p><ul><li>"Plan my day" · "Plan tomorrow around promos and outliers"</li><li>"Plan my day based on what sold from videos recently"</li><li>"What's left today?"</li><li>"Add 2 talking head and 3 car videos for the Glossi today"</li><li>"Move today to Thursday" · "Move the Glossi, take 1, to tomorrow" · "Mark 2 Glossi takes filmed"</li></ul>
 <p><b>✍️ Scripts &amp; captions</b></p><ul><li>"Write a middle of funnel script for the FlexStyle, it's on promo"</li><li>"Script for the Glossi in the car, angle: holiday party hair"</li><li>"Give me a caption for the Depuffi"</li></ul>
 <p><b>💰 Log things</b></p><ul><li>"Made a sale on my 'sock drawer' video, $40 GMV, $6 commission"</li><li>"Showcase sale on the FlexStyle yesterday, $X GMV, $X comm"</li><li>"Posted the Glossi car video on @thecozyko, caption '…', HQ"</li><li>"Add a promo for the CryoGlow Oct 20–26, Shark Beauty"</li><li>"Add a note to the Depuffi: ships slow"</li></ul>
 <p><b>📦 Products</b></p><ul><li>"I got a free sample of the CurlCharm from Shark Beauty"</li><li>"Glossi is out of stock" · "Restock the FlexStyle" · "Shelve the Depuffi"</li><li>"The sock drawer video was high quality"</li></ul>
@@ -264,6 +264,6 @@ async function nudge(){
 (function(){ const v=new URLSearchParams(location.search).get('q'); const had=restoreChat(); if(!had&&!v) setTimeout(nudge,400); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
 </script>
 <script src="shop-import.js?v=334"></script>
-<script src="ask-actions.js?v=358"></script>
+<script src="ask-actions.js?v=360"></script>
 </body>
 </html>
