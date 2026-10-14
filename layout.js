@@ -4,7 +4,12 @@
   if (!inShell) return;
   document.documentElement.classList.add('embedded');
   const st = document.createElement('style');
-  st.textContent = `html.embedded .desktop-sidebar,html.embedded .sidebar.desktop-sidebar,html.embedded .tab-bar,html.embedded .m-top,html.embedded .mobile-more-sheet,html.embedded .mobile-more-backdrop{display:none!important;}
+  st.textContent = `html.embedded .page-eyebrow,html.embedded .page-title,html.embedded .page-sub,
+    html.embedded .page-head .eyebrow,html.embedded .page-head .title,html.embedded .page-head .sub,
+    html.embedded .wrap>.head h1,html.embedded .wrap>h1{display:none!important;}
+    html.embedded .page,html.embedded main.page,html.embedded .wrap{padding-top:14px!important;}
+    html.embedded .page-header,html.embedded .page-head,html.embedded .wrap>.head{margin-top:0!important;padding-top:0!important;min-height:0!important;justify-content:flex-end!important;}
+    html.embedded .desktop-sidebar,html.embedded .sidebar.desktop-sidebar,html.embedded .tab-bar,html.embedded .m-top,html.embedded .mobile-more-sheet,html.embedded .mobile-more-backdrop{display:none!important;}
     html.embedded body,html.embedded body:not(.has-app-shell){padding-left:20px!important;padding-right:20px!important;padding-top:16px!important;padding-bottom:20px!important;}
     html.embedded .app-shell{grid-template-columns:minmax(0,1fr)!important;}`;
   document.head.appendChild(st);
