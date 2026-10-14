@@ -788,7 +788,7 @@ async function init() {
     renderBrandFilters(_allProducts);
     const filtered = _allProducts.filter(p => {
       if(_brandFilter === 'hero' && !isCoreProduct(p)) return false;
-      if(_brandFilter !== 'all' && _brandFilter !== 'hero' && brandKey(p.brand) !== _brandFilter) return false;
+      if(_brandFilter !== 'all' && _brandFilter !== 'hero' && (groupOf(_brandFilter) ? !inGroup(_brandFilter, p) : brandKey(p.brand) !== _brandFilter)) return false;
       const inStock = productInStock(p);
       const status = productStatus(p);
       if(_stockFilter === 'active' && status !== 'active') return false;
@@ -959,6 +959,10 @@ async function init() {
   function brandKey(brand) {
     return String(brand || 'No Brand').trim().toLowerCase();
   }
+  // Hero Brand groups: one name that means several brands
+  const BRAND_GROUPS = { 'shark/ninja': ['shark home', 'ninja kitchen'] };
+  function groupOf(key) { const k = String(key || '').toLowerCase().replace(/\s*(\/|&|and|\+)\s*/g, '/').replace(/\s+/g, ' ').trim(); return BRAND_GROUPS[k] ? k : null; }
+  function inGroup(key, p) { const g = BRAND_GROUPS[groupOf(key)]; return !!g && g.includes(brandKey(p.brand)); }
   function applyFiltersFromUrl() {
     const params = new URLSearchParams(window.location.search);
     const brand = params.get('brand');
@@ -1114,7 +1118,7 @@ async function init() {
   function isCoreProduct(p) {
     const name = String(p.name || '').trim().toLowerCase();
     const brand = String(p.brand || '').trim().toLowerCase();
-    return _coreNames.includes(name) || _coreNames.includes(brand);
+    return _coreNames.includes(name) || _coreNames.includes(brand) || _coreNames.some(c => groupOf(c) && BRAND_GROUPS[groupOf(c)].includes(brand));
   }
   function sortValue(p, field) {
     if(field === 'product') return String(p.name || '').toLowerCase();
@@ -1152,7 +1156,7 @@ async function init() {
     });
     const brands = Array.from(counts.entries()).sort((a,b) => b[1].count - a[1].count || a[1].label.localeCompare(b[1].label));
     const heroCount = products.filter(p => isCoreProduct(p)).length;
-    if(_brandFilter !== 'all' && _brandFilter !== 'hero' && !counts.has(_brandFilter)) _brandFilter = 'all';
+    if(_brandFilter !== 'all' && _brandFilter !== 'hero' && !groupOf(_brandFilter) && !counts.has(_brandFilter)) _brandFilter = 'all';
     el.innerHTML =
       `<button class="brand-pill ${_brandFilter === 'all' ? 'active' : ''}" data-brand="all" onclick="setBrandFilter(this,'all')">All Brands <span class="pill-count">${products.length}</span></button>` +
       (heroCount ? `<button class="brand-pill ${_brandFilter === 'hero' ? 'active' : ''} hero-pill" data-brand="hero" onclick="setBrandFilter(this,'hero')">Hero Brands <span class="pill-count">${heroCount}</span></button>` : '') +
