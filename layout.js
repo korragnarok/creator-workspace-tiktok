@@ -359,17 +359,23 @@
   // ── Phone layout: logo + profile, calendar, and folders at the top (replaces the tab bar) ──
   // Phone folders: the 6 main pages, plus a "More" folder that opens the rest
   const MOBILE_MAIN = ['video-tracker.html','products.html','brand-deals.html','scripts.html','sales-calendar.html','settings.html'];
+  // Phone nav: honeycomb like desktop — 8 pages, two interlocking rows of 4, light → dark brown
+  const MOBILE_HEX = ['film.html','video-tracker.html','products.html','sales-calendar.html','scripts.html','brand-deals.html','promos.html','video-feedback.html'];
   function mobileFolders(page) {
-    const tile = ([href,label]) => { const i = FOLDERS.findIndex(f => f[0] === href);
-      return `<a class="ls-folder${href === page ? ' active' : ''}" href="${href}"${extAttr(href)} style="--f:${folderShade(i)}">
-        <img class="ls-ic" src="icons/folder-${href === page ? 13 : folderNum(i)}.png" alt="" onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src='icons/folder-12.png';}else{this.outerHTML='<span class=&quot;ls-ic ls-fallback&quot;></span>';}"><span>${label}</span></a>`; };
-    const main = FOLDERS.filter(f => MOBILE_MAIN.includes(f[0])).sort((a,b) => MOBILE_MAIN.indexOf(a[0]) - MOBILE_MAIN.indexOf(b[0]));
-    const rest = FOLDERS.filter(f => !MOBILE_MAIN.includes(f[0]));
-    const moreActive = rest.some(f => f[0] === page);
-    return `<div class="ls-folders m-folders">${main.map(tile).join('')}
-      <button type="button" class="ls-folder m-more-btn${moreActive ? ' active' : ''}" onclick="this.closest('.m-top').classList.toggle('more-open')" style="--f:#3a2a22">
-        <span class="ls-ic ls-fallback m-more-ic">•••</span><span>More</span></button>
-      <div class="m-more">${rest.map(tile).join('')}</div></div>`;
+    const L = MOBILE_HEX.map(h => FOLDERS.find(f => f[0] === h) || [h, h === 'film.html' ? 'Film Board' : h === 'promos.html' ? 'Shark & Ninja' : h === 'video-feedback.html' ? 'Video Feedback' : h.replace('.html','')]);
+    const cell = ([href, label], i) => { const t = i / (L.length - 1), a = [226,201,176], b = [92,52,34], c = a.map((v,k) => Math.round(v + (b[k]-v) * t));
+      const fg = (c[0]*.299 + c[1]*.587 + c[2]*.114) > 150 ? '#3b2418' : '#fbefe3';
+      return `<a class="m-hex${href === page ? ' active' : ''}" href="${href}" style="--hb:rgb(${c.join(',')});--hf:${fg}"><span>${String(label).replace('&','&amp;')}</span></a>`; };
+    if (!document.getElementById('mHexCss')) { const st = document.createElement('style'); st.id = 'mHexCss';
+      st.textContent = `.m-hexgrid{--hw:min(20vw,80px);--hh:calc(var(--hw)*1.1547);--hg:5px;display:flex;flex-direction:column;align-items:center;padding:6px 0 4px;grid-column:1/-1;}
+        .m-hexrow{display:flex;gap:var(--hg);}
+        .m-hexrow:nth-child(1){transform:translateX(calc((var(--hw) + var(--hg))*-.25));}
+        .m-hexrow:nth-child(2){transform:translateX(calc((var(--hw) + var(--hg))*.25));margin-top:calc(var(--hh)*-.25 + var(--hg)*.87);}
+        .m-hex{width:var(--hw);height:var(--hh);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:var(--hb);color:var(--hf);display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;padding:0 8px;}
+        .m-hex span{font:800 10px/1.15 'Nunito Sans',sans-serif;}
+        .m-hex.active{filter:brightness(1.1);} .m-hex:active{transform:scale(.96);}`;
+      document.head.appendChild(st); }
+    return `<div class="m-hexgrid"><div class="m-hexrow">${L.slice(0,4).map((f,i) => cell(f,i)).join('')}</div><div class="m-hexrow">${L.slice(4).map((f,j) => cell(f,j+4)).join('')}</div></div>`;
   }
 
   function renderMobileTop(page) {
