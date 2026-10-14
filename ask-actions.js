@@ -207,6 +207,14 @@ async function actTry(text, waitEl) {
   }
   // trust the words she typed for the date ("tomorrow", "friday", "oct 15") over the AI's guess
   const ld = actLocalDate(text);
+  // trust the style words she typed over the AI's guess (one style named → every take goes there)
+  { const t = text.toLowerCase(), hits = [];
+    if (/faceless|aesthetic|no face|b-?roll/.test(t)) hits.push('faceless');
+    if (/\bcar\b/.test(t)) hits.push('car');
+    if (/voice ?over|\bvo\b|\bdemo\b/.test(t)) hits.push('vacuum');
+    if (/talking head|to camera|on camera/.test(t)) hits.push('talking');
+    try { Object.entries((ACT.cols || {})).forEach(([k, v]) => { const w = String(v).replace(/[^a-z /]/gi, '').trim().toLowerCase(); if (w.length > 2 && t.includes(w) && !hits.includes(k)) hits.push(k); }); } catch (e) {}
+    if (hits.length === 1) acts.forEach(x => { if (x.type === 'film_plan') { const n = (x.columns || []).reduce((s, c) => s + (+c.takes || 0), 0) || 1; x.columns = [{ column: hits[0], takes: n }]; } }); }
   const lds = actLocalDates(text);
   acts.forEach(x => { if (x.type !== 'move_takes' || !lds.length) return;
     if (lds.length >= 2) { x.date = lds[0].d; x.to_date = lds[lds.length - 1].d; }

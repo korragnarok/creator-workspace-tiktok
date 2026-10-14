@@ -83,7 +83,7 @@ html.mini .wrap{min-height:0;height:calc(100vh - 6px);}
 html.mini h1,html.mini .wrap>.sub,html.mini .hint,html.mini .foot,html.mini .m-top,html.mini .tab-bar{display:none!important;}
 html.mini .log{overflow-y:auto;min-height:0;gap:8px;margin-bottom:6px;padding-right:2px;}
 html.mini .msg{max-width:100%;padding:9px 11px;font-size:13px;line-height:1.45;}
-html.mini .ask{padding:4px 0;gap:5px;} html.mini .ask textarea{height:40px;padding:10px;font-size:13px;}
+html.mini .ask{padding:4px 0;gap:5px;} html.mini .ask textarea{height:64px;padding:10px;font-size:13.5px;}
 html.mini .ask button{padding:0 11px;font-size:11px;} html.mini .ask .mic{padding:0 9px;}
 html.mini .acard{padding:10px;} html.mini .arow3{grid-template-columns:1fr 1fr;}
 html.mini .clearchat{margin-bottom:2px;}
@@ -264,6 +264,6 @@ async function nudge(){
 (function(){ const v=new URLSearchParams(location.search).get('q'); const had=restoreChat(); if(!had&&!v) setTimeout(nudge,400); if(v){ document.getElementById('q').value=v; history.replaceState(null,'','ask.html'); setTimeout(send,300); } })();
 </script>
 <script src="shop-import.js?v=334"></script>
-<script src="ask-actions.js?v=364"></script>
+<script src="ask-actions.js?v=369"></script>
 </body>
 </html>
