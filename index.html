@@ -1255,10 +1255,16 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 
   // Hero Brands: move the existing widget (same inputs, edit button, and data) out of the hidden sidebar
   function moveHeroBrands(){
-    const core = document.querySelector('.desktop-sidebar .core-sidebar');
-    if (core) document.getElementById('heroBrandsSlot').appendChild(core);
+    const slot = document.getElementById('heroBrandsSlot'); if (!slot || slot.querySelector('.core-sidebar')) return;
+    let core = document.querySelector('.core-sidebar');
+    if (!core) { // build it here if the sidebar didn't include it
+      core = document.createElement('div'); core.className = 'core-sidebar';
+      core.innerHTML = '<div class="core-sidebar-head"><span>Hero Brands</span></div><div class="core-mini-list">' +
+        [1,2,3,4,5,6,7].map(n => `<label class="core-mini-item"><span class="core-mini-num">${n}</span><input class="core-mini-input" data-core-index="${n-1}" placeholder="Brand name"></label>`).join('') + '</div>';
+    }
+    slot.appendChild(core);
   }
-  moveHeroBrands();
+  moveHeroBrands(); window.addEventListener('load', moveHeroBrands);
   // Profile card: move it out of the hidden sidebar, under the stat cards
   const prof = document.querySelector('.desktop-sidebar .side-profile');
   const stats = document.querySelector('.b-left .stats-grid');
