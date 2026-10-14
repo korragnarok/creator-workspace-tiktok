@@ -56,7 +56,7 @@ const ACT_SCHEMA = { type: 'OBJECT', properties: {
     note: { type: 'STRING' }, count: { type: 'NUMBER' },
     columns: { type: 'ARRAY', items: { type: 'OBJECT', properties: { column: { type: 'STRING', enum: ['talking', 'vacuum', 'faceless', 'car'] }, takes: { type: 'NUMBER' } }, required: ['column', 'takes'] } },
     link: { type: 'STRING' }, high_quality: { type: 'BOOLEAN' }, column: { type: 'STRING' },
-    takes_list: { type: 'ARRAY', items: { type: 'NUMBER' } }, all_takes: { type: 'BOOLEAN' },
+    takes_list: { type: 'ARRAY', items: { type: 'NUMBER' } }, all_takes: { type: 'BOOLEAN' }, brand_all: { type: 'BOOLEAN' },
     metric: { type: 'STRING', enum: ['gmv', 'comm', 'units', 'videos'] }, amount: { type: 'NUMBER' }, period: { type: 'STRING', enum: ['month', 'week', 'day'] },
     brand: { type: 'STRING' }, free_sample: { type: 'BOOLEAN' }, status: { type: 'STRING', enum: ['active', 'paused', 'shelved', 'promote'] }, hq: { type: 'BOOLEAN' },
     funnel: { type: 'STRING', enum: ['Top', 'Middle'] }, on_sale: { type: 'BOOLEAN' }, angle: { type: 'STRING' },
@@ -77,8 +77,8 @@ Action types:
 - log_sale: a sale. source "video" (from a video — put the caption/description words she gives in "caption", and the product if she says it) or "showcase" (from her showcase — put the product in "product"). units (default 1 if she says "a sale"), gmv and comm as plain numbers (no $). account only if she names one.
 - day_note: a note for a sales day (note, date).
 - film_plan: filming plan / add a product to her Film Board or to-do ("add X to my to do", "put X on my board"). product, date, columns = list of {column, takes}. "5 videos, 2 talking head and 3 in the car" → [{talking,2},{car,3}]. If she gives no style, use one entry with column "talking".
-- move_day: move EVERYTHING planned on "date" to "to_date" (only when she means the whole day).
-- move_takes: move ONE product (or some of its takes) to another day ("move the jiyu toner pads, take 1, to tomorrow", "move all takes of the Glossi to Friday"). product, date = the day it's on now (default today), to_date = where it goes, takes_list = take numbers she names, all_takes = true if she says all / doesn't name takes.
+- move_day: move EVERYTHING planned on "date" to "to_date" — ONLY when she says the whole day / everything / all of it and names NO products. If she names any products (even several), use move_takes instead: one move_takes action per product.
+- move_takes: move ONE product (or some of its takes) to another day ("move the jiyu toner pads, take 1, to tomorrow", "move all takes of the Glossi to Friday"). product, date = the day it's on now (default today), to_date = where it goes, takes_list = take numbers she names, all_takes = true if she says all / doesn't name takes. If she says "all [brand] products" / "everything from [brand]", product = the brand name and brand_all = true (ONE move_takes action, not one per product).
 - mark_filmed: mark takes filmed (product, date, count — 0 means all).
 - add_promo: product, line (Shark / Ninja / Shark Beauty), deal (as she says it), start_date, end_date.
 - product_note: product, note.
@@ -197,7 +197,14 @@ async function actTry(text, waitEl) {
   waitEl.textContent = 'Reading that…';
   let parsed; try { parsed = await actTimeout(actParse(text), 30000, 'Understanding your message'); }
   catch (e) { console.warn('actParse', e); if (!strong) return false; waitEl.classList.remove('wait'); waitEl.innerHTML = `I couldn't set that up just now (${esc(e.message)}). Try sending it again.`; return true; }
-  const acts = (parsed.actions || []).filter(a => a && a.type);
+  let acts = (parsed.actions || []).filter(a => a && a.type);
+  // safety: "move day" only when she clearly means the whole day; otherwise re-read it as product moves
+  if (acts.some(a => a.type === 'move_day') && !/\b(whole|entire|everything|all of (it|them|that)|the day|my day|full day|board|schedule|plan)\b/i.test(text)) {
+    try { const again = await actTimeout(actParse(text + '\n\n(She named specific products — use move_takes, one action per product. Do NOT use move_day.)'), 30000, 'Understanding your message');
+      const a2 = (again.actions || []).filter(a => a && a.type && a.type !== 'move_day');
+      acts = acts.filter(a => a.type !== 'move_day').concat(a2.filter(a => a.type === 'move_takes')); parsed.is_action = !!acts.length || parsed.is_action;
+    } catch (e) { acts = acts.filter(a => a.type !== 'move_day'); }
+  }
   // trust the words she typed for the date ("tomorrow", "friday", "oct 15") over the AI's guess
   const ld = actLocalDate(text);
   const lds = actLocalDates(text);
@@ -692,17 +699,26 @@ async function actMoveTakes(a, i, c) {
   const k = `a${Date.now().toString(36)}${i}`; let from = dOk(a.date); const to = /^\d{4}-\d{2}-\d{2}$/.test(a.to_date || '') ? a.to_date : ymd(addDays(new Date(from + 'T00:00:00'), 1));
   let { data: rows } = await db.from('queue').select('id,prod_id,name,notes,done,sort_order,date').eq('user_id', c.uid).eq('date', from).order('sort_order').order('id');
   // not on that day? look across the board (2 weeks back → 3 weeks ahead) and use the closest day it's on
-  const hit = rs => (rs || []).some(r => r.prod_id && actScore(`${r.name || ''}`, a.product || '') >= 60);
+  const term = String(a.product || '').toLowerCase().replace(/\b(all|the|products?|stuff|items?)\b/g, '').trim();
+  const brandHit = r => { const p = c.prods.find(x => x.id === r.prod_id); return !!term && (String(p?.brand || '').toLowerCase().includes(term) || String(r.name || p?.name || '').toLowerCase().includes(term)); };
+  const hit = rs => (rs || []).some(r => r.prod_id && (a.brand_all ? brandHit(r) : actScore(`${r.name || ''}`, a.product || '') >= 60));
   if (!hit(rows)) {
     const lo = ymd(addDays(new Date(from + 'T00:00:00'), -14)), hi = ymd(addDays(new Date(from + 'T00:00:00'), 21));
     const { data: all } = await db.from('queue').select('id,prod_id,name,notes,done,sort_order,date').eq('user_id', c.uid).gte('date', lo).lte('date', hi).eq('done', false).order('sort_order').order('id');
-    const days = [...new Set((all || []).filter(r => r.prod_id && r.date !== to && actScore(`${r.name || ''}`, a.product || '') >= 60).map(r => r.date))]
+    const days = [...new Set((all || []).filter(r => r.prod_id && r.date !== to && (a.brand_all ? brandHit(r) : actScore(`${r.name || ''}`, a.product || '') >= 60)).map(r => r.date))]
       .sort((x, y) => Math.abs(new Date(x) - new Date(from)) - Math.abs(new Date(y) - new Date(from)));
     if (days.length) { from = days[0]; rows = (all || []).filter(r => r.date === from); }
   }
   const onDay = {}; (rows || []).filter(r => r.prod_id && !/^REMINDER$/m.test(r.notes || '')).forEach(r => (onDay[r.prod_id] = onDay[r.prod_id] || []).push(r));
   const cand = Object.keys(onDay).map(pid => ({ p: c.prods.find(x => x.id === pid) || { id: pid, name: onDay[pid][0].name, brand: '' }, rows: onDay[pid] }))
     .map(o => ({ ...o, s: actScore(`${o.p.name} ${o.p.brand || ''}`, a.product || '') })).filter(o => o.s >= 20).sort((x, y) => y.s - x.s);
+  if (a.brand_all) {
+    const grp = Object.keys(onDay).filter(pid => onDay[pid].some(brandHit)).map(pid => ({ p: c.prods.find(x => x.id === pid) || { name: onDay[pid][0].name }, rows: onDay[pid] }));
+    if (!grp.length) return `<div class="acard done" id="${k}"><div class="astat">I couldn't find any "${esc(a.product || '')}" products on your Film Board for ${esc(prettyD(from))}.</div></div>`;
+    const name = grp.length === 1 ? grp[0].p.name : `${grp.length} ${a.product} products (${grp.map(o => o.p.name).join(', ')})`;
+    ACT.cards[k] = { ...a, all_takes: true, type: 'move_pick', from, to, cand: [{ p: { name }, rows: grp.flatMap(o => o.rows) }] };
+    return await actMoveDo(k, 0, c);
+  }
   ACT.cards[k] = { ...a, type: 'move_pick', from, to, cand };
   if (!cand.length) return `<div class="acard done" id="${k}"><div class="astat">I couldn't find "${esc(a.product || '')}" on your Film Board for ${esc(prettyD(from))}.</div></div>`;
   const sure = cand[0].s >= 100 || (cand[0].s >= 60 && (!cand[1] || cand[0].s - cand[1].s >= 25));
