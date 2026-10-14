@@ -848,6 +848,17 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .left-goals>.ideas-btn .ib-count,.left-goals>.ideas-btn .ib-go,.left-goals>.brief-btn span span:not(.b-title){font-size:11px!important;line-height:1.25!important;}
   .left-goals>.brief-btn>span:last-child{display:none!important;}
 }
+
+/* Mobile honeycomb nav: 8 wide (flat-top) hexagons, two staggered rows of 4 */
+.mhex{display:none;}
+@media(max-width:768px){
+  .mhex{display:flex;flex-direction:column;align-items:center;gap:4px;margin:4px 0 14px;--mw:min(19vw,84px);}
+  .mhex .mrow{display:flex;gap:6px;}
+  .mhex .mrow:nth-child(1){transform:translateX(calc(var(--mw)*-.27));} .mhex .mrow:nth-child(2){transform:translateX(calc(var(--mw)*.27));}
+  .mhex a{width:var(--mw);height:calc(var(--mw)*.72);clip-path:polygon(22% 0,78% 0,100% 50%,78% 100%,22% 100%,0 50%);background:var(--hb);color:var(--hf);
+    display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;padding:0 14%;font:800 10.5px/1.12 'Nunito Sans',sans-serif;}
+  .mhex a:active{transform:scale(.95);}
+}
 </style>
 <div class="tc-modal" id="tpModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeTilePop()">
   <div class="tc-card tp-card">
@@ -912,6 +923,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
             <div class="b-cal-grid" id="bCalGrid"></div>
           </div>
           <div id="heroBrandsSlot"></div>
+            <nav class="mhex" id="mHex" aria-label="Pages"></nav>
             <div class="goals-col left-goals">
             <div class="card ask-mini">
               <div class="b-title">Ask Take24</div>
@@ -1193,6 +1205,11 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   const hex = (f, i) => { const [href, label] = f, s = hexShade(i);
     return `<a class="hex" href="${href}"${/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : ''} style="--hb:${s.bg};--hf:${s.fg}" title="${label}"><span>${label.replace('Shark & Ninja','Shark &amp; Ninja')}</span></a>`; };
   const rows = []; for (let k = 0, big = false; k < FOLDERS.length; big = !big) { const n = big ? 3 : 2; rows.push(FOLDERS.slice(k, k + n).map((f, j) => hex(f, k + j))); k += n; }
+  { const M = ['film.html','video-tracker.html','products.html','sales-calendar.html','scripts.html','brand-deals.html','promos.html','video-feedback.html'];
+    const mh = document.getElementById('mHex'); if (mh) { const L = M.map(h => FOLDERS.find(f => f[0] === h)).filter(Boolean);
+      const cell = (f, i) => { const t = i / (L.length - 1), a = [226,201,176], b = [92,52,34], c = a.map((v,k) => Math.round(v + (b[k]-v) * t));
+        return `<a href="${f[0]}" style="--hb:rgb(${c.join(',')});--hf:${(c[0]*.299+c[1]*.587+c[2]*.114) > 150 ? '#3b2418' : '#fbefe3'}">${f[1].replace('&','&amp;')}</a>`; };
+      mh.innerHTML = `<div class="mrow">${L.slice(0,4).map(cell).join('')}</div><div class="mrow">${L.slice(4).map((f,j) => cell(f, j+4)).join('')}</div>`; } }
   const bf = document.getElementById('bFolders'); bf.className = 'hexgrid';
   bf.innerHTML = rows.map(r => `<div class="hexrow">${r.join('')}</div>`).join('');
 
