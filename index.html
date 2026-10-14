@@ -929,7 +929,7 @@ select.sched-location-tag:focus{border-color:var(--rust);}
       <div class="main board">
         <aside class="b-col b-left">
           <a class="b-word" href="index.html"><img src="logo.png" alt="Take24"></a>
-          <div class="b-card b-cal">
+          <div class="b-card b-cal" style="cursor:pointer" title="Open Sales Log" onclick="if(!event.target.closest('button')){window.T24Shell?T24Shell.open('sales-calendar.html'):location.href='sales-calendar.html';}">
             <div class="b-cal-head"><button type="button" class="b-cal-arrow" onclick="bCalShift(-1)" aria-label="Previous month">‹</button><div class="b-title" id="bCalMonth"></div><button type="button" class="b-cal-arrow" onclick="bCalShift(1)" aria-label="Next month">›</button></div>
             <div class="b-cal-grid" id="bCalGrid"></div>
           </div>
