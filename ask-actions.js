@@ -200,7 +200,11 @@ async function actTry(text, waitEl) {
   const acts = (parsed.actions || []).filter(a => a && a.type);
   // trust the words she typed for the date ("tomorrow", "friday", "oct 15") over the AI's guess
   const ld = actLocalDate(text);
-  if (ld) acts.forEach(x => { if (x.type === 'move_takes') { if (!/\bfrom\b/i.test(text)) x.to_date = ld; } else if (x.type !== 'move_day' && x.type !== 'add_promo' && x.type !== 'set_goal') x.date = ld; });
+  const lds = actLocalDates(text);
+  acts.forEach(x => { if (x.type !== 'move_takes' || !lds.length) return;
+    if (lds.length >= 2) { x.date = lds[0].d; x.to_date = lds[lds.length - 1].d; }
+    else if (lds[0].src) x.date = lds[0].d; else x.to_date = lds[0].d; });
+  if (ld) acts.forEach(x => { if (x.type === 'move_takes') { /* handled above */ } else if (x.type !== 'move_day' && x.type !== 'add_promo' && x.type !== 'set_goal') x.date = ld; });
   if (!parsed.is_action || !acts.length) return false;
   waitEl.textContent = 'Getting it ready…';
   let c; try { c = await actTimeout(actContext(), 20000, 'Loading your videos and products'); }
@@ -673,10 +677,29 @@ function actLocalDate(text) {
   return '';
 }
 
+// every date she typed, in order; src = it reads like the day it's on now ("wednesday's", "from wed", "on wed")
+function actLocalDates(text) {
+  const t = String(text || ''), re = /\b(day after tomorrow|tomorrow|tmrw|tmr|tomorow|tommorow|tommorrow|yesterday|today|tonight|(?:next\s+|this\s+)?(?:sun|mon|tue|tues|wed|thu|thur|thurs|fri|sat)(?:day|sday|nesday|rsday|urday)?|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:st|nd|rd|th)?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)\b('s|’s)?/gi;
+  const out = []; let m;
+  while ((m = re.exec(t))) { const d = actLocalDate(m[1]); if (!d) continue;
+    const before = t.slice(Math.max(0, m.index - 8), m.index).toLowerCase();
+    out.push({ d, src: !!m[2] || /\b(from|on|off)\s+$/.test(before) }); }
+  return out;
+}
+
 // ─── Move one product (or some takes) to another day ───
 async function actMoveTakes(a, i, c) {
-  const k = `a${Date.now().toString(36)}${i}`, from = dOk(a.date), to = /^\d{4}-\d{2}-\d{2}$/.test(a.to_date || '') ? a.to_date : ymd(addDays(new Date(from + 'T00:00:00'), 1));
-  const { data: rows } = await db.from('queue').select('id,prod_id,name,notes,done,sort_order').eq('user_id', c.uid).eq('date', from).order('sort_order').order('id');
+  const k = `a${Date.now().toString(36)}${i}`; let from = dOk(a.date); const to = /^\d{4}-\d{2}-\d{2}$/.test(a.to_date || '') ? a.to_date : ymd(addDays(new Date(from + 'T00:00:00'), 1));
+  let { data: rows } = await db.from('queue').select('id,prod_id,name,notes,done,sort_order,date').eq('user_id', c.uid).eq('date', from).order('sort_order').order('id');
+  // not on that day? look across the board (2 weeks back → 3 weeks ahead) and use the closest day it's on
+  const hit = rs => (rs || []).some(r => r.prod_id && actScore(`${r.name || ''}`, a.product || '') >= 60);
+  if (!hit(rows)) {
+    const lo = ymd(addDays(new Date(from + 'T00:00:00'), -14)), hi = ymd(addDays(new Date(from + 'T00:00:00'), 21));
+    const { data: all } = await db.from('queue').select('id,prod_id,name,notes,done,sort_order,date').eq('user_id', c.uid).gte('date', lo).lte('date', hi).eq('done', false).order('sort_order').order('id');
+    const days = [...new Set((all || []).filter(r => r.prod_id && r.date !== to && actScore(`${r.name || ''}`, a.product || '') >= 60).map(r => r.date))]
+      .sort((x, y) => Math.abs(new Date(x) - new Date(from)) - Math.abs(new Date(y) - new Date(from)));
+    if (days.length) { from = days[0]; rows = (all || []).filter(r => r.date === from); }
+  }
   const onDay = {}; (rows || []).filter(r => r.prod_id && !/^REMINDER$/m.test(r.notes || '')).forEach(r => (onDay[r.prod_id] = onDay[r.prod_id] || []).push(r));
   const cand = Object.keys(onDay).map(pid => ({ p: c.prods.find(x => x.id === pid) || { id: pid, name: onDay[pid][0].name, brand: '' }, rows: onDay[pid] }))
     .map(o => ({ ...o, s: actScore(`${o.p.name} ${o.p.brand || ''}`, a.product || '') })).filter(o => o.s >= 20).sort((x, y) => y.s - x.s);
