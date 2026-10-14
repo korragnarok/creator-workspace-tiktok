@@ -119,14 +119,17 @@ async function gather(){
   if(DATA&&Date.now()-DATA_AT<5*60e3) return DATA;
   const { data:{ session } }=await db.auth.getSession(); if(!session) throw new Error('Please sign in first.');
   const uid=session.user.id, today=new Date(), t=ymd(today), since=ymd(addDays(today,-120));
-  const [accts,prods,sales,vids,promos,queue,scripts]=await Promise.all([
+  const [accts,prods,sales,vids,promos,queue,scripts,deals,notes,prefs]=await Promise.all([
     q('tiktok_accounts','tiktok_open_id,username,display_name,follower_count',x=>x.eq('user_id',uid)),
     q('products','*',x=>x.eq('user_id',uid)),
-    q('sales','date,gmv,comm,units,tiktok_account_id,video_sales',x=>x.eq('user_id',uid).gte('date',since).order('date')),
+    q('sales','date,gmv,comm,units,tiktok_account_id,video_sales,note',x=>x.eq('user_id',uid).gte('date',since).order('date')),
     q('videos','*',x=>x.eq('user_id',uid).gte('date',since).order('date',{ascending:false})),
     q('promos','product,line,deal,start_date,end_date,priority',x=>x.eq('user_id',uid).gte('end_date',ymd(addDays(today,-14)))),
-    q('queue','date,name,brand,done,prod_id',x=>x.eq('user_id',uid).gte('date',ymd(addDays(today,-90)))),
-    q('scripts','title,brand,cat',x=>x.eq('user_id',uid).limit(60))
+    q('queue','date,name,brand,done,prod_id,notes,script',x=>x.eq('user_id',uid).gte('date',ymd(addDays(today,-90)))),
+    q('scripts','title,brand,cat,script',x=>x.eq('user_id',uid).limit(80)),
+    q('brand_deals','*',x=>x.eq('user_id',uid)),
+    q('creator_notes','*',x=>x.eq('user_id',uid).limit(80)),
+    q('user_prefs','core5,core5_by_account',x=>x.eq('user_id',uid))
   ]);
   let fb=[]; try{ fb=await plannerGet('feedback',[])||[]; }catch(e){}
   const acct={}; accts.forEach(a=>acct[a.tiktok_open_id]='@'+(a.username||a.display_name||'account'));
@@ -147,7 +150,21 @@ async function gather(){
   promos.forEach(p=>lines.push(`${p.product} | ${p.line||''} | ${p.deal||''} | ${p.start_date||''} | ${p.end_date||''} | ${p.priority?'★':''}`));
   lines.push(`\nTO-DO / FILMING LOG last 90 days (date | product | filmed?):`);
   queue.slice(-200).forEach(x=>lines.push(`${x.date} | ${x.name} | ${x.done?'filmed':'not filmed'}`));
-  lines.push(`\nSCRIPT VAULT TITLES: ${scripts.map(s=>s.title).join('; ')}`);
+  // Hero Brands (per account, falls back to the general list)
+  try{ const pr=prefs[0]||{}; const all=new Set(); Object.values(pr.core5_by_account||{}).forEach(v=>(v||[]).forEach(b=>b&&all.add(String(b).trim()))); (pr.core5||[]).forEach(b=>b&&all.add(String(b).trim()));
+    try{ Object.keys(localStorage).filter(k=>k.startsWith('creatorHub:core5:')).forEach(k=>JSON.parse(localStorage.getItem(k)||'[]').forEach(b=>b&&all.add(String(b).trim()))); }catch(e){}
+    lines.splice(2,0,`HERO BRANDS (her top focus brands): ${[...all].join(', ')||'none set'}`); }catch(e){}
+  lines.push(`\nDAY NOTES she wrote on sales days: `+sales.filter(x=>x.note).map(x=>`${x.date}: ${String(x.note).replace(/\s+/g,' ').slice(0,160)}`).join(' || '));
+  lines.push(`\nPRODUCT NOTES (product: notes): `+prods.filter(p=>String(p.notes||'').replace(/FREE_SAMPLE/g,'').trim()).slice(0,120).map(p=>`${p.name}: ${String(p.notes).replace(/\s+/g,' ').slice(0,160)}`).join(' || '));
+  const fut=queue.filter(x=>x.date>t && !/^REMINDER$/m.test(x.notes||''));
+  lines.push(`\nUPCOMING FILM BOARD (date | product): `+fut.slice(0,150).map(x=>`${x.date} ${x.name}`).join('; '));
+  lines.push(`\nREMINDERS: `+queue.filter(x=>/^REMINDER$/m.test(x.notes||'')&&!x.done).map(x=>`${x.date} ${x.name}`).join('; '));
+  lines.push(`\nBRAND DEALS: `+deals.slice(0,60).map(d=>Object.entries(d).filter(([k,v])=>v!==null&&v!==''&&!/^(id|user_id|created_at|updated_at)$/.test(k)&&typeof v!=='object').map(([k,v])=>`${k}=${String(v).slice(0,80)}`).join(', ')).join(' || '));
+  lines.push(`\nNOTES PAGE: `+notes.slice(0,60).map(n=>Object.entries(n).filter(([k,v])=>v&&!/^(id|user_id|created_at|updated_at)$/.test(k)&&typeof v!=='object').map(([k,v])=>String(v).slice(0,200)).join(' – ')).join(' || '));
+  try{ const ideas=await plannerGet('ideas',[])||[]; lines.push(`\nCONTENT IDEAS: `+ideas.slice(0,80).map(i=>typeof i==='string'?i:[i.text||i.title||'',i.cat||i.tab||''].filter(Boolean).join(' / ')).filter(Boolean).join('; ')); }catch(e){}
+  lines.push(`\nSCRIPT VAULT (title | brand | start of script):`);
+  scripts.forEach(x=>lines.push(`${x.title} | ${x.brand||''} | ${String(x.script||'').replace(/\s+/g,' ').slice(0,220)}`));
+  lines.push(`\nTAKE24 SITE GUIDE (where things live): Home = calendar, Ask, Today's Content, stats, level ladder, Hero Brands. Film Board (film.html) = daily filming takes in columns, scripts/shots/extras per take, week view, Move day. Content Tracker (video-tracker.html) = posted videos + views. Products (products.html) = catalog, stock, links, 📊 Score, Hero Brands filter. Sales Log (sales-calendar.html) = daily GMV/commission/units + showcase sales. Script Vault (scripts.html) = saved scripts. Brand Deals (brand-deals.html) = paid partnerships. Shark & Ninja (promos.html) = promo timeline. Video Feedback (video-feedback.html) = review videos + write scripts. Content Ideas (ideas.html). Settings = account, look/theme. Monthly Recap + Today's Brief buttons on Home. Ask can log sales, plan/move takes, write scripts, add products, goals, reminders.`);
   lines.push(`\nVIDEO FEEDBACK HISTORY (what she said in reviewed videos):`);
   fb.slice(0,20).forEach(h=>{ const f=h.fb||{}; lines.push(`- ${new Date(h.at).toISOString().slice(0,10)} ${h.product||h.name||''}: score ${f.score??''}; ${String(f.summary||f.why_it_worked||'').slice(0,200)}${f.transcript?` | SAID: "${String(f.transcript).slice(0,600)}"`:''}`); });
   try{ if(typeof actGoalsSummary==='function'){ const gs=await actGoalsSummary(sales,vids); if(gs) lines.splice(2,0,gs); } }catch(e){}
