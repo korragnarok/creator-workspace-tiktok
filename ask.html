@@ -74,6 +74,21 @@ h1 em{font:24px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
 <script src="playbook.js?v=314"></script>
 <script src="policy.js?v=297"></script>
 <script>
+if(new URLSearchParams(location.search).get('mini')) document.documentElement.classList.add('mini');
+</script>
+<style>
+html.mini body,html.mini.embedded body{padding:4px 2px 0!important;background:transparent!important;}
+html.mini body::before{display:none!important;}
+html.mini .wrap{min-height:0;height:calc(100vh - 6px);}
+html.mini h1,html.mini .wrap>.sub,html.mini .hint,html.mini .foot,html.mini .m-top,html.mini .tab-bar{display:none!important;}
+html.mini .log{overflow-y:auto;min-height:0;gap:8px;margin-bottom:6px;padding-right:2px;}
+html.mini .msg{max-width:100%;padding:9px 11px;font-size:13px;line-height:1.45;}
+html.mini .ask{padding:4px 0;gap:5px;} html.mini .ask textarea{height:40px;padding:10px;font-size:13px;}
+html.mini .ask button{padding:0 11px;font-size:11px;} html.mini .ask .mic{padding:0 9px;}
+html.mini .acard{padding:10px;} html.mini .arow3{grid-template-columns:1fr 1fr;}
+html.mini .clearchat{margin-bottom:2px;}
+</style>
+<script>
 const WORKER='https://take24-scout.kortnycall5.workers.dev';
 const SUGGEST=["Plan my day","What's left today?","Write a middle of funnel script for the FlexStyle","I made a sale from my showcase on the FlexStyle — $X GMV, $X commission","Add 2 talking head and 3 car videos for the Glossi today","Why were my sales up or down this week?","Which products make me the most per video?","Which products have I stopped posting?","What do my best videos have in common?","What should I film tomorrow?","How can I do better?","What's my best day to post?","What's trending in my category right now?"];
 const CHAT=[]; let DATA=null, DATA_AT=0;
@@ -96,7 +111,7 @@ function md(t){ // tiny markdown: **bold**, bullets, paragraphs
     else { if(inList){out+='</ul>';inList=false;} if(l.trim()) out+=`<p>${l}</p>`; } }
   return out+(inList?'</ul>':'');
 }
-function add(role,html,cls=''){ const el=document.createElement('div'); el.className=`msg ${role} ${cls}`; el.innerHTML=html; document.getElementById('log').appendChild(el); el.scrollIntoView({behavior:'smooth',block:'end'}); return el; }
+function add(role,html,cls=''){ const el=document.createElement('div'); el.className=`msg ${role} ${cls}`; el.innerHTML=html; document.getElementById('log').appendChild(el); if(document.documentElement.classList.contains('mini')){ const lg=document.getElementById('log'); lg.scrollTop=lg.scrollHeight; } else el.scrollIntoView({behavior:'smooth',block:'end'}); return el; }
 
 async function q(table,cols,build){ try{ let x=db.from(table).select(cols); x=build?build(x):x; const {data,error}=await x; if(error) throw error; return data||[]; }catch(e){ console.warn(table,e.message); return []; } }
 
@@ -213,7 +228,7 @@ function restoreChat(){
     const log=document.getElementById('log'); log.innerHTML=s.html; (s.chat||[]).forEach(m=>CHAT.push(m));
     log.querySelectorAll('.msg.wait').forEach(m=>{ m.classList.remove('wait'); m.innerHTML='<i>(interrupted — ask again)</i>'; });
     log.querySelectorAll('.acard:not(.done)').forEach(c=>{ c.querySelector('.abtns')?.remove(); c.classList.add('done'); const st=c.querySelector('.astat'); if(st) st.textContent='Not saved — ask again to save this.'; });
-    document.getElementById('clearchat').style.display=''; setTimeout(()=>log.lastElementChild?.scrollIntoView({block:'end'}),50); return true; }catch(e){ return false; }
+    document.getElementById('clearchat').style.display=''; setTimeout(()=>{ if(document.documentElement.classList.contains('mini')) log.scrollTop=log.scrollHeight; else log.lastElementChild?.scrollIntoView({block:'end'}); },50); return true; }catch(e){ return false; }
 }
 function clearChat(){ if(!confirm("Clear today's chat?")) return; CHAT.length=0; document.getElementById('log').innerHTML=''; try{ localStorage.removeItem(CHAT_KEY); }catch(e){} document.getElementById('clearchat').style.display='none'; nudge(); }
 let _saveT=null; new MutationObserver(()=>{ clearTimeout(_saveT); _saveT=setTimeout(saveChat,400); }).observe(document.getElementById('log'),{childList:true,subtree:true,attributes:true,characterData:true});

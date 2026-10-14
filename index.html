@@ -901,10 +901,9 @@ select.sched-location-tag:focus{border-color:var(--rust);}
           </div>
           <div id="heroBrandsSlot"></div>
             <div class="goals-col left-goals">
-            <div class="card streak both-streak">
-              <div class="b-title">Posting Streak</div>
-              <div class="bs-row"><div class="streak-num"><span id="ttStreak">0</span><small>days in a row on TikTok</small></div><div class="streak-dots" id="ttDots"></div></div>
-              <div class="bs-row"><div class="streak-num"><span id="streakDays">0</span><small>days in a row on Facebook/Instagram</small></div><div class="streak-dots" id="streakDots"></div></div>
+            <div class="card ask-mini">
+              <div class="b-title">Ask Take24</div>
+              <iframe id="askMini" title="Ask Take24" src="ask.html?mini=1" loading="lazy" style="width:100%;height:360px;border:0;background:transparent;display:block;margin-top:6px"></iframe>
             </div>
             <a class="card ideas-btn" href="ideas.html"><div class="b-title">Content Ideas</div><div class="ib-count" id="ideasCount"></div><div class="ib-go">Open ideas board →</div></a>
             <button type="button" class="card brief-btn" onclick="window.showMorningBrief&&showMorningBrief()" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;cursor:pointer;text-align:left;font:inherit;color:inherit"><span><span class="b-title" style="display:block">☀ Today's Brief</span><span style="font-size:12px;color:var(--text-muted)">Promos, outliers, sales &amp; more</span></span><span style="color:var(--tan);font-size:20px">→</span></button>
@@ -1001,16 +1000,12 @@ select.sched-location-tag:focus{border-color:var(--rust);}
                   <div class="tt-stat" style="grid-column:1/-1"><div class="tt-l">Views · last 30 days</div><div class="tt-v" id="mViews30">-</div></div>
                 </div>
               </div>
-              <div class="card meta-spare"><div class="b-title">Ask Take24</div><div class="spare-sub">Ask anything about your sales, videos and products.</div>
-                <form onsubmit="event.preventDefault();const v=this.q.value.trim();(window.T24Shell?T24Shell.open:(u=>location.href=u))('ask.html'+(v?'?q='+encodeURIComponent(v):''));" style="display:flex;gap:6px;margin-top:10px">
-                  <input name="q" placeholder="e.g. What should I film tomorrow?" style="flex:1;min-width:0;background:var(--bg);border:1px solid var(--border-mid);border-radius:10px;padding:9px 11px;color:var(--ink);font:13px 'Nunito Sans',sans-serif;outline:none">
-                  <button style="border:0;border-radius:10px;background:var(--rust);color:#fff;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:0 14px;cursor:pointer">Ask</button>
-                </form>
-                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
-                  <a href="ask.html?q=Why%20were%20my%20sales%20up%20or%20down%20this%20week%3F" style="border:1px solid var(--border-mid);border-radius:999px;padding:5px 10px;font-size:11.5px;color:var(--text)">Sales this week?</a>
-                  <a href="ask.html?q=What%20should%20I%20film%20tomorrow%3F" style="border:1px solid var(--border-mid);border-radius:999px;padding:5px 10px;font-size:11.5px;color:var(--text)">Film tomorrow?</a>
-                  <a href="ask.html?q=What%20do%20my%20best%20videos%20have%20in%20common%3F" style="border:1px solid var(--border-mid);border-radius:999px;padding:5px 10px;font-size:11.5px;color:var(--text)">Best videos?</a>
-                </div></div>
+              <div class="card streak both-streak meta-spare">
+              <div class="b-title">Posting Streak</div>
+              <div class="bs-row"><div class="streak-num"><span id="ttStreak">0</span><small>days in a row on TikTok</small></div><div class="streak-dots" id="ttDots"></div></div>
+              <div class="bs-row"><div class="streak-num"><span id="streakDays">0</span><small>days in a row on Facebook/Instagram</small></div><div class="streak-dots" id="streakDots"></div></div>
+            </div>
+
             </div>
           </div>
 
