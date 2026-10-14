@@ -188,8 +188,8 @@ select.sched-location-tag:focus{border-color:var(--rust);}
 .chart-pill.active{background:var(--rust);border-color:var(--rust);color:#fff;}
 .chart-metrics{display:flex;gap:28px;margin:12px 0 6px;}
 .metric{display:flex;align-items:flex-start;gap:8px;}
-.metric-dot{width:9px;height:9px;border-radius:50%;margin-top:9px;background:var(--rust);}
-.metric-dot.sage{background:var(--sage);}
+.metric-dot{width:9px;height:9px;border-radius:50%;margin-top:9px;background:#6f8f5e!important;}
+.metric-dot.sage{background:var(--rust)!important;}
 .metric-value{font-family:'Noto Sans Mono',sans-serif;font-size:22px;font-weight:700;line-height:1;color:var(--ink);}
 .metric-label{font-size:11px;color:var(--text-muted);}
 .chart-wrap{position:relative;flex:0 0 auto;width:100%;height:110px;min-height:100px;min-width:0;max-width:100%;overflow:hidden;}
@@ -1317,8 +1317,8 @@ function rgbaFromColor(color,alpha){
   return raw;
 }
 function chartThemeOptions(){
-  const commColor=cssColor('--rust');
-  const gmvColor=cssColor('--sage');
+  const commColor='#6f8f5e';             // commission = green
+  const gmvColor=cssColor('--rust');      // GMV = brown
   const tickColor=cssColor('--text-muted');
   const gridColor=rgbaFromColor(cssColor('--ink'),0.08);
   return { commColor, gmvColor, tickColor, gridColor };
