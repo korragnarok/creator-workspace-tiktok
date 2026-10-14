@@ -1675,7 +1675,7 @@ async function init() {
   setText('s-streak', fmtStreak(streak));
 
   ttInitCards(user);
-  renderSalesChart(labels,commData,gmvData);
+  try { setChartRange(window._chartRange || 'month'); } catch (e) { console.warn('chart', e); }
 }
 
 function calcStreak(rows, todayStr, goal = 1) {

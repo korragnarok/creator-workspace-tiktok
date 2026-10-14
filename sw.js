@@ -1,5 +1,5 @@
 // ─── Creator Hub Service Worker ───────────────────────────────────────────────
-const CACHE = 'creator-hub-v375';
+const CACHE = 'creator-hub-v376';
 
 // Core files to cache for offline shell
 const PRECACHE = [
@@ -50,7 +50,7 @@ const PRECACHE = [
 // Install — cache core files
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(PRECACHE)).then(() => self.skipWaiting())
+    caches.open(CACHE).then(cache => Promise.all(PRECACHE.map(u => cache.add(u).catch(() => {})))).then(() => self.skipWaiting())
   );
 });
 
