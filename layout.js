@@ -176,6 +176,10 @@
       html body{background-image:radial-gradient(rgba(196,160,131,.05) 1px,transparent 1px);background-size:14px 14px;background-attachment:fixed;}
       @media (min-width:769px){
         html body:not(.has-app-shell){padding-left:236px!important;}
+        html body:not(.has-app-shell)>nav:not(.desktop-sidebar){display:none!important;}          /* old top bar — the sidebar replaces it */
+        html body:not(.has-app-shell)>.desktop-sidebar.sidebar{position:fixed!important;left:0;top:0;bottom:0;height:100vh!important;z-index:60;}
+        html[data-theme="notebook"] body:not(.has-app-shell){padding-left:270px!important;}
+        html[data-theme="notebook"] body:not(.has-app-shell)>.desktop-sidebar.sidebar{left:34px;}
         html body .app-shell{grid-template-columns:236px minmax(0,1fr)!important;}
         html body .desktop-sidebar.sidebar{width:236px!important;padding:18px 14px!important;align-items:stretch!important;gap:14px!important;overflow-y:auto;scrollbar-width:none;}
         .desktop-sidebar.sidebar::-webkit-scrollbar{display:none;}
