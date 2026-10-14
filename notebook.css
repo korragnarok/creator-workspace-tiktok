@@ -59,7 +59,9 @@ html[data-theme="notebook"] .b-cal,html[data-theme="notebook"] .b-folders{
     var(--nb-kraft)!important;border:1.8px solid var(--nb-ink)!important;transform:rotate(-.6deg);}
 html[data-theme="notebook"] .b-folders{transform:rotate(.5deg);}
 html[data-theme="notebook"] .b-cal *{color:var(--nb-ink)!important;}
-html[data-theme="notebook"] .b-cal .today,html[data-theme="notebook"] .b-cal [class*="has"]{background:var(--nb-ink)!important;color:var(--nb-paper)!important;}
+html[data-theme="notebook"] .b-cal .d.sale{background:var(--nb-ink)!important;color:var(--nb-paper)!important;}
+html[data-theme="notebook"] .b-cal .d.today{background:var(--nb-paper)!important;color:var(--nb-ink)!important;box-shadow:0 0 0 2px var(--nb-ink)!important;}
+html[data-theme="notebook"] .b-cal .d.sale.today{background:var(--nb-ink)!important;color:var(--nb-paper)!important;box-shadow:0 0 0 2px var(--nb-paper),0 0 0 3.5px var(--nb-ink)!important;}
 
 /* honeycomb as cut-out kraft hexagons with a pen outline */
 html[data-theme="notebook"] .hex{background:var(--nb-ink)!important;color:var(--nb-ink)!important;position:relative;isolation:isolate;}
