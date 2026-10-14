@@ -682,9 +682,9 @@ function _renderCore5Pills(values) {
     const href = `products.html?brand=${encodeURIComponent(val)}`;
     if (val) {
       item.style.display = '';
-      item.innerHTML = `<div class="core-pill" data-value="${val.replace(/"/g,'&quot;')}" title="View ${val} products" onclick="window.T24Shell?T24Shell.open('${href.replace(/'/g,"\'")}'):(window.location.href='${href.replace(/'/g,"\'")}')">
+      item.innerHTML = `<a class="core-pill" href="${href.replace(/"/g,'&quot;')}" data-value="${val.replace(/"/g,'&quot;')}" title="View ${val} products" style="display:block;text-decoration:none;color:inherit">
           <span class="core-pill-text">${val}</span>
-         </div>`;
+         </a>`;
     } else {
       item.style.display = 'none';
       item.innerHTML = '';
