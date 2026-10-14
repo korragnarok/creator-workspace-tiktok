@@ -196,6 +196,9 @@ async function actTry(text, waitEl) {
   let parsed; try { parsed = await actTimeout(actParse(text), 30000, 'Understanding your message'); }
   catch (e) { console.warn('actParse', e); if (!strong) return false; waitEl.classList.remove('wait'); waitEl.innerHTML = `I couldn't set that up just now (${esc(e.message)}). Try sending it again.`; return true; }
   const acts = (parsed.actions || []).filter(a => a && a.type);
+  // trust the words she typed for the date ("tomorrow", "friday", "oct 15") over the AI's guess
+  const ld = actLocalDate(text);
+  if (ld) acts.forEach(x => { if (x.type !== 'move_day' && x.type !== 'add_promo' && x.type !== 'set_goal') x.date = ld; });
   if (!parsed.is_action || !acts.length) return false;
   waitEl.textContent = 'Getting it ready…';
   let c; try { c = await actTimeout(actContext(), 20000, 'Loading your videos and products'); }
@@ -648,4 +651,22 @@ async function actFilmUndo(k) {
   if (u.ids.length) await db.from('queue').delete().in('id', u.ids).eq('user_id', c.uid);
   const b = (await plannerGet('filmBoard', {})) || {}; if (b[u.date]) { u.keys.forEach(key => { delete b[u.date][key]; }); await plannerSet('filmBoard', b); }
   a.undo = null; const st = document.querySelector(`#${k} .astat`); if (st) st.textContent = 'Undone — removed it from your Film Board.';
+}
+
+function actLocalDate(text) {
+  const t = String(text || '').toLowerCase(), now = new Date(), base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const add = n => ymd(addDays(base, n));
+  if (/\b(day after tomorrow)\b/.test(t)) return add(2);
+  if (/\b(tomorrow|tmrw|tmr|tomorow|tommorow|tommorrow)\b/.test(t)) return add(1);
+  if (/\byesterday\b/.test(t)) return add(-1);
+  if (/\b(today|tonight)\b/.test(t)) return add(0);
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const m = t.match(/\b(next\s+|this\s+)?(sun|mon|tue|tues|wed|thu|thur|thurs|fri|sat)(day|sday|nesday|rsday|urday)?\b/);
+  if (m) { const idx = days.findIndex(d => d.startsWith(m[2].slice(0, 3))); let diff = (idx - base.getDay() + 7) % 7; if (diff === 0 || /next/.test(m[1] || '')) diff = diff === 0 ? 7 : diff + (/next/.test(m[1] || '') && diff < 7 ? 0 : 0); return add(diff); }
+  const mon = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const md = t.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(st|nd|rd|th)?\b/);
+  if (md) { const d = new Date(base.getFullYear(), mon.indexOf(md[1].slice(0, 3)), +md[2]); if (d < addDays(base, -60)) d.setFullYear(d.getFullYear() + 1); return ymd(d); }
+  const sl = t.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
+  if (sl && +sl[1] <= 12 && +sl[2] <= 31) { let y = sl[3] ? +sl[3] : base.getFullYear(); if (y < 100) y += 2000; return ymd(new Date(y, +sl[1] - 1, +sl[2])); }
+  return '';
 }
