@@ -96,8 +96,10 @@ Action types:
 One message can have several actions. Never invent numbers she didn't say — leave them 0.
 
 MESSAGE: ${text}`;
-  const res = await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: 'application/json', responseSchema: ACT_SCHEMA, thinkingConfig: { thinkingBudget: 0 } } }), signal: AbortSignal.timeout ? AbortSignal.timeout(25000) : undefined });
+  const body = JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: 'application/json', responseSchema: ACT_SCHEMA, thinkingConfig: { thinkingBudget: 0 } } });
+  const call = ms => fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined });
+  let res; try { res = await call(30000); } catch (e) { res = await call(45000); }   // Gemini is sometimes slow — try once more
+  if (res.status >= 500 || res.status === 429) { await new Promise(r => setTimeout(r, 1200)); res = await call(45000); }
   const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(data?.error?.message || `Gemini error (${res.status})`);
   try { return JSON.parse((data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('')); } catch (e) { return { is_action: false, actions: [] }; }
 }
@@ -207,12 +209,12 @@ async function actTry(text, waitEl) {
   if (!actLooksLikeAction(text)) return false;
   const strong = /\b(made|log|logged|sold)\b.*\b(sale|sales|gmv|commission)\b|\b(add|put)\b.*\b(film ?board|board|to-?do)\b|\bplan my\b|\bposted\b|\bwrite\b.*\bscript\b/i.test(text);
   waitEl.textContent = 'Reading that…';
-  let parsed; try { parsed = await actTimeout(actParse(text), 30000, 'Understanding your message'); }
+  let parsed; try { parsed = await actTimeout(actParse(text), 95000, 'Understanding your message'); }
   catch (e) { console.warn('actParse', e); if (!strong) return false; waitEl.classList.remove('wait'); waitEl.innerHTML = `I couldn't set that up just now (${esc(e.message)}). Try sending it again.`; return true; }
   let acts = (parsed.actions || []).filter(a => a && a.type);
   // safety: "move day" only when she clearly means the whole day; otherwise re-read it as product moves
   if (acts.some(a => a.type === 'move_day') && !/\b(whole|entire|everything|all of (it|them|that)|the day|my day|full day|board|schedule|plan)\b/i.test(text)) {
-    try { const again = await actTimeout(actParse(text + '\n\n(She named specific products — use move_takes, one action per product. Do NOT use move_day.)'), 30000, 'Understanding your message');
+    try { const again = await actTimeout(actParse(text + '\n\n(She named specific products — use move_takes, one action per product. Do NOT use move_day.)'), 95000, 'Understanding your message');
       const a2 = (again.actions || []).filter(a => a && a.type && a.type !== 'move_day');
       acts = acts.filter(a => a.type !== 'move_day').concat(a2.filter(a => a.type === 'move_takes')); parsed.is_action = !!acts.length || parsed.is_action;
     } catch (e) { acts = acts.filter(a => a.type !== 'move_day'); }
