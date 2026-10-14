@@ -18,7 +18,7 @@ async function actContext() {
   const uid = session.user.id, since = ymd(addDays(new Date(), -180));
   const [{ data: accts }, { data: prods }, { data: vids }, colNames] = await Promise.all([
     db.from('tiktok_accounts').select('tiktok_open_id,username,display_name').eq('user_id', uid).order('created_at', { ascending: true }),
-    db.from('products').select('id,name,brand,notes,tiktok_account_id,status,units_sold').eq('user_id', uid).order('name'),
+    db.from('products').select('id,name,brand,notes,tiktok_account_id,status,units_sold,image_url').eq('user_id', uid).order('name'),
     db.from('videos').select('id,title,date,tiktok_account_id,views').eq('user_id', uid).gte('date', since).order('date', { ascending: false }).limit(800),
     plannerGet('filmColNames', {}).catch(() => ({}))
   ]);
@@ -75,7 +75,7 @@ Film Board columns (key = what she calls it): ${Object.entries(c.cols).map(([k, 
 Action types:
 - log_sale: a sale. source "video" (from a video — put the caption/description words she gives in "caption", and the product if she says it) or "showcase" (from her showcase — put the product in "product"). units (default 1 if she says "a sale"), gmv and comm as plain numbers (no $). account only if she names one.
 - day_note: a note for a sales day (note, date).
-- film_plan: filming plan. product, date, columns = list of {column, takes}. "5 videos, 2 talking head and 3 in the car" → [{talking,2},{car,3}]. If she gives no style, use one entry with column "talking".
+- film_plan: filming plan / add a product to her Film Board or to-do ("add X to my to do", "put X on my board"). product, date, columns = list of {column, takes}. "5 videos, 2 talking head and 3 in the car" → [{talking,2},{car,3}]. If she gives no style, use one entry with column "talking".
 - move_day: move everything planned on "date" to "to_date".
 - mark_filmed: mark takes filmed (product, date, count — 0 means all).
 - add_promo: product, line (Shark / Ninja / Shark Beauty), deal (as she says it), start_date, end_date.
@@ -204,8 +204,8 @@ async function actTry(text, waitEl) {
   let html = '';
   for (const a of left) html += await actWhatsLeft(c, dOk(a.date));
   const cards = [];
-  for (let i = 0; i < rest.length; i++) { const t = rest[i].type; if (t === 'write_script') waitEl.textContent = 'Writing your script…'; if (t === 'add_product') waitEl.textContent = 'Looking it up on TikTok Shop…'; cards.push(t === 'plan_day' ? await actPlanDayCard(rest[i], i, c) : t === 'write_script' ? await actScriptCard(rest[i], i, c) : t === 'add_product' ? await actAddProductCard(rest[i], i, c) : actCardHtml(rest[i], i, c)); }
-  if (cards.length) html += `<p>Here's what I'll do — check it and tap <b>Save</b>:</p>` + cards.join('');
+  for (let i = 0; i < rest.length; i++) { const t = rest[i].type; if (t === 'write_script') waitEl.textContent = 'Writing your script…'; if (t === 'add_product') waitEl.textContent = 'Looking it up on TikTok Shop…'; cards.push(t === 'plan_day' ? await actPlanDayCard(rest[i], i, c) : t === 'write_script' ? await actScriptCard(rest[i], i, c) : t === 'add_product' ? await actAddProductCard(rest[i], i, c) : t === 'film_plan' ? await actFilmAuto(rest[i], i, c) : actCardHtml(rest[i], i, c)); }
+  if (cards.length) html += (rest.some(x => x.type !== 'film_plan') ? `<p>Here's what I'll do — check it and tap <b>Save</b>:</p>` : '') + cards.join('');
   waitEl.classList.remove('wait');
   waitEl.innerHTML = html;
   return true;
@@ -322,9 +322,10 @@ async function actAddToBoard(c, date, p, plan, board) {
     keys.push([String(p.id) + (tag ? '#' + tag.slice(6, -1) : ''), x.col]);
     for (let t = 0; t < x.n; t++) rows.push({ user_id: c.uid, tiktok_account_id: acct, date, prod_id: p.id, name: p.name, brand: p.brand || '', notes: tag, script: '', done: false, sort_order: 900 + i });
   });
-  const { error } = await db.from('queue').insert(rows); if (error) throw error;
+  const { data: ins, error } = await db.from('queue').insert(rows).select('id'); if (error) throw error;
   keys.forEach(([key, col], i) => { day[key] = { ...(day[key] || {}), style: col, order: 900 + Object.keys(day).length + i }; });
   board[date] = day;
+  return { ids: (ins || []).map(r => r.id), keys: keys.map(k => k[0]) };
 }
 
 async function actPlanDayCard(a, i, c) {
@@ -599,4 +600,52 @@ async function actGoalsSummary(sales, vids) {
   if (g.day) line('day', today, today, 1);
   if (g.week) { const d = new Date(t); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); line('week', ymd(d), today, 7); }
   return out.join('\n');
+}
+
+// ─── Film plan: just do it when the product is clear; otherwise ask "which one?" ───
+function actFilmPlanOf(a) {
+  const cols = (a.columns && a.columns.length ? a.columns : [{ column: a.column || 'talking', takes: 1 }]);
+  const m = {}; cols.forEach(x => { const k = ['talking', 'vacuum', 'faceless', 'car'].includes(x.column) ? x.column : 'talking'; m[k] = (m[k] || 0) + Math.max(1, Math.min(20, +x.takes || 1)); });
+  return Object.entries(m).map(([col, n]) => ({ col, n }));
+}
+function actProdCandidates(c, name) {
+  const scored = c.prods.map(p => ({ p, s: actScore(`${p.name} ${p.brand || ''}`, name) })).filter(o => o.s >= 20).sort((x, y) => y.s - x.s);
+  // brand-only matches too ("dr melaxin" → every Dr. Melaxin product)
+  const words = actNorm(name).split(' ').filter(w => w.length > 2);
+  c.prods.forEach(p => { if (!scored.some(o => o.p.id === p.id) && words.some(w => actNorm(p.brand).includes(w))) scored.push({ p, s: 19 }); });
+  return scored.slice(0, 8);
+}
+async function actFilmAuto(a, i, c) {
+  const k = `a${Date.now().toString(36)}${i}`, date = dOk(a.date), plan = actFilmPlanOf(a);
+  ACT.cards[k] = { ...a, type: 'film_pick', date, plan };
+  const cand = actProdCandidates(c, a.product || '');
+  const top = cand[0], second = cand[1];
+  const sure = top && (top.s >= 100 || (top.s >= 67 && (!second || top.s - second.s >= 25)));
+  if (sure) {
+    try { return await actFilmDo(k, top.p, c); }
+    catch (e) { return `<div class="acard done" id="${k}"><div class="astat">Couldn't add it: ${esc(e.message)}</div></div>`; }
+  }
+  const planTxt = plan.map(x => `${x.n} × ${esc(c.cols[x.col])}`).join(', ');
+  return `<div class="acard" id="${k}"><div class="atitle">🎬 Which product?</div>
+    <div class="sub" style="margin:0 0 8px;font-size:12.5px">${cand.length ? `Here's what I found for "<b>${esc(a.product || '')}</b>" — tap the right one and I'll add it (${planTxt}, ${esc(prettyD(date))}):` : `I couldn't find "<b>${esc(a.product || '')}</b>" in your Products.`}</div>
+    ${cand.map(o => `<button type="button" class="ashop" style="width:100%;text-align:left" onclick="actFilmPick('${k}','${o.p.id}',this)">${o.p.image_url ? `<img src="${esc(o.p.image_url)}" alt="">` : ''}<span><b>${esc(o.p.name)}</b><small>${esc(o.p.brand || '')}</small></span></button>`).join('')}
+    <div class="abtns"><button class="abtn" onclick="askThis && askThis('Add ${esc(String(a.product || '').replace(/'/g, ''))} to my products')">➕ It's a new product — add it</button><button class="abtn" onclick="actSkip('${k}')">Never mind</button></div><div class="astat"></div></div>`;
+}
+async function actFilmPick(k, pid, btn) {
+  const c = await actContext(), p = c.prods.find(x => x.id === pid); if (!p) return;
+  const el = document.getElementById(k); el.querySelectorAll('button').forEach(b => b.disabled = true);
+  try { el.outerHTML = await actFilmDo(k, p, c); } catch (e) { el.querySelector('.astat').textContent = "Couldn't add it: " + e.message; el.querySelectorAll('button').forEach(b => b.disabled = false); }
+}
+async function actFilmDo(k, p, c) {
+  const a = ACT.cards[k], board = (await plannerGet('filmBoard', {})) || {};
+  const res = await actAddToBoard(c, a.date, p, a.plan, board); await plannerSet('filmBoard', board);
+  a.undo = { ...res, date: a.date };
+  ACT.ctx = null;
+  return `<div class="acard done" id="${k}"><div class="astat">✓ Added <b>${esc(p.name)}</b> to your Film Board for ${esc(prettyD(a.date))}: ${a.plan.map(x => `${x.n} × ${esc(c.cols[x.col])}`).join(', ')}. <a href="#" onclick="actFilmUndo('${k}');return false" style="color:var(--rust);font-weight:800;margin-left:6px">Undo</a></div></div>`;
+}
+async function actFilmUndo(k) {
+  const a = ACT.cards[k], u = a?.undo; if (!u) return; const c = await actContext();
+  if (u.ids.length) await db.from('queue').delete().in('id', u.ids).eq('user_id', c.uid);
+  const b = (await plannerGet('filmBoard', {})) || {}; if (b[u.date]) { u.keys.forEach(key => { delete b[u.date][key]; }); await plannerSet('filmBoard', b); }
+  a.undo = null; const st = document.querySelector(`#${k} .astat`); if (st) st.textContent = 'Undone — removed it from your Film Board.';
 }
