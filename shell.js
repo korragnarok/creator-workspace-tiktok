@@ -25,7 +25,7 @@
     document.head.appendChild(st);
     wrap = document.createElement('div'); wrap.className = 'shell-wrap';
     wrap.innerHTML = `<div class="shell-bar"><button type="button" data-a="home" title="Back to Home">⌂ Home</button><div class="shell-title"></div>
-      <button type="button" data-a="full" title="Use the whole screen">⤢ Expand</button><button type="button" data-a="tab" title="Open in its own tab">↗</button></div><iframe title="Page"></iframe>`;
+      <button type="button" data-a="full" title="Use the whole screen">⤢ Expand</button></div><iframe title="Page"></iframe>`;
     center.appendChild(wrap); frame = wrap.querySelector('iframe'); title = wrap.querySelector('.shell-title');
     wrap.querySelector('.shell-bar').addEventListener('click', e => { const a = e.target.closest('button')?.dataset.a;
       if (a === 'home') home(); else if (a === 'full') setFull(!board.classList.contains('shell-full')); else if (a === 'tab') window.open(currentPage(), '_blank'); });
