@@ -106,3 +106,9 @@ html[data-theme="notebook"] .bd,html[data-theme="notebook"] .badge,html[data-the
 html[data-theme="notebook"] body::after{opacity:.06!important;}
 html[data-theme="notebook"] .msg.me{background:var(--nb-kraft)!important;color:var(--nb-ink)!important;border:1.6px solid var(--nb-ink);}
 html[data-theme="notebook"] *{scrollbar-color:rgba(43,33,27,.35) transparent;}
+
+/* leave a real notebook margin between the spiral rings and the content */
+html[data-theme="notebook"]:not(.embedded) body:not(.has-app-shell){padding-left:84px!important;}
+html[data-theme="notebook"]:not(.embedded) .has-app-shell .content,html[data-theme="notebook"]:not(.embedded) .has-app-shell .workspace>.content{padding-left:84px!important;}
+@media(max-width:768px){html[data-theme="notebook"]:not(.embedded) body:not(.has-app-shell),html[data-theme="notebook"]:not(.embedded) .has-app-shell .content{padding-left:46px!important;}
+  html[data-theme="notebook"] body{background-position:-22px 0,0 0,0 0,0 0!important;}}
