@@ -13,7 +13,24 @@
     const h = a.getAttribute('href') || ''; if (/^(\.\/)?(index\.html)?(\?.*)?$/i.test(h) && !/^#/.test(h)) { e.preventDefault(); try { window.parent.T24Shell.home(); } catch (_) { location.href = h; } } }, true);
 })();
 // motion + texture layer on every page
-(function () { if (document.querySelector('link[href^="alive.css"]')) return; const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'alive.css?v=384'; document.head.appendChild(l); })();
+(function () { const put = () => { if (document.getElementById('t24drawSvg')) return; const d = document.createElement('div'); d.id = 't24drawSvg'; d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+  d.innerHTML = `<svg width="0" height="0" aria-hidden="true"><filter id="t24draw" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G" result="bleed"/>
+    <feGaussianBlur in="bleed" stdDeviation="2.2" result="soft"/>
+    <feComponentTransfer in="soft" result="pool"><feFuncR type="discrete" tableValues="0.08 0.3 0.5 0.68 0.84 0.97"/><feFuncG type="discrete" tableValues="0.07 0.28 0.48 0.66 0.82 0.96"/><feFuncB type="discrete" tableValues="0.06 0.25 0.44 0.62 0.78 0.92"/></feComponentTransfer>
+    <feGaussianBlur in="pool" stdDeviation="1.2" result="pool2"/>
+    <feColorMatrix in="pool2" type="matrix" values="0.87 0 0 0 0.13  0 0.87 0 0 0.12  0 0 0.87 0 0.11  0 0 0 1 0" result="wash"/>
+    <feColorMatrix in="soft" type="saturate" values="0" result="gray"/>
+    <feConvolveMatrix in="gray" order="3" kernelMatrix="-1 -1 -1 -1 8 -1 -1 -1 -1" divisor="1" preserveAlpha="true" result="edge"/>
+    <feColorMatrix in="edge" type="matrix" values="0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0 0.14  1.3 0 0 0 -0.04" result="ink"/>
+    <feComposite in="ink" in2="wash" operator="over" result="painted"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="grain"/>
+    <feColorMatrix in="grain" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.12 0.88" result="paper"/>
+    <feBlend in="painted" in2="paper" mode="multiply"/>
+  </filter></svg>`; document.body.appendChild(d); };
+  if (document.body) put(); else document.addEventListener('DOMContentLoaded', put); })();
+(function () { if (document.querySelector('link[href^="alive.css"]')) return; const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'alive.css?v=387'; document.head.appendChild(l); })();
 (function () { if (document.querySelector('link[href^="notebook.css"]')) return; const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'notebook.css?v=355'; document.head.appendChild(l); })();
 (function () {
   const NAV_ITEMS = [

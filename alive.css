@@ -54,10 +54,9 @@ button:active,.btn:active,.abtn:active{transform:scale(.97);}
 /* Respect "reduce motion" */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
 
-/* 11. Warm "film" look on real photos (product + video thumbnails), so they match the site.
-   Icons, logos and level badges are left alone. Turn off with <html class="photos-plain">. */
+/* 11. "Illustrated" look on real photos (product + video thumbnails) — flat painted colors + soft ink edges.
+   Filter lives in layout.js (#t24draw). Icons, logos, level badges and avatars are left alone. Turn off with <html class="photos-plain">. */
 html:not(.photos-plain) img:not([src*="icons/"]):not([src*="logo"]):not([src^="data:"]):not(.avatar-img):not(#mAvatarImg):not(.tier-icon):not([src*=".svg"]),
-html:not(.photos-plain) .tops-img,
-html:not(.photos-plain) [class*="thumb"]:not(img){
-  filter: sepia(.28) saturate(.78) contrast(.94) brightness(1.03) hue-rotate(-6deg);
+html:not(.photos-plain) .tops-img{
+  filter: url(#t24draw) saturate(.95) sepia(.08);
 }
