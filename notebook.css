@@ -1,11 +1,11 @@
 /* ─── Notebook theme: hand-drawn sketchbook look. Only active when <html data-theme="notebook"> ─── */
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Patrick+Hand&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Patrick+Hand&display=swap');
 
 html[data-theme="notebook"]{
   --nb-paper:#f3ead9; --nb-paper-2:#f8f1e4; --nb-line:rgba(120,140,160,.22); --nb-margin:rgba(196,92,80,.28);
   --nb-ink:#2b211b; --nb-ink-soft:#4a3a2f; --nb-kraft:#c9a47c; --nb-kraft-2:#b98f66; --nb-kraft-dark:#8a6446;
   --nb-tape:rgba(214,186,140,.78); --nb-sketch:255px 12px 225px 14px/14px 225px 12px 255px;
-  --nb-hand:'Patrick Hand','Comic Neue',cursive; --nb-title:'Caveat','Patrick Hand',cursive;
+  --nb-hand:'Patrick Hand','Comic Neue',cursive; --nb-title:'Caveat Brush','Patrick Hand',cursive;
 }
 
 /* paper, ruled lines, spiral binding */
@@ -24,11 +24,15 @@ html.embedded[data-theme="notebook"] body::before{display:none;}
 html[data-theme="notebook"] body,html[data-theme="notebook"] button,html[data-theme="notebook"] input,html[data-theme="notebook"] select,html[data-theme="notebook"] textarea,
 html[data-theme="notebook"] .b-folder,html[data-theme="notebook"] .card,html[data-theme="notebook"] [class*="label"],html[data-theme="notebook"] [class*="sub"]{font-family:var(--nb-hand)!important;}
 
+/* every bit of text = Patrick Hand (titles below switch to Caveat Brush) */
+html[data-theme="notebook"] *,html[data-theme="notebook"] *::before,html[data-theme="notebook"] *::after{font-family:var(--nb-hand)!important;}
 /* headings in marker handwriting */
 html[data-theme="notebook"] h1,html[data-theme="notebook"] h2,html[data-theme="notebook"] h3,html[data-theme="notebook"] .b-title,html[data-theme="notebook"] .card-title,
 html[data-theme="notebook"] .welcome,html[data-theme="notebook"] .core-sidebar-head,html[data-theme="notebook"] .col-h .cht,html[data-theme="notebook"] .swh,html[data-theme="notebook"] .atitle,
-html[data-theme="notebook"] .ins-head h2,html[data-theme="notebook"] .recap-hero .big,html[data-theme="notebook"] .shell-title{
-  font-family:var(--nb-title)!important;font-weight:700!important;color:var(--nb-ink)!important;letter-spacing:.2px!important;
+html[data-theme="notebook"] .ins-head h2,html[data-theme="notebook"] .recap-hero .big,html[data-theme="notebook"] .shell-title,
+html[data-theme="notebook"] .sec-title,html[data-theme="notebook"] .section-title,html[data-theme="notebook"] .mh h2,html[data-theme="notebook"] .ins-sec,html[data-theme="notebook"] .b-title *,html[data-theme="notebook"] .card-title *,
+html[data-theme="notebook"] .card-title::after,html[data-theme="notebook"] .b-title::after,html[data-theme="notebook"] .hex span{
+  font-family:var(--nb-title)!important;font-weight:400!important;color:var(--nb-ink)!important;letter-spacing:.2px!important;
   -webkit-text-fill-color:var(--nb-ink)!important;background:none!important;animation:none!important;}
 html[data-theme="notebook"] .b-title,html[data-theme="notebook"] .card-title{font-size:30px!important;line-height:1.05!important;}
 html[data-theme="notebook"] h1{font-size:46px!important;}
@@ -62,7 +66,7 @@ html[data-theme="notebook"] .hex{background:var(--nb-ink)!important;color:var(--
 html[data-theme="notebook"] .hex::before{content:"";position:absolute;inset:2px;z-index:-1;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
   background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.35),transparent 55%),#efe2cc;}
 html[data-theme="notebook"] .hexrow:nth-child(even) .hex:nth-child(2)::before,html[data-theme="notebook"] .hexrow:last-child .hex:last-child::before{background:var(--nb-kraft-2);}
-html[data-theme="notebook"] .hex span{font:400 13px/1.05 var(--nb-title)!important;font-weight:700!important;text-shadow:none!important;}
+html[data-theme="notebook"] .hex span{font-size:13px!important;line-height:1.05!important;text-shadow:none!important;}
 
 /* tape on photos */
 html[data-theme="notebook"] .tops-tile,html[data-theme="notebook"] .lineup-card,html[data-theme="notebook"] .tc-prod,html[data-theme="notebook"] .card .ctop{position:relative;}
