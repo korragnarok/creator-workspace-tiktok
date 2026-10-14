@@ -96,10 +96,14 @@ Action types:
 One message can have several actions. Never invent numbers she didn't say — leave them 0.
 
 MESSAGE: ${text}`;
-  const body = JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: 'application/json', responseSchema: ACT_SCHEMA, thinkingConfig: { thinkingBudget: 0 } } });
-  const call = ms => fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined });
-  let res; try { res = await call(30000); } catch (e) { res = await call(45000); }   // Gemini is sometimes slow — try once more
-  if (res.status >= 500 || res.status === 429) { await new Promise(r => setTimeout(r, 1200)); res = await call(45000); }
+  // fast path: the light model with the strict answer format; backup: regular model, plain JSON (no strict format)
+  const mk = (schema) => JSON.stringify({ contents: [{ role: 'user', parts: [{ text: schema ? prompt : prompt + '\n\nReply with ONLY JSON shaped like {"is_action":bool,"actions":[{"type":"...", ...fields}]} using the field names above.' }] }],
+    generationConfig: { temperature: 0.1, responseMimeType: 'application/json', ...(schema ? { responseSchema: ACT_SCHEMA } : {}), thinkingConfig: { thinkingBudget: 0 } } });
+  const call = (model, schema, ms) => fetch(`${WORKER}/?service=gemini&model=${model}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: mk(schema), signal: AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined });
+  let res = null;
+  try { res = await call('gemini-2.5-flash-lite', true, 20000); if (!res.ok) { console.warn('parse lite', res.status, await res.clone().text().catch(() => '')); res = null; } } catch (e) { console.warn('parse lite', e); }
+  if (!res) { try { res = await call('gemini-2.5-flash', false, 30000); } catch (e) { console.warn('parse flash', e); } }
+  if (!res) res = await call('gemini-2.5-flash', true, 40000);
   const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(data?.error?.message || `Gemini error (${res.status})`);
   try { return JSON.parse((data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('')); } catch (e) { return { is_action: false, actions: [] }; }
 }
