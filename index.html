@@ -836,6 +836,18 @@ select.sched-location-tag:focus{border-color:var(--rust);}
   .b-word,.b-cal,#heroBrandsSlot,.b-folders{display:none;}
   .board .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
 }
+
+/* Mobile: Ask on its own full row, the other three short tiles underneath */
+@media(max-width:768px){
+  .left-goals{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;overflow:visible!important;}
+  .left-goals>.ask-mini{grid-column:1/-1;width:auto!important;min-height:0!important;}
+  .left-goals>.ask-mini iframe{height:340px!important;}
+  .left-goals>.ideas-btn,.left-goals>.brief-btn{width:auto!important;min-width:0!important;height:auto!important;min-height:0!important;padding:10px 8px!important;
+    display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;text-align:center!important;}
+  .left-goals>.ideas-btn .b-title,.left-goals>.brief-btn .b-title{font-size:15px!important;line-height:1.15!important;margin:0!important;}
+  .left-goals>.ideas-btn .ib-count,.left-goals>.ideas-btn .ib-go,.left-goals>.brief-btn span span:not(.b-title){font-size:11px!important;line-height:1.25!important;}
+  .left-goals>.brief-btn>span:last-child{display:none!important;}
+}
 </style>
 <div class="tc-modal" id="tpModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeTilePop()">
   <div class="tc-card tp-card">
