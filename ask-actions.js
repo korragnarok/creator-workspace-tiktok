@@ -221,8 +221,10 @@ async function actTry(text, waitEl) {
   let parsed; try { parsed = await actTimeout(actParse(text), 95000, 'Understanding your message'); }
   catch (e) { console.warn('actParse', e); if (!strong) return false; waitEl.classList.remove('wait'); waitEl.innerHTML = `I couldn't set that up just now (${esc(e.message)}). Try sending it again.`; return true; }
   let acts = (parsed.actions || []).filter(a => a && a.type);
+  // she said copy / duplicate → never move, always copy
+  if (/\b(copy|duplicate|same as|repeat)\b/i.test(text)) acts.forEach(a => { if (a.type === 'move_day') a.type = 'copy_day'; });
   // safety: "move day" only when she clearly means the whole day; otherwise re-read it as product moves
-  if (acts.some(a => a.type === 'move_day') && !/\b(whole|entire|everything|all of (it|them|that)|the day|my day|full day|board|schedule|plan)\b/i.test(text)) {
+  if (acts.some(a => a.type === 'move_day') && !/\b(copy|duplicate|whole|entire|everything|all of (it|them|that)|the day|my day|full day|board|schedule|plan)\b/i.test(text)) {
     try { const again = await actTimeout(actParse(text + '\n\n(She named specific products — use move_takes, one action per product. Do NOT use move_day.)'), 95000, 'Understanding your message');
       const a2 = (again.actions || []).filter(a => a && a.type && a.type !== 'move_day');
       acts = acts.filter(a => a.type !== 'move_day').concat(a2.filter(a => a.type === 'move_takes')); parsed.is_action = !!acts.length || parsed.is_action;
