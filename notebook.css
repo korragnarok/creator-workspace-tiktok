@@ -112,3 +112,6 @@ html[data-theme="notebook"]:not(.embedded) body:not(.has-app-shell){padding-left
 html[data-theme="notebook"]:not(.embedded) .has-app-shell .content,html[data-theme="notebook"]:not(.embedded) .has-app-shell .workspace>.content{padding-left:84px!important;}
 @media(max-width:768px){html[data-theme="notebook"]:not(.embedded) body:not(.has-app-shell),html[data-theme="notebook"]:not(.embedded) .has-app-shell .content{padding-left:46px!important;}
   html[data-theme="notebook"] body{background-position:-22px 0,0 0,0 0,0 0!important;}}
+
+/* badge/link GROUPS are just containers — no outline around them */
+html[data-theme="notebook"] .product-cell-badges,html[data-theme="notebook"] .pl-badges,html[data-theme="notebook"] [class$="-badges"]{border:0!important;box-shadow:none!important;background:transparent!important;}
