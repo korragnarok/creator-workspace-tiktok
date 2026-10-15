@@ -199,7 +199,7 @@ function card(g){
   return `<div class="card${g.done?' done':''}" data-key="${esc(g.key)}" draggable="true" ondragstart="dragStart(event,'${esc(g.key)}')" ondragend="this.classList.remove('dragging')" ondragover="this.classList.add('dropbefore')" ondragleave="this.classList.remove('dropbefore')">
     <div class="ctop">${img?`<img src="${esc(img)}" alt="">`:'<span class="ph"></span>'}<div style="min-width:0"><div class="cname"${g.prod_id?` onclick="event.stopPropagation();openScorecard('${g.prod_id}')" title="See this product's scorecard" style="cursor:pointer"`:''}>${esc(g.name)}</div><div class="cmeta">${esc(g.brand||g.p?.brand||'')}</div></div><div class="cacts"><button class="cx" type="button" title="Move to another day" draggable="false" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();openMoveCard('${esc(g.key)}')">📅</button><button class="cx" type="button" title="Remove" draggable="false" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();removeCard('${esc(g.key)}')">×</button></div></div>
     <div class="badges">${promo?'<span class="bd promo">★ Promo</span>':''}${sample?'<span class="bd sample">Free sample</span>':''}${noScript?'<span class="bd warn">No script yet</span>':''}${g.done?'<span class="bd ok">✓ Filmed</span>':''}${shots.length?`<span class="bd" style="background:var(--surface-2);color:var(--ink)">📷 ${sDone}/${shots.length} shots</span>`:''}</div>
-    <div class="takes">${g.rows.map((r,i)=>`<label draggable="true" ondragstart="takeDragStart(event,'${r.id}')" ondragend="this.classList.remove('tdrag')" ondragover="takeOver(event)" ondragleave="this.classList.remove('tover')" ondrop="takeDrop(event,'${r.id}')"${String(r.script||'').trim()?' class="has-script" title="Has a script — drag to reorder"':' title="Drag to reorder"'}><input type="checkbox" ${r.done?'checked':''} onchange="toggleTake('${r.id}',this.checked)">Take ${i+1}</label>`).join('')}${g.rows.length>1?`<button class="btn sm" style="padding:4px 10px" title="Remove last take" onclick="removeTake('${esc(g.key)}')">−</button>`:''}<button class="btn sm" style="padding:4px 9px" title="Add a take" onclick="addTake('${esc(g.key)}')">+</button></div>
+    <div class="takes">${g.rows.map((r,i)=>`<label draggable="true" ondragstart="takeDragStart(event,'${r.id}')" ondragend="this.classList.remove('tdrag');setTimeout(()=>TAKE_DRAG=null,50)" ondragover="takeOver(event)" ondragleave="this.classList.remove('tover')" ondrop="takeDrop(event,'${r.id}')"${String(r.script||'').trim()?' class="has-script" title="Has a script — drag to reorder"':' title="Drag to reorder"'}><input type="checkbox" ${r.done?'checked':''} onchange="toggleTake('${r.id}',this.checked)">Take ${i+1}</label>`).join('')}${g.rows.length>1?`<button class="btn sm" style="padding:4px 10px" title="Remove last take" onclick="removeTake('${esc(g.key)}')">−</button>`:''}<button class="btn sm" style="padding:4px 9px" title="Add a take" onclick="addTake('${esc(g.key)}')">+</button></div>
     <div class="cbtns"><button class="btn sm" onclick="openItem('${esc(g.key)}','script')">Script</button><button class="btn sm" onclick="openItem('${esc(g.key)}','shots')">Shots</button><button class="btn sm" onclick="openItem('${esc(g.key)}','seo')">Extras</button><button class="btn sm" onclick="copyCard('${esc(g.key)}')" title="Make a copy under this one">Copy</button></div>
     <div class="mv-row"><button class="btn sm" onclick="nudge('${esc(g.key)}',-1)" title="Move up">↑</button><button class="btn sm" onclick="nudge('${esc(g.key)}',1)" title="Move down">↓</button>
     <select class="mv" onchange="placeCard('${esc(g.key)}',this.value,null)">${COLS.map(([k,l])=>`<option value="${k}"${g.style===k?' selected':''}>Move to: ${l}</option>`).join('')}</select></div>
@@ -232,6 +232,7 @@ function setTab(k){ MOBILECOL=k; try{ localStorage.setItem('take24:filmTab',k); 
 function dragStart(e,k){ e.dataTransfer.setData('text/plain',k); e.currentTarget.classList.add('dragging'); }
 function dropOn(e,col){
   e.preventDefault(); document.querySelectorAll('.col,.card').forEach(c=>c.classList.remove('over','dropbefore'));
+  if(TAKE_DRAG){ const id=TAKE_DRAG; TAKE_DRAG=null; const card=e.target.closest('.card'); if(card) moveTakeTo(id,card.dataset.key); else moveTakeTo(id,null,col); return; }
   const k=e.dataTransfer.getData('text/plain'); if(!k) return;
   const target=e.target.closest('.card'); let before=target?target.dataset.key:null;
   if(target){ const r=target.getBoundingClientRect(); if(e.clientY>r.top+r.height/2){ const nx=target.nextElementSibling; before=nx&&nx.classList.contains('card')?nx.dataset.key:null; } }
@@ -300,7 +301,8 @@ function takeOver(e){ if(!TAKE_DRAG) return; e.preventDefault(); e.stopPropagati
 async function takeDrop(e,targetId){
   e.preventDefault(); e.stopPropagation(); document.querySelectorAll('.tover').forEach(x=>x.classList.remove('tover'));
   const from=TAKE_DRAG; TAKE_DRAG=null; if(!from||from===targetId) return;
-  const g=groups().find(x=>x.rows.some(r=>r.id===from)&&x.rows.some(r=>r.id===targetId)); if(!g) return;
+  const g=groups().find(x=>x.rows.some(r=>r.id===from)&&x.rows.some(r=>r.id===targetId));
+  if(!g){ const tg=groups().find(x=>x.rows.some(r=>r.id===targetId)); if(tg) await moveTakeTo(from,tg.key); return; }
   const rows=[...g.rows], a=rows.findIndex(r=>r.id===from), b=rows.findIndex(r=>r.id===targetId);
   const [m]=rows.splice(a,1); rows.splice(b,0,m);
   const base=Math.min(...g.rows.map(r=>+r.sort_order||0));
@@ -308,6 +310,30 @@ async function takeDrop(e,targetId){
   ROWS.sort((x,y)=>(x.sort_order-y.sort_order)||String(x.id).localeCompare(String(y.id)));
   render();
   await Promise.all(rows.map((r,i)=>db.from('queue').update({sort_order:base+i}).eq('id',r.id).eq('user_id',USER.id)));
+}
+// Move ONE take into another card of the same product (e.g. Talking head → Aesthetic / faceless).
+// Dropped on a column with no matching card → it becomes its own card there.
+async function moveTakeTo(id,targetKey,col){
+  const r=ROWS.find(x=>x.id===id); if(!r) return;
+  const G=groups(), src=G.find(g=>g.rows.some(x=>x.id===id)); if(!src) return;
+  const same=g=>String(g.prod_id||String(g.name||'').toLowerCase())===String(r.prod_id||String(r.name||'').toLowerCase());
+  let tg=targetKey?G.find(g=>g.key===targetKey):null;
+  if(tg&&tg.key===src.key) return;
+  if(tg&&!same(tg)){ alert(`That take is for ${r.name} — drop it on a ${r.name} card (or on an empty spot in a column to give it its own card).`); return; }
+  if(!tg&&col){ tg=G.find(g=>same(g)&&g.style===col&&g.key!==src.key)||null; }
+  const base=String(r.notes||'').replace(/\s*\[copy:\w+\]\s*/g,' ').trim();
+  let tag='';
+  if(tg){ const m=tg.key.split('#')[1]; tag=m?`[copy:${m}]`:''; }
+  else tag=`[copy:${Date.now().toString(36)}]`;
+  const notes=[base,tag].filter(Boolean).join(' ').trim();
+  const order=tg?Math.max(...tg.rows.map(x=>+x.sort_order||0))+1:(r.sort_order||0);
+  r.notes=notes; r.sort_order=order;
+  if(!tg){ const nk=keyOf(r); META={...META,[nk]:{style:col,shots:[],seo:'',caption:''}}; metaSave(nk,{style:col}); }
+  if(src.rows.length===1){ const all={...META}; delete all[src.key]; META=all; plannerGet('filmBoard',{}).then(b=>{ b=b||{}; b[ymd(DAY)]=META; plannerSet('filmBoard',b); }); }
+  ROWS.sort((x,y)=>(x.sort_order-y.sort_order)||String(x.id).localeCompare(String(y.id)));
+  render();
+  const {error}=await db.from('queue').update({notes,sort_order:order}).eq('id',id).eq('user_id',USER.id);
+  if(error) alert("Couldn't move that take: "+error.message);
 }
 async function toggleTake(id,done){
   const r=ROWS.find(x=>x.id===id); if(r) r.done=done;
