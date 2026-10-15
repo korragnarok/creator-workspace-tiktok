@@ -1690,25 +1690,31 @@ function guessProductForImport(video){
     const byShopName=PRODUCT_OPTIONS.find(p=>normProductName(p.name)===shopName||(shopName.length>4&&normProductName(p.name).includes(shopName)));
     if(byShopName)return byShopName;
   }
-  // 3. Try hashtag matching against brand names (e.g. #petlabco -> PetLab Co.)
-  const hashtagText=normProductName((video.hashtags||[]).join(' '));
-  if(hashtagText){
-    const byHashtag=PRODUCT_OPTIONS.find(product=>{
-      const brand=normProductName(product.brand||'').replace(/\s/g,'');
-      const name=normProductName(product.name||'').replace(/\s/g,'');
-      const htNoSpace=hashtagText.replace(/\s/g,'');
-      return (brand.length>3&&htNoSpace.includes(brand))||(name.length>4&&htNoSpace.includes(name));
-    });
-    if(byHashtag)return byHashtag;
-  }
-  // 4. Fall back to caption/URL text match
-  const haystack=normProductName(`${video.caption} ${video.url}`);
-  if(!haystack)return null;
-  return PRODUCT_OPTIONS.find(product=>{
-    const name=normProductName(product.name);
-    const brand=normProductName(product.brand);
-    return (name&&name.length>3&&haystack.includes(name))||(brand&&brand.length>3&&haystack.includes(brand));
-  })||null;
+  // 3. Read the caption + hashtags and SCORE every product — best match wins (not just the first brand hit)
+  const caption=normProductName(`${video.caption||''} ${(video.hashtags||[]).join(' ')}`);
+  if(!caption)return null;
+  const flat=caption.replace(/\s/g,'');
+  const STOP=new Set(['the','and','for','with','set','pack','kit','new','mini','duo','trio','bundle','your','this','that','from','size','travel','oz','ml','in','of','a','to']);
+  const words=t=>normProductName(t).split(/\s+/).filter(w=>w.length>2&&!STOP.has(w));
+  const capWords=new Set(caption.split(/\s+/));
+  let best=null,bestScore=0,second=0;
+  PRODUCT_OPTIONS.forEach(product=>{
+    const name=normProductName(product.name||''), brand=normProductName(product.brand||'');
+    if(!name)return;
+    let score=0;
+    if(name.length>3&&(caption.includes(name)||flat.includes(name.replace(/\s/g,''))))score+=100;          // whole product name is in the caption
+    const nw=words(product.name||''); if(nw.length){
+      const hit=nw.filter(w=>capWords.has(w)||capWords.has(w+'s')||capWords.has(w.replace(/s$/,''))||(w.length>5&&flat.includes(w))).length;
+      score+=Math.round(60*hit/nw.length)+hit*6;                                                            // most of its name words are there
+    }
+    if(brand.length>2&&(caption.includes(brand)||flat.includes(brand.replace(/\s/g,''))))score+=12;          // brand mentioned (or #brand)
+    if(score>bestScore){second=bestScore;bestScore=score;best=product;}else if(score>second)second=score;
+  });
+  // only guess when it's a real match and clearly ahead of the next one
+  if(best&&bestScore>=40&&bestScore-second>=8)return best;
+  // brand-only fallback: the caption names a brand that has just one product
+  const byBrand=PRODUCT_OPTIONS.filter(p=>{ const br=normProductName(p.brand||''); return br.length>2&&(caption.includes(br)||flat.includes(br.replace(/\s/g,''))); });
+  return byBrand.length===1?byBrand[0]:null;
 }
 function renderImportResults(){
   const results=document.getElementById('importResults');
