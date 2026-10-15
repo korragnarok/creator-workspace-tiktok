@@ -301,12 +301,12 @@ function takeOver(e){ if(!TAKE_DRAG) return; e.preventDefault(); e.stopPropagati
 async function takeDrop(e,targetId){
   e.preventDefault(); e.stopPropagation(); document.querySelectorAll('.tover').forEach(x=>x.classList.remove('tover'));
   const from=TAKE_DRAG; TAKE_DRAG=null; if(!from||from===targetId) return;
-  const g=groups().find(x=>x.rows.some(r=>r.id===from)&&x.rows.some(r=>r.id===targetId));
-  if(!g){ const tg=groups().find(x=>x.rows.some(r=>r.id===targetId)); if(tg) await moveTakeTo(from,tg.key); return; }
-  const rows=[...g.rows], a=rows.findIndex(r=>r.id===from), b=rows.findIndex(r=>r.id===targetId);
+  const g=groups().find(x=>x.rows.some(r=>String(r.id)===String(from))&&x.rows.some(r=>String(r.id)===String(targetId)));
+  if(!g){ const tg=groups().find(x=>x.rows.some(r=>String(r.id)===String(targetId))); if(tg) await moveTakeTo(from,tg.key); return; }
+  const rows=[...g.rows], a=rows.findIndex(r=>String(r.id)===String(from)), b=rows.findIndex(r=>String(r.id)===String(targetId));
   const [m]=rows.splice(a,1); rows.splice(b,0,m);
   const base=Math.min(...g.rows.map(r=>+r.sort_order||0));
-  rows.forEach((r,i)=>{ const row=ROWS.find(x=>x.id===r.id); if(row) row.sort_order=base+i; });
+  rows.forEach((r,i)=>{ const row=ROWS.find(x=>String(x.id)===String(r.id)); if(row) row.sort_order=base+i; });
   ROWS.sort((x,y)=>(x.sort_order-y.sort_order)||String(x.id).localeCompare(String(y.id)));
   render();
   await Promise.all(rows.map((r,i)=>db.from('queue').update({sort_order:base+i}).eq('id',r.id).eq('user_id',USER.id)));
@@ -314,8 +314,8 @@ async function takeDrop(e,targetId){
 // Move ONE take into another card of the same product (e.g. Talking head → Aesthetic / faceless).
 // Dropped on a column with no matching card → it becomes its own card there.
 async function moveTakeTo(id,targetKey,col){
-  const r=ROWS.find(x=>x.id===id); if(!r) return;
-  const G=groups(), src=G.find(g=>g.rows.some(x=>x.id===id)); if(!src) return;
+  const r=ROWS.find(x=>String(x.id)===String(id)); if(!r) return;
+  const G=groups(), src=G.find(g=>g.rows.some(x=>String(x.id)===String(id))); if(!src) return;
   const same=g=>String(g.prod_id||String(g.name||'').toLowerCase())===String(r.prod_id||String(r.name||'').toLowerCase());
   let tg=targetKey?G.find(g=>g.key===targetKey):null;
   if(tg&&tg.key===src.key) return;
@@ -332,11 +332,11 @@ async function moveTakeTo(id,targetKey,col){
   if(src.rows.length===1){ const all={...META}; delete all[src.key]; META=all; plannerGet('filmBoard',{}).then(b=>{ b=b||{}; b[ymd(DAY)]=META; plannerSet('filmBoard',b); }); }
   ROWS.sort((x,y)=>(x.sort_order-y.sort_order)||String(x.id).localeCompare(String(y.id)));
   render();
-  const {error}=await db.from('queue').update({notes,sort_order:order}).eq('id',id).eq('user_id',USER.id);
+  const {error}=await db.from('queue').update({notes,sort_order:order}).eq('id',r.id).eq('user_id',USER.id);
   if(error) alert("Couldn't move that take: "+error.message);
 }
 async function toggleTake(id,done){
-  const r=ROWS.find(x=>x.id===id); if(r) r.done=done;
+  const r=ROWS.find(x=>String(x.id)===String(id)); if(r) r.done=done;
   await db.from('queue').update({done}).eq('id',id).eq('user_id',USER.id); render();
   if(done&&typeof celebrate==='function'){
     const g=groups().find(x=>x.rows.some(rr=>rr.id===id));
