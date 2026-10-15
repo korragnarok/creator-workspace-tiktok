@@ -9,7 +9,7 @@ const ACT_COLS_DEFAULT = { talking: '🗣 Talking head', vacuum: '🎬 Demo / vo
 
 // quick gate so plain questions skip the extra AI call
 function actLooksLikeAction(t) {
-  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|hashtags?|hook|write|product|products|sample|samples|got|stock|restock|shelve|shelved|promote|goal|goals|remind|reminder|reminders|hero|heroes|swap)\b/i.test(t);
+  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|hashtags?|hook|write|product|products|sample|samples|got|stock|restock|shelve|shelved|promote|goal|goals|remind|reminder|reminders|hero|heroes|swap|copy|duplicate|repeat|same)\b/i.test(t);
 }
 
 async function actContext() {
@@ -48,7 +48,7 @@ const actProd = (c, name) => actFind(c.prods, name, p => `${p.name} ${p.brand ||
 const ACT_SCHEMA = { type: 'OBJECT', properties: {
   is_action: { type: 'BOOLEAN' },
   actions: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
-    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script', 'add_product', 'set_status', 'mark_hq', 'set_goal', 'add_reminder', 'move_takes', 'set_hero'] },
+    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script', 'add_product', 'set_status', 'mark_hq', 'set_goal', 'add_reminder', 'move_takes', 'set_hero', 'copy_day'] },
     date: { type: 'STRING' }, to_date: { type: 'STRING' },
     source: { type: 'STRING', enum: ['video', 'showcase'] },
     caption: { type: 'STRING' }, product: { type: 'STRING' }, account: { type: 'STRING' },
@@ -78,6 +78,7 @@ Action types:
 - log_sale: a sale. source "video" (from a video — put the caption/description words she gives in "caption", and the product if she says it) or "showcase" (from her showcase — put the product in "product"). units (default 1 if she says "a sale"), gmv and comm as plain numbers (no $). account only if she names one.
 - day_note: a note for a sales day (note, date).
 - film_plan: filming plan / add a product to her Film Board or to-do ("add X to my to do", "put X on my board"). product, date, columns = list of {column, takes}. "5 videos, 2 talking head and 3 in the car" → [{talking,2},{car,3}]. If she gives no style, use one entry with column "talking".
+- copy_day: COPY (duplicate) everything planned on "date" onto "to_date" — the original day stays as it is. Use when she says copy / duplicate / same as / repeat a day ("copy today's board to Friday", "make Thursday the same as Monday").
 - move_day: move EVERYTHING planned on "date" to "to_date" — ONLY when she says the whole day / everything / all of it and names NO products. If she names any products (even several), use move_takes instead: one move_takes action per product.
 - move_takes: move ONE product (or some of its takes) to another day ("move the jiyu toner pads, take 1, to tomorrow", "move all takes of the Glossi to Friday"). product, date = the day it's on now (default today), to_date = where it goes, takes_list = take numbers she names, all_takes = true if she says all / doesn't name takes. If she says "all [brand] products" / "everything from [brand]", product = the brand name and brand_all = true (ONE move_takes action, not one per product).
 - mark_filmed: mark takes filmed (product, date, count — 0 means all).
@@ -149,6 +150,10 @@ function actCardHtml(a, i, c) {
   } else if (a.type === 'move_day') {
     title = '📅 Move a filming day';
     body = row('From', `<input type="date" id="${k}_d" value="${date}">`) + row('To', `<input type="date" id="${k}_t" value="${dOk(a.to_date || ymd(addDays(new Date(), 1)))}">`);
+  } else if (a.type === 'copy_day') {
+    title = '📋 Copy a filming day';
+    body = row('Copy from', `<input type="date" id="${k}_d" value="${date}">`) + row('Onto', `<input type="date" id="${k}_t" value="${dOk(a.to_date || ymd(addDays(new Date(), 1)))}">`)
+      + `<label class="achk"><input type="checkbox" id="${k}_sc" checked> Copy the scripts too</label>`;
   } else if (a.type === 'mark_filmed') {
     title = '✅ Mark takes filmed';
     body = row('Product', actProdSel(c, k + '_p', a.product)) + row('Date', `<input type="date" id="${k}_d" value="${date}">`) + row('How many', `<input type="number" min="0" id="${k}_n" value="${a.count || ''}" placeholder="all">`);
@@ -234,10 +239,10 @@ async function actTry(text, waitEl) {
     try { Object.entries((ACT.cols || {})).forEach(([k, v]) => { const w = String(v).replace(/[^a-z /]/gi, '').trim().toLowerCase(); if (w.length > 2 && t.includes(w) && !hits.includes(k)) hits.push(k); }); } catch (e) {}
     if (hits.length === 1) acts.forEach(x => { if (x.type === 'film_plan') { const n = (x.columns || []).reduce((s, c) => s + (+c.takes || 0), 0) || 1; x.columns = [{ column: hits[0], takes: n }]; } }); }
   const lds = actLocalDates(text);
-  acts.forEach(x => { if (x.type !== 'move_takes' || !lds.length) return;
+  acts.forEach(x => { if ((x.type !== 'move_takes' && x.type !== 'copy_day') || !lds.length) return;
     if (lds.length >= 2) { x.date = lds[0].d; x.to_date = lds[lds.length - 1].d; }
     else if (lds[0].src) x.date = lds[0].d; else x.to_date = lds[0].d; });
-  if (ld) acts.forEach(x => { if (x.type === 'move_takes') { /* handled above */ } else if (x.type !== 'move_day' && x.type !== 'add_promo' && x.type !== 'set_goal') x.date = ld; });
+  if (ld) acts.forEach(x => { if (x.type === 'move_takes' || x.type === 'copy_day') { /* handled above */ } else if (x.type !== 'move_day' && x.type !== 'add_promo' && x.type !== 'set_goal') x.date = ld; });
   if (!parsed.is_action || !acts.length) return false;
   waitEl.textContent = 'Getting it ready…';
   let c; try { c = await actTimeout(actContext(), 20000, 'Loading your videos and products'); }
@@ -259,7 +264,7 @@ async function actRun(k, btn) {
   const a = ACT.cards[k], c = await actContext(), stat = document.querySelector(`#${k} .astat`);
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    const msg = await ({ set_goal: actGoal, add_reminder: actReminder, add_product: actAddProductSave, set_status: actStatus, mark_hq: actHQ, set_hero: actHero, write_script: actScriptSave, plan_day: actPlanDaySave, log_video: actVideo, log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
+    const msg = await ({ set_goal: actGoal, add_reminder: actReminder, add_product: actAddProductSave, set_status: actStatus, mark_hq: actHQ, set_hero: actHero, write_script: actScriptSave, plan_day: actPlanDaySave, log_video: actVideo, log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, copy_day: actCopyDay, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
     const el = document.getElementById(k); el.querySelector('.abtns').remove(); el.classList.add('done');
     el.querySelectorAll('input,select,textarea').forEach(x => x.disabled = true);
     stat.innerHTML = '✓ ' + msg;
@@ -327,6 +332,26 @@ async function actMove(k, a, c) {
   const { data, error } = await db.from('queue').update({ date: to }).eq('user_id', c.uid).eq('date', from).select('id'); if (error) throw error;
   const b = (await plannerGet('filmBoard', {})) || {}; if (b[from]) { b[to] = { ...(b[to] || {}), ...b[from] }; delete b[from]; await plannerSet('filmBoard', b); }
   return `Moved ${data?.length || 0} take${data?.length === 1 ? '' : 's'} from ${esc(prettyD(from))} to ${esc(prettyD(to))}.`;
+}
+async function actCopyDay(k, a, c) {
+  const from = v$(k, '_d'), to = v$(k, '_t'), withScripts = !!document.getElementById(k + '_sc')?.checked;
+  if (!from || !to || from === to) throw new Error('pick two different days');
+  const { data: src, error: e1 } = await db.from('queue').select('*').eq('user_id', c.uid).eq('date', from).order('sort_order').order('id'); if (e1) throw e1;
+  const rows = (src || []).filter(r => !/^REMINDER$/m.test(r.notes || ''));
+  if (!rows.length) throw new Error(`nothing planned on ${prettyD(from)}`);
+  const { data: there } = await db.from('queue').select('sort_order').eq('user_id', c.uid).eq('date', to);
+  const base = Math.max(0, ...(there || []).map(r => +r.sort_order || 0)) + 1;
+  const ins = rows.map((r, i) => { const { id, created_at, updated_at, ...rest } = r; return { ...rest, date: to, done: false, sort_order: base + i, script: withScripts ? (r.script || '') : '' }; });
+  const { data: made, error } = await db.from('queue').insert(ins).select('id'); if (error) throw error;
+  const b = (await plannerGet('filmBoard', {})) || {}; if (b[from]) { b[to] = { ...JSON.parse(JSON.stringify(b[from])), ...(b[to] || {}) }; await plannerSet('filmBoard', b); }
+  ACT.cards[k] = { ...(ACT.cards[k] || a), undoIds: (made || []).map(r => r.id) };
+  const n = made?.length || 0;
+  return `Copied ${n} take${n === 1 ? '' : 's'} from ${esc(prettyD(from))} onto <b>${esc(prettyD(to))}</b>${withScripts ? ' (with scripts)' : ''}. ${esc(prettyD(from))} is unchanged. <a href="#" onclick="actCopyUndo('${k}');return false" style="color:var(--rust);font-weight:800;margin-left:6px">Undo</a>`;
+}
+async function actCopyUndo(k) {
+  const ids = ACT.cards[k]?.undoIds; if (!ids?.length) return; const c = await actContext();
+  await db.from('queue').delete().in('id', ids).eq('user_id', c.uid); ACT.cards[k].undoIds = null;
+  const st = document.querySelector(`#${k} .astat`); if (st) st.textContent = 'Undone — removed the copied takes.';
 }
 async function actMark(k, a, c) {
   const pid = v$(k, '_p'), date = v$(k, '_d'), n = +v$(k, '_n') || 0; if (!pid) throw new Error('pick the product');
