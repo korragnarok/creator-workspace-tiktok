@@ -9,7 +9,7 @@ const ACT_COLS_DEFAULT = { talking: '🗣 Talking head', vacuum: '🎬 Demo / vo
 
 // quick gate so plain questions skip the extra AI call
 function actLooksLikeAction(t) {
-  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|captions|hashtags?|seo|keywords?|search words|hook|write|product|products|sample|samples|got|stock|restock|shelve|shelved|promote|goal|goals|remind|reminder|reminders|hero|heroes|swap|copy|duplicate|repeat|same)\b/i.test(t);
+  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|captions|hashtags?|seo|keywords?|search words|hook|write|product|products|sample|samples|got|stock|restock|shelve|shelved|promote|goal|goals|remind|reminder|reminders|hero|heroes|swap|copy|duplicate|repeat|same|clear|empty|wipe|delete|remove|reset)\b/i.test(t);
 }
 
 async function actContext() {
@@ -48,7 +48,7 @@ const actProd = (c, name) => actFind(c.prods, name, p => `${p.name} ${p.brand ||
 const ACT_SCHEMA = { type: 'OBJECT', properties: {
   is_action: { type: 'BOOLEAN' },
   actions: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
-    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script', 'write_copy', 'add_product', 'set_status', 'mark_hq', 'set_goal', 'add_reminder', 'move_takes', 'set_hero', 'copy_day'] },
+    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'clear_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script', 'write_copy', 'add_product', 'set_status', 'mark_hq', 'set_goal', 'add_reminder', 'move_takes', 'set_hero', 'copy_day'] },
     date: { type: 'STRING' }, to_date: { type: 'STRING' },
     source: { type: 'STRING', enum: ['video', 'showcase'] },
     caption: { type: 'STRING' }, product: { type: 'STRING' }, parts: { type: 'ARRAY', items: { type: 'STRING', enum: ['caption', 'hashtags', 'seo', 'title', 'hook'] } }, account: { type: 'STRING' },
@@ -79,6 +79,7 @@ Action types:
 - day_note: a note for a sales day (note, date).
 - film_plan: filming plan / add a product to her Film Board or to-do ("add X to my to do", "put X on my board"). product, date, columns = list of {column, takes}. "5 videos, 2 talking head and 3 in the car" → [{talking,2},{car,3}]. If she gives no style, use one entry with column "talking".
 - copy_day: COPY (duplicate) everything planned on "date" onto "to_date" — the original day stays as it is. Use when she says copy / duplicate / same as / repeat a day ("copy today's board to Friday", "make Thursday the same as Monday").
+- clear_day: CLEAR / empty / wipe / delete everything on her Film Board for "date" ("clear my film board for Friday", "wipe tomorrow", "delete everything on the 20th"). date only. NOT for moving or copying.
 - move_day: move EVERYTHING planned on "date" to "to_date" — ONLY when she says the whole day / everything / all of it and names NO products. If she names any products (even several), use move_takes instead: one move_takes action per product.
 - move_takes: move ONE product (or some of its takes) to another day ("move the jiyu toner pads, take 1, to tomorrow", "move all takes of the Glossi to Friday"). product, date = the day it's on now (default today), to_date = where it goes, takes_list = take numbers she names, all_takes = true if she says all / doesn't name takes. If she says "all [brand] products" / "everything from [brand]", product = the brand name and brand_all = true (ONE move_takes action, not one per product).
 - mark_filmed: mark takes filmed (product, date, count — 0 means all).
@@ -151,6 +152,11 @@ function actCardHtml(a, i, c) {
   } else if (a.type === 'move_day') {
     title = '📅 Move a filming day';
     body = row('From', `<input type="date" id="${k}_d" value="${date}">`) + row('To', `<input type="date" id="${k}_t" value="${dOk(a.to_date || ymd(addDays(new Date(), 1)))}">`);
+  } else if (a.type === 'clear_day') {
+    title = '🧹 Clear a filming day';
+    body = row('Day', `<input type="date" id="${k}_d" value="${date}">`)
+      + `<label class="achk"><input type="checkbox" id="${k}_rem" checked> Keep my reminders on that day</label>`
+      + `<div class="awarn" style="margin-top:6px">This removes every take on that day (scripts, shots, SEO and captions too). You can undo right after.</div>`;
   } else if (a.type === 'copy_day') {
     title = '📋 Copy a filming day';
     body = row('Copy from', `<input type="date" id="${k}_d" value="${date}">`) + row('Onto', `<input type="date" id="${k}_t" value="${dOk(a.to_date || ymd(addDays(new Date(), 1)))}">`)
@@ -202,7 +208,7 @@ function actCardHtml(a, i, c) {
     title = '🏷 Add a product note';
     body = row('Product', actProdSel(c, k + '_p', a.product)) + row('Note', `<textarea id="${k}_n" rows="2">${esc(a.note || '')}</textarea>`);
   } else return '';
-  return `<div class="acard" id="${k}"><div class="atitle">${title}</div>${body}<div class="abtns"><button class="abtn primary" onclick="actRun('${k}',this)">Save</button><button class="abtn" onclick="actSkip('${k}')">Skip</button></div><div class="astat"></div></div>`;
+  return `<div class="acard" id="${k}"><div class="atitle">${title}</div>${body}<div class="abtns"><button class="abtn primary" onclick="actRun('${k}',this)">${a.type === 'clear_day' ? 'Clear it' : 'Save'}</button><button class="abtn" onclick="actSkip('${k}')">Skip</button></div><div class="astat"></div></div>`;
 }
 
 // entry point from send(): returns true if it handled the message
@@ -270,7 +276,7 @@ async function actRun(k, btn) {
   const a = ACT.cards[k], c = await actContext(), stat = document.querySelector(`#${k} .astat`);
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    const msg = await ({ set_goal: actGoal, add_reminder: actReminder, add_product: actAddProductSave, set_status: actStatus, mark_hq: actHQ, set_hero: actHero, write_script: actScriptSave, plan_day: actPlanDaySave, log_video: actVideo, log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, copy_day: actCopyDay, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
+    const msg = await ({ set_goal: actGoal, add_reminder: actReminder, add_product: actAddProductSave, set_status: actStatus, mark_hq: actHQ, set_hero: actHero, write_script: actScriptSave, plan_day: actPlanDaySave, log_video: actVideo, log_sale: actSale, day_note: actDayNote, film_plan: actFilm, move_day: actMove, clear_day: actClearDay, copy_day: actCopyDay, mark_filmed: actMark, add_promo: actPromo, product_note: actProdNote })[a.type](k, a, c);
     const el = document.getElementById(k); el.querySelector('.abtns').remove(); el.classList.add('done');
     el.querySelectorAll('input,select,textarea').forEach(x => x.disabled = true);
     stat.innerHTML = '✓ ' + msg;
@@ -353,6 +359,25 @@ async function actCopyDay(k, a, c) {
   ACT.cards[k] = { ...(ACT.cards[k] || a), undoIds: (made || []).map(r => r.id) };
   const n = made?.length || 0;
   return `Copied ${n} take${n === 1 ? '' : 's'} from ${esc(prettyD(from))} onto <b>${esc(prettyD(to))}</b>${withScripts ? ' (with scripts)' : ''}. ${esc(prettyD(from))} is unchanged. <a href="#" onclick="actCopyUndo('${k}');return false" style="color:var(--rust);font-weight:800;margin-left:6px">Undo</a>`;
+}
+async function actClearDay(k, a, c) {
+  const day = v$(k, '_d'), keepRem = !!document.getElementById(k + '_rem')?.checked; if (!day) throw new Error('pick the day');
+  const { data: all, error: e1 } = await db.from('queue').select('*').eq('user_id', c.uid).eq('date', day); if (e1) throw e1;
+  const rows = (all || []).filter(r => !(keepRem && /^REMINDER$/m.test(r.notes || '')));
+  if (!rows.length) throw new Error(`nothing on your Film Board for ${prettyD(day)}`);
+  const { error } = await db.from('queue').delete().in('id', rows.map(r => r.id)).eq('user_id', c.uid); if (error) throw error;
+  const b = (await plannerGet('filmBoard', {})) || {}, meta = b[day] ? JSON.parse(JSON.stringify(b[day])) : null;
+  if (b[day]) { delete b[day]; await plannerSet('filmBoard', b); }
+  ACT.cards[k] = { ...(ACT.cards[k] || a), undoRows: rows, undoMeta: meta, undoDay: day };
+  const n = rows.length;
+  return `Cleared ${n} take${n === 1 ? '' : 's'} from <b>${esc(prettyD(day))}</b>${keepRem ? ' (kept your reminders)' : ''}. <a href="#" onclick="actClearUndo('${k}');return false" style="color:var(--rust);font-weight:800;margin-left:6px">Undo</a>`;
+}
+async function actClearUndo(k) {
+  const x = ACT.cards[k]; if (!x?.undoRows?.length) return; const c = await actContext();
+  const { error } = await db.from('queue').insert(x.undoRows); const st = document.querySelector(`#${k} .astat`);
+  if (error) { if (st) st.textContent = "Couldn't undo: " + error.message; return; }
+  if (x.undoMeta) { const b = (await plannerGet('filmBoard', {})) || {}; b[x.undoDay] = { ...x.undoMeta, ...(b[x.undoDay] || {}) }; await plannerSet('filmBoard', b); }
+  x.undoRows = null; if (st) st.textContent = `Undone — ${prettyD(x.undoDay)} is back the way it was.`;
 }
 async function actCopyUndo(k) {
   const ids = ACT.cards[k]?.undoIds; if (!ids?.length) return; const c = await actContext();
