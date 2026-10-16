@@ -373,17 +373,29 @@ async function saveToVault(id,btn){
 
 // ── item modal: Script / Shots / SEO & caption ──
 function openItem(k,tab){ CUR=k; MTAB=tab; CUR_TAKE=0; drawM(); document.getElementById('m').classList.add('open'); }
-function closeM(){ document.getElementById('m').classList.remove('open'); render(); }
+function closeM(){ flushDraft(); document.getElementById('m').classList.remove('open'); render(); }
+// auto-save what's typed in Script / Extras — switching tabs, takes, closing or leaving never loses it
+let DRAFT_T=null; function draftSoon(){ clearTimeout(DRAFT_T); DRAFT_T=setTimeout(flushDraft,1200); }
+function flushDraft(){
+  clearTimeout(DRAFT_T);
+  const sc=document.getElementById('scTxt');
+  if(sc&&sc.dataset.id){ const r=ROWS.find(x=>x.id===sc.dataset.id), v=sc.value;
+    if(r&&String(r.script||'')!==v){ r.script=v; db.from('queue').update({script:v}).eq('id',r.id).eq('user_id',USER.id).then(({error})=>{ if(error) console.warn('autosave script',error); }); } }
+  const seo=document.getElementById('seoTxt'), cap=document.getElementById('capTxt');
+  if(CUR&&seo&&cap){ const m=curMeta(); if((m.seo||'')!==seo.value||(m.caption||'')!==cap.value) metaSave(CUR,{seo:seo.value,caption:cap.value}); }
+}
+window.addEventListener('pagehide',flushDraft); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') flushDraft(); });
 let CUR_TAKE=0, EDITING=false;
 function drawM(){
+  flushDraft();
   const g=groups().find(x=>x.key===CUR); if(!g){ closeM(); return; }
   const tabs=[['script','Script'],['shots','Shots'],['seo','Extras']];
   let body='';
   if(MTAB==='script'){
     const r=g.rows[CUR_TAKE]||g.rows[0]; const txt=String(r.script||'');
     body=`${g.rows.length>1?`<div class="mtabs">${g.rows.map((x,i)=>`<button class="tab${i===CUR_TAKE?' on':''}" onclick="CUR_TAKE=${i};EDITING=false;drawM()">Take ${i+1}${x.done?' ✓':''}</button>`).join('')}</div>`:''}
-      ${EDITING||!txt.trim()?`<textarea id="scTxt" rows="12" placeholder="Paste or type the script for this take… (write scripts in Video Feedback → Write a script, then paste here)">${esc(txt)}</textarea>
-        <div class="row" style="margin-top:10px;justify-content:flex-end"><span class="saved" id="sv"></span>${txt.trim()?`<button class="btn sm" onclick="EDITING=false;drawM()">Cancel</button>`:''}<button class="btn sm primary" onclick="saveScript('${r.id}')">Save script</button></div>`
+      ${EDITING||!txt.trim()?`<textarea id="scTxt" data-id="${r.id}" data-orig="${esc(txt)}" oninput="draftSoon()" rows="12" placeholder="Paste or type the script for this take… (write scripts in Video Feedback → Write a script, then paste here)">${esc(txt)}</textarea>
+        <div class="row" style="margin-top:10px;justify-content:flex-end"><span class="saved" id="sv"></span>${txt.trim()?`<button class="btn sm" onclick="const t=document.getElementById('scTxt');t.value=t.dataset.orig;EDITING=false;drawM()">Cancel</button>`:''}<button class="btn sm primary" onclick="saveScript('${r.id}')">Save script</button></div>`
       :`<div class="script-view">${esc(txt)}</div>
         <div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn sm" onclick="saveToVault('${r.id}',this)">Save to vault</button><button class="btn sm" onclick="navigator.clipboard.writeText(document.querySelector('.script-view').innerText);this.textContent='✓ Copied'">Copy</button><button class="btn sm" onclick="EDITING=true;drawM()">Edit</button></div>`}`;
   } else if(MTAB==='shots'){
@@ -393,9 +405,9 @@ function drawM(){
       <div class="row" style="margin-top:10px"><input id="shotNew" placeholder="e.g. close-up of hair wrapping on the brush" onkeydown="if(event.key==='Enter')shotAdd()"><button class="btn sm primary" onclick="shotAdd()">Add</button></div>`;
   } else {
     body=`<div class="lbl">SEO words <button class="btn sm" onclick="navigator.clipboard.writeText(document.getElementById('seoTxt').value);this.textContent='✓ Copied'">Copy</button></div>
-      <textarea id="seoTxt" rows="4" placeholder="Paste your SEO words (comma separated)">${esc(g.meta.seo||'')}</textarea>
+      <textarea id="seoTxt" oninput="draftSoon()" rows="4" placeholder="Paste your SEO words (comma separated)">${esc(g.meta.seo||'')}</textarea>
       <div class="lbl">Caption <button class="btn sm" onclick="navigator.clipboard.writeText(document.getElementById('capTxt').value);this.textContent='✓ Copied'">Copy</button></div>
-      <textarea id="capTxt" rows="5" placeholder="Paste the caption + hashtags">${esc(g.meta.caption||'')}</textarea>
+      <textarea id="capTxt" oninput="draftSoon()" rows="5" placeholder="Paste the caption + hashtags">${esc(g.meta.caption||'')}</textarea>
       <div class="row" style="margin-top:10px;justify-content:flex-end"><span class="saved" id="sv"></span><button class="btn sm primary" onclick="saveSeo()">Save</button></div>`;
   }
   document.getElementById('mc').innerHTML=`<div class="mh"><div><h2>${esc(g.name)}</h2><div class="sub">${esc(g.brand||g.p?.brand||'')}</div></div><button class="x" onclick="closeM()">×</button></div>
