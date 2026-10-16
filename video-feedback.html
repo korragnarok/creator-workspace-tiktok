@@ -1037,6 +1037,41 @@ async function swSave(btn,sc){
   if(error){ alert('Could not save: '+error.message); return; } btn.textContent='✓ Saved'; btn.disabled=true;
 }
 
+
+// ── Keep the feedback + script on screen when you leave and come back ──
+const VF_KEY='take24:vfState', VF_TTL=3*24*3600*1000;
+function vfVals(root){ const o={}; root?.querySelectorAll('textarea[id],input[id]').forEach(el=>{ if(el.type==='file') return; o[el.id]=(el.type==='checkbox'||el.type==='radio')?el.checked:el.value; }); return o; }
+function vfPut(root,vals){ Object.entries(vals||{}).forEach(([id,v])=>{ const el=document.getElementById(id); if(!el||!root.contains(el)) return; if(el.type==='checkbox'||el.type==='radio') el.checked=!!v; else el.value=v; }); }
+function vfSave(){
+  try{
+    const res=document.getElementById('results'), flow=document.getElementById('swFlow'), setup=document.getElementById('swSetup');
+    const { shots, shotParts, imgPart, ...sw } = SW;
+    const st={ at:Date.now(), ctx:CTX, current:CURRENT, fw:FW_CURRENT, newScript:NEW_SCRIPT,
+      results:res.innerHTML, resVals:vfVals(res), sw, flow:flow.innerHTML, flowVals:vfVals(flow), setupVals:vfVals(setup),
+      picked:document.getElementById('swProdPicked')?.innerHTML||'', pickedOn:document.getElementById('swProdPicked')?.style.display!=='none' };
+    localStorage.setItem(VF_KEY, JSON.stringify(st));
+  }catch(e){ console.warn('vfSave',e); }
+}
+function vfRestore(){
+  let st=null; try{ st=JSON.parse(localStorage.getItem(VF_KEY)||'null'); }catch(e){}
+  if(!st||Date.now()-st.at>VF_TTL) { vfWatch(); return; }
+  try{
+    if(st.results && (st.current||st.fw)){ CTX=st.ctx||CTX; CURRENT=st.current; FW_CURRENT=st.fw; NEW_SCRIPT=st.newScript;
+      const res=document.getElementById('results'); res.innerHTML=st.results; vfPut(res,st.resVals);
+      res.querySelectorAll('button[disabled]').forEach(b=>{ if(/Writing/i.test(b.textContent)) { b.disabled=false; b.textContent='✦ Write me a new script from this feedback'; } }); }
+    if(st.sw){ Object.assign(SW, st.sw); vfPut(document.getElementById('swSetup'), st.setupVals);
+      document.querySelectorAll('#swSetup .swopt input').forEach(cb=>cb.closest('.swopt')?.classList.toggle('on',cb.checked));
+      if(st.pickedOn && st.picked){ const pk=document.getElementById('swProdPicked'); pk.innerHTML=st.picked; pk.style.display=''; const pp=document.getElementById('swProdPick'); if(pp) pp.style.display='none'; }
+      if(st.flow && !/Writing…|Reading about|Workshopping/.test(st.flow)){ const flow=document.getElementById('swFlow'); flow.innerHTML=st.flow; vfPut(flow,st.flowVals); } }
+  }catch(e){ console.warn('vfRestore',e); }
+  vfWatch();
+}
+let vfT=null; const vfSoon=()=>{ clearTimeout(vfT); vfT=setTimeout(vfSave,400); };
+function vfWatch(){
+  ['results','swFlow','swSetup'].forEach(id=>{ const el=document.getElementById(id); if(!el) return;
+    new MutationObserver(vfSoon).observe(el,{childList:true,subtree:true,characterData:true}); el.addEventListener('input',vfSoon,true); el.addEventListener('change',vfSoon,true); });
+  window.addEventListener('pagehide',vfSave); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') vfSave(); });
+}
 (async () => {
   const { data: { session } } = await db.auth.getSession();
   if (!session) { location.href = 'auth.html'; return; }
@@ -1056,6 +1091,7 @@ async function swSave(btn,sc){
   try { const last = JSON.parse(localStorage.getItem('take24:lastFeedback')); if (last?.fb && !HIST.some(h => h.at === last.at)) { HIST.unshift({ at: last.at || Date.now(), name: last.name, fb: last.fb }); plannerSet('feedback', HIST, true); } } catch (e) {}
   renderHistory();
   if (HIST[0]) { CTX = { name: HIST[0].name, link: HIST[0].link || '', product: HIST[0].product || '', audio: HIST[0].audio || 'voiceover', goal: HIST[0].goal || '', mode: HIST[0].mode, fileUri: '' }; if (HIST[0].mode === 'framework') renderFramework(HIST[0].fb); else render(HIST[0].fb, HIST[0].product || HIST[0].name); }
+  vfRestore();
 })();
 </script>
 </body>
