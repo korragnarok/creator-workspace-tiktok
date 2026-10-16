@@ -9,7 +9,7 @@ const ACT_COLS_DEFAULT = { talking: '🗣 Talking head', vacuum: '🎬 Demo / vo
 
 // quick gate so plain questions skip the extra AI call
 function actLooksLikeAction(t) {
-  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|hashtags?|hook|write|product|products|sample|samples|got|stock|restock|shelve|shelved|promote|goal|goals|remind|reminder|reminders|hero|heroes|swap|copy|duplicate|repeat|same)\b/i.test(t);
+  return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|captions|hashtags?|seo|keywords?|search words|hook|write|product|products|sample|samples|got|stock|restock|shelve|shelved|promote|goal|goals|remind|reminder|reminders|hero|heroes|swap|copy|duplicate|repeat|same)\b/i.test(t);
 }
 
 async function actContext() {
@@ -48,10 +48,10 @@ const actProd = (c, name) => actFind(c.prods, name, p => `${p.name} ${p.brand ||
 const ACT_SCHEMA = { type: 'OBJECT', properties: {
   is_action: { type: 'BOOLEAN' },
   actions: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
-    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script', 'add_product', 'set_status', 'mark_hq', 'set_goal', 'add_reminder', 'move_takes', 'set_hero', 'copy_day'] },
+    type: { type: 'STRING', enum: ['log_sale', 'day_note', 'film_plan', 'move_day', 'mark_filmed', 'add_promo', 'product_note', 'plan_day', 'whats_left', 'log_video', 'write_script', 'write_copy', 'add_product', 'set_status', 'mark_hq', 'set_goal', 'add_reminder', 'move_takes', 'set_hero', 'copy_day'] },
     date: { type: 'STRING' }, to_date: { type: 'STRING' },
     source: { type: 'STRING', enum: ['video', 'showcase'] },
-    caption: { type: 'STRING' }, product: { type: 'STRING' }, account: { type: 'STRING' },
+    caption: { type: 'STRING' }, product: { type: 'STRING' }, parts: { type: 'ARRAY', items: { type: 'STRING', enum: ['caption', 'hashtags', 'seo', 'title', 'hook'] } }, account: { type: 'STRING' },
     units: { type: 'NUMBER' }, gmv: { type: 'NUMBER' }, comm: { type: 'NUMBER' },
     note: { type: 'STRING' }, count: { type: 'NUMBER' },
     columns: { type: 'ARRAY', items: { type: 'OBJECT', properties: { column: { type: 'STRING', enum: ['talking', 'vacuum', 'faceless', 'car'] }, takes: { type: 'NUMBER' } }, required: ['column', 'takes'] } },
@@ -92,7 +92,8 @@ Action types:
 - set_status: change a product's stock status. product, status: "active" (back in stock / restock / unshelve), "paused" (out of stock), "shelved" (shelve / stop promoting / done with it), "promote" (push it / promote now).
 - set_hero: change her HERO BRANDS list (max 7). hero_mode: "set" = replace the whole list with brands; "add" = add brands; "remove" = remove remove_brands; "swap" = remove remove_brands and add brands ("swap PetLab for Jiyu" → remove_brands [PetLab], brands [Jiyu]).
 - mark_hq: mark a posted video high quality (or not). caption = words from the caption/description she gives, product if she names it, hq = false only if she says NOT high quality.
-- write_script: she wants a video SCRIPT written (or a caption/hashtags for a product). product, funnel ("Middle" if she says middle of funnel / push the sale / get them to buy, else "Top"), on_sale true only if she says it's on sale/promo, column = the filming style if she says it, angle = any specific idea/angle/hook she mentions, date if she says one.
+- write_script: ONLY when she asks for a SCRIPT (the spoken lines for a video). product, funnel ("Middle" if she says middle of funnel / push the sale / get them to buy, else "Top"), on_sale true only if she says it's on sale/promo, column = the filming style if she says it, angle = any specific idea/angle/hook she mentions, date if she says one.
+- write_copy: she asks for a caption, hashtags, SEO words/keywords, a title or a hook — and NOT a script. parts = ONLY the pieces she named: "caption" → [caption]; "caption and seo" → [caption, seo]; "seo words" → [seo]; "caption with hashtags" → [caption, hashtags]; "hashtags" → [hashtags]; "title" → [title]; "hook" → [hook]. Never add pieces she didn't ask for. product, angle = any idea she mentions.
 - log_video: she POSTED a video ("posted the Glossi car video on @thecozyko, caption '...'"). caption = the caption/description she gives, product, account, date, link if given, high_quality true only if she says HQ/high quality, column = which style it was if she says it.
 One message can have several actions. Never invent numbers she didn't say — leave them 0.
 
@@ -223,6 +224,9 @@ async function actTry(text, waitEl) {
   let acts = (parsed.actions || []).filter(a => a && a.type);
   // she said copy / duplicate → never move, always copy
   if (/\b(copy|duplicate|same as|repeat)\b/i.test(text)) acts.forEach(a => { if (a.type === 'move_day') a.type = 'copy_day'; });
+  // she didn't say "script" → never write one; give only the pieces she named
+  if (!/\bscripts?\b/i.test(text)) acts.forEach(a => { if (a.type === 'write_script') { a.type = 'write_copy';
+    if (!a.parts?.length) a.parts = [/\bcaptions?\b/i.test(text) && 'caption', /\bhashtags?\b/i.test(text) && 'hashtags', /\b(seo|keywords?|search words)\b/i.test(text) && 'seo', /\btitle\b/i.test(text) && 'title', /\bhook\b/i.test(text) && 'hook'].filter(Boolean); } });
   // safety: "move day" only when she clearly means the whole day; otherwise re-read it as product moves
   if (acts.some(a => a.type === 'move_day') && !/\b(copy|duplicate|whole|entire|everything|all of (it|them|that)|the day|my day|full day|board|schedule|plan)\b/i.test(text)) {
     try { const again = await actTimeout(actParse(text + '\n\n(She named specific products — use move_takes, one action per product. Do NOT use move_day.)'), 95000, 'Understanding your message');
@@ -253,8 +257,8 @@ async function actTry(text, waitEl) {
   let html = '';
   for (const a of left) html += await actWhatsLeft(c, dOk(a.date));
   const cards = [];
-  for (let i = 0; i < rest.length; i++) { const t = rest[i].type; if (t === 'write_script') waitEl.textContent = 'Writing your script…'; if (t === 'add_product') waitEl.textContent = 'Looking it up on TikTok Shop…'; cards.push(t === 'plan_day' ? await actPlanDayCard(rest[i], i, c) : t === 'write_script' ? await actScriptCard(rest[i], i, c) : t === 'add_product' ? await actAddProductCard(rest[i], i, c) : t === 'film_plan' ? await actFilmAuto(rest[i], i, c) : t === 'move_takes' ? await actMoveTakes(rest[i], i, c) : actCardHtml(rest[i], i, c)); }
-  if (cards.length) html += (rest.some(x => x.type !== 'film_plan' && x.type !== 'move_takes') ? `<p>Here's what I'll do — check it and tap <b>Save</b>:</p>` : '') + cards.join('');
+  for (let i = 0; i < rest.length; i++) { const t = rest[i].type; if (t === 'write_script') waitEl.textContent = 'Writing your script…'; if (t === 'write_copy') waitEl.textContent = 'Writing it…'; if (t === 'add_product') waitEl.textContent = 'Looking it up on TikTok Shop…'; cards.push(t === 'plan_day' ? await actPlanDayCard(rest[i], i, c) : t === 'write_script' ? await actScriptCard(rest[i], i, c) : t === 'write_copy' ? await actCopyCard(rest[i], i, c) : t === 'add_product' ? await actAddProductCard(rest[i], i, c) : t === 'film_plan' ? await actFilmAuto(rest[i], i, c) : t === 'move_takes' ? await actMoveTakes(rest[i], i, c) : actCardHtml(rest[i], i, c)); }
+  if (cards.length) html += (rest.some(x => !['film_plan', 'move_takes', 'write_copy'].includes(x.type)) ? `<p>Here's what I'll do — check it and tap <b>Save</b>:</p>` : '') + cards.join('');
   waitEl.classList.remove('wait');
   waitEl.innerHTML = html;
   return true;
@@ -550,6 +554,34 @@ CAPTION: ${sc.caption}`, { type: 'OBJECT', properties: { passed: { type: 'BOOLEA
   const paragraphs = actClean(pol?.paragraphs?.length ? pol.paragraphs : sc.paragraphs);
   const tags = (sc.hashtags || []).slice(0, 5).map(h => '#' + String(h).replace(/^#/, '').replace(/\s+/g, ''));
   return { title: sc.title || p.name, paragraphs, caption: `${(pol?.caption || sc.caption || '').trim()}\n\n${tags.join(' ')}`.trim(), passed: pol ? pol.passed : null, issues: pol?.issues || [], funnel, seo: (sc.seo || []).map(w => String(w).replace(/^#/, '').trim().toLowerCase()).filter(Boolean).slice(0, 15).join(', ') };
+}
+// ─── Just a caption / hashtags / SEO words (no script) ─────────────────────────
+const COPY_LABEL = { caption: 'Caption', hashtags: 'Hashtags', seo: 'SEO words', title: 'Title', hook: 'Hook' };
+async function actCopyCard(a, i, c) {
+  const k = 'act' + Date.now().toString(36) + i;
+  const parts = [...new Set((a.parts || []).filter(x => COPY_LABEL[x]))]; if (!parts.length) parts.push('caption');
+  const p = actProd(c, a.product || '')[0];
+  const name = p ? `${p.name}${p.brand ? ' by ' + p.brand : ''}` : (a.product || 'this product');
+  const notes = p ? String(p.notes || '').replace(/FREE_SAMPLE/g, '').replace(/TikTok Shop (price|sold count) seen:.*$/gim, '').trim().slice(0, 800) : '';
+  const want = { caption: 'caption: a ready-to-post TikTok caption in her voice, 1–3 short sentences, under 150 characters, NO hashtags in it',
+    hashtags: 'hashtags: exactly 5 hashtags, most relevant first',
+    seo: 'seo: 10–15 short lowercase search phrases people would actually type into TikTok search to find this video (product name/type, brand, the problem it solves, who it is for), no hashtags',
+    title: 'title: a short video title, 3–6 words', hook: 'hook: one scroll-stopping opening line, under 15 words' };
+  const props = {}; parts.forEach(x => props[x] = (x === 'hashtags' || x === 'seo') ? { type: 'ARRAY', items: { type: 'STRING' } } : { type: 'STRING' });
+  let out;
+  try {
+    out = await actTimeout(actGemJSON(`Write ONLY these for a TikTok Shop video about ${name}. Do not write a script or anything else.
+${parts.map(x => '- ' + want[x]).join('\n')}
+${actVoice()}
+${a.angle ? `Her angle: ${a.angle}` : ''}
+${notes ? `PRODUCT FACTS (don't invent claims beyond these):\n${notes}` : ''}`, { type: 'OBJECT', properties: props, required: parts }, 0.7), 60000, 'Writing it');
+  } catch (e) { return `<div class="acard done" id="${k}"><div class="atitle">✍️ ${esc(parts.map(x => COPY_LABEL[x]).join(' + '))}</div><div class="astat">Couldn't write it: ${esc(e.message)}. Try again.</div></div>`; }
+  const fmt = x => { const v = out[x]; if (x === 'hashtags') return (v || []).slice(0, 5).map(h => '#' + String(h).replace(/^#/, '').replace(/\s+/g, '')).join(' ');
+    if (x === 'seo') return (v || []).map(w => String(w).replace(/^#/, '').trim().toLowerCase()).filter(Boolean).slice(0, 15).join(', ');
+    return actClean([v || ''])[0] || ''; };
+  const rows = parts.map(x => { const v = fmt(x); return `<div class="arow"><label>${COPY_LABEL[x]}</label><textarea id="${k}_${x}" rows="${x === 'seo' ? 3 : 2}">${esc(v)}</textarea>
+    <div class="abtns" style="margin-top:4px"><button class="abtn" onclick="navigator.clipboard.writeText(document.getElementById('${k}_${x}').value);this.textContent='✓ Copied'">Copy ${COPY_LABEL[x].toLowerCase()}</button></div></div>`; }).join('');
+  return `<div class="acard" id="${k}"><div class="atitle">✍️ ${esc(parts.map(x => COPY_LABEL[x]).join(' + '))} — ${esc(p ? p.name : (a.product || ''))}</div>${rows}<div class="astat"></div></div>`;
 }
 async function actScriptCard(a, i, c) {
   const p = actProd(c, a.product || '')[0];
