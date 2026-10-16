@@ -122,7 +122,7 @@
     let cells = ['S','M','T','W','T','F','S'].map(d => `<div class="ls-dow">${d}</div>`).join('');
     for (let i = 0; i < first; i++) cells += '<div></div>';
     for (let d = 1; d <= days; d++) cells += `<div class="ls-d${d === now.getDate() ? ' ls-today' : ''}">${d}</div>`;
-    return `<div class="ls-cal"><div class="ls-month">${now.toLocaleDateString(undefined,{month:'long'})}</div><div class="ls-cal-grid">${cells}</div></div>`;
+    return `<a class="ls-cal" href="sales-calendar.html" title="Open Sales Log" style="display:block;text-decoration:none;color:inherit;cursor:pointer"><div class="ls-month">${now.toLocaleDateString(undefined,{month:'long'})}</div><div class="ls-cal-grid">${cells}</div></a>`;
   }
   // Content Ideas shortcut, shown on every page
   function ideasCard(page) {
@@ -370,7 +370,7 @@
   // Phone folders: the 6 main pages, plus a "More" folder that opens the rest
   const MOBILE_MAIN = ['video-tracker.html','products.html','brand-deals.html','scripts.html','sales-calendar.html','settings.html'];
   // Phone nav: honeycomb like desktop — 8 pages, two interlocking rows of 4, light → dark brown
-  const MOBILE_HEX = ['film.html','video-tracker.html','products.html','sales-calendar.html','scripts.html','brand-deals.html','promos.html','video-feedback.html'];
+  const MOBILE_HEX = ['film.html','video-tracker.html','products.html','shop.html','scripts.html','brand-deals.html','promos.html','video-feedback.html'];
   function mobileFolders(page) {
     const L = MOBILE_HEX.map(h => FOLDERS.find(f => f[0] === h) || [h, h === 'film.html' ? 'Film Board' : h === 'promos.html' ? 'Shark & Ninja' : h === 'video-feedback.html' ? 'Video Feedback' : h.replace('.html','')]);
     const cell = ([href, label], i) => { const t = i / (L.length - 1), a = [226,201,176], b = [92,52,34], c = a.map((v,k) => Math.round(v + (b[k]-v) * t));
@@ -383,7 +383,10 @@
         .m-hexrow:nth-child(2){transform:translateX(calc((var(--hw) + var(--hg))*.25));margin-top:calc(var(--hh)*-.25 + var(--hg)*.87);}
         .m-hex{width:var(--hw);height:var(--hh);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:var(--hb);color:var(--hf);display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;padding:0 8px;}
         .m-hex span{font:800 10px/1.15 'Nunito Sans',sans-serif;}
-        .m-hex.active{filter:brightness(1.1);} .m-hex:active{transform:scale(.96);}`;
+        .m-hex.active{filter:brightness(1.1);} .m-hex:active{transform:scale(.96);}
+        html[data-theme="notebook"] .m-hex{background:var(--nb-ink)!important;color:var(--nb-ink)!important;position:relative;isolation:isolate;}
+        html[data-theme="notebook"] .m-hex::before{content:"";position:absolute;inset:2px;z-index:-1;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.35),transparent 55%),#efe2cc;}
+        html[data-theme="notebook"] .m-hexrow:nth-child(1) .m-hex:nth-child(3)::before,html[data-theme="notebook"] .m-hexrow:last-child .m-hex:last-child::before{background:var(--nb-kraft-2);}`;
       document.head.appendChild(st); }
     return `<div class="m-hexgrid"><div class="m-hexrow">${L.slice(0,4).map((f,i) => cell(f,i)).join('')}</div><div class="m-hexrow">${L.slice(4).map((f,j) => cell(f,j+4)).join('')}</div></div>`;
   }
