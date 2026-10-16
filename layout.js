@@ -66,6 +66,7 @@
     { href: 'brand-deals.html', label: 'Brand Deals', icon: 'products' },
     { href: 'product-scout.html', label: 'Product Scout', icon: 'products' },
     { href: 'notes.html', label: 'Notes', icon: 'scripts' },
+    { href: 'shop.html', label: 'Pinterest Shop', icon: 'products' },
     { href: 'settings.html', label: 'Settings', icon: 'scripts' }
   ];
 
@@ -103,7 +104,7 @@
   const FOLDERS = [
     ['video-tracker.html','Content Tracker',2], ['film.html','Film Board',8],
     ['products.html','Products',3], ['brand-deals.html','Brand Deals',4],
-    ['promos.html','Shark & Ninja',16],
+    ['promos.html','Shark & Ninja',16], ['shop.html','Pinterest Shop',5],
     ['scripts.html','Script Vault',6], ['sales-calendar.html','Sales Log',10],
     ['https://a.co/d/0aN0vMFu','Storefront',11], ['https://affiliate-program.amazon.com/home','Associates',12],
     ['video-feedback.html','Video Feedback',14], ['ask.html','Ask Take24',7], ['settings.html','Settings',15]

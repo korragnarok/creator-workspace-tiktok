@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1F1F1E">
+<title>Pinterest Shop — Take24</title>
+<script src="theme-init.js?v=352"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Bad+Script&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--paper:var(--bg);--card:var(--surface);--line:var(--border-mid);--char:var(--surface-2);--muted:var(--text-muted);--cream:var(--ink);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font:13px 'Nunito Sans',sans-serif;padding:26px;padding-top:max(26px,env(safe-area-inset-top));
+  background-image:radial-gradient(rgba(196,160,131,.05) 1px,transparent 1px);background-size:14px 14px;background-attachment:fixed;}
+.wrap{max-width:1180px;margin:0 auto;}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+h1{font:300 40px 'Cormorant Garamond',serif;color:var(--cream);}
+h1 em{font:26px 'Bad Script',cursive;color:var(--tan);font-style:normal;}
+.btn{border:1px solid var(--line);background:var(--char);color:var(--cream);border-radius:999px;padding:9px 16px;font:800 11px 'Nunito Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-block;}
+.btn:hover,.btn.on{background:var(--rust);color:#fff;}
+.form{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form .full{grid-column:1/-1;}
+.form label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);}
+.form input,.form textarea{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 13px;color:var(--ink);font:14px 'Nunito Sans',sans-serif;outline:none;text-transform:none;letter-spacing:0;font-weight:400;}
+.form input:focus,.form textarea:focus{border-color:var(--tan);}
+.form textarea{min-height:64px;resize:vertical;}
+.form .row{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
+.form .hint{font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:400;}
+.preview{width:64px;height:64px;border-radius:12px;background:var(--char) center/cover no-repeat;border:1px solid var(--line);flex:none;}
+.msg{margin-right:auto;font-size:12px;color:var(--tan);}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.ctab{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:12px;padding:8px 14px;font:800 12px 'Nunito Sans',sans-serif;cursor:pointer;}
+.ctab span{opacity:.6;margin-left:3px;}
+.ctab.on{background:var(--rust);border-color:var(--rust);color:#fff;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;}
+.pcard.off{opacity:.5;}
+.pimg{aspect-ratio:1/1;background:var(--char) center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:var(--muted);font:20px 'Cormorant Garamond',serif;}
+.pbody{padding:12px 14px;display:flex;flex-direction:column;gap:4px;flex:1;}
+.pcat{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--tan);}
+.ptitle{font:20px 'Cormorant Garamond',serif;color:var(--cream);line-height:1.2;}
+.pnote{font-size:12px;color:var(--muted);flex:1;}
+.pslug{font-size:11px;color:var(--muted);word-break:break-all;}
+.pacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.pacts .btn{padding:6px 10px;font-size:10px;}
+.empty{grid-column:1/-1;color:var(--muted);text-align:center;padding:50px 20px;background:var(--card);border:1px dashed var(--line);border-radius:18px;}
+.empty b{display:block;font:24px 'Cormorant Garamond',serif;color:var(--cream);margin-bottom:6px;font-weight:400;}
+@media(max-width:640px){.form{grid-template-columns:1fr;}body{padding:16px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Pinterest Shop <em>The House of Kor</em></h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a class="btn" href="https://shop.take24.co" target="_blank" rel="noopener">View shop ↗</a>
+      <a class="btn" href="index.html">← Home</a>
+    </div>
+  </header>
+
+  <form class="form" id="form" onsubmit="event.preventDefault();save();">
+    <label>Product name<input id="fTitle" required placeholder="Curl Defining Cream" oninput="autoSlug()"></label>
+    <label>Category<input id="fCat" list="catList" required placeholder="Hair"><datalist id="catList"></datalist></label>
+    <label class="full">Amazon link (with your tag)<input id="fUrl" type="url" required placeholder="https://amzn.to/…"></label>
+    <label class="full">Photo link<span class="hint">On Amazon, right-click the main photo → Copy image address</span>
+      <div style="display:flex;gap:10px;align-items:center"><input id="fImg" type="url" style="flex:1" placeholder="https://m.media-amazon.com/images/…" oninput="showPreview()"><div class="preview" id="fPrev"></div></div></label>
+    <label class="full">Why I love it<textarea id="fNote" placeholder="One or two lines, in your voice"></textarea></label>
+    <label>Pin link name<input id="fSlug" required placeholder="curl-cream" oninput="slugTouched=true"><span class="hint" id="slugHint"></span></label>
+    <label>Order<input id="fSort" type="number" value="100"><span class="hint">Lower numbers show first</span></label>
+    <div class="row full">
+      <span class="msg" id="msg"></span>
+      <button type="button" class="btn" id="cancelBtn" onclick="resetForm()" hidden>Cancel</button>
+      <button type="submit" class="btn on" id="saveBtn">Add product</button>
+    </div>
+  </form>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=379"></script>
+<script src="planner-sync.js?v=238"></script>
+<script src="layout.js?v=404"></script>
+<script>
+const SHOP_URL='https://shop.take24.co';
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const $=id=>document.getElementById(id);
+let USER=null, ROWS=[], tab='All', editId=null, slugTouched=false;
+
+const slugify=s=>String(s||'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,50);
+function autoSlug(){ if(!slugTouched && !editId) $('fSlug').value=slugify($('fTitle').value); updateHint(); }
+function updateHint(){ const s=slugify($('fSlug').value); $('slugHint').textContent=s?`Pin link: shop.take24.co/#${s}`:''; }
+$('fSlug').addEventListener('input',updateHint);
+function showPreview(){ const u=$('fImg').value.trim(); $('fPrev').style.backgroundImage=u?`url("${u.replace(/"/g,'')}")`:''; }
+function flash(t){ $('msg').textContent=t; clearTimeout(flash.t); flash.t=setTimeout(()=>$('msg').textContent='',3000); }
+
+async function load(){
+  const {data,error}=await db.from('shop_products').select('*').eq('user_id',USER.id).order('sort_order',{ascending:true}).order('created_at',{ascending:false});
+  if(error){ $('grid').innerHTML=`<div class="empty"><b>Couldn't load products</b>${esc(error.message)}</div>`; return; }
+  ROWS=data||[]; render();
+}
+
+function render(){
+  const cats=[...new Set(ROWS.map(r=>r.category).filter(Boolean))];
+  $('catList').innerHTML=[...new Set(['Hair','Nails','Skin',...cats])].map(c=>`<option value="${esc(c)}">`).join('');
+  if(tab!=='All' && !cats.includes(tab)) tab='All';
+  $('tabs').innerHTML=['All',...cats].map(c=>{const n=c==='All'?ROWS.length:ROWS.filter(r=>r.category===c).length;
+    return `<button class="ctab${tab===c?' on':''}" data-c="${esc(c)}">${esc(c)} <span>${n}</span></button>`;}).join('');
+  const list=ROWS.filter(r=>tab==='All'||r.category===tab);
+  $('grid').innerHTML=list.length?list.map(r=>`
+    <div class="pcard${r.active?'':' off'}">
+      <div class="pimg" style="${r.image_url?`background-image:url('${esc(r.image_url)}')`:''}">${r.image_url?'':esc(r.category)}</div>
+      <div class="pbody">
+        <span class="pcat">${esc(r.category)}${r.active?'':' · hidden'}</span>
+        <div class="ptitle">${esc(r.title)}</div>
+        <div class="pnote">${esc(r.note)}</div>
+        <div class="pslug">#${esc(r.slug)}</div>
+        <div class="pacts">
+          <button class="btn on" onclick="copyPin('${esc(r.slug)}')">Copy pin link</button>
+          <button class="btn" onclick="edit('${r.id}')">Edit</button>
+          <button class="btn" onclick="toggle('${r.id}')">${r.active?'Hide':'Show'}</button>
+          <button class="btn" onclick="del('${r.id}')">Delete</button>
+        </div>
+      </div>
+    </div>`).join(''):`<div class="empty"><b>No products yet</b>Add your first pick above and it shows up on shop.take24.co right away.</div>`;
+}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('.ctab'); if(!b) return; tab=b.dataset.c; render();});
+
+async function save(){
+  const row={
+    title:$('fTitle').value.trim(), category:$('fCat').value.trim(),
+    amazon_url:$('fUrl').value.trim(), image_url:$('fImg').value.trim()||null,
+    note:$('fNote').value.trim()||null, slug:slugify($('fSlug').value),
+    sort_order:parseInt($('fSort').value,10)||100
+  };
+  if(!row.slug){ flash('Add a pin link name'); return; }
+  if(ROWS.some(r=>r.slug===row.slug && r.id!==editId)){ flash('That pin link name is already used'); return; }
+  $('saveBtn').disabled=true;
+  const q=editId? db.from('shop_products').update(row).eq('id',editId).eq('user_id',USER.id)
+                : db.from('shop_products').insert({...row,user_id:USER.id,active:true});
+  const {error}=await q;
+  $('saveBtn').disabled=false;
+  if(error){ flash(error.code==='23505'?'That pin link name is already used':error.message); return; }
+  flash(editId?'Saved ✓':'Added ✓'); resetForm(); load();
+}
+
+function edit(id){
+  const r=ROWS.find(x=>x.id===id); if(!r) return;
+  editId=id; slugTouched=true;
+  $('fTitle').value=r.title; $('fCat').value=r.category; $('fUrl').value=r.amazon_url;
+  $('fImg').value=r.image_url||''; $('fNote').value=r.note||''; $('fSlug').value=r.slug; $('fSort').value=r.sort_order??100;
+  showPreview(); updateHint();
+  $('saveBtn').textContent='Save changes'; $('cancelBtn').hidden=false;
+  $('form').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetForm(){
+  editId=null; slugTouched=false; $('form').reset(); $('fSort').value=100; showPreview(); updateHint();
+  $('saveBtn').textContent='Add product'; $('cancelBtn').hidden=true;
+}
+async function toggle(id){
+  const r=ROWS.find(x=>x.id===id); if(!r) return;
+  const {error}=await db.from('shop_products').update({active:!r.active}).eq('id',id).eq('user_id',USER.id);
+  if(error) return flash(error.message); load();
+}
+async function del(id){
+  const r=ROWS.find(x=>x.id===id); if(!r||!confirm(`Delete "${r.title}"? Pins linking to it will just open the shop.`)) return;
+  const {error}=await db.from('shop_products').delete().eq('id',id).eq('user_id',USER.id);
+  if(error) return flash(error.message); load();
+}
+async function copyPin(slug){
+  const link=`${SHOP_URL}/#${slug}`;
+  try{ await navigator.clipboard.writeText(link); flash('Copied '+link); }catch(e){ prompt('Copy this pin link:',link); }
+}
+
+(async()=>{ USER=await requireAuth(); if(USER) load(); })();
+</script>
+</body>
+</html>
