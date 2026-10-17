@@ -567,7 +567,7 @@ Audio style: ${AUDIO_NOTES[audio]||''}
 ${noVoice?'Because this is a sound/music video with NO voiceover, "spoken" must be empty ("") in every scene — tell the story with visuals and ON-SCREEN TEXT timed to the beat.':voiceGuide()}
 Requirements:
 - The first 3 seconds must be a scroll-stopping hook (use the hook alternatives from the feedback as inspiration).
-- Scenes: 5–9 short scenes with timestamps, what to film (angles, close-ups, B-roll, props, transitions), the on-screen text, the spoken line, and what changed from the original.
+- Scenes: 3–5 short scenes with timestamps (the spoken lines across the WHOLE script add up to 4–5 sentences max), what to film (angles, close-ups, B-roll, props, transitions), the on-screen text, the spoken line, and what changed from the original.
 - No "click the link"/"tap the cart" CTA. Build urgency and desire instead (deal, limited stock, problem→solution, payoff, FOMO) and describe it in "urgency".
 - filming_tips: 3–5 practical tips (lighting, framing, pacing).
 Keep it under ~30 seconds unless the feedback says longer works.
@@ -792,8 +792,8 @@ function swRenderHolidays(){
 function swContext(){
   const bits=[`Filming: ${SW.film}${SW.film==='Faceless'?' (voiceover over hands/product/B-roll shots, creator never on camera)':''}`,
     `Format: ${SW.fmt}${SW.fmt==='Aesthetic'?' (calm, visual, minimal words — short lines that work as on-screen text or a soft voiceover)':''}`];
-  bits.push(SW.funnel==='Middle'?`FUNNEL: MIDDLE OF FUNNEL — the viewer already knows this product and has been thinking about it. Don't re-explain it or list features (one quick reminder of the main benefit at most). The whole script is about getting them to finally pull the trigger: name the one hesitation stopping them and answer it ("if you've had it in your cart", "if you've been going back and forth"), what life is like once you have it, real reassurance (how much you use it, how it's held up, what you'd tell a friend), and a confident-but-soft push to grab it. ${SW.special.includes('On sale')?'It IS on a promo right now, so the deal can be one reason to buy now (no numbers).':'It is NOT on a promo — do NOT talk about sales, discounts, deals, coupons or "the price right now". The reason to buy is the product and the payoff, not a deal. No fake urgency ("selling out", "won\'t last").'} Short, direct, confident — about 20–30 seconds.`
-    :`FUNNEL: TOP OF FUNNEL — the viewer has never seen this product. Hook them with a relatable problem or a strong visual moment, then really SHOW and EXPLAIN the product: what it is, how it works, 2–3 specific features tied to the real benefit for her life, what makes it different from what she uses now, and a quick real-life use. Use the real product facts — specific, concrete details, not vague praise. Deal talk is optional and brief.`);
+  bits.push(SW.funnel==='Middle'?`FUNNEL: MIDDLE OF FUNNEL — the viewer already knows this product and has been thinking about it. Don't re-explain it or list features (one quick reminder of the main benefit at most). The whole script is about getting them to finally pull the trigger: name the one hesitation stopping them and answer it ("if you've had it in your cart", "if you've been going back and forth"), what life is like once you have it, real reassurance (how much you use it, how it's held up, what you'd tell a friend), and a confident-but-soft push to grab it. ${SW.special.includes('On sale')?'It IS on a promo right now, so the deal can be one reason to buy now (no numbers).':'It is NOT on a promo — do NOT talk about sales, discounts, deals, coupons or "the price right now". The reason to buy is the product and the payoff, not a deal. No fake urgency ("selling out", "won\'t last").'} Short, direct, confident. LENGTH (hard rule): 4–5 sentences TOTAL for the whole spoken script, one sentence per paragraph — about 15–20 seconds. Never more than 5 sentences.`
+    :`FUNNEL: TOP OF FUNNEL — the viewer has never seen this product. Hook them with a relatable problem or a strong visual moment, then really SHOW and EXPLAIN the product: what it is, how it works, the 1–2 features that matter most, tied to the real benefit for her life. Use the real product facts — specific, concrete details, not vague praise. Deal talk is optional and brief. LENGTH (hard rule): 4–5 sentences TOTAL for the whole spoken script, one sentence per paragraph — about 15–20 seconds. Never more than 5 sentences.`);
   if(document.getElementById('swHoliday').checked&&SW.holiday) bits.push(`Work in this holiday/event naturally: ${SW.holiday}`);
   const sp=SW.special.filter(x=>x!=='On sale');
   if(sp.length) bits.push(`Open the script with this: it's a ${sp.join(' and ')}`);
@@ -871,7 +871,7 @@ async function swWrite(extra){
   try{
     const parts=SW.shotParts||[];
     let sc=extra?.from?await gem([{text:`Rewrite this TikTok Shop script. Change: ${extra.how}. Keep the same product facts.\n${voiceGuide()}\n${swContext()}\nTITLE: ${extra.from.title}\nSCRIPT:\n${extra.from.paragraphs.join('\n\n')}`}],SCRIPT1,0.7)
-      :await gem([...parts,{text:`Write a TikTok Shop video script (spoken, about 30–45 seconds, 5–8 short paragraphs) for ${SW.product}${SW.brand?` by ${SW.brand}`:''}.
+      :await gem([...parts,{text:`Write a short TikTok Shop video script (spoken, 4–5 sentences TOTAL, one sentence per paragraph, about 15–20 seconds) for ${SW.product}${SW.brand?` by ${SW.brand}`:''}.
 ${voiceGuide()}
 ${swContext()}
 ${SW.picked.length?`Build it around these angles (use them naturally, don't list them):\n${swAngleText()}`:'Pick the most convincing everyday angle yourself.'}
@@ -915,7 +915,7 @@ ${SW.product?`PRODUCT: ${SW.product}${SW.brand?` by ${SW.brand}`:''}`:'Work out 
 2. "verdict": one honest sentence on how strong it is right now.
 3. "works": 2–4 specific things that are already good (keep these in the rewrite).
 4. "fixes": 2–5 specific changes you made and why — hook strength in the first 3 seconds, buyer trigger, specificity, pacing, CTA, and any policy problems.
-5. Return the finished spoken script (5–8 short paragraphs, ~30–45 seconds) in "paragraphs" with a 3–6 word "title".
+5. Return the finished spoken script (4–5 sentences TOTAL, one per paragraph, ~15–20 seconds — never more than 5) in "paragraphs" with a 3–6 word "title".
 If it's a full script, KEEP her structure, wording and best lines — edit, don't replace. If it's an idea or hook, build the script around HER idea, not a different one.
 End with a soft, casual CTA.
 ${voiceGuide()}
@@ -962,7 +962,7 @@ function swRenderScript(tab){
 }
 async function swRage(){
   SW._rageBusy=true;
-  try{ const r=await gem([{text:`Write a "rage bait" version of this TikTok Shop script: same product and facts, but open with a mildly controversial, debate-starting take that makes people want to comment (e.g. "unpopular opinion…", "I don't get why people still…"). Keep it playful, not mean, no insulting groups or naming competitors, no false claims.\n${voiceGuide()}\nTITLE: ${SW.script.title}\nSCRIPT:\n${SW.script.paragraphs.join('\n\n')}`}],SCRIPT1,0.8);
+  try{ const r=await gem([{text:`Write a "rage bait" version of this TikTok Shop script (keep it 4–5 sentences total, one per paragraph): same product and facts, but open with a mildly controversial, debate-starting take that makes people want to comment (e.g. "unpopular opinion…", "I don't get why people still…"). Keep it playful, not mean, no insulting groups or naming competitors, no false claims.\n${voiceGuide()}\nTITLE: ${SW.script.title}\nSCRIPT:\n${SW.script.paragraphs.join('\n\n')}`}],SCRIPT1,0.8);
     const pol=await swPolicy(r); SW.rage={title:pol.title||r.title,paragraphs:pol.paragraphs?.length?pol.paragraphs:r.paragraphs,passed:pol.passed,issues:pol.issues||[]}; }
   catch(e){ alert('Could not write the rage bait version: '+e.message); }
   SW._rageBusy=false; swRenderScript();
@@ -1004,7 +1004,8 @@ async function swTeachSave(btn){
   catch(e){ btn.disabled=false; btn.textContent='Save my version'; alert('Could not save: '+e.message); }
 }
 function swNoOkay(ps){
-  return (ps||[]).map(p=>{ const t=String(p).replace(/^\s*(okay|ok|alright|all right)\b[\s,.!…-]*(so\b[\s,]*)?/i,'')
+  ps=(ps||[]).map(x=>String(x||'').trim()).filter(Boolean); if(ps.length>5) ps=[...ps.slice(0,4),ps[ps.length-1]];
+  return ps.map(p=>{ const t=String(p).replace(/^\s*(okay|ok|alright|all right)\b[\s,.!…-]*(so\b[\s,]*)?/i,'')
       .replace(/,?\s*\bhonestly\b,?/gi,'').replace(/,?\s*\byou guys\b,?/gi,'').replace(/,\s*like,/gi,',').replace(/(^|[.!?]\s+)like,\s*/gi,'$1')
       .replace(/\s+([,.!?])/g,'$1').replace(/\s{2,}/g,' ').trim(); return t?t.charAt(0).toUpperCase()+t.slice(1):p; });
 }

@@ -557,9 +557,9 @@ async function actWriteScript(c, p, a) {
   const facts = [`Name: ${p.name}`, p.brand ? `Brand: ${p.brand}` : '', String(p.notes || '').replace(/FREE_SAMPLE/g, '').replace(/TikTok Shop (price|sold count) seen:.*$/gim, '').trim() ? `Her notes: ${String(p.notes).replace(/FREE_SAMPLE/g, '').slice(0, 800)}` : ''].filter(Boolean).join('\n');
   const style = { talking: 'talking to camera', vacuum: 'demo / voiceover over the product in use', faceless: 'aesthetic / faceless — voiceover over hands, product and B-roll, she is never on camera', car: 'filmed in her car, talking to camera' }[a.column] || 'talking to camera';
   const fun = funnel === 'Middle'
-    ? `FUNNEL: MIDDLE — the viewer already knows this product. Don't re-explain it or list features (one quick reminder of the main benefit at most). Get them to finally buy: name the hesitation and answer it, what life is like once you have it, real reassurance, a confident-but-soft push. ${a.on_sale ? 'It IS on a promo right now, so the deal can be one reason to buy now (no numbers).' : 'It is NOT on a promo — do NOT mention sales, discounts, deals, coupons or "the price right now". No fake urgency.'} About 20–30 seconds.`
-    : `FUNNEL: TOP — the viewer has never seen this product. Hook with a relatable problem or strong visual moment, then really show and explain it: what it is, how it works, 2–3 specific features tied to a real benefit, what makes it different, a quick real-life use. ${a.on_sale ? 'It is on sale right now — mention it briefly, no numbers.' : ''} About 30–45 seconds.`;
-  const sc = await actGemJSON(`Write a TikTok Shop video script (spoken lines only, 5–8 short paragraphs) for ${p.name}${p.brand ? ' by ' + p.brand : ''}.
+    ? `FUNNEL: MIDDLE — the viewer already knows this product. Don't re-explain it or list features (one quick reminder of the main benefit at most). Get them to finally buy: name the hesitation and answer it, what life is like once you have it, real reassurance, a confident-but-soft push. ${a.on_sale ? 'It IS on a promo right now, so the deal can be one reason to buy now (no numbers).' : 'It is NOT on a promo — do NOT mention sales, discounts, deals, coupons or "the price right now". No fake urgency.'} LENGTH (hard rule): 4–5 sentences TOTAL for the whole spoken script, one sentence per paragraph — about 15–20 seconds. Never more than 5 sentences.`
+    : `FUNNEL: TOP — the viewer has never seen this product. Hook with a relatable problem or strong visual moment, then really show and explain it: what it is, how it works, the 1–2 features that matter most, tied to a real benefit. ${a.on_sale ? 'It is on sale right now — mention it briefly, no numbers.' : ''} LENGTH (hard rule): 4–5 sentences TOTAL for the whole spoken script, one sentence per paragraph — about 15–20 seconds. Never more than 5 sentences.`;
+  const sc = await actGemJSON(`Write a short TikTok Shop video script (spoken lines only, 4–5 sentences total, one sentence per paragraph) for ${p.name}${p.brand ? ' by ' + p.brand : ''}.
 ${actVoice()}
 Filming style: ${style}.
 ${fun}
@@ -578,7 +578,8 @@ SCRIPT:
 ${sc.paragraphs.join('\n\n')}
 CAPTION: ${sc.caption}`, { type: 'OBJECT', properties: { passed: { type: 'BOOLEAN' }, issues: { type: 'ARRAY', items: { type: 'STRING' } }, paragraphs: { type: 'ARRAY', items: { type: 'STRING' } }, caption: { type: 'STRING' } }, required: ['passed', 'issues', 'paragraphs', 'caption'] }, 0.2, 45000);
   } catch (e) { console.warn('policy check', e); }
-  const paragraphs = actClean(pol?.paragraphs?.length ? pol.paragraphs : sc.paragraphs);
+  let paragraphs = actClean(pol?.paragraphs?.length ? pol.paragraphs : sc.paragraphs);
+  if (paragraphs.length > 5) paragraphs = [...paragraphs.slice(0, 4), paragraphs[paragraphs.length - 1]];
   const tags = (sc.hashtags || []).slice(0, 5).map(h => '#' + String(h).replace(/^#/, '').replace(/\s+/g, ''));
   return { title: sc.title || p.name, paragraphs, caption: `${(pol?.caption || sc.caption || '').trim()}\n\n${tags.join(' ')}`.trim(), passed: pol ? pol.passed : null, issues: pol?.issues || [], funnel, seo: (sc.seo || []).map(w => String(w).replace(/^#/, '').trim().toLowerCase()).filter(Boolean).slice(0, 15).join(', ') };
 }
