@@ -628,7 +628,7 @@ async function actScriptCard(a, i, c) {
     <div class="arow"><label>Caption + hashtags</label><textarea id="${k}_cap" rows="3">${esc(sc.caption)}</textarea></div>
     <div class="arow"><label>SEO words</label><textarea id="${k}_seo" rows="2">${esc(sc.seo || '')}</textarea></div>
     <div class="arow3" style="grid-template-columns:1fr 1fr"><div class="arow"><label>Film Board day</label><input type="date" id="${k}_d" value="${date}"></div><div class="arow"><label>Column ${q?.length ? '(already on the board)' : ''}</label>${actSel(k + '_col', Object.entries(c.cols), col)}</div></div>
-    <label class="achk"><input type="checkbox" id="${k}_fb" checked> Put it on my Film Board ${q?.length ? '(fills the next take with no script)' : '(adds the product with 1 take)'}</label>
+    <label class="achk"><input type="checkbox" id="${k}_fb" checked> Put it on my Film Board in the column above ${q?.length ? '(uses an empty take there, or adds one)' : '(adds the product with 1 take)'}</label>
     <label class="achk"><input type="checkbox" id="${k}_v"> Also save to Script Vault</label>
     <div class="abtns"><button class="abtn primary" onclick="actRun('${k}',this)">Save</button><button class="abtn" onclick="navigator.clipboard.writeText(document.getElementById('${k}_s').value);this.textContent='✓ Copied'">Copy script</button><button class="abtn" onclick="actSkip('${k}')">Skip</button></div><div class="astat"></div></div>`;
 }
@@ -643,17 +643,24 @@ async function actScriptSave(k, a, c) {
     if (pairs.length) { try { await addVoiceEdits(pairs); done.push(`learned ${pairs.length} rewritten line${pairs.length === 1 ? '' : 's'}`); } catch (e) {} }
   }
   if (document.getElementById(k + '_fb')?.checked) {
-    let { data: rows } = await db.from('queue').select('id,notes,script').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).order('sort_order').order('id');
+    const col = v$(k, '_col');
     const board = (await plannerGet('filmBoard', {})) || {};
-    if (!rows?.length) { await actAddToBoard(c, date, p, [{ col: v$(k, '_col'), n: 1 }], board); ({ data: rows } = await db.from('queue').select('id,notes,script').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).order('sort_order').order('id')); }
-    const isBase = r => !/\[copy:\w+\]/.test(r.notes || ''), empty = r => !String(r.script || '').trim();
-    const target = (rows || []).find(r => isBase(r) && empty(r)) || (rows || []).find(empty) || (rows || [])[0];
+    const load = async () => ((await db.from('queue').select('id,notes,script').eq('user_id', c.uid).eq('date', date).eq('prod_id', p.id).order('sort_order').order('id')).data || []);
+    const keyOf = r => { const t = (String(r.notes || '').match(/\[copy:(\w+)\]/) || [])[1]; return String(p.id) + (t ? '#' + t : ''); };
+    const styleOf = r => (board[date] || {})[keyOf(r)]?.style || '';
+    const empty = r => !String(r.script || '').trim();
+    let rows = await load();
+    // only use a take that's in the column she picked; otherwise add a new take in that column
+    let target = rows.find(r => styleOf(r) === col && empty(r));
+    if (!target && !rows.length) { await actAddToBoard(c, date, p, [{ col, n: 1 }], board); rows = await load(); target = rows.find(empty) || rows[0]; }
+    else if (!target) { const res = await actAddToBoard(c, date, p, [{ col, n: 1 }], board); rows = await load(); target = rows.find(r => res.ids.includes(r.id)); }
     if (!target) throw new Error('could not find a take to attach it to');
     const { error } = await db.from('queue').update({ script }).eq('id', target.id).eq('user_id', c.uid); if (error) throw error;
-    const tag = (String(target.notes || '').match(/\[copy:(\w+)\]/) || [])[1], key = String(p.id) + (tag ? '#' + tag : '');
-    board[date] = { ...(board[date] || {}) }; board[date][key] = { ...(board[date][key] || {}), caption, seo, style: board[date][key]?.style || v$(k, '_col') };
+    const key = keyOf(target);
+    board[date] = { ...(board[date] || {}) }; board[date][key] = { ...(board[date][key] || {}), caption, seo, style: board[date][key]?.style || col };
     await plannerSet('filmBoard', board);
-    done.push(`on your Film Board for ${esc(prettyD(date))} (take ${(rows || []).indexOf(target) + 1}) with the caption + SEO words`);
+    const inCol = rows.filter(r => keyOf(r) === key), n = inCol.findIndex(r => r.id === target.id) + 1;
+    done.push(`on your Film Board for ${esc(prettyD(date))} in <b>${esc(c.cols[col] || col)}</b> (take ${n}) with the caption + SEO words`);
   }
   if (document.getElementById(k + '_v')?.checked) {
     const { error } = await db.from('scripts').insert({ user_id: c.uid, title: a.sc.title, brand: p.name, cat: 'review', script, notes: [caption ? `Caption:\n${caption}` : '', seo ? `SEO words:\n${seo}` : ''].filter(Boolean).join('\n\n') });
