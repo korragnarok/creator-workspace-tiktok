@@ -627,7 +627,7 @@ async function actScriptCard(a, i, c) {
     <div class="arow"><label>Script — edit any line; your changes teach it your voice</label><textarea id="${k}_s" rows="${Math.min(16, sc.paragraphs.length * 2 + 2)}">${esc(sc.paragraphs.join('\n\n'))}</textarea></div>
     <div class="arow"><label>Caption + hashtags</label><textarea id="${k}_cap" rows="3">${esc(sc.caption)}</textarea></div>
     <div class="arow"><label>SEO words</label><textarea id="${k}_seo" rows="2">${esc(sc.seo || '')}</textarea></div>
-    <div class="arow3" style="grid-template-columns:1fr 1fr"><div class="arow"><label>Film Board day</label><input type="date" id="${k}_d" value="${date}"></div><div class="arow"><label>Column ${q?.length ? '(already on the board)' : ''}</label>${actSel(k + '_col', Object.entries(c.cols), col)}</div></div>
+    <div class="arow"><label>Film Board day</label><input type="date" id="${k}_d" value="${date}" style="width:100%"></div><div class="arow"><label>Column</label>${actSel(k + '_col', Object.entries(c.cols), col).replace('<select ', '<select style="width:100%" ')}</div>
     <label class="achk"><input type="checkbox" id="${k}_fb" checked> Put it on my Film Board in the column above ${q?.length ? '(uses an empty take there, or adds one)' : '(adds the product with 1 take)'}</label>
     <label class="achk"><input type="checkbox" id="${k}_v"> Also save to Script Vault</label>
     <div class="abtns"><button class="abtn primary" onclick="actRun('${k}',this)">Save</button><button class="abtn" onclick="navigator.clipboard.writeText(document.getElementById('${k}_s').value);this.textContent='✓ Copied'">Copy script</button><button class="abtn" onclick="actSkip('${k}')">Skip</button></div><div class="astat"></div></div>`;
