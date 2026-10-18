@@ -356,29 +356,31 @@ const FW_SCHEMA = { type:'OBJECT', properties:{
   ingredients:{type:'ARRAY',items:{type:'STRING'}},
   script:{type:'OBJECT',properties:{title:{type:'STRING'},
     hook:{type:'OBJECT',properties:{visual:{type:'STRING'},on_screen_text:{type:'STRING'},spoken:{type:'STRING'}},required:['visual','on_screen_text','spoken']},
-    scenes:{type:'ARRAY',items:{type:'OBJECT',properties:{time:{type:'STRING'},visual:{type:'STRING'},on_screen_text:{type:'STRING'},spoken:{type:'STRING'},change:{type:'STRING',description:'Which framework beat this matches'}},required:['time','visual','on_screen_text','spoken','change']}},
+    scenes:{type:'ARRAY',items:{type:'OBJECT',properties:{time:{type:'STRING'},visual:{type:'STRING'},on_screen_text:{type:'STRING'},spoken:{type:'STRING'},change:{type:'STRING',description:'Which principle this uses and how it differs from the original'}},required:['time','visual','on_screen_text','spoken','change']}},
     urgency:{type:'STRING'},filming_tips:{type:'ARRAY',items:{type:'STRING'}},caption:{type:'STRING'},hashtags:{type:'ARRAY',items:{type:'STRING'}}},
     required:['title','hook','scenes','urgency','filming_tips','caption','hashtags']}},
   required:['why_it_worked','hook','framework','ingredients','script'] };
 function buildFrameworkPrompt(){
   const audio = document.getElementById('audio').value, product = document.getElementById('product').value.trim();
   const noVoice = audio === 'trending' || audio === 'text-music';
-  return `You are a short-form video strategist for a TikTok Shop affiliate creator. This video performed well. Watch it closely and REVERSE-ENGINEER why it worked, then reuse that exact framework for a different product.
+  return `You are a short-form video strategist for a TikTok Shop affiliate creator. This video performed well. Watch it closely and REVERSE-ENGINEER why it worked — the underlying principles — then write an ORIGINAL video for a different product that uses those principles without copying the video.
 AUDIO of this video: ${AUDIO_NOTES[audio]}
 
 0. Also fill "transcript" with what's actually said in the original video (empty if no voice).
 1. why_it_worked: 3–4 sentences on the real reasons it performed (hook, format, emotion, pacing, relatability, payoff).
 2. hook: what happens in the first 3 seconds and why it stops the scroll.
-3. framework: the video's structure as a reusable, timed template — each beat with a timestamp range, what happens (described generically, not about the original product) and its purpose.
-4. ingredients: the 4–6 key elements to keep (e.g. "reaction shot before the reveal", "text-only story told over a trending sound").
+3. framework: the video's structure, beat by beat with timestamps — this is for learning only, NOT a template to copy.
+4. ingredients: the 4–6 underlying PRINCIPLES that made it work, written generally so they apply to any video (e.g. "payoff shown in the first 2 seconds", "names a frustration the viewer has felt"), never specific lines or shots from the original.
 ${voiceGuide()}
 
-5. script: a script for "${product || 'the new product'}" that CLOSELY mirrors the original video — this is the most important part:
-   - First transcribe what's actually said/shown in the original (in your head), then rewrite it line by line for the new product.
-   - Same number of beats, same order, same timing, same hook structure, same sentence shapes, same rhythm and length per line, same emotional turn and payoff, same kind of CTA.
-   - Keep the original's signature phrases and patterns where they're generic (e.g. "nobody talks about…", "not one, not two…"), swapping in the new product's details and benefits.
-   - It must NOT be an exact copy: change every product-specific word, reword each line enough that no full sentence is identical, and use the new product's real details. Never copy a distinctive line verbatim (that can get flagged as unoriginal).
-   - Think "same song, new lyrics" — someone who saw both should recognize the format, not the words. ${noVoice ? 'Keep the same audio style: NO voiceover — "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.' : voiceGuide()} In each scene's "change", name the framework beat it matches. No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). Include 3–5 filming tips, a caption and exactly 5 hashtags (TikTok's max), most relevant first.`;
+5. script: an ORIGINAL script for "${product || 'the new product'}" inspired by those principles.
+   ORIGINALITY (hard rules — this is the most important part):
+   - Learn the PRINCIPLES (why it worked), never the format. Do NOT recreate the original's beat order, timing, hook line, sentence shapes, signature phrases, setting, props, story or on-screen text pattern — not even reworded. "Same song, new lyrics" is NOT allowed.
+   - Use a DIFFERENT hook type than the original (e.g. if it opened on a question, open on a visual moment, a confession or a bold claim instead), a different order of beats, a different setting/visual concept, and her own real-life situation.
+   - Pick only 1–2 of the principles (e.g. "show the result before explaining", "relatable frustration first") and apply them in a fresh way that fits this product and her style.
+   - Before you finish, compare against the transcript: if someone who saw both videos would say "that's the same video", start over with a different concept.
+   - LENGTH: the spoken lines across the whole script total 4–5 sentences max (3–5 scenes).
+   ${noVoice ? 'Keep the same audio style: NO voiceover — "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.' : voiceGuide()} In each scene's "change", name the principle it uses and how it's different from the original. No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). Include 3–5 filming tips, a caption and exactly 5 hashtags (TikTok's max), most relevant first.`;
 }
 function buildPrompt(){
   if (document.getElementById('goal').value === 'framework') return buildFrameworkPrompt();
@@ -472,7 +474,7 @@ function renderFramework(fw){
     <div class="hookcard"><div class="hk-top"><h3>The Hook · first 3 seconds</h3></div><p class="hk-why">${stamps(fw.hook?.what_happens||'')}</p><p class="hk-why"><b>Why it stops the scroll:</b> ${esc(fw.hook?.why_it_stops_scroll||'')}</p></div>
     <div class="secs">
       <div class="sec"><h3>The framework</h3>${(fw.framework||[]).map(b=>`<div class="scene"><div class="st">${esc(b.time)}</div><p><b>${esc(b.beat)}</b></p><p class="chg">${esc(b.purpose)}</p></div>`).join('')}</div>
-      <div class="sec"><h3>Keep these ingredients</h3>${(fw.ingredients||[]).map(x=>`<p class="good">${esc(x)}</p>`).join('')}</div>
+      <div class="sec"><h3>The principles to borrow</h3>${(fw.ingredients||[]).map(x=>`<p class="good">${esc(x)}</p>`).join('')}</div>
     </div>
     </details>`;
   renderScript(fw.script);
@@ -552,15 +554,21 @@ async function makeScript(btn){
   btn.disabled=true; btn.textContent='Writing your script…';
   const audio=CTX.audio||'voiceover', noVoice=audio==='trending'||audio==='text-music';
   // Framework breakdowns: write a different version for the same product, following the same framework
-  const fwPrompt=FW_CURRENT&&!CURRENT?`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Write a DIFFERENT new script for "${CTX.product||'the product'}" that still CLOSELY mirrors the original video (same beats, order, timing, hook structure, sentence shapes and rhythm — "same song, new lyrics"), but reworded so it isn't a copy of the original or of the previous version. Vary the wording and the specific hook line, not the structure.
+  const fwPrompt=FW_CURRENT&&!CURRENT?`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Write a DIFFERENT new ORIGINAL script for "${CTX.product||'the product'}" that uses the PRINCIPLES from the breakdown below (not the original's format) and is also a different concept from the previous version.
+ORIGINALITY (hard rules — this is the most important part):
+- Learn the PRINCIPLES (why it worked), never the format. Do NOT recreate the original's beat order, timing, hook line, sentence shapes, signature phrases, setting, props, story or on-screen text pattern — not even reworded. "Same song, new lyrics" is NOT allowed.
+- Use a DIFFERENT hook type than the original (e.g. if it opened on a question, open on a visual moment, a confession or a bold claim instead), a different order of beats, a different setting/visual concept, and her own real-life situation.
+- Pick only 1–2 of the principles (e.g. "show the result before explaining", "relatable frustration first") and apply them in a fresh way that fits this product and her style.
+- Before you finish, compare against the transcript: if someone who saw both videos would say "that's the same video", start over with a different concept.
+- LENGTH: the spoken lines across the whole script total 4–5 sentences max (3–5 scenes).
 Audio style: ${AUDIO_NOTES[audio]||''}
 ${noVoice?'NO voiceover: "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.\n'+voiceGuide():voiceGuide()}
-No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). In each scene's "change", name the framework beat it matches. Include 3–5 filming tips, a caption and exactly 5 hashtags (TikTok's max), most relevant first.
+No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). In each scene's "change", name the principle it uses and how it's different from the original. Include 3–5 filming tips, a caption and exactly 5 hashtags (TikTok's max), most relevant first.
 
 WHY THE ORIGINAL WORKED: ${FW_CURRENT.why_it_worked}
 FRAMEWORK: ${JSON.stringify(FW_CURRENT.framework)}
-KEEP THESE INGREDIENTS: ${JSON.stringify(FW_CURRENT.ingredients)}
-${FW_CURRENT.transcript?`ORIGINAL VIDEO'S WORDS (mirror the structure and rhythm, never copy a sentence): ${FW_CURRENT.transcript}\n`:''}PREVIOUS SCRIPT (reword it — don't repeat its sentences): ${JSON.stringify(NEW_SCRIPT||FW_CURRENT.script)}`:'';
+PRINCIPLES TO USE (in your own way): ${JSON.stringify(FW_CURRENT.ingredients)}
+${FW_CURRENT.transcript?`ORIGINAL VIDEO'S WORDS (for reference only — do NOT follow its structure, order, hook or sentence shapes): ${FW_CURRENT.transcript}\n`:''}PREVIOUS SCRIPT (write a different concept — don't repeat it): ${JSON.stringify(NEW_SCRIPT||FW_CURRENT.script)}`:'';
   const prompt=fwPrompt||`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Using the feedback below${CTX.fileUri?' and the original video':''}, write a NEW, improved version of this video that fixes the problems and keeps what worked.
 Product: ${CTX.product||'(see video)'}. Goal: ${CTX.goal||'TikTok Shop sale'}.
 Audio style: ${AUDIO_NOTES[audio]||''}
