@@ -68,7 +68,7 @@
     const days=new Set((vids.data||[]).map(v=>String(v.date||'').slice(0,10)));
     let s=0, d=days.has(t)?today:addDays(today,-1); while(days.has(ymd(d))){ s++; d=addDays(d,-1); }
     out.streak={n:s, postedToday:days.has(t), missedYest:!days.has(y)&&!days.has(t)};
-    // 7. free samples not filmed, waiting 7+ days
+    // 7. free samples not filmed yet (any age — newest ones need content too)
     // a sample counts as done if: any Content Tracker video is linked to it or mentions its name,
     // it was ticked filmed on any to-do, or it's no longer active
     const AV=allVids.data||[], low=x=>String(x||'').toLowerCase();
@@ -79,12 +79,12 @@
     const words=x=>low(x).replace(/[^a-z0-9 ]+/g,' ').split(' ').filter(w=>w.length>2&&!STOP.has(w));
     const vidWords=AV.map(v=>new Set(words(v.title+' '+v.brand)));
     // most of the product's key words show up in one video's caption/product (e.g. "heatless curl headband")
-    const fuzzy=p=>{ const w=words(p.name); if(w.length<2) return false; return vidWords.some(set=>w.filter(x=>set.has(x)).length/w.length>=0.6); };
+    const fuzzy=p=>{ const w=words(p.name); if(w.length<2) return false; return vidWords.some(set=>{ const n=w.filter(x=>set.has(x)).length; return n>=2&&n/w.length>=0.75; }); };
     let DISMISSED=[]; try{ DISMISSED=JSON.parse(localStorage.getItem('take24:samplesDone')||'[]'); }catch(e){}
     try{ if(typeof plannerGet==='function') DISMISSED=[...DISMISSED,...((await plannerGet('samplesDone',[]))||[])]; }catch(e){}
     const isDone=p=>DISMISSED.includes(p.id)||fuzzy(p)||filmedIds.has(p.id)||filmedNames.has(low(p.name))||(low(p.name).length>3&&vidText.includes(low(p.name)))||!['active','promote',''].includes(low(p.status||'active'));
-    out.samples=(prods.data||[]).filter(p=>/FREE_SAMPLE/.test(p.notes||'')&&!isDone(p)&&p.created_at&&daysBetween(p.created_at.slice(0,10),t)>=7)
-      .map(p=>({id:p.id,name:p.name,wait:daysBetween(p.created_at.slice(0,10),t)})).sort((a,b)=>b.wait-a.wait).slice(0,5);
+    out.samples=(prods.data||[]).filter(p=>/FREE_SAMPLE/.test(p.notes||'')&&!isDone(p))
+      .map(p=>({id:p.id,name:p.name,wait:p.created_at?Math.max(0,daysBetween(p.created_at.slice(0,10),t)):0})).sort((a,b)=>b.wait-a.wait).slice(0,8);
     // 8. stale TikTok connection (stats not refreshed in 3+ days)
     out.stale=(accts.data||[]).filter(a=>!a.stats_updated_at||daysBetween(a.stats_updated_at.slice(0,10),t)>=3).map(a=>'@'+(a.username||a.display_name||'account'));
     return out;
@@ -105,7 +105,7 @@
     html+=sec('Promos starting soon',o.starting.map(p=>{ const d=daysBetween(o.t,p.start_date); return `<a class="mb-row" href="promos.html"><span>${p.priority?'★ ':''}<b>${esc(p.product)}</b>${p.deal?' · '+esc(p.deal):''}</span><span>starts ${d===1?'tomorrow':'in '+d+' days'} — film ahead</span></a>`; }).join(''));
     const st=o.streak;
     html+=sec('Posting streak',`<div class="mb-line">${st.postedToday?`🔥 <b>${st.n}</b>-day streak — you've already posted today.`:st.n?`🔥 Post today to keep your <b>${st.n}</b>-day streak going.`:st.missedYest?`No post yesterday — post today to start a new streak.`:'Post today to start a streak.'}</div>`);
-    html+=sec('Free samples waiting',o.samples.map(s=>`<div class="mb-row" id="mbs_${s.id}"><span><b>${esc(s.name)}</b><br><small style="opacity:.7">${s.wait} days, not filmed</small></span><button type="button" onclick="mbSampleDone('${s.id}')" style="border:1px solid currentColor;background:none;color:inherit;border-radius:999px;padding:4px 10px;font:700 11px inherit;cursor:pointer;opacity:.8;white-space:nowrap">✓ Already filmed</button></div>`).join(''));
+    html+=sec('Free samples waiting',o.samples.map(s=>`<div class="mb-row" id="mbs_${s.id}"><span><b>${esc(s.name)}</b><br><small style="opacity:.7">${s.wait>=7?`${s.wait} days, not filmed`:s.wait>=1?`got it ${s.wait} day${s.wait===1?'':'s'} ago · new`:'new today'}</small></span><button type="button" onclick="mbSampleDone('${s.id}')" style="border:1px solid currentColor;background:none;color:inherit;border-radius:999px;padding:4px 10px;font:700 11px inherit;cursor:pointer;opacity:.8;white-space:nowrap">✓ Already filmed</button></div>`).join(''));
     html+=`<button class="mb-btn" onclick="document.getElementById('mbOv').remove()">Got it</button>`;
     return html;
   }
