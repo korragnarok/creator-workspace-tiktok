@@ -377,7 +377,7 @@ ${voiceGuide()}
    - First transcribe what's actually said/shown in the original (in your head), then rewrite it line by line for the new product.
    - Same number of beats, same order, same timing, same hook structure, same sentence shapes, same rhythm and length per line, same emotional turn and payoff, same kind of CTA.
    - Keep the original's signature phrases and patterns where they're generic (e.g. "nobody talks about…", "not one, not two…"), swapping in the new product's details and benefits.
-   - It must NOT be an exact copy: change every product-specific word, reword each line enough that no full sentence is identical, and use the new product's real details. Never copy a distinctive line verbatim (that can get flagged as unoriginal).
+   - It must NOT be an exact copy: change every product-specific word, reword every line — never reuse 5 or more words in a row from the original (except the product's own name) — and use the new product's real details. Never copy a distinctive line verbatim (that can get flagged as unoriginal).
    - Think "same song, new lyrics" — someone who saw both should recognize the format, not the words. ${noVoice ? 'Keep the same audio style: NO voiceover — "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.' : voiceGuide()} In each scene's "change", name the framework beat it matches. No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). Include 3–5 filming tips, a caption and exactly 5 hashtags (TikTok's max), most relevant first.`;
 }
 function buildPrompt(){
@@ -412,14 +412,51 @@ Rules:
 ${voiceGuide()}`;
 }
 
+// ── Research the product she names + never reuse the original video's wording ──
+const RESEARCH={};
+async function researchFacts(name){
+  name=String(name||'').trim(); if(!name) return '';
+  const low=name.toLowerCase(), nm=x=>String(x.name||'').toLowerCase();
+  const p=SW_PRODUCTS.find(x=>nm(x)===low)||SW_PRODUCTS.find(x=>nm(x)&&(nm(x).includes(low)||low.includes(nm(x))));
+  let own=''; try{ own=p?await productFacts(p):''; }catch(e){}
+  if(RESEARCH[low]===undefined){
+    RESEARCH[low]='';
+    try{
+      const q=name+(p?.brand&&!low.includes(String(p.brand).toLowerCase())?' by '+p.brand:'');
+      const res=await fetch(`${WORKER}/?service=gemini&model=gemini-2.5-flash`,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{role:'user',parts:[{text:`Research the product "${q}" with Google Search. In 6–10 short bullet points list only verified facts: what it is, what it does, key features or ingredients, how you use it, who it's for, and what makes it different. No prices, no review quotes, nothing you can't verify. If you can't find this exact product, reply only: NOT FOUND`}]}],tools:[{google_search:{}}],generationConfig:{temperature:0.2}})});
+      const d=await res.json().catch(()=>({})), t=(d?.candidates?.[0]?.content?.parts||[]).map(x=>x.text||'').join('').trim();
+      if(res.ok&&t&&!/NOT FOUND/i.test(t)) RESEARCH[low]=t.slice(0,2500);
+    }catch(e){}
+  }
+  return [own, RESEARCH[low]?`From researching the product online:\n${RESEARCH[low]}`:''].filter(Boolean).join('\n');
+}
+// any run of 5+ words that also appears in the original video's words
+function copiedBits(sc,orig){
+  const w=t=>String(t||'').toLowerCase().replace(/[^a-z0-9' ]+/g,' ').split(/\s+/).filter(Boolean);
+  const O=w(orig); if(O.length<5) return [];
+  const grams=new Set(); for(let i=0;i+5<=O.length;i++) grams.add(O.slice(i,i+5).join(' '));
+  const lines=[sc?.hook?.spoken,sc?.hook?.on_screen_text,...(sc?.scenes||[]).flatMap(x=>[x.spoken,x.on_screen_text])].filter(Boolean), hits=new Set();
+  lines.forEach(l=>{ const L=w(l); for(let i=0;i+5<=L.length;i++){ const g=L.slice(i,i+5).join(' '); if(grams.has(g)) hits.add(g); } });
+  return [...hits];
+}
+async function deCopy(sc,orig){
+  const hits=copiedBits(sc,orig); if(!hits.length) return sc;
+  try{
+    const out=await gem([{text:`This TikTok script reuses wording from another creator's video. Rewrite ONLY the lines that contain these phrases so no 5 words in a row match the original — keep the same structure, beats, timing and meaning, same voice.\nPHRASES TO REMOVE: ${JSON.stringify(hits)}\nORIGINAL VIDEO'S WORDS: ${String(orig).slice(0,3000)}\nSCRIPT: ${JSON.stringify(sc)}`}],SCRIPT_SCHEMA,0.4);
+    return out?.scenes?.length?out:sc;
+  }catch(e){ return sc; }
+}
 async function analyze(){
   if (!VIDEO && !LINK) return;
   const mode = document.getElementById('goal').value;
   if (mode === 'framework' && !document.getElementById('product').value.trim()) { alert('Add the product you want the new script to be for.'); document.getElementById('product').focus(); return; }
   const btn = document.getElementById('goBtn'); btn.disabled = true;
+  let facts = '';
+  if (document.getElementById('product').value.trim()) { setStatus('Researching the product…'); try { facts = await researchFacts(document.getElementById('product').value); } catch (e) {} }
   // remember what this run is about, then clear the form for the next video
   CTX = { video: VIDEO, link: LINK, name: VIDEO ? VIDEO.name : LINK, product: document.getElementById('product').value.trim(),
-          audio: document.getElementById('audio').value, goal: document.getElementById('goal').selectedOptions[0].textContent, prompt: buildPrompt()+(factsFor(document.getElementById('product').value)?`\n\nPRODUCT FACTS:\n${factsFor(document.getElementById('product').value)}\n${PF_RULE}`:''), mode, fileUri: '', fileMime: '' };
+          audio: document.getElementById('audio').value, goal: document.getElementById('goal').selectedOptions[0].textContent, prompt: buildPrompt()+(facts?`\n\nPRODUCT FACTS (what you say about the product must come from these):\n${facts}\n${PF_RULE}`:''), facts, mode, fileUri: '', fileMime: '' };
   const vid = VIDEO, link = LINK;
   resetForm();
   try {
@@ -442,7 +479,7 @@ async function analyze(){
     if (!res.ok) throw new Error(data?.error?.message || `Gemini error (${res.status})`);
     const text = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
     const fb = JSON.parse(text.replace(/```json|```/g, '').trim());
-    if (CTX.mode === 'framework' && fb.script) { setStatus('Checking the new script against TikTok policy…'); fb.script = await policyCheckScenes(fb.script); }
+    if (CTX.mode === 'framework' && fb.script) { setStatus('Making sure nothing is copied word for word…'); fb.script = await deCopy(fb.script, fb.transcript); setStatus('Checking the new script against TikTok policy…'); fb.script = await policyCheckScenes(fb.script); }
     if (CTX.mode === 'framework') renderFramework(fb); else render(fb, null, true);
     setStatus('');
     await addHistory({ at: Date.now(), name: CTX.name, link: CTX.link || '', product: CTX.product, audio: CTX.audio, goal: CTX.goal, mode: CTX.mode, fb });
@@ -552,17 +589,17 @@ async function makeScript(btn){
   btn.disabled=true; btn.textContent='Writing your script…';
   const audio=CTX.audio||'voiceover', noVoice=audio==='trending'||audio==='text-music';
   // Framework breakdowns: write a different version for the same product, following the same framework
-  const fwPrompt=FW_CURRENT&&!CURRENT?`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Write a DIFFERENT new script for "${CTX.product||'the product'}" that still CLOSELY mirrors the original video (same beats, order, timing, hook structure, sentence shapes and rhythm — "same song, new lyrics"), but reworded so it isn't a copy of the original or of the previous version. Vary the wording and the specific hook line, not the structure.
+  const fwPrompt=FW_CURRENT&&!CURRENT?`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Write a DIFFERENT new script for "${CTX.product||'the product'}" that still CLOSELY mirrors the original video (same beats, order, timing, hook structure, sentence shapes and rhythm — "same song, new lyrics"), but reworded so it isn't a copy of the original or of the previous version — never reuse 5 or more words in a row from the original's words. Vary the wording and the specific hook line, not the structure.
 Audio style: ${AUDIO_NOTES[audio]||''}
 ${noVoice?'NO voiceover: "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.\n'+voiceGuide():voiceGuide()}
 No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). In each scene's "change", name the framework beat it matches. Include 3–5 filming tips, a caption and exactly 5 hashtags (TikTok's max), most relevant first.
 
-WHY THE ORIGINAL WORKED: ${FW_CURRENT.why_it_worked}
+${CTX.facts?`PRODUCT FACTS (what you say about the product must come from these):\n${CTX.facts}\n${PF_RULE}\n`:''}WHY THE ORIGINAL WORKED: ${FW_CURRENT.why_it_worked}
 FRAMEWORK: ${JSON.stringify(FW_CURRENT.framework)}
 KEEP THESE INGREDIENTS: ${JSON.stringify(FW_CURRENT.ingredients)}
 ${FW_CURRENT.transcript?`ORIGINAL VIDEO'S WORDS (mirror the structure and rhythm, never copy a sentence): ${FW_CURRENT.transcript}\n`:''}PREVIOUS SCRIPT (reword it — don't repeat its sentences): ${JSON.stringify(NEW_SCRIPT||FW_CURRENT.script)}`:'';
   const prompt=fwPrompt||`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Using the feedback below${CTX.fileUri?' and the original video':''}, write a NEW, improved version of this video that fixes the problems and keeps what worked.
-Product: ${CTX.product||'(see video)'}. Goal: ${CTX.goal||'TikTok Shop sale'}.
+Product: ${CTX.product||'(see video)'}. Goal: ${CTX.goal||'TikTok Shop sale'}.${CTX.facts?`\nPRODUCT FACTS (what you say about the product must come from these):\n${CTX.facts}\n${PF_RULE}`:''}
 Audio style: ${AUDIO_NOTES[audio]||''}
 ${noVoice?'Because this is a sound/music video with NO voiceover, "spoken" must be empty ("") in every scene — tell the story with visuals and ON-SCREEN TEXT timed to the beat.':voiceGuide()}
 Requirements:
@@ -581,7 +618,9 @@ ${JSON.stringify(CURRENT)}`;
     const data=await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
     btn.textContent='Checking TikTok policy…';
-    NEW_SCRIPT=await policyCheckScenes(JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim()));
+    let draft=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
+    if(FW_CURRENT?.transcript){ btn.textContent='Making sure nothing is copied…'; draft=await deCopy(draft,FW_CURRENT.transcript); }
+    NEW_SCRIPT=await policyCheckScenes(draft);
     renderScript(NEW_SCRIPT);
   }catch(e){ btn.disabled=false; btn.textContent='✦ Write me a new script from this feedback'; alert('Could not write the script: '+e.message); }
 }
