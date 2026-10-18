@@ -377,7 +377,7 @@ ${voiceGuide()}
    - First transcribe what's actually said/shown in the original (in your head), then rewrite it line by line for the new product.
    - Same number of beats, same order, same timing, same hook structure, same sentence shapes, same rhythm and length per line, same emotional turn and payoff, same kind of CTA.
    - Keep the original's signature phrases and patterns where they're generic (e.g. "nobody talks about…", "not one, not two…"), swapping in the new product's details and benefits.
-   - It must NOT be an exact copy: change every product-specific word, reword every line — never reuse 5 or more words in a row from the original (except the product's own name) — and use the new product's real details. Never copy a distinctive line verbatim (that can get flagged as unoriginal).
+   - It must NOT be an exact copy: change every product-specific word, reword each line enough that no full sentence is identical, and use the new product's real details. Never copy a distinctive line verbatim (that can get flagged as unoriginal).
    - Think "same song, new lyrics" — someone who saw both should recognize the format, not the words. ${noVoice ? 'Keep the same audio style: NO voiceover — "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.' : voiceGuide()} In each scene's "change", name the framework beat it matches. No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). Include 3–5 filming tips, a caption and exactly 5 hashtags (TikTok's max), most relevant first.`;
 }
 function buildPrompt(){
@@ -431,48 +431,6 @@ async function researchFacts(name){
   }
   return [own, RESEARCH[low]?`From researching the product online:\n${RESEARCH[low]}`:''].filter(Boolean).join('\n');
 }
-// any run of 5+ words that also appears in the original video's words
-function copiedBits(sc,orig){
-  const w=t=>String(t||'').toLowerCase().replace(/[^a-z0-9' ]+/g,' ').split(/\s+/).filter(Boolean);
-  const O=w(orig); if(O.length<5) return [];
-  const grams=new Set(); for(let i=0;i+5<=O.length;i++) grams.add(O.slice(i,i+5).join(' '));
-  const lines=[sc?.hook?.spoken,sc?.hook?.on_screen_text,...(sc?.scenes||[]).flatMap(x=>[x.spoken,x.on_screen_text])].filter(Boolean), hits=new Set();
-  lines.forEach(l=>{ const L=w(l); for(let i=0;i+5<=L.length;i++){ const g=L.slice(i,i+5).join(' '); if(grams.has(g)) hits.add(g); } });
-  return [...hits];
-}
-async function deCopy(sc,orig){
-  const hits=copiedBits(sc,orig); if(!hits.length) return sc;
-  try{
-    const out=await gem([{text:`This TikTok script reuses wording from another creator's video. Rewrite ONLY the lines that contain these phrases so no 5 words in a row match the original — keep each line's same shape, rhythm, word count, structure, beats, timing and meaning. Change as few words as possible.\nPHRASES TO REMOVE: ${JSON.stringify(hits)}\nORIGINAL VIDEO'S WORDS: ${String(orig).slice(0,3000)}\nSCRIPT: ${JSON.stringify(sc)}`}],SCRIPT_SCHEMA,0.4);
-    return out?.scenes?.length?out:sc;
-  }catch(e){ return sc; }
-}
-// Rewrite the original video LINE BY LINE for her product: same shape, rhythm and order — new words
-async function mirrorScript(fw, product, facts, audio, prev){
-  const noVoice = audio === 'trending' || audio === 'text-music';
-  const bans = `- Never say a price, dollar amount or % off. No "click the link" / "tap the cart".
-- Never use "okay", "honestly", "you guys", or filler "like". No cringe ad-speak ("game changer", "holy grail", "run don't walk").
-${typeof TTS_POLICY_SHORT!=='undefined'?'- '+TTS_POLICY_SHORT:''}`;
-  const prompt = `Rewrite this TikTok video for a different product, LINE BY LINE — "same song, new lyrics".
-NEW PRODUCT: ${product}
-${facts?`PRODUCT FACTS (everything you say about the product must come from these — no invented claims):\n${facts}\n`:''}
-ORIGINAL ${noVoice?'ON-SCREEN TEXT / BEATS':'SPOKEN WORDS'}:
-${noVoice?JSON.stringify(fw.framework):fw.transcript}
-
-ORIGINAL BEATS (timing + what's on screen): ${JSON.stringify(fw.framework)}
-
-RULES:
-1. Split the original into its lines. Write exactly ONE new line for EACH original line, in the SAME order — same number of lines.
-2. Each new line copies the original line's SHAPE: same sentence type (command / question / list / statement), same rhythm and punctuation, roughly the same word count (±3 words). If the original opens with a 3-beat list like "pop it, twist it, and lift your undereyes", yours opens with a 3-beat list too, about the new product (e.g. "swipe it, blend it, and wake up your face").
-3. Change the WORDS: swap in the new product's real actions, features and results. Never reuse 5 or more words in a row from the original. Common short words are fine.
-4. The hook is the first line — it must mirror the original's first line. Don't replace it with a different kind of opener.
-5. Visuals: mirror each original beat's shot, adapted to the new product. Same timing as the original beats.
-6. ${noVoice?'NO voiceover: "spoken" must be "" everywhere; mirror the on-screen text instead.':'On-screen text: mirror the original\'s on-screen text pattern the same way.'}
-${bans}
-${prev?`7. Make this a DIFFERENT version from the previous one (new word choices, same shapes): ${JSON.stringify(prev)}`:''}
-In each scene's "change", quote the original line it mirrors in a few words. Also write 3–5 filming tips, "urgency" (how it builds desire without fake urgency), a caption and exactly 5 hashtags.`;
-  try{ const out=await gem([{text:prompt}],FW_SCHEMA.properties.script,0.6); return out?.scenes?.length?out:null; }catch(e){ console.warn('mirrorScript',e); return null; }
-}
 async function analyze(){
   if (!VIDEO && !LINK) return;
   const mode = document.getElementById('goal').value;
@@ -505,8 +463,7 @@ async function analyze(){
     if (!res.ok) throw new Error(data?.error?.message || `Gemini error (${res.status})`);
     const text = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
     const fb = JSON.parse(text.replace(/```json|```/g, '').trim());
-    if (CTX.mode === 'framework' && (fb.transcript || fb.framework?.length)) { setStatus('Writing your version line by line…'); const m = await mirrorScript(fb, CTX.product, CTX.facts, CTX.audio); if (m) fb.script = m; }
-    if (CTX.mode === 'framework' && fb.script) { setStatus('Making sure nothing is copied word for word…'); fb.script = await deCopy(fb.script, fb.transcript); setStatus('Checking the new script against TikTok policy…'); fb.script = await policyCheckScenes(fb.script); }
+    if (CTX.mode === 'framework' && fb.script) { setStatus('Checking the new script against TikTok policy…'); fb.script = await policyCheckScenes(fb.script); }
     if (CTX.mode === 'framework') renderFramework(fb); else render(fb, null, true);
     setStatus('');
     await addHistory({ at: Date.now(), name: CTX.name, link: CTX.link || '', product: CTX.product, audio: CTX.audio, goal: CTX.goal, mode: CTX.mode, fb });
@@ -615,17 +572,8 @@ async function makeScript(btn){
   if(!CURRENT && !FW_CURRENT) return;
   btn.disabled=true; btn.textContent='Writing your script…';
   const audio=CTX.audio||'voiceover', noVoice=audio==='trending'||audio==='text-music';
-  if(FW_CURRENT&&!CURRENT&&(FW_CURRENT.transcript||FW_CURRENT.framework?.length)){
-    try{
-      if(!CTX.facts&&CTX.product){ btn.textContent='Researching the product…'; CTX.facts=await researchFacts(CTX.product); }
-      btn.textContent='Writing your version line by line…';
-      let d=await mirrorScript(FW_CURRENT,CTX.product,CTX.facts,audio,NEW_SCRIPT||FW_CURRENT.script); if(!d) throw new Error('no script came back');
-      if(FW_CURRENT.transcript){ btn.textContent='Making sure nothing is copied…'; d=await deCopy(d,FW_CURRENT.transcript); }
-      btn.textContent='Checking TikTok policy…'; NEW_SCRIPT=await policyCheckScenes(d); renderScript(NEW_SCRIPT); return;
-    }catch(e){ btn.disabled=false; btn.textContent='✦ Write me a new script from this feedback'; alert('Could not write the script: '+e.message); return; }
-  }
   // Framework breakdowns: write a different version for the same product, following the same framework
-  const fwPrompt=FW_CURRENT&&!CURRENT?`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Write a DIFFERENT new script for "${CTX.product||'the product'}" that still CLOSELY mirrors the original video (same beats, order, timing, hook structure, sentence shapes and rhythm — "same song, new lyrics"), but reworded so it isn't a copy of the original or of the previous version — never reuse 5 or more words in a row from the original's words. Vary the wording and the specific hook line, not the structure.
+  const fwPrompt=FW_CURRENT&&!CURRENT?`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Write a DIFFERENT new script for "${CTX.product||'the product'}" that still CLOSELY mirrors the original video (same beats, order, timing, hook structure, sentence shapes and rhythm — "same song, new lyrics"), but reworded so it isn't a copy of the original or of the previous version. Vary the wording and the specific hook line, not the structure.
 Audio style: ${AUDIO_NOTES[audio]||''}
 ${noVoice?'NO voiceover: "spoken" must be "" in every scene; tell it with visuals and on-screen text timed to the sound.\n'+voiceGuide():voiceGuide()}
 No "click the link"/"tap the cart" CTA — build urgency and desire instead (describe in "urgency"). In each scene's "change", name the framework beat it matches. Include 3–5 filming tips, a caption and exactly 5 hashtags (TikTok's max), most relevant first.
@@ -655,7 +603,6 @@ ${JSON.stringify(CURRENT)}`;
     if(!res.ok) throw new Error(data?.error?.message||`Gemini error (${res.status})`);
     btn.textContent='Checking TikTok policy…';
     let draft=JSON.parse((data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim());
-    if(FW_CURRENT?.transcript){ btn.textContent='Making sure nothing is copied…'; draft=await deCopy(draft,FW_CURRENT.transcript); }
     NEW_SCRIPT=await policyCheckScenes(draft);
     renderScript(NEW_SCRIPT);
   }catch(e){ btn.disabled=false; btn.textContent='✦ Write me a new script from this feedback'; alert('Could not write the script: '+e.message); }
