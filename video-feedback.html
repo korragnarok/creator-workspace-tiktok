@@ -443,9 +443,35 @@ function copiedBits(sc,orig){
 async function deCopy(sc,orig){
   const hits=copiedBits(sc,orig); if(!hits.length) return sc;
   try{
-    const out=await gem([{text:`This TikTok script reuses wording from another creator's video. Rewrite ONLY the lines that contain these phrases so no 5 words in a row match the original — keep the same structure, beats, timing and meaning, same voice.\nPHRASES TO REMOVE: ${JSON.stringify(hits)}\nORIGINAL VIDEO'S WORDS: ${String(orig).slice(0,3000)}\nSCRIPT: ${JSON.stringify(sc)}`}],SCRIPT_SCHEMA,0.4);
+    const out=await gem([{text:`This TikTok script reuses wording from another creator's video. Rewrite ONLY the lines that contain these phrases so no 5 words in a row match the original — keep each line's same shape, rhythm, word count, structure, beats, timing and meaning. Change as few words as possible.\nPHRASES TO REMOVE: ${JSON.stringify(hits)}\nORIGINAL VIDEO'S WORDS: ${String(orig).slice(0,3000)}\nSCRIPT: ${JSON.stringify(sc)}`}],SCRIPT_SCHEMA,0.4);
     return out?.scenes?.length?out:sc;
   }catch(e){ return sc; }
+}
+// Rewrite the original video LINE BY LINE for her product: same shape, rhythm and order — new words
+async function mirrorScript(fw, product, facts, audio, prev){
+  const noVoice = audio === 'trending' || audio === 'text-music';
+  const bans = `- Never say a price, dollar amount or % off. No "click the link" / "tap the cart".
+- Never use "okay", "honestly", "you guys", or filler "like". No cringe ad-speak ("game changer", "holy grail", "run don't walk").
+${typeof TTS_POLICY_SHORT!=='undefined'?'- '+TTS_POLICY_SHORT:''}`;
+  const prompt = `Rewrite this TikTok video for a different product, LINE BY LINE — "same song, new lyrics".
+NEW PRODUCT: ${product}
+${facts?`PRODUCT FACTS (everything you say about the product must come from these — no invented claims):\n${facts}\n`:''}
+ORIGINAL ${noVoice?'ON-SCREEN TEXT / BEATS':'SPOKEN WORDS'}:
+${noVoice?JSON.stringify(fw.framework):fw.transcript}
+
+ORIGINAL BEATS (timing + what's on screen): ${JSON.stringify(fw.framework)}
+
+RULES:
+1. Split the original into its lines. Write exactly ONE new line for EACH original line, in the SAME order — same number of lines.
+2. Each new line copies the original line's SHAPE: same sentence type (command / question / list / statement), same rhythm and punctuation, roughly the same word count (±3 words). If the original opens with a 3-beat list like "pop it, twist it, and lift your undereyes", yours opens with a 3-beat list too, about the new product (e.g. "swipe it, blend it, and wake up your face").
+3. Change the WORDS: swap in the new product's real actions, features and results. Never reuse 5 or more words in a row from the original. Common short words are fine.
+4. The hook is the first line — it must mirror the original's first line. Don't replace it with a different kind of opener.
+5. Visuals: mirror each original beat's shot, adapted to the new product. Same timing as the original beats.
+6. ${noVoice?'NO voiceover: "spoken" must be "" everywhere; mirror the on-screen text instead.':'On-screen text: mirror the original\'s on-screen text pattern the same way.'}
+${bans}
+${prev?`7. Make this a DIFFERENT version from the previous one (new word choices, same shapes): ${JSON.stringify(prev)}`:''}
+In each scene's "change", quote the original line it mirrors in a few words. Also write 3–5 filming tips, "urgency" (how it builds desire without fake urgency), a caption and exactly 5 hashtags.`;
+  try{ const out=await gem([{text:prompt}],FW_SCHEMA.properties.script,0.6); return out?.scenes?.length?out:null; }catch(e){ console.warn('mirrorScript',e); return null; }
 }
 async function analyze(){
   if (!VIDEO && !LINK) return;
@@ -479,6 +505,7 @@ async function analyze(){
     if (!res.ok) throw new Error(data?.error?.message || `Gemini error (${res.status})`);
     const text = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
     const fb = JSON.parse(text.replace(/```json|```/g, '').trim());
+    if (CTX.mode === 'framework' && (fb.transcript || fb.framework?.length)) { setStatus('Writing your version line by line…'); const m = await mirrorScript(fb, CTX.product, CTX.facts, CTX.audio); if (m) fb.script = m; }
     if (CTX.mode === 'framework' && fb.script) { setStatus('Making sure nothing is copied word for word…'); fb.script = await deCopy(fb.script, fb.transcript); setStatus('Checking the new script against TikTok policy…'); fb.script = await policyCheckScenes(fb.script); }
     if (CTX.mode === 'framework') renderFramework(fb); else render(fb, null, true);
     setStatus('');
@@ -588,6 +615,15 @@ async function makeScript(btn){
   if(!CURRENT && !FW_CURRENT) return;
   btn.disabled=true; btn.textContent='Writing your script…';
   const audio=CTX.audio||'voiceover', noVoice=audio==='trending'||audio==='text-music';
+  if(FW_CURRENT&&!CURRENT&&(FW_CURRENT.transcript||FW_CURRENT.framework?.length)){
+    try{
+      if(!CTX.facts&&CTX.product){ btn.textContent='Researching the product…'; CTX.facts=await researchFacts(CTX.product); }
+      btn.textContent='Writing your version line by line…';
+      let d=await mirrorScript(FW_CURRENT,CTX.product,CTX.facts,audio,NEW_SCRIPT||FW_CURRENT.script); if(!d) throw new Error('no script came back');
+      if(FW_CURRENT.transcript){ btn.textContent='Making sure nothing is copied…'; d=await deCopy(d,FW_CURRENT.transcript); }
+      btn.textContent='Checking TikTok policy…'; NEW_SCRIPT=await policyCheckScenes(d); renderScript(NEW_SCRIPT); return;
+    }catch(e){ btn.disabled=false; btn.textContent='✦ Write me a new script from this feedback'; alert('Could not write the script: '+e.message); return; }
+  }
   // Framework breakdowns: write a different version for the same product, following the same framework
   const fwPrompt=FW_CURRENT&&!CURRENT?`You are a short-form video scriptwriter for a TikTok Shop affiliate creator. Write a DIFFERENT new script for "${CTX.product||'the product'}" that still CLOSELY mirrors the original video (same beats, order, timing, hook structure, sentence shapes and rhythm — "same song, new lyrics"), but reworded so it isn't a copy of the original or of the previous version — never reuse 5 or more words in a row from the original's words. Vary the wording and the specific hook line, not the structure.
 Audio style: ${AUDIO_NOTES[audio]||''}
