@@ -90,7 +90,7 @@ Action types:
 - set_goal: she sets a goal ("my goal is $2k GMV this month", "I want $300 commission this week", "goal: 50 sales this month"). metric gmv / comm (commission) / units (sales/units) / videos (videos posted — "post 3 videos a day", "60 videos this month"), amount as a plain number, period month (default), week, or day ("a day" / "per day" / "daily"). Asking HOW she's doing on a goal is NOT an action.
 - add_reminder: a reminder or to-do that isn't filming a product ("remind me to repost the CryoGlow Friday", "remind me to email QVC tomorrow"). note = the reminder in short plain words, date.
 - add_product: she got / wants to add a NEW product ("I got a free sample of the X from Y", "add the X to my products"). product = product name as she says it, brand, link if she pastes one, free_sample true if she says free sample / sample / they sent it, note = anything else she says about it.
-- set_status: change a product's stock status. product, status: "active" (back in stock / restock / unshelve), "paused" (out of stock), "shelved" (shelve / stop promoting / done with it), "promote" (push it / promote now).
+- set_status: change a product's stock status. If she means ALL products from a brand ("shelve all mellow products", "everything from Kitsch is out of stock"), set brand_all=true and product = just the brand name. product, status: "active" (back in stock / restock / unshelve), "paused" (out of stock), "shelved" (shelve / stop promoting / done with it), "promote" (push it / promote now).
 - set_hero: change her HERO BRANDS list (max 7). hero_mode: "set" = replace the whole list with brands; "add" = add brands; "remove" = remove remove_brands; "swap" = remove remove_brands and add brands ("swap PetLab for Jiyu" → remove_brands [PetLab], brands [Jiyu]).
 - mark_hq: mark a posted video high quality (or not). caption = words from the caption/description she gives, product if she names it, hq = false only if she says NOT high quality.
 - write_script: ONLY when she asks for a SCRIPT (the spoken lines for a video). product, funnel ("Middle" if she says middle of funnel / push the sale / get them to buy, else "Top"), on_sale true only if she says it's on sale/promo, column = the filming style if she says it, angle = any specific idea/angle/hook she mentions, date if she says one.
@@ -187,6 +187,15 @@ function actCardHtml(a, i, c) {
   } else if (a.type === 'set_status') {
     title = '📦 Change stock status';
     const st = a.status || 'active';
+    if (a.brand_all) {
+      const term = String(a.product || a.brand || '').toLowerCase().replace(/\b(all|my|the|products?|stuff|items?|things?|everything|from)\b/g, ' ').replace(/\s+/g, ' ').trim();
+      const list = term ? c.prods.filter(p => String(p.brand || '').toLowerCase().includes(term) || (!String(p.brand || '').trim() && String(p.name || '').toLowerCase().includes(term))) : [];
+      if (!list.length) return `<div class="acard done" id="${k}"><div class="atitle">📦 Change stock status</div><div class="astat">I couldn't find any products from "${esc(term || a.product || '')}" in your Products.</div></div>`;
+      title = `📦 ${list.length} product${list.length === 1 ? '' : 's'} from ${esc(term)}`;
+      const lbl = { active: 'in stock', paused: 'out of stock', promote: 'promote now', shelved: 'shelved' };
+      body = row('Set to', actSel(k + '_st', [['active', 'In stock'], ['paused', 'Out of stock'], ['promote', 'Promote now'], ['shelved', 'Shelved']], st))
+        + list.map(p => `<label class="achk"><input type="checkbox" class="${k}_pk" value="${p.id}" checked> ${esc(p.name)} <small style="opacity:.6">(now ${lbl[p.status || 'active'] || esc(p.status)})</small></label>`).join('');
+    } else
     body = row('Product', actProdSel(c, k + '_p', a.product)) + row('Status', actSel(k + '_st', [['active', 'In stock'], ['paused', 'Out of stock'], ['promote', 'Promote now'], ['shelved', 'Shelved']], st));
   } else if (a.type === 'set_hero') {
     title = '⭐ Update Hero Brands';
@@ -231,6 +240,7 @@ async function actTry(text, waitEl) {
   // she said copy / duplicate → never move, always copy
   if (/\b(copy|duplicate|same as|repeat)\b/i.test(text)) acts.forEach(a => { if (a.type === 'move_day') a.type = 'copy_day'; });
   // "all kitsch products" / "everything from QVC" → a whole-brand add
+  if (/\b(all|every|everything)\b/i.test(text)) acts.forEach(a => { if (a.type === 'set_status') a.brand_all = true; });
   if (/\b(all|every|everything)\b/i.test(text)) acts.forEach(a => { if (a.type === 'film_plan' && /\b(all|every)\b[^.]*\b(products?|stuff|items?|things?)\b|\beverything from\b|\bevery\b/i.test(text)) a.brand_all = true; });
   // she didn't say "script" → never write one; give only the pieces she named
   if (!/\bscripts?\b/i.test(text)) acts.forEach(a => { if (a.type === 'write_script') { a.type = 'write_copy';
@@ -702,9 +712,22 @@ async function actAddProductSave(k, a, c) {
   return `Added <b>${esc(name)}</b> to Products${sp?.image_url ? ' with its photo and link' : ' (no photo yet — add it on the Products page)'}${/FREE_SAMPLE/.test(notes) ? ' as a free sample' : ''}.`;
 }
 async function actStatus(k, a, c) {
+  if (a.brand_all) {
+    const st = v$(k, '_st'), ids = [...document.querySelectorAll(`.${k}_pk:checked`)].map(x => x.value);
+    if (!ids.length) throw new Error('tick at least one product');
+    const before = ids.map(id => ({ id, status: c.prods.find(p => p.id === id)?.status || 'active' }));
+    const { error } = await db.from('products').update({ status: st }).in('id', ids).eq('user_id', c.uid); if (error) throw error;
+    ACT.cards[k] = { ...(ACT.cards[k] || a), undoStatus: before };
+    return `${ids.length} product${ids.length === 1 ? '' : 's'} now <b>${{ active: 'in stock', paused: 'out of stock', promote: 'promote now', shelved: 'shelved' }[st]}</b>. <a href="#" onclick="actStatusUndo('${k}');return false" style="color:var(--rust);font-weight:800;margin-left:6px">Undo</a>`;
+  }
   const pid = v$(k, '_p'), st = v$(k, '_st'); if (!pid) throw new Error('pick the product');
   const { error } = await db.from('products').update({ status: st }).eq('id', pid).eq('user_id', c.uid); if (error) throw error;
   return `<b>${esc(c.prods.find(p => p.id === pid)?.name || 'Product')}</b> is now <b>${{ active: 'in stock', paused: 'out of stock', promote: 'promote now', shelved: 'shelved' }[st]}</b>.`;
+}
+async function actStatusUndo(k) {
+  const u = ACT.cards[k]?.undoStatus; if (!u?.length) return; const c = await actContext();
+  for (const x of u) await db.from('products').update({ status: x.status }).eq('id', x.id).eq('user_id', c.uid);
+  ACT.cards[k].undoStatus = null; const st = document.querySelector(`#${k} .astat`); if (st) st.textContent = 'Undone — put them back the way they were.';
 }
 async function actHero(k, a, c) {
   const vals = [0,1,2,3,4,5,6].map(i => (document.getElementById(`${k}_h${i}`)?.value || '').trim());
