@@ -757,7 +757,7 @@ document.addEventListener('click',e=>{ const b=e.target.closest('.seg button'); 
 function swUseProduct(){
   const v=document.getElementById('swProduct').value.trim(); if(!v){ document.getElementById('swProduct').focus(); return; }
   const p=SW_PRODUCTS.find(x=>String(x.name).toLowerCase()===v.toLowerCase());
-  SW.product=p?.name||v; SW.brand=p?.brand||''; SW.image=p?.image_url||''; SW.shots=[]; SW.imgPart=false; swShowPicked();
+  SW.product=p?.name||v; SW.brand=p?.brand||''; SW.image=p?.image_url||''; SW.shots=[]; SW.shotParts=[]; SW.extraShots=0; SW.imgPart=false; swShowPicked();
   if(p?.id){ swCheckPromo(p.id);
     const small=()=>document.querySelector('#swProdPicked small');
     if(small()) small().textContent=(p.brand?p.brand+' · ':'')+'loading product details…';
@@ -769,7 +769,15 @@ async function swPickShots(files){
 }
 function swShowPicked(){
   document.getElementById('swProdPick').style.display='none'; const el=document.getElementById('swProdPicked'); el.style.display='';
-  el.innerHTML=`<div class="swpicked">${SW.image?`<img src="${esc(SW.image)}">`:''}<div><b>${esc(SW.product||`${SW.shots.length} screenshot${SW.shots.length===1?'':'s'}`)}</b><small>${esc(SW.brand||(SW.shots.length?'Gemini reads the product from your screenshots':''))}</small></div><a onclick="swChange()">Change</a></div>`;
+  el.innerHTML=`<div class="swpicked">${SW.image?`<img src="${esc(SW.image)}">`:''}<div><b>${esc(SW.product||`${SW.shots.length} screenshot${SW.shots.length===1?'':'s'}`)}</b><small>${esc(SW.brand||(SW.shots.length?'Gemini reads the product from your screenshots':''))}</small></div><a onclick="swChange()">Change</a></div>
+    <div class="swrow" style="margin-top:8px;align-items:center;gap:10px"><button type="button" class="btn sm" onclick="document.getElementById('swMore').click()">+ Add info screenshots</button><small style="color:var(--text-muted)">${(SW.shots.length+(SW.extraShots||0))?`${SW.shots.length+(SW.extraShots||0)} added — Gemini will read them for product info`:'e.g. a Google result, ingredients or the product page (up to 5)'}</small></div>
+    <input type="file" id="swMore" accept="image/*" multiple hidden onchange="swAddShots(this.files)">`;
+}
+// add info screenshots on top of a picked product (keeps the product)
+function swAddShots(files){
+  const room=Math.max(0,5-SW.shots.length-(SW.extraShots||0)), list=[...(files||[])].slice(0,room);
+  document.getElementById('swMore').value=''; if(!list.length){ if(!room) alert('That\'s the max of 5 screenshots.'); return; }
+  SW.shots=[...SW.shots,...list]; if(!SW.image) SW.image=URL.createObjectURL(list[0]); swShowPicked();
 }
 // If this product is on your Shark & Ninja promo list right now (or soon), fill in the sale for you
 async function swCheckPromo(prodId){
@@ -784,7 +792,7 @@ async function swCheckPromo(prodId){
     note.textContent=`Filled in from your Shark & Ninja promos: ${pr.deal||'deal'} · ${pr.start_date<=today?'live now':'starts '+new Date(pr.start_date+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}.`;
   }catch(e){}
 }
-function swChange(){ SW.product=''; SW.shots=[]; document.getElementById('swProdPick').style.display=''; document.getElementById('swProdPicked').style.display='none'; }
+function swChange(){ SW.product=''; SW.shots=[]; SW.shotParts=[]; SW.extraShots=0; SW.imgPart=false; document.getElementById('swProdPick').style.display=''; document.getElementById('swProdPicked').style.display='none'; }
 
 // upcoming holidays & events (next ~4 months)
 function swHolidays(){
@@ -825,19 +833,20 @@ function swContext(){
   if(SW.funnel==='Top'&&(SW.special.includes('On sale')||saleAngle)) bits.push(`TOP OF FUNNEL WINS: do NOT open with the price, the sale or the deal (no "have you seen the price…"). Open on the problem, a visual moment or the product itself. The sale can come up once, briefly, near the end.`);
   if(SW.funnel!=='Top'&&(SW.special.includes('On sale')||saleAngle)) bits.push(`SALE OPENING (required): the very FIRST line of the script must be about the price/deal, e.g. "Have you seen the price on ${SW.product} today?" or "${SW.product} is on sale right now and I had to tell you." Vary the wording, but the price/sale must be the hook — don't open with anything else. Never say any price, dollar amount, or percentage — not even one from the deal info — because TikTok Shop doesn't allow it; hint at the deal instead ("you have to check the price", "it's on sale right now").`);
   const f=factsFor(SW.product); if(f) bits.push(`PRODUCT FACTS:\n${f}\n${PF_RULE}`);
+  if((SW.shotParts||[]).length||SW.extraShots) bits.push(`ATTACHED IMAGES: she added product photos / info screenshots (e.g. a Google result, ingredient list or product page). Read them and use the real product info in them — what it does, key ingredients or features, how to use it. Never say a price you see in them.`);
   return bits.join('\n');
 }
 async function swProductParts(){
   const parts=[];
   for(const f of SW.shots){ const r=await fetch(`${WORKER}/?service=gemini-upload`,{method:'POST',headers:{'Content-Type':f.type||'image/png'},body:f});
     const j=await r.json().catch(()=>({})); if(!r.ok||!j.uri) throw new Error(j.error||'Upload failed'); parts.push({file_data:{mime_type:j.mime_type,file_uri:j.uri}}); }
-  SW.shots=[]; SW.shotParts=[...(SW.shotParts||[]),...parts];
+  SW.extraShots=(SW.extraShots||0)+SW.shots.length; SW.shots=[]; SW.shotParts=[...(SW.shotParts||[]),...parts];
   // also show Gemini the product photo from your Products list
-  if(!SW.imgPart&&SW.image&&/^https?:/.test(SW.image)&&!(SW.shotParts||[]).length){
+  if(!SW.imgPart&&SW.image&&/^https?:/.test(SW.image)){
     SW.imgPart=true;
     try{ const b=await (await fetch(SW.image)).blob();
       const r=await fetch(`${WORKER}/?service=gemini-upload`,{method:'POST',headers:{'Content-Type':b.type||'image/jpeg'},body:b});
-      const j=await r.json().catch(()=>({})); if(r.ok&&j.uri) SW.shotParts=[{file_data:{mime_type:j.mime_type,file_uri:j.uri}}]; }catch(e){}
+      const j=await r.json().catch(()=>({})); if(r.ok&&j.uri) SW.shotParts=[{file_data:{mime_type:j.mime_type,file_uri:j.uri}},...(SW.shotParts||[])]; }catch(e){}
   }
   return SW.shotParts||[];
 }
