@@ -71,7 +71,10 @@ function queueCarryKey(row) {
   ].join('|');
 }
 
+// Turned off: unfinished takes stay on the day she planned them (she moves them herself with Move day / Ask).
+const AUTO_CARRY_FORWARD = false;
 async function carryForwardUnfinishedQueue(userId, targetDate = localDateKey()) {
+  if (!AUTO_CARRY_FORWARD) return 0;
   if (!userId || !targetDate) return 0;
   const { data: overdue, error } = await db.from('queue')
     .select('id,prod_id,name,brand,notes,sort_order,done,tiktok_account_id')
