@@ -8,7 +8,7 @@ html[data-theme="notebook"]{
   --nb-hand:'Patrick Hand','Comic Neue',cursive; --nb-title:'Caveat Brush','Patrick Hand',cursive;
 }
 
-/* paper, ruled lines, spiral binding */
+/* paper and ruled lines */
 html[data-theme="notebook"] body{
   background:
     linear-gradient(90deg,transparent 0 62px,var(--nb-margin) 62px 63.5px,transparent 63.5px),
@@ -16,10 +16,7 @@ html[data-theme="notebook"] body{
     radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.55),transparent 60%),
     var(--nb-paper)!important;
   color:var(--nb-ink)!important;font-family:var(--nb-hand)!important;}
-html[data-theme="notebook"] body::before{content:"";position:fixed;left:0;top:0;bottom:0;width:30px;z-index:1;pointer-events:none;
-  background:
-    radial-gradient(circle at 18px 50%,#2b211b 0 2.6px,transparent 3.2px) 0 0/30px 26px repeat-y,
-    radial-gradient(ellipse at 9px 50%,transparent 0 6px,#6f6f74 6.5px 8px,#3d3d42 8.5px 9.4px,transparent 10px) 0 0/30px 26px repeat-y;}
+html[data-theme="notebook"] body::before{display:none;}
 html.embedded[data-theme="notebook"] body::before{display:none;}
 html[data-theme="notebook"] body,html[data-theme="notebook"] button,html[data-theme="notebook"] input,html[data-theme="notebook"] select,html[data-theme="notebook"] textarea,
 html[data-theme="notebook"] .b-folder,html[data-theme="notebook"] .card,html[data-theme="notebook"] [class*="label"],html[data-theme="notebook"] [class*="sub"]{font-family:var(--nb-hand)!important;}
@@ -107,7 +104,7 @@ html[data-theme="notebook"] body::after{opacity:.06!important;}
 html[data-theme="notebook"] .msg.me{background:var(--nb-kraft)!important;color:var(--nb-ink)!important;border:1.6px solid var(--nb-ink);}
 html[data-theme="notebook"] *{scrollbar-color:rgba(43,33,27,.35) transparent;}
 
-/* leave a real notebook margin between the spiral rings and the content */
+/* keep content to the right of the red margin line */
 html[data-theme="notebook"]:not(.embedded) body:not(.has-app-shell){padding-left:84px!important;}
 html[data-theme="notebook"]:not(.embedded) .has-app-shell .content,html[data-theme="notebook"]:not(.embedded) .has-app-shell .workspace>.content{padding-left:84px!important;}
 @media(max-width:768px){html[data-theme="notebook"]:not(.embedded) body:not(.has-app-shell),html[data-theme="notebook"]:not(.embedded) .has-app-shell .content{padding-left:46px!important;}
