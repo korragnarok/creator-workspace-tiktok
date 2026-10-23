@@ -93,7 +93,7 @@ Action types:
 - set_status: change a product's stock status. If she means ALL products from a brand ("shelve all mellow products", "everything from Kitsch is out of stock"), set brand_all=true and product = just the brand name. product, status: "active" (back in stock / restock / unshelve), "paused" (out of stock), "shelved" (shelve / stop promoting / done with it), "promote" (push it / promote now).
 - set_hero: change her HERO BRANDS list (max 7). hero_mode: "set" = replace the whole list with brands; "add" = add brands; "remove" = remove remove_brands; "swap" = remove remove_brands and add brands ("swap PetLab for Jiyu" → remove_brands [PetLab], brands [Jiyu]).
 - mark_hq: mark a posted video high quality (or not). caption = words from the caption/description she gives, product if she names it, hq = false only if she says NOT high quality.
-- write_script: ONLY when she asks for a SCRIPT (the spoken lines for a video). product, funnel ("Middle" if she says middle of funnel / push the sale / get them to buy, else "Top"), on_sale true only if she says it's on sale/promo, column = the filming style if she says it, angle = any specific idea/angle/hook she mentions, date if she says one.
+- write_script: ONLY when she asks for a SCRIPT (the spoken lines for a video). product, funnel ("Middle" if she says follow-up / still using it / update / middle of funnel, else "Top" = first look / honest review), on_sale true only if she says it's on sale/promo, column = the filming style if she says it, angle = any specific idea/angle/hook she mentions, date if she says one.
 - write_copy: she asks for a caption, hashtags, SEO words/keywords, a title or a hook — and NOT a script. parts = ONLY the pieces she named: "caption" → [caption]; "caption and seo" → [caption, seo]; "seo words" → [seo]; "caption with hashtags" → [caption, hashtags]; "hashtags" → [hashtags]; "title" → [title]; "hook" → [hook]. Never add pieces she didn't ask for. product, angle = any idea she mentions.
 - log_video: she POSTED a video ("posted the Glossi car video on @thecozyko, caption '...'"). caption = the caption/description she gives, product, account, date, link if given, high_quality true only if she says HQ/high quality, column = which style it was if she says it.
 One message can have several actions. Never invent numbers she didn't say — leave them 0.
@@ -552,10 +552,10 @@ async function actGemJSON(prompt, schema, temp = 0.7, ms = 60000) {
 function actVoice() {
   const ban = `- NEVER use: "okay", "honestly", "you guys", or "like" as filler (only for real comparisons). Never open with "Okay", "Ok so", "So," or "Alright".
 - No cringe ad-speak: "game changer", "holy grail", "you NEED this", "run don't walk", "life-changing", all-caps hype.
-- NEVER say a price, dollar amount, or % off. Talk about a deal without numbers.
+- NEVER say a price, dollar amount, or % off. If there's a deal, mention it once, casually, without numbers.
 - Every line earns its place: specific > generic.`;
   const real = typeof voicePromptSync === 'function' ? voicePromptSync() : '';
-  return `${real || 'VOICE: warm, natural, confident — a real person talking to a friend, short sentences, contractions, real-life moments.'}\n${ban}\n${typeof TTS_POLICY_SHORT !== 'undefined' ? '- ' + TTS_POLICY_SHORT : ''}${typeof playbookPromptSync === 'function' ? playbookPromptSync() : ''}${typeof voiceEditsPromptSync === 'function' ? voiceEditsPromptSync() : ''}`;
+  return `${typeof HONEST_VOICE !== 'undefined' ? HONEST_VOICE + '\n' : ''}${real || 'VOICE: warm, natural, honest — a real person giving a friend an honest review, short sentences, contractions, real-life moments.'}\n${ban}\n${typeof TTS_POLICY_SHORT !== 'undefined' ? '- ' + TTS_POLICY_SHORT : ''}${typeof playbookPromptSync === 'function' ? playbookPromptSync() : ''}${typeof voiceEditsPromptSync === 'function' ? voiceEditsPromptSync() : ''}`;
 }
 function actClean(ps) {
   return (ps || []).map(p => { const t = String(p).replace(/^\s*(okay|ok|alright|all right)\b[\s,.!…-]*(so\b[\s,]*)?/i, '')
@@ -567,23 +567,23 @@ async function actWriteScript(c, p, a) {
   const facts = [`Name: ${p.name}`, p.brand ? `Brand: ${p.brand}` : '', String(p.notes || '').replace(/FREE_SAMPLE/g, '').replace(/TikTok Shop (price|sold count) seen:.*$/gim, '').trim() ? `Her notes: ${String(p.notes).replace(/FREE_SAMPLE/g, '').slice(0, 800)}` : ''].filter(Boolean).join('\n');
   const style = { talking: 'talking to camera', vacuum: 'demo / voiceover over the product in use', faceless: 'aesthetic / faceless — voiceover over hands, product and B-roll, she is never on camera', car: 'filmed in her car, talking to camera' }[a.column] || 'talking to camera';
   const fun = funnel === 'Middle'
-    ? `FUNNEL: MIDDLE — the viewer already knows this product. Don't re-explain it or list features (one quick reminder of the main benefit at most). Get them to finally buy: name the hesitation and answer it, what life is like once you have it, real reassurance, a confident-but-soft push. ${a.on_sale ? 'It IS on a promo right now, so the deal can be one reason to buy now (no numbers).' : 'It is NOT on a promo — do NOT mention sales, discounts, deals, coupons or "the price right now". No fake urgency.'} LENGTH (hard rule): 4–5 sentences TOTAL for the whole spoken script, one sentence per paragraph — about 15–20 seconds. Never more than 5 sentences.`
-    : `FUNNEL: TOP — the viewer has never seen this product. Hook with a relatable problem or strong visual moment, then really show and explain it: what it is, how it works, the 1–2 features that matter most, tied to a real benefit. ${a.on_sale ? 'It is on sale right now — mention it briefly, no numbers.' : ''} LENGTH (hard rule): 4–5 sentences TOTAL for the whole spoken script, one sentence per paragraph — about 15–20 seconds. Never more than 5 sentences.`;
+    ? `VIDEO TYPE: FOLLOW-UP / "STILL USING IT?" — the viewer may already know this product. Don't re-explain every feature. Her honest update: how long she's used it, how it's held up, what she's noticed (modest, cosmetic/temporary only), what still bugs her a little, and whether she'd buy it again and who for. No pressure to buy. ${a.on_sale ? 'It IS on sale — she can mention it once, casually, as info (no numbers).' : 'It is NOT on sale — do not mention sales, deals or "the price right now". No urgency.'} LENGTH (hard rule): 4–5 sentences TOTAL, one sentence per paragraph — about 15–20 seconds.`
+    : `VIDEO TYPE: FIRST LOOK / HONEST REVIEW — the viewer hasn't seen this product. Hook with something real (first impression, texture/finish, a question people ask, or her verdict up front). What it is, how it feels and how she uses it, the 1–2 things she likes most (real details), ONE honest downside or "know this first", and who it's for. ${a.on_sale ? 'It is on sale right now — she can mention it once, casually, near the end, no numbers.' : ''} LENGTH (hard rule): 4–5 sentences TOTAL, one sentence per paragraph — about 15–20 seconds.`;
   const sc = await actGemJSON(`Write a short TikTok Shop video script (spoken lines only, 4–5 sentences total, one sentence per paragraph) for ${p.name}${p.brand ? ' by ' + p.brand : ''}.
 ${actVoice()}
 Filming style: ${style}.
 ${fun}
-${a.angle ? `Her idea / angle for this one: ${a.angle}` : 'Pick the most convincing everyday angle yourself.'}
+${a.angle ? `Her idea / angle for this one: ${a.angle}` : 'Pick the most honest, useful angle yourself.'}
 PRODUCT FACTS (use these; don't invent features, specs or claims that aren't here; never quote prices):
 ${facts}
-End with a soft, casual close like "I tagged it below" — never "click the link" or "tap the orange cart".
+Include one honest downside. End softly — "it's linked if you're curious" or just her verdict — never "click the link", "tap the orange cart", or any push to buy.
 Also write: a short title (3–6 words), and a ready-to-post caption in her voice (1–3 short sentences, under 150 characters) plus exactly 5 hashtags, most relevant first. Also 10–15 SEO words: short lowercase search phrases people would actually type into TikTok search to find this video (product name/type, brand, the problem it solves, who it's for), no hashtags.`,
     { type: 'OBJECT', properties: { title: { type: 'STRING' }, paragraphs: { type: 'ARRAY', items: { type: 'STRING' } }, caption: { type: 'STRING' }, hashtags: { type: 'ARRAY', items: { type: 'STRING' } }, seo: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['title', 'paragraphs', 'caption', 'hashtags', 'seo'] });
   let pol = null;
   try {
     pol = await actGemJSON(`Check this TikTok Shop affiliate script and caption against TikTok Shop content policy and her hard rules.${typeof playbookRulesSync === 'function' ? playbookRulesSync() : ''}
 ${typeof TTS_POLICY !== 'undefined' ? TTS_POLICY : ''}
-Also: NO prices, dollar amounts or % of any kind; no "free"; no directing people off TikTok; no medical/cure claims; no "best/#1/guaranteed". If it's fine return passed=true, issues=[] and everything unchanged. If not, return passed=false, list each issue in plain words, and return FIXED versions with the smallest possible changes, same voice.
+Also: NO prices, dollar amounts or % of any kind; no "free"; no directing people off TikTok; no medical/cure claims; no "best/#1/guaranteed". KEEP her honest downsides — only reword one if it disparages a competitor or makes a medical/safety claim. Also flag false urgency or pushy sales lines. If it's fine return passed=true, issues=[] and everything unchanged. If not, return passed=false, list each issue in plain words, and return FIXED versions with the smallest possible changes, same voice.
 SCRIPT:
 ${sc.paragraphs.join('\n\n')}
 CAPTION: ${sc.caption}`, { type: 'OBJECT', properties: { passed: { type: 'BOOLEAN' }, issues: { type: 'ARRAY', items: { type: 'STRING' } }, paragraphs: { type: 'ARRAY', items: { type: 'STRING' } }, caption: { type: 'STRING' } }, required: ['passed', 'issues', 'paragraphs', 'caption'] }, 0.2, 45000);
@@ -632,7 +632,7 @@ async function actScriptCard(a, i, c) {
   ACT.cards[k] = { ...a, type: 'write_script', pid: p.id, sc };
   const col = a.column || (mem || {})[p.id] || ACT_GUESS(p.name, p.brand || '');
   const pol = sc.passed === true ? '<span class="apol ok">✓ Policy check passed</span>' : sc.passed === false ? '<span class="apol fix">Policy fixes applied</span>' : '';
-  return `<div class="acard" id="${k}"><div class="atitle">✍️ ${esc(sc.title)} <small style="font-weight:600;color:var(--text-muted)">· ${esc(p.name)} · ${sc.funnel} of funnel</small> ${pol}</div>
+  return `<div class="acard" id="${k}"><div class="atitle">✍️ ${esc(sc.title)} <small style="font-weight:600;color:var(--text-muted)">· ${esc(p.name)} · ${sc.funnel === "Middle" ? "Follow-up" : "First look"}</small> ${pol}</div>
     ${sc.passed === false && sc.issues.length ? `<div class="awarn" style="margin-bottom:8px">Fixed: ${sc.issues.map(esc).join(' · ')}</div>` : ''}
     <div class="arow"><label>Script — edit any line; your changes teach it your voice</label><textarea id="${k}_s" rows="${Math.min(16, sc.paragraphs.length * 2 + 2)}">${esc(sc.paragraphs.join('\n\n'))}</textarea></div>
     <div class="arow"><label>Caption + hashtags</label><textarea id="${k}_cap" rows="3">${esc(sc.caption)}</textarea></div>

@@ -41,3 +41,16 @@ PLATFORM RULES
 - AI-generated content can't change, exaggerate or fake the product or its results (no instant/unrealistic AI demos).`;
 
 const TTS_POLICY_SHORT = `TikTok Shop policy: truthful claims only (match the listing); no exaggerated results, fake awards/"#1"/"approved"; no medical, cure/prevent, weight-loss or drug-like claims; no before/afters; no "lowest/cheapest price"; no fake deals or giveaways; no disparaging competitors; nothing aimed at kids; no off-TikTok links, other stores or handles; no trademarks/celebrities; nothing sexual, vulgar, unsafe, or showing vapes/drugs.`;
+
+// ─── Kourtney's voice (Oct 2026): honest reviewer, not a salesperson ─────────────
+// Used by every script writer (Write a script, Ask Take24, video remakes, workshop).
+// This WINS over anything salesy in older voice examples or playbook notes.
+const HONEST_VOICE = `HER VOICE — HONEST REVIEWER, NOT A SALESPERSON (this overrides anything pushier in her examples or playbook):
+- She's an influencer sharing her real experience — mostly skincare. Tone: "here's what it is, here's what I like, here's what I don't, you decide." Calm, warm, real, a little candid. Never pushy.
+- Show the GOOD and the BAD. Mostly the good, but include ONE honest, specific downside or "know this before you buy" note in every script (texture, scent, how long it takes to see a difference, finish, packaging, how much you get, who it's NOT for, how you'd use it differently). No product is perfect and viewers trust her more for saying so.
+- Downsides must stay TikTok Shop compliant: about her own experience with THIS product only — never trash a competitor or brand, no medical or safety scare claims, no "it broke me out" diagnoses (say "my skin didn't love it the first few days" or "if you're sensitive, patch test first").
+- Talk like an influencer giving a review: what it is, how it feels/smells/looks on, how she uses it, what she's noticed (honest timelines, temporary/cosmetic effects only), who she'd recommend it to.
+- NO sales pressure: no urgency, no FOMO, no "before it sells out", no "you need this", no "run", no "grab it now", no "don't miss out", no hard push to buy. Buying is optional — the viewer decides.
+- Deals: if it's on sale, she can mention it once, casually, as info ("it's on sale right now if you were already thinking about it") — never as the hook, never as pressure, never with numbers.
+- Close softly and neutral: "it's linked if you want to check it out", "I tagged it if you're curious" — or just end on her honest verdict. Never "click the link" / "tap the orange cart".
+- No gimmicks: no fake suspense, no clickbait reveals, no "wait for it", no trend-bait hooks. Hook with something real: a first impression, a question people actually ask, a texture shot, or her honest verdict up front.`;
