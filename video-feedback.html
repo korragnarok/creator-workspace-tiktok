@@ -1052,7 +1052,7 @@ async function swTeachSave(btn){
   catch(e){ btn.disabled=false; btn.textContent='Save my version'; alert('Could not save: '+e.message); }
 }
 function swNoOkay(ps){
-  ps=(ps||[]).map(x=>String(x||'').trim()).filter(Boolean); if(ps.length>5) ps=[...ps.slice(0,4),ps[ps.length-1]];
+  ps=(ps||[]).map(x=>String(x||'').trim()).filter(Boolean); if(ps.length>9) ps=[...ps.slice(0,8),ps[ps.length-1]];
   return ps.map(p=>{ const t=String(p).replace(/^\s*(okay|ok|alright|all right)\b[\s,.!…-]*(so\b[\s,]*)?/i,'')
       .replace(/,?\s*\bhonestly\b,?/gi,'').replace(/,?\s*\byou guys\b,?/gi,'').replace(/,\s*like,/gi,',').replace(/(^|[.!?]\s+)like,\s*/gi,'$1')
       .replace(/\s+([,.!?])/g,'$1').replace(/\s{2,}/g,' ').trim(); return t?t.charAt(0).toUpperCase()+t.slice(1):p; });
