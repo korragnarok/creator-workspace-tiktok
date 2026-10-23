@@ -1,5 +1,5 @@
 // ─── Creator Hub Service Worker ───────────────────────────────────────────────
-const CACHE = 'creator-hub-v427';
+const CACHE = 'creator-hub-v428';
 
 // Core files to cache for offline shell
 const PRECACHE = [
@@ -53,7 +53,7 @@ const PRECACHE = [
 // Install — cache core files
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache => Promise.all(PRECACHE.map(u => cache.add(u).catch(() => {})))).then(() => self.skipWaiting())
+    caches.open(CACHE).then(cache => Promise.all(PRECACHE.map(u => cache.add(new Request(u, { cache: 'reload' })).catch(() => {})))).then(() => self.skipWaiting())
   );
 });
 
@@ -84,7 +84,8 @@ self.addEventListener('fetch', e => {
   const isAppFile = url.origin === self.location.origin;
 
   e.respondWith(
-    fetch(e.request).then(response => {
+    // app files: always ask GitHub for the newest copy (skip the browser's ~10-minute cache)
+    (isAppFile && e.request.method === 'GET' ? fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin' }) : fetch(e.request)).then(response => {
       if (isAppFile && e.request.method === 'GET' && response.status === 200) {
         const clone = response.clone();
         caches.open(CACHE).then(cache => cache.put(e.request, clone));
