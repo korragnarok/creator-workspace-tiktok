@@ -1,3 +1,8 @@
+// ── Ignore the mouse's side Back / Forward buttons everywhere in Take24 (they were wiping half-typed scripts) ──
+(function () {
+  const block = e => { if (e.button === 3 || e.button === 4) { e.preventDefault(); e.stopPropagation(); } };
+  ['mousedown', 'mouseup', 'auxclick', 'pointerdown', 'pointerup'].forEach(t => window.addEventListener(t, block, true));
+})();
 // ── Desktop: a page opened on its own always reopens inside Home (no old sidebar view) ──
 (function () {
   try {
