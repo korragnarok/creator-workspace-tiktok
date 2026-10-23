@@ -722,7 +722,19 @@ async function actAddProductSave(k, a, c) {
   if (document.getElementById(k + '_fs')?.checked) notes = notes ? notes + '\nFREE_SAMPLE' : 'FREE_SAMPLE';
   const row = { user_id: c.uid, name, brand, link: sp?.link || (/^https?:/.test(a.link || '') ? a.link : ''), image_url: sp?.image_url || '', notes, status: 'active', tiktok_account_id: null };
   const { error } = await db.from('products').insert(row); if (error) throw error;
-  return `Added <b>${esc(name)}</b> to Products${sp?.image_url ? ' with its photo and link' : ' (no photo yet — add it on the Products page)'}${/FREE_SAMPLE/.test(notes) ? ' as a free sample' : ''}.`;
+  // free sample → also a "Sample" brand deal (same as adding it on the Products page), unless one already exists
+  let deal = false;
+  if (/FREE_SAMPLE/.test(notes)) {
+    try {
+      const { data: ex } = await db.from('brand_deals').select('id').eq('user_id', c.uid).eq('type', 'sample').ilike('name', name).limit(1);
+      if (!ex?.length) {
+        const t = new Date(), due = addDays(t, 14);
+        const { error: e2 } = await db.from('brand_deals').insert({ user_id: c.uid, name, brand, type: 'sample', received: ymd(t), due: ymd(due), done: 0, needed: 1, min_gmv: 0, link: row.link || '', notes: 'Added automatically from Ask Take24 (free sample).', refundable: false, status: 'not-started' });
+        deal = !e2; if (e2) console.warn('free sample deal', e2);
+      }
+    } catch (e) { console.warn('free sample deal', e); }
+  }
+  return `Added <b>${esc(name)}</b> to Products${sp?.image_url ? ' with its photo and link' : ' (no photo yet — add it on the Products page)'}${/FREE_SAMPLE/.test(notes) ? ' as a free sample' : ''}${deal ? ' and to Brand Deals (due in 2 weeks)' : ''}.`;
 }
 async function actStatus(k, a, c) {
   if (a.brand_all) {
