@@ -383,7 +383,7 @@ function flushDraft(){
   if(sc&&sc.dataset.id){ const r=ROWS.find(x=>x.id===sc.dataset.id), v=sc.value;
     if(r&&String(r.script||'')!==v){ r.script=v; db.from('queue').update({script:v}).eq('id',r.id).eq('user_id',USER.id).then(({error})=>{ if(error) console.warn('autosave script',error); }); } }
   const seo=document.getElementById('seoTxt'), cap=document.getElementById('capTxt');
-  if(CUR&&seo&&cap){ const m=curMeta(); if((m.seo||'')!==seo.value||(m.caption||'')!==cap.value) metaSave(CUR,{seo:seo.value,caption:cap.value}); }
+  if(CUR&&seo&&cap&&seo.dataset.id) saveTakeExtras(seo.dataset.id,seo.value,cap.value,true);
 }
 window.addEventListener('pagehide',flushDraft); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') flushDraft(); });
 let CUR_TAKE=0, EDITING=false;
@@ -401,16 +401,17 @@ function drawM(){
         <div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn sm" onclick="saveToVault('${r.id}',this)">Save to vault</button><button class="btn sm" onclick="navigator.clipboard.writeText(document.querySelector('.script-view').innerText);this.textContent='✓ Copied'">Copy</button><button class="btn sm" onclick="EDITING=true;drawM()">Edit</button></div>`}`;
   } else if(MTAB==='shots'){
     const r=g.rows[CUR_TAKE]||g.rows[0], shots=takeShots(g.meta,r,g.rows.indexOf(r));
-    body=`${g.rows.length>1?`<div class="mtabs">${g.rows.map((x,i)=>`<button class="tab${i===CUR_TAKE?' on':''}" onclick="CUR_TAKE=${i};drawM()">Take ${i+1}</button>`).join('')}</div>`:''}
+    body=`${g.rows.length>1?`<div class="mtabs">${g.rows.map((x,i)=>`<button class="tab${i===CUR_TAKE?' on':''}" onclick="flushDraft();CUR_TAKE=${i};drawM()">Take ${i+1}</button>`).join('')}</div>`:''}
       <div class="lbl">Shots for take ${g.rows.indexOf(r)+1} <span style="letter-spacing:0;text-transform:none;font-weight:600;color:var(--text-muted)">${shots.filter(s=>s.done).length}/${shots.length} done</span></div>
       ${shots.length?shots.map((s,i)=>`<div class="shot${s.done?' done':''}"><input type="checkbox" ${s.done?'checked':''} onchange="shotTog(${i},this.checked)"><span style="white-space:pre-wrap">${esc(s.t)}</span><button class="x" style="font-size:18px" onclick="shotDel(${i})">×</button></div>`).join(''):'<div class="sub" style="padding:6px 0">No shots for this take yet. Add them here, or use "Add shots to Film Board" in the script writer.</div>'}
       <div class="row" style="margin-top:10px"><textarea id="shotNew" rows="2" placeholder="Add a shot — or paste a whole list (one shot per line)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();shotAdd()}"></textarea><button class="btn sm primary" onclick="shotAdd()">Add</button></div>
       ${shots.length?`<div class="row" style="margin-top:8px;justify-content:flex-end"><button class="btn sm" onclick="shotClear()">Clear this take's shots</button></div>`:''}`;
   } else {
-    body=`<div class="lbl">SEO words <button class="btn sm" onclick="navigator.clipboard.writeText(document.getElementById('seoTxt').value);this.textContent='✓ Copied'">Copy</button></div>
-      <textarea id="seoTxt" oninput="draftSoon()" rows="4" placeholder="Paste your SEO words (comma separated)">${esc(g.meta.seo||'')}</textarea>
+    const r=g.rows[CUR_TAKE]||g.rows[0], ex=takeExtras(g.meta,r,g.rows.indexOf(r));
+    body=`${g.rows.length>1?`<div class="mtabs">${g.rows.map((x,i)=>`<button class="tab${i===CUR_TAKE?' on':''}" onclick="flushDraft();CUR_TAKE=${i};drawM()">Take ${i+1}</button>`).join('')}</div>`:''}<div class="lbl">SEO words <button class="btn sm" onclick="navigator.clipboard.writeText(document.getElementById('seoTxt').value);this.textContent='✓ Copied'">Copy</button></div>
+      <textarea id="seoTxt" oninput="draftSoon()" rows="4" data-id="${r.id}" placeholder="Paste your SEO words (comma separated)">${esc(ex.seo)}</textarea>
       <div class="lbl">Caption <button class="btn sm" onclick="navigator.clipboard.writeText(document.getElementById('capTxt').value);this.textContent='✓ Copied'">Copy</button></div>
-      <textarea id="capTxt" oninput="draftSoon()" rows="5" placeholder="Paste the caption + hashtags">${esc(g.meta.caption||'')}</textarea>
+      <textarea id="capTxt" oninput="draftSoon()" rows="5" placeholder="Paste the caption + hashtags">${esc(ex.caption)}</textarea>
       <div class="row" style="margin-top:10px;justify-content:flex-end"><span class="saved" id="sv"></span><button class="btn sm primary" onclick="saveSeo()">Save</button></div>`;
   }
   document.getElementById('mc').innerHTML=`<div class="mh"><div><h2>${esc(g.name)}</h2><div class="sub">${esc(g.brand||g.p?.brand||'')}</div></div><button class="x" onclick="closeM()">×</button></div>
@@ -437,7 +438,14 @@ function shotAdd(){ const v=document.getElementById('shotNew').value.trim(); if(
 function shotTog(i,d){ const s=curShots(); s[i]={...s[i],done:d}; setTakeShots(s); drawM(); }
 function shotDel(i){ const s=curShots(); s.splice(i,1); setTakeShots(s); drawM(); }
 function shotClear(){ if(!confirm("Clear this take's shot list?")) return; setTakeShots([]); drawM(); }
-function saveSeo(){ metaSave(CUR,{seo:document.getElementById('seoTxt').value,caption:document.getElementById('capTxt').value}); const sv=document.getElementById('sv'); sv.textContent='✓ Saved'; setTimeout(()=>sv.textContent='',2000); }
+// each take has its own SEO words + caption (meta.takeSeo / meta.takeCaption by take id); the old card-wide ones show on Take 1
+function takeExtras(meta,r,i){ const m=meta||{}, id=String(r?.id); return { seo:(m.takeSeo||{})[id]??(i===0?(m.seo||''):''), caption:(m.takeCaption||{})[id]??(i===0?(m.caption||''):'') }; }
+function saveTakeExtras(id,seo,cap,onlyIfChanged){
+  const g=groups().find(x=>x.key===CUR); if(!g) return; const r=g.rows.find(x=>String(x.id)===String(id)); if(!r) return;
+  const m=curMeta(), cur=takeExtras(m,r,g.rows.indexOf(r)); if(onlyIfChanged&&cur.seo===seo&&cur.caption===cap) return;
+  metaSave(CUR,{takeSeo:{...(m.takeSeo||{}),[String(id)]:seo},takeCaption:{...(m.takeCaption||{}),[String(id)]:cap}});
+}
+function saveSeo(){ saveTakeExtras(document.getElementById('seoTxt').dataset.id,document.getElementById('seoTxt').value,document.getElementById('capTxt').value); const sv=document.getElementById('sv'); sv.textContent='✓ Saved'; setTimeout(()=>sv.textContent='',2000); }
 
 // ── add product ──
 function openAdd(){

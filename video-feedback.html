@@ -1097,7 +1097,7 @@ async function swShotsToBoard(btn,opt={}){
     if(!m.takeShots&&m.shots?.length&&idx!==0){ const { data:first }=await db.from('queue').select('id,prod_id,name,notes').eq('user_id',session.user.id).eq('date',date).order('sort_order').order('id'); const f=(first||[]).find(r=>swKeyOf(r)===key); if(f) ts[String(f.id)]=m.shots; }
     if(SW.shotList?.length) ts[String(id)]=SW.shotList.map(t=>({t,done:false}));
     m.takeShots=ts;
-    if(opt.all){ if(SW.extras?.seo) m.seo=SW.extras.seo; if(SW.extras?.caption) m.caption=SW.extras.caption;
+    if(opt.all){ if(SW.extras?.seo) m.takeSeo={...(m.takeSeo||{}),[String(id)]:SW.extras.seo}; if(SW.extras?.caption) m.takeCaption={...(m.takeCaption||{}),[String(id)]:SW.extras.caption};
       if(v!=='new'&&v){ const { error }=await db.from('queue').update({ script:SW.script.paragraphs.join('\n\n') }).eq('id',id).eq('user_id',session.user.id); if(error) throw error; } }
     day[key]=m; b[date]=day; await plannerSet('filmBoard',b);
     btn.textContent=`✓ Added ${SW.shotList?.length||0} shots`; swShotTakes();
@@ -1117,7 +1117,10 @@ async function swSendAll(btn){
   if(SW.boardUsed?.[SW.boardTake]&&!confirm(`${sel.options[sel.selectedIndex].text} already has a script or shots. Replace them with this one?`)) return;
   btn.disabled=true;
   try{
-    for(const k of ['shots','seo','caption']) if(!SW.extras?.[k]){ btn.textContent=`Writing ${k==='shots'?'shot by shot':k==='seo'?'SEO words':'caption'}…`; await swExtra(k); }
+    let have={};
+    try{ if(SW.boardTake&&SW.boardTake!=='new'){ const [tid,key,ix]=SW.boardTake.split('|'); const m=((await plannerGet('filmBoard',{}))||{})[SW.boardDate||swDateKey(new Date())]?.[key]||{};
+      have={ seo:!!String((m.takeSeo||{})[tid]??(+ix===0?m.seo||'':'')).trim(), caption:!!String((m.takeCaption||{})[tid]??(+ix===0?m.caption||'':'')).trim() }; } }catch(e){}
+    for(const k of ['shots','seo','caption']) if(!SW.extras?.[k]&&!have[k]){ btn.textContent=`Writing ${k==='shots'?'shot by shot':k==='seo'?'SEO words':'caption'}…`; await swExtra(k); }
     const b2=document.getElementById('swTodoBtn'); if(b2){ b2.disabled=true; b2.textContent='Sending…'; }
     const res=await swShotsToBoard(document.getElementById('swTodoBtn')||btn,{all:true});
     const done=document.getElementById('swTodoBtn'); if(done&&res){ done.disabled=true; done.textContent=`✓ Sent to ${res.when} · ${res.take==='new'?'new take':'Take '+res.take}`; }

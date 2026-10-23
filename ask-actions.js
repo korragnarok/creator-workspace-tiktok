@@ -671,7 +671,7 @@ async function actScriptSave(k, a, c) {
     if (!target) throw new Error('could not find a take to attach it to');
     const { error } = await db.from('queue').update({ script }).eq('id', target.id).eq('user_id', c.uid); if (error) throw error;
     const key = keyOf(target);
-    board[date] = { ...(board[date] || {}) }; board[date][key] = { ...(board[date][key] || {}), caption, seo, style: board[date][key]?.style || col };
+    board[date] = { ...(board[date] || {}) }; { const m = board[date][key] || {}; board[date][key] = { ...m, takeCaption: { ...(m.takeCaption || {}), [String(target.id)]: caption }, takeSeo: { ...(m.takeSeo || {}), [String(target.id)]: seo }, style: m.style || col }; }
     await plannerSet('filmBoard', board);
     const inCol = rows.filter(r => keyOf(r) === key), n = inCol.findIndex(r => r.id === target.id) + 1;
     done.push(`on your Film Board for ${esc(prettyD(date))} in <b>${esc(c.cols[col] || col)}</b> (take ${n}) with the caption + SEO words`);
