@@ -704,10 +704,19 @@ async function actAddProductCard(a, i, c) {
     <label class="achk"><input type="checkbox" id="${k}_fs"${a.free_sample ? ' checked' : ''}> Free sample</label>
     <div class="abtns"><button class="abtn primary" onclick="actRun('${k}',this)">Add product</button><button class="abtn" onclick="actSkip('${k}')">Skip</button></div><div class="astat"></div></div>`;
 }
+// Capital first letter on every word ("dr. rejuall copper peptide serum" → "Dr. Rejuall Copper Peptide Serum").
+// Shouty ALL-CAPS words become Title Case; short all-caps like SPF / CC / 2X stay as they are.
+function actTitle(t) {
+  return String(t || '').trim().replace(/\s+/g, ' ').split(' ').map(w => {
+    if (/^[A-Z0-9&+\-]{1,4}$/.test(w) && /[A-Z]/.test(w)) return w;
+    if (w === w.toUpperCase() && /[A-Z]{5,}/.test(w)) w = w.toLowerCase();
+    return w.replace(/(^|[-/(])([a-z])/g, (m, a, b) => a + b.toUpperCase());
+  }).join(' ');
+}
 async function actAddProductSave(k, a, c) {
   const pick = +(document.querySelector(`input[name="${k}_pick"]:checked`)?.value ?? -1), sp = pick >= 0 ? a.found[pick] : null;
-  const name = v$(k, '_n').trim() || sp?.name || String(a.product || '').trim(); if (!name) throw new Error('add a name');
-  const brand = v$(k, '_b').trim() || sp?.brand || a.brand || '';
+  const name = actTitle(v$(k, '_n').trim() || sp?.name || String(a.product || '').trim()); if (!name) throw new Error('add a name');
+  const brand = actTitle(v$(k, '_b').trim() || sp?.brand || a.brand || '');
   let notes = v$(k, '_note').trim();
   if (sp) notes = [notes, sp.price ? `TikTok Shop price seen: ${sp.price}` : '', sp.sold ? `TikTok Shop sold count seen: ${Number(sp.sold).toLocaleString()}` : '', 'Imported from TikTok Shop search.'].filter(Boolean).join('\n');
   if (document.getElementById(k + '_fs')?.checked) notes = notes ? notes + '\nFREE_SAMPLE' : 'FREE_SAMPLE';
