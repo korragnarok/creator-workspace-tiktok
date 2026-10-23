@@ -4,6 +4,14 @@
    Started as a copy of the Skin Lab list (from: "skin-lab"). */
 window.TT_SKINCARE = [
  {
+  "name": "Dr. Rejuall Copper Peptide Serum",
+  "brand": "Dr. Rejuall",
+  "step": "treatment",
+  "from": "tiktok",
+  "ingredients": "Water, Butylene Glycol, Glycerin, Dipropylene Glycol, 1,2-Hexanediol, Isopentyldiol, Niacinamide, Caprylic/Capric Triglyceride, Panthenol, Sorbitol, C12-14 Alketh-12, Sodium Polyacryloyldimethyl Taurate, Acrylates/C10-30 Alkyl Acrylate Crosspolymer, Propanediol, Tromethamine, Sodium DNA, Copper Tripeptide-1, Ethylhexylglycerin, Allantoin, Sodium PCA, Adenosine, Gellan Gum, Glyceryl Acrylate/Acrylic Acid Copolymer, Agar, Sodium Hyaluronate, Sodium Phytate, Chamaecyparis Obtusa Oil, Guaiazulene, Beta-Glucan, Anthemis Nobilis Flower Oil, Xanthan Gum, Acetyl Octapeptide-3, Acetyl Tetrapeptide-5, Acetyl Tetrapeptide-9, Palmitoyl Hexapeptide-12, Palmitoyl Tripeptide-5, Tocopherol, Hydrolyzed Collagen",
+  "notes": "Blue gel with little blue speckles."
+ },
+ {
   "name": "CeraVe Moisturizing Cream",
   "step": "moisturizer",
   "skin": [
