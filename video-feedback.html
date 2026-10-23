@@ -590,10 +590,10 @@ Audio style: ${AUDIO_NOTES[audio]||''}
 ${noVoice?'Because this is a sound/music video with NO voiceover, "spoken" must be empty ("") in every scene — tell the story with visuals and ON-SCREEN TEXT timed to the beat.':voiceGuide()}
 Requirements:
 - The first 3 seconds must be a scroll-stopping hook (use the hook alternatives from the feedback as inspiration).
-- Scenes: 3–5 short scenes with timestamps (the spoken lines across the WHOLE script add up to 4–5 sentences max), what to film (angles, close-ups, B-roll, props, transitions), the on-screen text, the spoken line, and what changed from the original.
+- Scenes: 3–5 short scenes with timestamps (the spoken lines across the WHOLE script add up to 6–9 sentences max), what to film (angles, close-ups, B-roll, props, transitions), the on-screen text, the spoken line, and what changed from the original.
 - Honest review, not a sales pitch: no urgency, no FOMO, no "click the link"/"tap the cart". Include one real downside. Put her one-line honest verdict in "urgency".
 - filming_tips: 3–5 practical tips (lighting, framing, pacing).
-Keep it under ~30 seconds unless the feedback says longer works.
+Keep it around 25–40 seconds.
 
 ${NEW_SCRIPT?`PREVIOUS VERSION YOU WROTE (make this one clearly different — new hook and angle): ${JSON.stringify(NEW_SCRIPT)}\n\n`:''}FEEDBACK:
 ${JSON.stringify(CURRENT)}`;
@@ -824,8 +824,8 @@ function swRenderHolidays(){
 function swContext(){
   const bits=[`Filming: ${SW.film}${SW.film==='Faceless'?' (voiceover over hands/product/B-roll shots, creator never on camera)':''}`,
     `Format: ${SW.fmt}${SW.fmt==='Aesthetic'?' (calm, visual, minimal words — short lines that work as on-screen text or a soft voiceover)':''}`];
-  bits.push(SW.funnel==='Middle'?`VIDEO TYPE: FOLLOW-UP / "STILL USING IT?" — the viewer may have seen this product before. Don't re-explain every feature. Share her honest update: how long she's been using it, how it's held up, what she's noticed (honest and modest), what still bugs her a little, and whether she'd buy it again and who for. No pressure to buy. ${SW.special.includes('On sale')?'It IS on sale right now — she can mention it once, casually, as info (no numbers).':'It is NOT on sale — do not mention sales, deals or "the price right now".'} LENGTH (hard rule): 4–5 sentences TOTAL for the whole spoken script, one sentence per paragraph — about 15–20 seconds.`
-    :`VIDEO TYPE: FIRST LOOK / HONEST REVIEW — the viewer hasn't seen this product. Hook with something real (first impression, the texture/finish, a question people ask, or her verdict up front). Show what it is, how it feels and how she uses it, the 1–2 things she likes most (with real product details), ONE honest downside or "know this first", and who it's for. Deal talk optional, once, casual. LENGTH (hard rule): 4–5 sentences TOTAL for the whole spoken script, one sentence per paragraph — about 15–20 seconds.`);
+  bits.push(SW.funnel==='Middle'?`VIDEO TYPE: FOLLOW-UP / "STILL USING IT?" — the viewer may have seen this product before. Don't re-explain every feature. Share her honest update: how long she's been using it, how it's held up, what she's noticed (honest and modest), what still bugs her a little, and whether she'd buy it again and who for. No pressure to buy. ${SW.special.includes('On sale')?'It IS on sale right now — she can mention it once, casually, as info (no numbers).':'It is NOT on sale — do not mention sales, deals or "the price right now".'} LENGTH (hard rule): 6–9 sentences TOTAL (use 6 for a simple product, up to 9 only if it genuinely needs it — every sentence must earn its place), one sentence per paragraph — about 25–40 seconds for the whole spoken script.`
+    :`VIDEO TYPE: FIRST LOOK / HONEST REVIEW — the viewer hasn't seen this product. Hook with something real (first impression, the texture/finish, a question people ask, or her verdict up front). Show what it is, how it feels and how she uses it, the 1–2 things she likes most (with real product details), ONE honest downside or "know this first", and who it's for. Deal talk optional, once, casual. LENGTH (hard rule): 6–9 sentences TOTAL (use 6 for a simple product, up to 9 only if it genuinely needs it — every sentence must earn its place), one sentence per paragraph — about 25–40 seconds for the whole spoken script.`);
   if(document.getElementById('swHoliday').checked&&SW.holiday) bits.push(`Work in this holiday/event naturally: ${SW.holiday}`);
   const sp=SW.special.filter(x=>x!=='On sale');
   if(sp.length) bits.push(`Open the script with this: it's a ${sp.join(' and ')}`);
@@ -916,7 +916,7 @@ async function swWrite(extra){
   try{
     const parts=SW.shotParts||[];
     let sc=extra?.from?await gem([{text:`Rewrite this TikTok Shop script. Change: ${extra.how}. Keep the same product facts.\n${voiceGuide()}\n${swContext()}\nTITLE: ${extra.from.title}\nSCRIPT:\n${extra.from.paragraphs.join('\n\n')}`}],SCRIPT1,0.7)
-      :await gem([...parts,{text:`Write a short TikTok Shop video script (spoken, 4–5 sentences TOTAL, one sentence per paragraph, about 15–20 seconds) for ${SW.product}${SW.brand?` by ${SW.brand}`:''}.
+      :await gem([...parts,{text:`Write a short TikTok Shop video script (spoken, 6–9 sentences TOTAL (use 6 for a simple product, up to 9 only if it genuinely needs it — every sentence must earn its place), one sentence per paragraph — about 25–40 seconds) for ${SW.product}${SW.brand?` by ${SW.brand}`:''}.
 ${voiceGuide()}
 ${swContext()}
 ${SW.picked.length?`Build it around these angles (use them naturally, don't list them):\n${swAngleText()}`:'Pick the most honest, useful angle yourself.'}
@@ -963,7 +963,7 @@ ${SW.product?`PRODUCT: ${SW.product}${SW.brand?` by ${SW.brand}`:''}`:'Work out 
 2. "verdict": one honest sentence on how strong it is right now.
 3. "works": 2–4 specific things that are already good (keep these in the rewrite).
 4. "fixes": 2–5 specific changes you made and why — hook strength in the first 3 seconds, honesty (is there a real downside?), specificity, cutting salesy/pushy lines, pacing, and any policy problems.
-5. Return the finished spoken script (4–5 sentences TOTAL, one per paragraph, ~15–20 seconds — never more than 5) in "paragraphs" with a 3–6 word "title".
+5. Return the finished spoken script (6–9 sentences TOTAL (use 6 for a simple product, up to 9 only if it genuinely needs it — every sentence must earn its place), one sentence per paragraph — about 25–40 seconds — never more than 9) in "paragraphs" with a 3–6 word "title".
 If it's a full script, KEEP her structure, wording and best lines — edit, don't replace. If it's an idea or hook, build the script around HER idea, not a different one.
 End softly — no pressure to buy. Take out hype, urgency and pushy lines.
 ${voiceGuide()}
@@ -1010,7 +1010,7 @@ function swRenderScript(tab){
 }
 async function swRage(){
   SW._rageBusy=true;
-  try{ const r=await gem([{text:`Write a "rage bait" version of this TikTok Shop script (keep it 4–5 sentences total, one per paragraph): same product and facts, but open with a mildly controversial, debate-starting take that makes people want to comment (e.g. "unpopular opinion…", "I don't get why people still…"). Keep it playful, not mean, no insulting groups or naming competitors, no false claims.\n${voiceGuide()}\nTITLE: ${SW.script.title}\nSCRIPT:\n${SW.script.paragraphs.join('\n\n')}`}],SCRIPT1,0.8);
+  try{ const r=await gem([{text:`Write a "rage bait" version of this TikTok Shop script (keep it 6–9 sentences total, one per paragraph): same product and facts, but open with a mildly controversial, debate-starting take that makes people want to comment (e.g. "unpopular opinion…", "I don't get why people still…"). Keep it playful, not mean, no insulting groups or naming competitors, no false claims.\n${voiceGuide()}\nTITLE: ${SW.script.title}\nSCRIPT:\n${SW.script.paragraphs.join('\n\n')}`}],SCRIPT1,0.8);
     const pol=await swPolicy(r); SW.rage={title:pol.title||r.title,paragraphs:pol.paragraphs?.length?pol.paragraphs:r.paragraphs,passed:pol.passed,issues:pol.issues||[]}; }
   catch(e){ alert('Could not write the rage bait version: '+e.message); }
   SW._rageBusy=false; swRenderScript();
