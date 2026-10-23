@@ -1069,12 +1069,15 @@ async function swShotTakes(){
   const sel=document.getElementById('swShotTake'); if(!sel) return;
   const { data:{ session } }=await db.auth.getSession(); if(!session) return;
   const date=document.getElementById('swShotDate').value||swDateKey(new Date()), low=String(SW.product||'').toLowerCase();
-  const { data:rows }=await db.from('queue').select('id,prod_id,name,notes,done,sort_order').eq('user_id',session.user.id).eq('date',date).order('sort_order').order('id');
+  const { data:rows }=await db.from('queue').select('id,prod_id,name,notes,done,sort_order,script').eq('user_id',session.user.id).eq('date',date).order('sort_order').order('id');
   const mine=(rows||[]).filter(r=>!/^REMINDER$/m.test(r.notes||'')&&(SW.prodId?String(r.prod_id)===String(SW.prodId):String(r.name||'').toLowerCase()===low));
   const board=(await plannerGet('filmBoard',{}))?.[date]||{}, COL={talking:'Talking head',vacuum:'Demo / voiceover',faceless:'Aesthetic / faceless',car:'Car'};
   const byCard={}; mine.forEach(r=>{ (byCard[swKeyOf(r)]=byCard[swKeyOf(r)]||[]).push(r); });
-  const opts=[]; Object.entries(byCard).forEach(([key,rs])=>rs.forEach((r,i)=>{ const n=(board[key]?.takeShots||{})[String(r.id)]?.length||0; opts.push(`<option value="${r.id}|${esc(key)}|${i}">Take ${i+1}${board[key]?.style?' · '+(COL[board[key].style]||board[key].style):''}${r.done?' ✓ filmed':''}${n?` · has ${n} shots`:''}</option>`); }));
-  sel.innerHTML=(opts.length?opts.join(''):'')+`<option value="new">＋ Add a new take${opts.length?'':` (no ${esc(SW.product||'product')} takes that day)`}</option>`; if(SW.boardTake&&[...sel.options].some(o=>o.value===SW.boardTake)) sel.value=SW.boardTake; sel.onchange=()=>{SW.boardTake=sel.value;};
+  const opts=[]; let firstEmpty=null; SW.boardUsed={};
+  Object.entries(byCard).forEach(([key,rs])=>rs.forEach((r,i)=>{ const n=(board[key]?.takeShots||{})[String(r.id)]?.length||(i===0&&!board[key]?.takeShots?(board[key]?.shots||[]).length:0), hasS=!!String(r.script||'').trim(), val=`${r.id}|${key}|${i}`;
+    SW.boardUsed[val]=hasS||n>0; if(!SW.boardUsed[val]&&!r.done&&!firstEmpty) firstEmpty=val;
+    opts.push(`<option value="${esc(val)}">Take ${i+1}${board[key]?.style?' · '+(COL[board[key].style]||board[key].style):''}${r.done?' ✓ filmed':''}${hasS||n?' · has '+[hasS?'script':'',n?n+' shots':''].filter(Boolean).join(' + '):' · empty'}</option>`); }));
+  sel.innerHTML=(opts.length?opts.join(''):'')+`<option value="new">＋ Add a new take${opts.length?'':` (no ${esc(SW.product||'product')} takes that day)`}</option>`; if(SW.boardTake&&[...sel.options].some(o=>o.value===SW.boardTake)) sel.value=SW.boardTake; else sel.value=firstEmpty||'new';  // default: an empty take, else a new one sel.onchange=()=>{SW.boardTake=sel.value;};
 }
 async function swShotsToBoard(btn,opt={}){
   const { data:{ session } }=await db.auth.getSession(); if(!session||(!SW.shotList?.length&&!opt.all)) return;
@@ -1111,6 +1114,7 @@ async function swFindProd(uid){
 // everything the writer made → one take (script on the take, shots on the take, SEO + caption on the card)
 async function swSendAll(btn){
   if(!SW.script) return; const sel=document.getElementById('swShotTake'); SW.boardTake=sel?.value; SW.boardDate=document.getElementById('swShotDate')?.value;
+  if(SW.boardUsed?.[SW.boardTake]&&!confirm(`${sel.options[sel.selectedIndex].text} already has a script or shots. Replace them with this one?`)) return;
   btn.disabled=true;
   try{
     for(const k of ['shots','seo','caption']) if(!SW.extras?.[k]){ btn.textContent=`Writing ${k==='shots'?'shot by shot':k==='seo'?'SEO words':'caption'}…`; await swExtra(k); }
