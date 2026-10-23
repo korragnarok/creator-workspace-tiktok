@@ -5,15 +5,18 @@
 // Results are saved per product (planner key "ingredientChecks") so it only runs once.
 (function () {
   const W = () => (typeof WORKER !== 'undefined' ? WORKER : 'https://take24-scout.kortnycall5.workers.dev');
+  // her Take24 skincare list (skincare-list.js) first, then the Skin Lab site as a backup
   let skinLoad = null;
+  const addScript = src => new Promise(res => { const s = document.createElement('script'); s.src = src; s.onload = s.onerror = () => res(); document.head.appendChild(s); setTimeout(res, 8000); });
   function loadSkinLab() {
-    if (window.PRODUCTS && Array.isArray(window.PRODUCTS)) return Promise.resolve(window.PRODUCTS);
     if (skinLoad) return skinLoad;
-    skinLoad = new Promise(res => {
-      const s = document.createElement('script'); s.src = 'https://skin.take24.co/products.js?t=' + Math.floor(Date.now() / 36e5);
-      s.onload = () => res(Array.isArray(window.PRODUCTS) ? window.PRODUCTS : []); s.onerror = () => res([]);
-      document.head.appendChild(s); setTimeout(() => res(window.PRODUCTS || []), 8000);
-    });
+    skinLoad = (async () => {
+      if (!window.TT_SKINCARE) await addScript('skincare-list.js?t=' + Math.floor(Date.now() / 36e5));
+      if (!window.PRODUCTS) await addScript('https://skin.take24.co/products.js?t=' + Math.floor(Date.now() / 36e5));
+      const mine = Array.isArray(window.TT_SKINCARE) ? window.TT_SKINCARE : [], lab = Array.isArray(window.PRODUCTS) ? window.PRODUCTS : [];
+      const seen = new Set(mine.map(p => norm(p.name)));
+      return [...mine.map(p => ({ ...p, _src: p.from === 'skin-lab' ? 'Your skincare list (from Skin Lab)' : 'Your skincare list' })), ...lab.filter(p => !seen.has(norm(p.name))).map(p => ({ ...p, _src: 'Your Skin Lab list' }))];
+    })();
     return skinLoad;
   }
   const norm = t => String(t || '').toLowerCase().replace(/[®™'’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -22,7 +25,8 @@
     if (!n) return null;
     let best = null, score = 0;
     list.forEach(p => {
-      const pn = norm(p.name); if (!pn) return;
+      const pn = norm(p.name), pb = norm(`${p.brand || ''} ${p.name}`); if (!pn) return;
+      if (pb === nb) { best = p; score = 999; return; }
       if (pn === n || pn === nb) { best = p; score = 999; return; }
       const w = pn.split(' ').filter(x => x.length > 2), hit = w.filter(x => nb.includes(x)).length, sc = w.length ? hit / w.length : 0;
       if (sc > score) { score = sc; best = p; }
@@ -70,12 +74,12 @@ Be accurate. If you're not sure about an ingredient, say so instead of guessing.
     let saved = {}; try { saved = (typeof plannerGet === 'function' ? await plannerGet('ingredientChecks', {}) : {}) || {}; } catch (e) {}
     if (saved[key] && !opts.fresh) return saved[key];
     const sk = await findSkinProduct(name, brand);
-    let list = sk?.ingredients || '', source = sk ? 'Your Skin Lab list' : '';
+    let list = sk?.ingredients || '', source = sk ? (sk._src || 'Your skincare list') : '';
     if (!list && opts.pasted) { list = opts.pasted; source = 'What you pasted'; }
     if (!list && opts.noOnline) return null;
     if (!list) { const on = await findIngredientsOnline(name, brand).catch(() => null); if (on) { list = on.list; source = on.source; } }
     if (!list) return { none: true, name };
-    const extra = sk ? [sk.warn?.length ? 'Her notes: ' + sk.warn.join('; ') : '', sk.flags?.length ? 'Flags: ' + sk.flags.join(', ') : '', sk.fit ? 'Her fit chart: ' + Object.entries(sk.fit).map(([k, v]) => `${k}=${v}`).join(', ') : ''].filter(Boolean).join('. ') : '';
+    const extra = sk ? [sk.notes ? 'Her notes: ' + sk.notes : '', sk.warn?.length ? 'Her notes: ' + sk.warn.join('; ') : '', sk.flags?.length ? 'Flags: ' + sk.flags.join(', ') : '', sk.fit ? 'Her fit chart: ' + Object.entries(sk.fit).map(([k, v]) => `${k}=${v}`).join(', ') : ''].filter(Boolean).join('. ') : '';
     const r = await analyze(name, brand, list, extra);
     const out = { ...r, name, brand: brand || '', source, list, at: Date.now() };
     try { saved[key] = out; if (typeof plannerSet === 'function') await plannerSet('ingredientChecks', saved); } catch (e) {}
