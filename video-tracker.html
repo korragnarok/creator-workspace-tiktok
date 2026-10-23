@@ -200,7 +200,7 @@ footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-i
 .imp-prod-wrap{position:relative;width:100%;}
 .import-product-search{width:100%;padding:8px 10px;border:1px solid var(--border-mid);border-radius:8px;background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:12px;outline:none;cursor:text;}
 .import-product-search:focus{border-color:var(--rose);}
-.imp-prod-list{position:absolute;bottom:calc(100% + 4px);left:0;right:0;background:var(--bg-lift);border:1px solid var(--border-mid);border-radius:10px;box-shadow:0 -8px 24px rgba(0,0,0,0.28);max-height:200px;overflow-y:auto;z-index:600;display:flex;flex-direction:column;gap:2px;padding:6px;}
+.imp-prod-list{position:fixed;background:var(--bg-lift);border:1px solid var(--border-mid);border-radius:10px;box-shadow:0 -8px 24px rgba(0,0,0,0.28);max-height:200px;overflow-y:auto;z-index:600;display:flex;flex-direction:column;gap:2px;padding:6px;}
 .imp-prod-item{padding:7px 9px;border-radius:7px;font-size:12px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;gap:1px;}
 .imp-prod-item:hover,.imp-prod-item.focused{background:color-mix(in srgb,var(--rust) 10%,var(--surface) 90%);color:var(--ink);}
 .imp-prod-item .ipi-brand{font-family:'Stack Sans Notch',sans-serif;font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);}
@@ -1152,7 +1152,7 @@ function openImpProd(index){
   if(!listEl || !searchEl) return;
   _impProdFocusIndex = -1;
   renderImpProdList(index, searchEl.value);
-  listEl.style.display = 'flex';
+  listEl.style.display = 'flex'; placeImpList(index);
   // Close other open lists
   document.querySelectorAll('.imp-prod-list').forEach(el => {
     if(el.id !== 'impProdList' + index) el.style.display = 'none';
@@ -1168,8 +1168,18 @@ function filterImpProd(index){
   }
   _impProdFocusIndex = -1;
   renderImpProdList(index, searchEl.value);
-  listEl.style.display = 'flex';
+  listEl.style.display = 'flex'; placeImpList(index);
 }
+function placeImpList(index){
+  const l=document.getElementById('impProdList'+index), i=document.getElementById('impProdSearch'+index); if(!l||!i) return;
+  const r=i.getBoundingClientRect(), below=window.innerHeight-r.bottom-12, above=r.top-12, down=below>=220||below>=above;
+  l.style.left=r.left+'px'; l.style.width=r.width+'px'; l.style.right='auto'; l.style.zIndex='2000';
+  l.style.maxHeight=Math.max(120,Math.min(300,down?below:above))+'px';
+  if(down){ l.style.top=(r.bottom+4)+'px'; l.style.bottom='auto'; } else { l.style.bottom=(window.innerHeight-r.top+4)+'px'; l.style.top='auto'; }
+}
+// keep an open list stuck to its box while the import window scrolls
+document.addEventListener('scroll',()=>document.querySelectorAll('.imp-prod-list').forEach(l=>{ if(l.style.display!=='none'){ const n=l.id.replace('impProdList',''); placeImpList(n); } }),true);
+window.addEventListener('resize',()=>document.querySelectorAll('.imp-prod-list').forEach(l=>{ if(l.style.display!=='none') placeImpList(l.id.replace('impProdList','')); }));
 function renderImpProdList(index, q){
   const listEl = document.getElementById('impProdList' + index);
   if(!listEl) return;
