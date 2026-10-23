@@ -2425,39 +2425,36 @@ init();
 // Called from img onerror when a TikTok CDN URL expires.
 // Looks up the video's TikTok link, hits the free oEmbed API, gets a fresh thumb.
 const _oembedCache = {};
-async function refreshThumb(imgEl, videoId) {
-  // Avoid hammering if already tried
-  if (_oembedCache[videoId] === false) {
-    imgEl.src = 'icons/default-product.png';
-    imgEl.closest('.video-card-thumb')?.classList.add('placeholder');
-    return;
-  }
-  // Find the video record to get its TikTok link
-  const video = (typeof DATA !== 'undefined' ? DATA : []).find(v => String(v.id) === String(videoId));
-  const link = video?.link || '';
-  if (!link || !/tiktok\.com/i.test(link)) {
-    _oembedCache[videoId] = false;
-    imgEl.src = 'icons/default-product.png';
-    imgEl.closest('.video-card-thumb')?.classList.add('placeholder');
-    return;
-  }
-  try {
-    const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(link)}`);
-    const data = await res.json();
-    const freshUrl = data?.thumbnail_url;
-    if (freshUrl) {
-      _oembedCache[videoId] = freshUrl;
-      imgEl.onerror = null;
-      imgEl.src = freshUrl;
-      imgEl.closest('.video-card-thumb')?.classList.remove('placeholder');
-    } else {
-      throw new Error('no thumbnail');
-    }
-  } catch(e) {
-    _oembedCache[videoId] = false;
-    imgEl.src = 'icons/default-product.png';
-    imgEl.closest('.video-card-thumb')?.classList.add('placeholder');
-  }
+// TikTok cover links expire after a few days. When one breaks: get a fresh cover from TikTok (a few at a time),
+// save a PERMANENT copy in your Supabase storage when TikTok allows it, and remember the new link on the video.
+const _thumbQ=[]; let _thumbBusy=0;
+function _thumbNext(){ while(_thumbBusy<3&&_thumbQ.length){ const job=_thumbQ.shift(); _thumbBusy++; job().finally(()=>{ _thumbBusy--; _thumbNext(); }); } }
+function refreshThumb(imgEl, videoId){
+  const fail=()=>{ imgEl.onerror=null; imgEl.src='icons/default-product.png'; imgEl.closest('.video-card-thumb')?.classList.add('placeholder'); };
+  if(_oembedCache[videoId]===false) return fail();
+  if(_oembedCache[videoId]){ imgEl.onerror=fail; imgEl.src=_oembedCache[videoId]; return; }
+  const video=(typeof DATA!=='undefined'?DATA:[]).find(v=>String(v.id)===String(videoId)), link=video?.link||'';
+  if(!link||!/tiktok\.com/i.test(link)){ _oembedCache[videoId]=false; return fail(); }
+  imgEl.onerror=null; imgEl.src='icons/default-product.png';
+  _thumbQ.push(async()=>{
+    let fresh='';
+    for(let t=0;t<2&&!fresh;t++){ try{ const r=await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(link)}`); const d=await r.json(); fresh=d?.thumbnail_url||''; }catch(e){} if(!fresh&&t===0) await new Promise(r=>setTimeout(r,1200)); }
+    if(!fresh){ _oembedCache[videoId]=false; return fail(); }
+    let keep=fresh;
+    try{ // permanent copy (only works if TikTok's image server allows it)
+      const blob=await (await fetch(fresh,{mode:'cors'})).blob();
+      if(blob&&blob.size>2000&&/image/.test(blob.type)){ const path=`${user.id}/thumbs/${videoId}.jpg`;
+        const {error}=await db.storage.from('product-images').upload(path,blob,{contentType:blob.type,upsert:true});
+        if(!error) keep=db.storage.from('product-images').getPublicUrl(path).data.publicUrl+'?v='+Date.now(); }
+    }catch(e){}
+    _oembedCache[videoId]=keep; imgEl.onerror=fail; imgEl.src=keep; imgEl.closest('.video-card-thumb')?.classList.remove('placeholder');
+    try{ // remember it on the video so it isn't looked up again
+      const lines=String(video.notes||'').split('\n').filter(l=>!/^\s*(TikTok thumbnail|Thumbnail)\s*:/i.test(l));
+      const notes=[...lines,`TikTok thumbnail: ${keep}`].join('\n').trim(); video.notes=notes;
+      await db.from('videos').update({notes}).eq('id',videoId).eq('user_id',user.id);
+      for(const col of ['thumbnail_url','cover_url']) if(video[col]){ video[col]=keep; await db.from('videos').update({[col]:keep}).eq('id',videoId).eq('user_id',user.id); }
+    }catch(e){}
+  }); _thumbNext();
 }
 
 
