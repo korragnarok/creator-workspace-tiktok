@@ -9,6 +9,7 @@ const ACT_COLS_DEFAULT = { talking: '🗣 Talking head', vacuum: '🎬 Demo / vo
 
 // quick gate so plain questions skip the extra AI call
 function actLooksLikeAction(t) {
+  if (/https?:\/\/\S*(tiktok\.com|tiktokshop)/i.test(t || '')) return true;   // a pasted TikTok Shop link
   return /\b(made|sold|sale|sales|gmv|commission|comm\b|log|add|put|plan|film|filming|move|mark|filmed|promo|note|notes|schedule|takes?|posted|post|uploaded|left|today|tomorrow|day|hq|high quality|script|scripts|caption|captions|hashtags?|seo|keywords?|search words|hook|write|product|products|sample|samples|got|stock|restock|shelve|shelved|promote|goal|goals|remind|reminder|reminders|hero|heroes|swap|copy|duplicate|repeat|same|clear|empty|wipe|delete|remove|reset)\b/i.test(t);
 }
 
@@ -89,7 +90,7 @@ Action types:
 - whats_left: she asks what's left / still to film / to do today (date). Not a general strategy question.
 - set_goal: she sets a goal ("my goal is $2k GMV this month", "I want $300 commission this week", "goal: 50 sales this month"). metric gmv / comm (commission) / units (sales/units) / videos (videos posted — "post 3 videos a day", "60 videos this month"), amount as a plain number, period month (default), week, or day ("a day" / "per day" / "daily"). Asking HOW she's doing on a goal is NOT an action.
 - add_reminder: a reminder or to-do that isn't filming a product ("remind me to repost the CryoGlow Friday", "remind me to email QVC tomorrow"). note = the reminder in short plain words, date.
-- add_product: she got / wants to add a NEW product ("I got a free sample of the X from Y", "add the X to my products"). product = product name as she says it, brand, link if she pastes one, free_sample true if she says free sample / sample / they sent it, note = anything else she says about it.
+- add_product: she got / wants to add a NEW product ("I got a free sample of the X from Y", "add the X to my products"). product = product name as she says it, brand, link if she pastes one, free_sample true if she says free sample / sample / they sent it, note = anything else she says about it. If she pastes a TikTok Shop / tiktok.com product link with few or no other words, that's add_product with that link (product = any name she gives, else "").
 - set_status: change a product's stock status. If she means ALL products from a brand ("shelve all mellow products", "everything from Kitsch is out of stock"), set brand_all=true and product = just the brand name. product, status: "active" (back in stock / restock / unshelve), "paused" (out of stock), "shelved" (shelve / stop promoting / done with it), "promote" (push it / promote now).
 - set_hero: change her HERO BRANDS list (max 7). hero_mode: "set" = replace the whole list with brands; "add" = add brands; "remove" = remove remove_brands; "swap" = remove remove_brands and add brands ("swap PetLab for Jiyu" → remove_brands [PetLab], brands [Jiyu]).
 - mark_hq: mark a posted video high quality (or not). caption = words from the caption/description she gives, product if she names it, hq = false only if she says NOT high quality.
