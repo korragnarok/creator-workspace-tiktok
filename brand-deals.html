@@ -213,6 +213,27 @@ tbody td{padding:14px 16px;vertical-align:middle;color:var(--text-mid);}
 <script>
 let user=null;
 let deals=[];
+// ── Free samples: quick "Got it" check — sets the real received date and moves the due date with it ──
+const gotDate=n=>(String(n||'').match(/\[got:(\d{4}-\d{2}-\d{2})\]/)||[])[1]||'';
+const cleanNotes=n=>String(n||'').replace(/\s*\[got:\d{4}-\d{2}-\d{2}\]\s*/g,' ').trim();
+function openGot(id){
+  const d=deals.find(x=>String(x.id)===String(id)); if(!d) return; window._gotId=id;
+  document.getElementById('gotName').textContent=d.name; document.getElementById('gotDate').value=todayKey();
+  document.getElementById('gotModal').classList.add('open');
+}
+function closeGot(){ document.getElementById('gotModal').classList.remove('open'); }
+async function saveGot(useToday){
+  const d=deals.find(x=>String(x.id)===String(window._gotId)); if(!d) return;
+  const day=useToday?todayKey():(document.getElementById('gotDate').value||todayKey());
+  const span=(d.received&&d.due)?Math.max(1,Math.round((parseLocalDate(d.due)-parseLocalDate(d.received))/864e5)):14;  // keep the same posting window (default 2 weeks)
+  const due=new Date(parseLocalDate(day)); due.setDate(due.getDate()+span);
+  const dueKey=`${due.getFullYear()}-${String(due.getMonth()+1).padStart(2,'0')}-${String(due.getDate()).padStart(2,'0')}`;
+  const notes=[cleanNotes(d.notes),`[got:${day}]`].filter(Boolean).join('\n');
+  const {error}=await db.from('brand_deals').update({received:day,due:dueKey,notes}).eq('id',d.id).eq('user_id',user.id);
+  if(error){ alert("Couldn't save: "+error.message); return; }
+  Object.assign(d,{received:day,due:dueKey,notes}); closeGot(); renderDeals();
+  if(typeof showToast==='function') showToast(`Got it ${monthDay(day)} · due ${monthDay(dueKey)}`);
+}
 let activeFilter='all';
 
 async function init(){
@@ -435,16 +456,16 @@ async function renderDeals(){
           <div class="deal-thumb">${esc((deal.brand||deal.name||'?').slice(0,1).toUpperCase())}</div>
           <div><div class="deal-title">${esc(deal.name)} <span class="tag ${deal.type}">${esc(typeLabel(deal.type))}</span>${deal.refundable?'<span class="tag refundable">Refundable</span>':''}</div>
           <div class="deal-meta">${deal.link?`<a href="${esc(deal.link)}" target="_blank" rel="noopener">View Product</a>`:''}</div>
-          ${deal.notes?`<div class="deal-notes">${esc(deal.notes)}</div>`:''}</div>
+          ${cleanNotes(deal.notes)?`<div class="deal-notes">${esc(cleanNotes(deal.notes))}</div>`:''}</div>
         </div>
       </td>
       <td>${esc(deal.brand)}</td>
-      <td>${esc(monthDay(deal.received))}</td>
+      <td>${deal.type==='sample'?(gotDate(deal.notes)?`<div>${esc(monthDay(deal.received))}</div><div class="got-ok">✓ Got it</div>`:`<div style="color:var(--text-muted)">${esc(monthDay(deal.received))}</div><button class="btn got-btn" onclick="event.stopPropagation();openGot('${esc(deal.id)}')">📦 Got it?</button>`):esc(monthDay(deal.received))}</td>
       <td>${esc(monthDay(deal.due))}</td>
       <td>${criteriaHtml}</td>
       <td><span class="status ${status}">${esc(statusLabel(status))}</span></td>
       <td>${status==='completed'?'<div class="days finished">Finished</div>':left<0?'<div class="days overdue">Overdue</div>':left===0?'<div class="days due-soon">Due Today</div>':`<div class="days ${dayClass}">${left}</div><div class="days-label ${dayClass}">days</div>`}</td>
-      <td style="white-space:nowrap;">${deal.notes?`<button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openBriefModal('${esc(deal.id)}')">See Brief</button>`:''}<button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openEditModal('${esc(deal.id)}')">Edit</button><button class="btn" onclick="event.stopPropagation();confirmDeleteDeal('${esc(deal.id)}')">Remove</button></td>
+      <td style="white-space:nowrap;">${cleanNotes(deal.notes)?`<button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openBriefModal('${esc(deal.id)}')">See Brief</button>`:''}<button class="btn" style="margin-right:6px;" onclick="event.stopPropagation();openEditModal('${esc(deal.id)}')">Edit</button><button class="btn" onclick="event.stopPropagation();confirmDeleteDeal('${esc(deal.id)}')">Remove</button></td>
     </tr>`;
   }).join('');
 }
@@ -503,7 +524,7 @@ function openDealModal(){
   document.getElementById('dealNeeded').value=1;
   document.getElementById('dealMinGmv').value='';
   document.getElementById('dealLink').value='';
-  document.getElementById('dealNotes').value='';
+  document.getElementById('dealNotes').value=''; window._gotTag='';
   const dr=document.getElementById('dealRefundable');if(dr)dr.checked=false;
   toggleModalFields();
   document.getElementById('dealModal').classList.add('open');
@@ -537,7 +558,7 @@ function openEditModal(id){
   document.getElementById('dealNeeded').value=deal.needed||1;
   document.getElementById('dealMinGmv').value=deal.min_gmv||0;
   document.getElementById('dealLink').value=deal.link||'';
-  document.getElementById('dealNotes').value=deal.notes||'';
+  document.getElementById('dealNotes').value=cleanNotes(deal.notes); window._gotTag=gotDate(deal.notes)?`[got:${gotDate(deal.notes)}]`:'';
   const dr=document.getElementById('dealRefundable');if(dr)dr.checked=!!deal.refundable;
   document.getElementById('dealModal').classList.add('open');
   setTimeout(()=>document.getElementById('dealName').focus(),50);
@@ -613,7 +634,7 @@ async function saveDeal(){
     needed:Number(document.getElementById('dealNeeded').value)||1,
     min_gmv:(type==='campaign'||type==='creator_connections')?(parseFloat(document.getElementById('dealMinGmv').value)||0):0,
     link:document.getElementById('dealLink').value.trim(),
-    notes:document.getElementById('dealNotes').value.trim(),
+    notes:[document.getElementById('dealNotes').value.trim(),window._gotTag||''].filter(Boolean).join('\n'),
     refundable:document.getElementById('dealRefundable')?.checked||false,
     status:'not-started'
   };
@@ -666,5 +687,15 @@ function loadPps(){
   document.getElementById('statPps').textContent=v||'—';
 }
 </script>
+<div class="modal-overlay" id="gotModal" onclick="if(event.target===this)closeGot()" style="z-index:700">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-title" style="margin-bottom:6px">When did you get this?</div>
+    <div class="sub" id="gotName" style="margin-bottom:14px;color:var(--text-muted)"></div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="saveGot(true)">Today</button>
+    <div style="display:flex;gap:8px;align-items:center"><input type="date" class="form-input" id="gotDate" style="flex:1"><button class="btn" onclick="saveGot(false)">Save date</button></div>
+    <div style="text-align:right;margin-top:12px"><button class="btn" onclick="closeGot()">Cancel</button></div>
+  </div>
+</div>
+<style>.got-btn{margin-top:4px;padding:3px 8px!important;font-size:10px!important}.got-ok{font-size:10px;font-weight:800;color:#6f8f5e;margin-top:2px}#gotModal.open{display:flex}</style>
 </body>
 </html>
