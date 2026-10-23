@@ -428,7 +428,11 @@ function curTake(){ const g=groups().find(x=>x.key===CUR); return g?(g.rows[CUR_
 function setTakeShots(list){ const r=curTake(); if(!r) return; const m=curMeta(), ts={...(m.takeShots||{}),[String(r.id)]:list}; const patch={takeShots:ts}; if(!m.takeShots&&m.shots&&(groups().find(x=>x.key===CUR)?.rows.indexOf(r)!==0)) patch.takeShots={...ts,[String(groups().find(x=>x.key===CUR).rows[0].id)]:m.shots}; metaSave(CUR,patch); }
 function curShots(){ const g=groups().find(x=>x.key===CUR), r=curTake(); return g&&r?[...takeShots(curMeta(),r,g.rows.indexOf(r))]:[]; }
 function shotAdd(){ const v=document.getElementById('shotNew').value.trim(); if(!v) return;
-  const lines=v.split(/\n+/).map(x=>x.replace(/^\s*(\d+[.)]|[-•*])\s*/,'').trim()).filter(Boolean);
+  // a numbered/bulleted list → each number starts a shot and the lines under it (like the “script line”) stay with that shot
+  const raw=v.split(/\n/), marker=/^\s*(\d+[.)]|[-•*]|🎬)\s*/, numbered=raw.some(x=>marker.test(x));
+  let lines=[];
+  if(numbered){ raw.forEach(x=>{ if(!x.trim()) return; if(marker.test(x)||!lines.length) lines.push(x.replace(/^\s*(\d+[.)]|[-•*])\s*/,'').trim()); else lines[lines.length-1]+='\n'+x.trim(); }); }
+  else lines=raw.map(x=>x.trim()).filter(Boolean);
   setTakeShots([...curShots(),...lines.map(t=>({t,done:false}))]); drawM(); setTimeout(()=>document.getElementById('shotNew')?.focus(),0); }
 function shotTog(i,d){ const s=curShots(); s[i]={...s[i],done:d}; setTakeShots(s); drawM(); }
 function shotDel(i){ const s=curShots(); s.splice(i,1); setTakeShots(s); drawM(); }
