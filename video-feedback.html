@@ -987,7 +987,7 @@ function swRenderScript(tab){
     const head=swBar()+`<div class="card swc"><div class="swh" style="margin-bottom:6px">${esc(SW.product)} · your angles</div><div class="swbar">${SW.picked.map(i=>`<span class="chip">${esc(SW.angles[i].title)}</span>`).join('')}</div></div>`;
     document.getElementById('swFlow').innerHTML=head+`<div class="card swc"><div class="swh">Your extras <small style="float:right;color:var(--text-muted);font-weight:600">No script — built from your angles</small></div>
       <div class="swtabs">${[['seo','SEO words'],['caption','Caption'],['hooks','Text hooks'],['thumb','Thumbnail'],['sound','Sounds'],['shots','Shot ideas']].map(([k,l])=>`<button class="${t===k?'on':''}" onclick="swExtra('${k}')">${l}</button>`).join('')}</div>
-      <div class="swextra" id="swExtra">${SW.extras[t]?esc(SW.extras[t]):''}</div>${SW.extras[t]?`<button class="copy" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('swExtra').innerText);this.textContent='✓ Copied'">${t==='seo'?'Copy all words':'Copy'}</button>`:''}</div>
+      <div class="swextra" id="swExtra">${SW.extras[t]?esc(SW.extras[t]):''}</div>${SW.extras[t]?`<button class="copy" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('swExtra').innerText);this.textContent='✓ Copied'">${t==='seo'?'Copy all words':'Copy'}</button>`:''}${t==='shots'&&SW.shotList?.length?`<div class="swrow" id="swShotBox" style="margin-top:10px;align-items:center;flex-wrap:wrap;gap:8px"><input type="date" id="swShotDate" value="${swDateKey(new Date())}" onchange="swShotTakes()"><select id="swShotTake" style="min-width:200px"><option>Loading takes…</option></select><button class="btn sm" id="swShotBtn" onclick="swShotsToBoard(this)">＋ Add shots to Film Board</button></div>`:''}</div>
       <div class="swacts"><button class="copy" onclick="SW.only=false;swWrite()">Write the full script too</button><a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer;align-self:center" onclick="swReset()">Start over</a></div>`;
     return;
   }
@@ -1002,11 +1002,12 @@ function swRenderScript(tab){
   document.getElementById('swFlow').innerHTML=head+(rage?`<div class="swtwo">${main}${rage}</div>`:main)+teach+
     `<div class="card swc"><div class="swh">Make the rest of your video <small style="float:right;color:var(--text-muted);font-weight:600">Written for this script</small></div>
       <div class="swtabs">${[['shots','Shot by shot'],['hooks','Text hooks'],['thumb','Thumbnail'],['sound','Sounds'],['seo','SEO words'],['caption','Caption']].map(([k,l])=>`<button class="${t===k?'on':''}" onclick="swExtra('${k}')">${l}</button>`).join('')}</div>
-      <div class="swextra" id="swExtra">${t&&SW.extras[t]?esc(SW.extras[t]):''}</div>${t&&SW.extras[t]?`<button class="copy" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('swExtra').innerText);this.textContent='✓ Copied'">${t==='seo'?'Copy all words':'Copy'}</button>`:''}</div>
+      <div class="swextra" id="swExtra">${t&&SW.extras[t]?esc(SW.extras[t]):''}</div>${t&&SW.extras[t]?`<button class="copy" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('swExtra').innerText);this.textContent='✓ Copied'">${t==='seo'?'Copy all words':'Copy'}</button>`:''}${t==='shots'&&SW.shotList?.length?`<div class="swrow" id="swShotBox" style="margin-top:10px;align-items:center;flex-wrap:wrap;gap:8px"><input type="date" id="swShotDate" value="${swDateKey(new Date())}" onchange="swShotTakes()"><select id="swShotTake" style="min-width:200px"><option>Loading takes…</option></select><button class="btn sm" id="swShotBtn" onclick="swShotsToBoard(this)">＋ Add shots to Film Board</button></div>`:''}</div>
     <div class="card swc"><div class="swh">Add to my to-do</div><div class="swrow"><input type="date" id="swTodoDate" value="${swDateKey(new Date())}"><button class="btn sm" id="swTodoBtn" onclick="swToTodo(this)">Add to to-do</button></div></div>
     <div class="swacts">${['Shorter','Funnier','Stronger hook','More casual'].map(x=>`<button class="copy" onclick="swWrite({from:SW.script,how:'${x.toLowerCase()}'})">${x}</button>`).join('')}<a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer;align-self:center" onclick="swReset()">Start over</a></div>
     <div class="swrow"><input id="swAsk" placeholder="Or tell it what to change…" onkeydown="if(event.key==='Enter'&&this.value.trim())swWrite({from:SW.script,how:this.value.trim()})"><button class="btn sm" onclick="const v=document.getElementById('swAsk').value.trim();if(v)swWrite({from:SW.script,how:v})">↑</button></div>`;
   if(document.getElementById('swRage').checked&&!SW.rage&&!SW._rageBusy) swRage();
+  if(document.getElementById('swShotTake')) swShotTakes();
 }
 async function swRage(){
   SW._rageBusy=true;
@@ -1021,7 +1022,7 @@ async function swExtra(k){
   const txt=SW.script.paragraphs.join('\n\n');
   try{
     if(k==='shots'){ const o=await gem([{text:`Turn this TikTok Shop script into a shot-by-shot filming plan for "${SW.film}" / ${SW.fmt} format. For each line of the script: what to film (framing, angle, close-ups, B-roll, props) and the matching line.\n${swContext()}\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{shots:{type:'ARRAY',items:{type:'OBJECT',properties:{film:{type:'STRING'},line:{type:'STRING'}},required:['film','line']}}},required:['shots']},0.5);
-      SW.extras.shots=o.shots.map((x,i)=>`${i+1}. 🎬 ${x.film}\n   “${x.line}”`).join('\n\n'); }
+      SW.shotList=o.shots.map(x=>`🎬 ${x.film}${x.line?`\n“${x.line}”`:''}`); SW.extras.shots=o.shots.map((x,i)=>`${i+1}. 🎬 ${x.film}\n   “${x.line}”`).join('\n\n'); }
     if(k==='hooks'){ const o=await gem([{text:`Write 8 short on-screen TEXT HOOKS (the text overlay in the first 2 seconds) for this TikTok Shop video. Under 10 words each, punchy and curiosity-driven, confident but not cheesy; no "you NEED this", no all-caps hype.\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{hooks:{type:'ARRAY',items:{type:'STRING'}}},required:['hooks']},0.9);
       SW.extras.hooks=o.hooks.map((h,i)=>`${i+1}. ${h}`).join('\n'); }
     if(k==='thumb'){ const o=await gem([{text:`Give 3 thumbnail / first-frame ideas for this TikTok Shop video. For each: what's in the frame (shot + where the product is), the text overlay (max 6 words, never starting with "okay"), and why it stops the scroll. Simple to shoot at home${SW.film==='Faceless'?', no face in frame':''}.\nPRODUCT: ${SW.product}\nSCRIPT:\n${txt}`}],{type:'OBJECT',properties:{ideas:{type:'ARRAY',items:{type:'OBJECT',properties:{frame:{type:'STRING'},text:{type:'STRING'},why:{type:'STRING'}},required:['frame','text','why']}}},required:['ideas']},0.8);
@@ -1060,6 +1061,40 @@ function swNoOkay(ps){
 function swDateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function swRedoPart(part){
   swWrite({from:SW.script,how:`Rewrite ONLY the ${part}. Every other paragraph must stay exactly word-for-word the same, in the same order. Make the rewritten part noticeably different and stronger.`});
+}
+// ─ Shot by shot → a specific take on the Film Board ─
+const swKeyOf=r=>{ const c=String(r.notes||'').match(/\[copy:(\w+)\]/); return String(r.prod_id||String(r.name||'').toLowerCase())+(c?'#'+c[1]:''); };
+async function swShotTakes(){
+  const sel=document.getElementById('swShotTake'); if(!sel) return;
+  const { data:{ session } }=await db.auth.getSession(); if(!session) return;
+  const date=document.getElementById('swShotDate').value||swDateKey(new Date()), low=String(SW.product||'').toLowerCase();
+  const { data:rows }=await db.from('queue').select('id,prod_id,name,notes,done,sort_order').eq('user_id',session.user.id).eq('date',date).order('sort_order').order('id');
+  const mine=(rows||[]).filter(r=>!/^REMINDER$/m.test(r.notes||'')&&(String(r.name||'').toLowerCase()===low||String(r.name||'').toLowerCase().includes(low)||low.includes(String(r.name||'').toLowerCase())));
+  const board=(await plannerGet('filmBoard',{}))?.[date]||{}, COL={talking:'Talking head',vacuum:'Demo / voiceover',faceless:'Aesthetic / faceless',car:'Car'};
+  const byCard={}; mine.forEach(r=>{ (byCard[swKeyOf(r)]=byCard[swKeyOf(r)]||[]).push(r); });
+  const opts=[]; Object.entries(byCard).forEach(([key,rs])=>rs.forEach((r,i)=>{ const n=(board[key]?.takeShots||{})[String(r.id)]?.length||0; opts.push(`<option value="${r.id}|${esc(key)}|${i}">Take ${i+1}${board[key]?.style?' · '+(COL[board[key].style]||board[key].style):''}${r.done?' ✓ filmed':''}${n?` · has ${n} shots`:''}</option>`); }));
+  sel.innerHTML=opts.length?opts.join(''):`<option value="new">No ${esc(SW.product||'product')} takes that day — add a new take</option>`;
+}
+async function swShotsToBoard(btn){
+  const { data:{ session } }=await db.auth.getSession(); if(!session||!SW.shotList?.length) return;
+  const date=document.getElementById('swShotDate').value||swDateKey(new Date()), v=document.getElementById('swShotTake').value;
+  btn.disabled=true; btn.textContent='Adding…';
+  try{
+    let id, key, idx=0;
+    if(v==='new'||!v){
+      const uid=session.user.id, { data:prods }=await db.from('products').select('id,name,brand,tiktok_account_id').eq('user_id',uid).ilike('name',SW.product); const prod=prods?.[0]||null;
+      let acct=prod?.tiktok_account_id||null; try{ if(!acct&&typeof getActiveAccountId==='function') acct=getActiveAccountId()||null; }catch(e){}
+      const { data:last }=await db.from('queue').select('sort_order').eq('user_id',uid).eq('date',date).order('sort_order',{ascending:false}).limit(1);
+      const { data:ins, error }=await db.from('queue').insert({ user_id:uid, tiktok_account_id:acct, date, prod_id:prod?.id||null, name:prod?.name||SW.product, brand:prod?.brand||SW.brand||'', notes:'', script:SW.script?.paragraphs?.join('\n\n')||'', done:false, sort_order:(Number(last?.[0]?.sort_order)||0)+1 }).select();
+      if(error) throw error; id=ins[0].id; key=swKeyOf(ins[0]);
+    } else { [id,key,idx]=v.split('|'); idx=+idx||0; }
+    const b=(await plannerGet('filmBoard',{}))||{}, day={...(b[date]||{})}, m={...(day[key]||{})};
+    const ts={...(m.takeShots||{})};
+    if(!m.takeShots&&m.shots?.length&&idx!==0){ const { data:first }=await db.from('queue').select('id,prod_id,name,notes').eq('user_id',session.user.id).eq('date',date).order('sort_order').order('id'); const f=(first||[]).find(r=>swKeyOf(r)===key); if(f) ts[String(f.id)]=m.shots; }
+    ts[String(id)]=SW.shotList.map(t=>({t,done:false}));
+    m.takeShots=ts; day[key]=m; b[date]=day; await plannerSet('filmBoard',b);
+    btn.textContent=`✓ Added ${SW.shotList.length} shots`; swShotTakes();
+  }catch(e){ btn.disabled=false; btn.textContent='＋ Add shots to Film Board'; alert("Couldn't add the shots: "+e.message); }
 }
 async function swToTodo(btn){
   const { data:{ session } }=await db.auth.getSession(); if(!session||!SW.script) return;
