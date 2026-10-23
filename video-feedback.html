@@ -150,6 +150,7 @@ details.bdx>summary::-webkit-details-marker{display:none;}
 details.bdx>summary::before{content:'▸';color:var(--rust);transition:transform .15s;}
 details.bdx[open]>summary::before{transform:rotate(90deg);}
 details.bdx[open]>summary{margin-bottom:12px;}
+.ingc{background:var(--surface);border:1px solid var(--border-mid);border-radius:16px;padding:14px 16px;margin:0 0 14px;font-size:13px;line-height:1.5;color:var(--ink);}
 </style>
 </head>
 <body>
@@ -256,6 +257,7 @@ details.bdx[open]>summary{margin-bottom:12px;}
 <script src="planner-sync.js?v=238"></script>
 <script src="playbook.js?v=314"></script>
 <script src="policy.js?v=414"></script>
+<script src="ingredients.js?v=416"></script>
 <script src="layout.js?v=407"></script>
 <script>
 const WORKER = 'https://take24-scout.kortnycall5.workers.dev';
@@ -833,6 +835,7 @@ function swContext(){
   if(SW.funnel==='Top'&&(SW.special.includes('On sale')||saleAngle)) bits.push(`Do NOT open with the price, the sale or the deal (no "have you seen the price…"). Open on the problem, a visual moment or the product itself. The sale can come up once, briefly, near the end.`);
   if(SW.funnel!=='Top'&&(SW.special.includes('On sale')||saleAngle)) bits.push(`Do NOT open with the sale. Lead with her honest take; the sale can come up once, casually, near the end — no numbers.`);
   const f=factsFor(SW.product); if(f) bits.push(`PRODUCT FACTS:\n${f}\n${PF_RULE}`);
+  if(SW.ing&&typeof ingredientFacts==='function'){ const t=ingredientFacts(SW.ing); if(t) bits.push(t); }
   if((SW.shotParts||[]).length||SW.extraShots) bits.push(`ATTACHED IMAGES: she added product photos / info screenshots (e.g. a Google result, ingredient list or product page). Read them and use the real product info in them — what it does, key ingredients or features, how to use it. Never say a price you see in them.`);
   return bits.join('\n');
 }
@@ -850,7 +853,7 @@ async function swProductParts(){
   }
   return SW.shotParts||[];
 }
-function swBar(){ return `<div class="card swc swbar">${SW.image?`<img src="${esc(SW.image)}" style="width:30px;height:30px;border-radius:6px;object-fit:cover">`:''}<b style="color:var(--ink);margin-right:4px">${esc(SW.product||'Your product')}</b>
+function swBar(){ return (SW.ing?`<div class="card swc" style="padding:0;border:0;background:none;box-shadow:none">${ingredientCardHtml(SW.ing)}</div>`:'')+`<div class="card swc swbar">${SW.image?`<img src="${esc(SW.image)}" style="width:30px;height:30px;border-radius:6px;object-fit:cover">`:''}<b style="color:var(--ink);margin-right:4px">${esc(SW.product||'Your product')}</b>
   ${document.getElementById('swPsych').checked?'<span class="chip">Viewer questions</span>':''}${document.getElementById('swHoliday').checked&&SW.holiday?`<span class="chip">${esc(SW.holiday)}</span>`:''}${SW.special.map(x=>`<span class="chip">${esc(x==='On sale'&&document.getElementById('swDeal').value.trim()?'On sale · '+document.getElementById('swDeal').value.trim():x)}</span>`).join('')}
   <span class="chip">${esc(SW.film)}</span><span class="chip">${esc(SW.fmt)}</span><span class="chip">${SW.funnel==='Middle'?'Follow-up':'First look'}</span><a style="margin-left:auto;color:var(--rust);font-weight:800;font-size:12px;cursor:pointer" onclick="swReset()">Start over</a></div>`; }
 function swReset(){ SW.wsNotes=null; SW.angles=[];SW.picked=[];SW.script=null;SW.rage=null;SW.shotParts=[]; document.getElementById('swFlow').innerHTML=''; document.getElementById('swSetup').style.display=''; window.scrollTo({top:0,behavior:'smooth'}); }
@@ -862,6 +865,7 @@ async function swStart(){
   if(document.getElementById('swSpecial').checked&&!SW.special.length){ alert('Pick New release, Limited edition or On sale (or turn that option off).'); return; }
   document.getElementById('swSetup').style.display='none';
   const flow=document.getElementById('swFlow');
+  await swIngCheck(flow);
   if(!document.getElementById('swPsych').checked){ flow.innerHTML=swBar(); SW.picked=[]; return swWrite(); }
   flow.innerHTML=swBar()+`<div class="card swc"><div class="swh">What viewers want to know</div><div class="swsteps" id="swSteps"><div>Reading about ${esc(SW.product||'your product')}</div><div>Thinking like someone curious about it</div><div>Finding what people want to know</div><div>Writing your angles…</div></div></div>`;
   const step=n=>document.querySelectorAll('#swSteps div').forEach((d,i)=>d.classList.toggle('done',i<n));
@@ -875,6 +879,15 @@ List 6–8 honest review angles — the things real viewers actually want to kno
     if(!SW.product) SW.product=out.product; if(!SW.brand) SW.brand=out.brand;
     { const mine=(SW.angles||[]).filter(a=>a.custom); SW.angles=[...mine,...(out.angles||[])]; SW.picked=mine.map((_,i)=>i); } step(4); swRenderAngles();
   }catch(e){ flow.innerHTML=swBar()+`<div class="card swc">Couldn't find angles: ${esc(e.message)}</div>`; }
+}
+// 🧪 honest ingredient check (Skin Lab list → online), shown above the angles and fed into the script
+async function swIngCheck(flow){
+  SW.ing=null; if(typeof ingredientCheck!=='function'||!SW.product) return;
+  const beauty=looksBeauty(`${SW.product} ${SW.brand||''}`);
+  const sk=await findSkinProduct(SW.product,SW.brand).catch(()=>null);
+  if(!sk&&!beauty) return;
+  flow.innerHTML=`<div class="ingc"><b>🧪 Checking the ingredients…</b><p style="margin:4px 0 0">${sk?'Found it in your Skin Lab list.':'Looking up the full ingredient list online.'} Reading it like a cosmetic chemist.</p></div>`;
+  try{ SW.ing=await ingredientCheck(SW.product,SW.brand); }catch(e){ console.warn('ingredient check',e); SW.ing=null; }
 }
 function swRenderAngles(){
   document.getElementById('swFlow').innerHTML=swBar()+`<div class="card swc"><div class="swh">What viewers want to know. Pick your angles.</div>
@@ -939,6 +952,9 @@ async function swWorkshop(){
   document.getElementById('swSetup').style.display='none';
   const flow=document.getElementById('swFlow');
   flow.innerHTML=`<div class="card swc"><div class="swh">Workshopping your ${draft.split(/\s+/).length>40?'script':'idea'} <span class="swpol wait" style="float:right" id="swState">Reading…</span></div><div class="sub">Checking it against your playbook and voice, then tightening it up.</div></div>`;
+  // product named in her draft? check its ingredients first so the rewrite stays honest
+  if(!SW.product){ try{ const m=await gem([{text:`What skincare/beauty product (name and brand) is this TikTok draft about? If none, product="".\n${draft.slice(0,1500)}`}],{type:'OBJECT',properties:{product:{type:'STRING'},brand:{type:'STRING'}},required:['product','brand']},0); if(m.product){ SW.product=m.product; SW.brand=SW.brand||m.brand; } }catch(e){} }
+  if(SW.product){ document.getElementById('swState').textContent='Checking ingredients…'; try{ SW.ing=typeof ingredientCheck==='function'&&(await findSkinProduct(SW.product,SW.brand)||looksBeauty(`${SW.product} ${SW.brand||''} ${draft}`))?await ingredientCheck(SW.product,SW.brand):null; }catch(e){ SW.ing=null; } document.getElementById('swState').textContent='Reading…'; }
   try{
     const schema={type:'OBJECT',properties:{product:{type:'STRING'},kind:{type:'STRING'},verdict:{type:'STRING'},works:{type:'ARRAY',items:{type:'STRING'}},fixes:{type:'ARRAY',items:{type:'STRING'}},title:{type:'STRING'},paragraphs:{type:'ARRAY',items:{type:'STRING'}}},required:['product','kind','verdict','works','fixes','title','paragraphs']};
     const o=await gem([...(SW.shotParts||[]),{text:`Kourtney pasted something she wants to workshop for a TikTok Shop video. It may be a rough idea, a hook, notes, or a full script.

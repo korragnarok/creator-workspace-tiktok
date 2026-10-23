@@ -569,6 +569,8 @@ async function actWriteScript(c, p, a) {
   const fun = funnel === 'Middle'
     ? `VIDEO TYPE: FOLLOW-UP / "STILL USING IT?" — the viewer may already know this product. Don't re-explain every feature. Her honest update: how long she's used it, how it's held up, what she's noticed (modest, cosmetic/temporary only), what still bugs her a little, and whether she'd buy it again and who for. No pressure to buy. ${a.on_sale ? 'It IS on sale — she can mention it once, casually, as info (no numbers).' : 'It is NOT on sale — do not mention sales, deals or "the price right now". No urgency.'} LENGTH (hard rule): 4–5 sentences TOTAL, one sentence per paragraph — about 15–20 seconds.`
     : `VIDEO TYPE: FIRST LOOK / HONEST REVIEW — the viewer hasn't seen this product. Hook with something real (first impression, texture/finish, a question people ask, or her verdict up front). What it is, how it feels and how she uses it, the 1–2 things she likes most (real details), ONE honest downside or "know this first", and who it's for. ${a.on_sale ? 'It is on sale right now — she can mention it once, casually, near the end, no numbers.' : ''} LENGTH (hard rule): 4–5 sentences TOTAL, one sentence per paragraph — about 15–20 seconds.`;
+  let ingTxt = '';
+  try { if (typeof ingredientCheck === 'function') { const ic = await ingredientCheck(p.name, p.brand, { noOnline: !looksBeauty(`${p.name} ${p.brand || ''}`) }); ingTxt = ingredientFacts(ic); } } catch (e) { console.warn('ingredient check', e); }
   const sc = await actGemJSON(`Write a short TikTok Shop video script (spoken lines only, 4–5 sentences total, one sentence per paragraph) for ${p.name}${p.brand ? ' by ' + p.brand : ''}.
 ${actVoice()}
 Filming style: ${style}.
@@ -576,6 +578,7 @@ ${fun}
 ${a.angle ? `Her idea / angle for this one: ${a.angle}` : 'Pick the most honest, useful angle yourself.'}
 PRODUCT FACTS (use these; don't invent features, specs or claims that aren't here; never quote prices):
 ${facts}
+${ingTxt}
 Include one honest downside. End softly — "it's linked if you're curious" or just her verdict — never "click the link", "tap the orange cart", or any push to buy.
 Also write: a short title (3–6 words), and a ready-to-post caption in her voice (1–3 short sentences, under 150 characters) plus exactly 5 hashtags, most relevant first. Also 10–15 SEO words: short lowercase search phrases people would actually type into TikTok search to find this video (product name/type, brand, the problem it solves, who it's for), no hashtags.`,
     { type: 'OBJECT', properties: { title: { type: 'STRING' }, paragraphs: { type: 'ARRAY', items: { type: 'STRING' } }, caption: { type: 'STRING' }, hashtags: { type: 'ARRAY', items: { type: 'STRING' } }, seo: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['title', 'paragraphs', 'caption', 'hashtags', 'seo'] });
