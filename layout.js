@@ -1,3 +1,13 @@
+// ── Desktop: a page opened on its own always reopens inside Home (no old sidebar view) ──
+(function () {
+  try {
+    if (window.self !== window.top) return;                                   // already inside Home's panel
+    if (!window.matchMedia('(min-width: 1181px)').matches) return;            // phones/tablets keep their own layout
+    const file = location.pathname.split('/').pop() || 'index.html';
+    if (/^(index|auth|login|privacy|terms|choose|connect)\.html$/i.test(file) || !/\.html$/i.test(file)) return;
+    location.replace('index.html?p=' + encodeURIComponent(file + location.search + location.hash));
+  } catch (e) {}
+})();
 // ── Inside Home's middle panel: hide this page's own sidebar / phone nav ──
 (function () {
   let inShell = false; try { inShell = window.self !== window.top && !!window.parent.T24Shell; } catch (e) {}
