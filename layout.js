@@ -1,3 +1,5 @@
+// ── Shown again inside Home (kept alive in the background): let the page refresh its data ──
+window.addEventListener('message', e => { if (e.origin === location.origin && e.data && e.data.t24 === 'shown' && typeof window.onT24Shown === 'function') { try { window.onT24Shown(); } catch (err) {} } });
 // ── Ignore the mouse's side Back / Forward buttons everywhere in Take24 (they were wiping half-typed scripts) ──
 (function () {
   const block = e => { if (e.button === 3 || e.button === 4) { e.preventDefault(); e.stopPropagation(); } };

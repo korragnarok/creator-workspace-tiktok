@@ -3,6 +3,8 @@
   const WIDE = window.matchMedia('(min-width: 1181px)');
   const SKIP = /^(index\.html|auth\.html|login\.html|privacy\.html|terms\.html)?$/i;
   let wrap, frame, title, board;
+  const FRAMES = {};   // one live iframe per page, kept in the background so pages don't reset when you leave them
+  const fileOf = p => String(p || '').split(/[?#]/)[0];
 
   function pageOf(href) {
     try { const u = new URL(href, location.href); if (u.origin !== location.origin) return null;
@@ -20,42 +22,51 @@
       .shell-bar button:hover{border-color:var(--tan);}
       .shell-title{flex:1;font:300 20px 'Cormorant Garamond',serif;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       .shell-wrap iframe{flex:1;width:100%;border:0;background:var(--bg);}
+      .shell-wrap iframe.shell-hidden{display:none;}
       .board.shell-full{grid-template-columns:minmax(0,1fr)!important;}
       .board.shell-full .b-left,.board.shell-full .b-right{display:none!important;}`;
     document.head.appendChild(st);
     wrap = document.createElement('div'); wrap.className = 'shell-wrap';
     wrap.innerHTML = `<div class="shell-bar"><button type="button" data-a="home" title="Back to Home">⌂ Home</button><div class="shell-title"></div>
-      <button type="button" data-a="full" title="Use the whole screen">⤢ Expand</button></div><iframe title="Page"></iframe>`;
-    center.appendChild(wrap); frame = wrap.querySelector('iframe'); title = wrap.querySelector('.shell-title');
+      <button type="button" data-a="full" title="Use the whole screen">⤢ Expand</button></div>`;
+    center.appendChild(wrap); title = wrap.querySelector('.shell-title');
     wrap.querySelector('.shell-bar').addEventListener('click', e => { const a = e.target.closest('button')?.dataset.a;
       if (a === 'home') home(); else if (a === 'full') setFull(!board.classList.contains('shell-full')); else if (a === 'tab') window.open(currentPage(), '_blank'); });
-    frame.addEventListener('load', onFrameLoad);
     return true;
   }
   let FULL = false; try { FULL = localStorage.getItem('take24:shellFull') === '1'; } catch (e) {}
   function setFull(on) { FULL = on; try { localStorage.setItem('take24:shellFull', on ? '1' : '0'); } catch (e) {}
     board.classList.toggle('shell-full', on && board.classList.contains('shell-on'));
     wrap.querySelector('[data-a="full"]').textContent = on ? '⤡ Show panels' : '⤢ Expand'; }
-  function currentPage() { try { const l = frame.contentWindow.location; return l.pathname.split('/').pop() + l.search + l.hash; } catch (e) { return frame.getAttribute('src'); } }
+  function currentPage() { if (!frame) return ''; try { const l = frame.contentWindow.location; return l.pathname.split('/').pop() + l.search + l.hash; } catch (e) { return frame.getAttribute('src'); } }
   function open(page, push = true) {
     if (!build()) return false;
     board.classList.add('shell-on'); setFull(FULL);
-    if (frame.getAttribute('src') !== page) { title.textContent = 'Loading…'; frame.setAttribute('src', page); }
+    const f = fileOf(page); let fr = FRAMES[f], fresh = false;
+    if (!fr) { fr = document.createElement('iframe'); fr.title = 'Page'; fr.addEventListener('load', () => onFrameLoad(fr)); wrap.appendChild(fr); FRAMES[f] = fr; fresh = true; }
+    Object.values(FRAMES).forEach(x => x.classList.toggle('shell-hidden', x !== fr)); frame = fr;
+    let cur = ''; try { const l = fr.contentWindow.location; cur = l.pathname.split('/').pop() + l.search + l.hash; } catch (e) {}
+    if (fresh || (page !== f && cur !== page)) { title.textContent = 'Loading…'; fr.setAttribute('src', page); }   // new page, or same page with a different filter (e.g. a brand)
+    else { setTitle(fr); try { fr.contentWindow.postMessage({ t24: 'shown' }, location.origin); } catch (e) {} }
     if (push) history.pushState({ shell: page }, '', 'index.html?p=' + encodeURIComponent(page));
     return true;
   }
   function home(push = true) {
     if (!board) return; board.classList.remove('shell-on', 'shell-full');
-    if (frame) { frame.removeAttribute('src'); frame.src = 'about:blank'; }
+    // pages stay alive in the background (hidden) so they're exactly as you left them
     if (push) history.pushState({}, '', 'index.html');
     try { window.renderTodayContent && renderTodayContent(); } catch (e) {}
   }
-  function onFrameLoad() {
-    let doc; try { doc = frame.contentDocument; } catch (e) { return; }
-    if (!doc || frame.src === 'about:blank') return;
-    const p = currentPage(), file = p.split(/[?#]/)[0];
-    if (!file || SKIP.test(file)) { home(); return; }      // page inside went back to Home
-    title.textContent = (doc.title || file).replace(/\s*[·|–-]\s*Take24.*$/i, '');
+  function setTitle(fr) { try { const doc = fr.contentDocument, file = fr.contentWindow.location.pathname.split('/').pop(); title.textContent = (doc.title || file).replace(/\s*[·|–-]\s*(Take24|Creator Hub).*$/i, ''); } catch (e) {} }
+  function onFrameLoad(fr) {
+    let doc; try { doc = fr.contentDocument; } catch (e) { return; }
+    if (!doc || fr.src === 'about:blank') return;
+    let p = ''; try { const l = fr.contentWindow.location; p = l.pathname.split('/').pop() + l.search + l.hash; } catch (e) {}
+    const file = fileOf(p), key = Object.keys(FRAMES).find(k => FRAMES[k] === fr);
+    if (!file || SKIP.test(file)) { if (key) { fr.remove(); delete FRAMES[key]; } home(); return; }      // page inside went back to Home
+    if (key && key !== file) { delete FRAMES[key]; if (FRAMES[file] && FRAMES[file] !== fr) FRAMES[file].remove(); FRAMES[file] = fr; }   // a link inside moved this frame to another page
+    if (fr !== frame) return;
+    setTitle(fr);
     if (history.state?.shell !== p) history.replaceState({ shell: p }, '', 'index.html?p=' + encodeURIComponent(p));
   }
   // links on Home open in the middle

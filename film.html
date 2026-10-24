@@ -117,7 +117,7 @@ html .cbtns .btn{min-width:0;display:flex;align-items:center;justify-content:cen
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=415"></script>
 <script src="planner-sync.js?v=238"></script>
-<script src="layout.js?v=409"></script>
+<script src="layout.js?v=410"></script>
 <script src="celebrate.js?v=338"></script>
 <script src="insights.js?v=339"></script>
 <script>
@@ -159,6 +159,7 @@ function metaSave(k,patch){
   const day=ymd(DAY); plannerGet('filmBoard',{}).then(b=>{ b=b||{}; const d={...(b[day]||{})}; d[k]={...(d[k]||{}),...patch}; b[day]={...META,...d,[k]:{...META[k],...d[k]}}; META={...META,[k]:b[day][k]}; plannerSet('filmBoard',b); });
 }
 
+window.onT24Shown=()=>{ try{ flushDraft(); }catch(e){} if(document.getElementById('m')?.classList.contains('open')) return; (typeof MODE!=='undefined'&&MODE==='week')?loadWeek():load(); };
 async function load(){
   document.getElementById('dayLbl').textContent=ymd(DAY)===ymd(new Date())?'Today · '+DAY.toLocaleDateString(undefined,{month:'short',day:'numeric'}):DAY.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
   const day=ymd(DAY);

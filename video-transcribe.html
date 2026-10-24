@@ -77,7 +77,7 @@ button,input,textarea,select{font:inherit;}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js?v=415"></script>
-<script src="layout.js?v=409"></script>
+<script src="layout.js?v=410"></script>
 <script>
 const WORKER = 'https://take24-scout.kortnycall5.workers.dev';
 let VIDEO = null, VIDEO_URL = '';
@@ -112,7 +112,7 @@ async function findVideo(){
     document.getElementById('vtStats').textContent = [st.play_count ?? v.play_count, st.digg_count ?? v.digg_count].some(x => x != null) ? `▶ ${fmt(st.play_count ?? v.play_count)} views · ♥ ${fmt(st.digg_count ?? v.digg_count)}` : '';
     document.getElementById('vtWatch').href = VIDEO_URL;
     const t = document.getElementById('trBtn'); t.disabled = false; t.textContent = 'Transcribe';
-    document.getElementById('vtCard').style.display = 'grid';
+    document.getElementById('vtCard').style.display = 'grid'; saveState();
   } catch (e) { err('Couldn\'t find that video. Check the link and try again.'); }
   finally { document.getElementById('vtLoading').style.display = 'none'; b.disabled = false; }
 }
@@ -133,9 +133,21 @@ async function transcribe(){
     if (t) document.getElementById('tActs').style.display = 'flex';
     b.textContent = '✓ Transcribed';
   } catch (e) { document.getElementById('tText').textContent = 'Transcription failed: ' + e.message + '. Try again in a moment.'; b.disabled = false; b.textContent = 'Transcribe'; }
-  finally { document.getElementById('tLoading').style.display = 'none'; }
+  finally { document.getElementById('tLoading').style.display = 'none'; saveState(); }
 }
-const q = new URLSearchParams(location.search).get('url'); if (q) { document.getElementById('vtLink').value = q; findVideo(); }
+// remember the last video + transcript so the page is the same when you come back (even after a refresh)
+const SAVE_KEY = 'take24:transcribe';
+function saveState(){ try { localStorage.setItem(SAVE_KEY, JSON.stringify({ link: document.getElementById('vtLink').value, url: VIDEO_URL, shown: document.getElementById('vtCard').style.display === 'grid',
+  thumb: document.getElementById('vtThumb').src, creator: document.getElementById('vtCreator').textContent, caption: document.getElementById('vtCaption').textContent, stats: document.getElementById('vtStats').textContent,
+  text: document.getElementById('tText').textContent, ok: document.getElementById('tActs').style.display === 'flex' })); } catch (e) {} }
+function restoreState(){ try { const st = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (!st) return;
+  document.getElementById('vtLink').value = st.link || '';
+  if (st.shown && st.url) { VIDEO_URL = st.url; VIDEO = {}; document.getElementById('vtThumb').src = st.thumb || ''; document.getElementById('vtCreator').textContent = st.creator || '';
+    document.getElementById('vtCaption').textContent = st.caption || ''; document.getElementById('vtStats').textContent = st.stats || ''; document.getElementById('vtWatch').href = st.url; document.getElementById('vtCard').style.display = 'grid'; }
+  if (st.text) { document.getElementById('tBox').style.display = 'block'; document.getElementById('tText').textContent = st.text; if (st.ok) { document.getElementById('tActs').style.display = 'flex'; const b = document.getElementById('trBtn'); b.textContent = '✓ Transcribed'; } }
+} catch (e) {} }
+document.getElementById('vtLink').addEventListener('input', saveState);
+const q = new URLSearchParams(location.search).get('url'); if (q) { document.getElementById('vtLink').value = q; findVideo(); } else restoreState();
 </script>
 </body>
 </html>
