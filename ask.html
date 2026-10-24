@@ -88,6 +88,17 @@ html.mini .ask{padding:4px 0;gap:5px;} html.mini .ask textarea{height:64px;paddi
 html.mini .ask button{padding:0 11px;font-size:11px;} html.mini .ask .mic{padding:0 9px;}
 html.mini .acard{padding:10px;} html.mini .arow3{grid-template-columns:1fr 1fr;}
 html.mini .clearchat{margin-bottom:2px;}
+/* narrow Home box: everything stacks and wraps instead of spilling sideways */
+html.mini,html.mini body,html.mini .wrap,html.mini .log{overflow-x:hidden!important;max-width:100%;}
+html.mini .msg,html.mini .acard{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word;}
+html.mini .arow3{grid-template-columns:1fr!important;}
+html.mini .ashop{gap:7px;padding:5px 6px;align-items:flex-start;}
+html.mini .ashop img{width:34px;height:34px;flex:none;}
+html.mini .ashop span{min-width:0;flex:1;font-size:11.5px;line-height:1.3;}
+html.mini .ashop b{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:11.5px;text-transform:none!important;letter-spacing:0!important;}
+html.mini .ashop small{display:block;font-size:10px;}
+html.mini .abtns{flex-wrap:wrap;} html.mini .abtn{padding:7px 12px;flex:1;}
+html.mini .arow input,html.mini .arow select,html.mini .arow textarea{font-size:12.5px;padding:7px 8px;}
 </style>
 <script>
 const WORKER='https://take24-scout.kortnycall5.workers.dev';
