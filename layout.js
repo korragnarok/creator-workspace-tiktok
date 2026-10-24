@@ -55,11 +55,11 @@
       href: 'script-workshop.html',
       label: 'Scripts',
       icon: 'scripts',
-      activePages: ['scripts.html', 'script-scout.html'],
+      activePages: ['scripts.html', 'video-transcribe.html'],
       children: [
         { href: 'scripts.html', label: 'Script Vault', icon: 'scripts' },
         { href: 'script-workshop.html', label: 'Script Workshop', icon: 'workshop' },
-        { href: 'script-scout.html', label: 'Script Scout', icon: 'video' },
+        { href: 'video-transcribe.html', label: 'Video Transcribe', icon: 'video' },
       ]
     },
     { href: 'notes.html', label: 'Notes', icon: 'scripts' },
@@ -70,7 +70,7 @@
     { href: 'index.html', label: 'Home', icon: 'home', aliases: [''] },
     { href: 'daily-todo.html', label: 'To Do', icon: 'todo' },
     { href: 'products.html', label: 'Products', icon: 'products' },
-    { href: 'script-scout.html', label: 'Scout', icon: 'video' },
+    { href: 'video-transcribe.html', label: 'Transcribe', icon: 'video' },
     { href: 'script-workshop.html', label: 'Scripts', icon: 'scripts', activePages: ['scripts.html'] },
     { href: 'sales-calendar.html', label: 'Sales', icon: 'sales' },
     { href: 'video-tracker.html', label: 'Content', icon: 'video' }
@@ -122,7 +122,7 @@
     ['promos.html','Shark & Ninja',16], ['shop.html','Pinterest Shop',5],
     ['scripts.html','Script Vault',6], ['sales-calendar.html','Sales Log',10],
     ['https://a.co/d/0aN0vMFu','Storefront',11], ['https://affiliate-program.amazon.com/home','Associates',12],
-    ['video-feedback.html','Video Feedback',14], ['ask.html','Ask Take24',7], ['settings.html','Settings',15]
+    ['video-feedback.html','Video Feedback',14], ['video-transcribe.html','Transcribe',13], ['ask.html','Ask Take24',7], ['settings.html','Settings',15]
   ];
   // folder image number: 1, 2, 3… but skips 13 (that's the black "you are here" folder)
   const folderNum = i => FOLDERS[i][2];

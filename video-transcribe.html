@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F8F5F1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/pwa/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/pwa/icon-192.png">
+<title>Video Transcribe — Take24</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200;300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script src="theme-init.js?v=352"></script>
+<link rel="stylesheet" href="layout.css?v=144">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Serif',serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+button,input,textarea,select{font:inherit;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:9px;border:1px solid var(--border-mid);background:transparent;color:var(--ink);font-family:'Stack Sans Notch',sans-serif;font-size:12px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;padding:9px 16px;cursor:pointer;transition:background 0.15s,border-color 0.15s,opacity 0.15s;}
+.btn:hover{background:color-mix(in srgb,var(--surface) 70%,var(--rust) 14%);}
+.btn-primary{background:var(--rust);border-color:var(--rust);color:#fff;}
+.btn-primary:hover{opacity:0.88;background:var(--rust);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-ghost{background:color-mix(in srgb,var(--surface) 78%,var(--bg) 22%);}
+.state-msg{text-align:center;padding:60px 20px;color:var(--text-muted);font-size:14px;}
+.state-msg strong{display:block;font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.error-msg{background:color-mix(in srgb,var(--rust) 12%,transparent);border:1px solid color-mix(in srgb,var(--rust) 24%,transparent);color:var(--rust);border-radius:12px;padding:14px 18px;font-size:13px;margin-bottom:20px;display:none;}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid color-mix(in srgb,var(--rust) 30%,transparent);border-top-color:var(--rust);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.page{max-width:760px;margin:0 auto;padding:40px 32px 100px;}
+.page-title{font-family:'IBM Plex Serif',serif;font-size:36px;font-weight:800;line-height:1;color:var(--ink);}
+.page-sub{font-size:13px;color:var(--text-muted);margin:6px 0 22px;}
+.bar{display:flex;gap:10px;margin-bottom:20px;}
+.bar input{flex:1;padding:13px 16px;border:1px solid var(--border-mid);border-radius:12px;background:var(--bg);color:var(--ink);font-size:15px;outline:none;}
+.bar input:focus{border-color:var(--rust);}
+.btn{padding:11px 18px;cursor:pointer;}
+.vcard{display:none;grid-template-columns:120px 1fr;gap:16px;border:1px solid var(--border-mid);border-radius:16px;background:var(--surface);padding:14px;margin-bottom:18px;}
+.vcard img{width:120px;height:170px;object-fit:cover;border-radius:10px;background:var(--bg);}
+.vcreator{font-weight:800;color:var(--ink);font-size:15px;}
+.vcaption{font-size:13px;color:var(--text-mid);margin:6px 0 10px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+.vstats{font-size:12px;color:var(--text-muted);margin-bottom:12px;}
+.vacts{display:flex;gap:8px;flex-wrap:wrap;}
+.tbox{display:none;border:1px solid var(--border-mid);border-radius:16px;background:var(--surface);padding:18px;}
+.ttext{white-space:pre-wrap;font-size:14px;line-height:1.7;color:var(--ink);margin:10px 0 14px;}
+.tlabel{font-family:'Stack Sans Notch',sans-serif;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-title">Video Transcribe</div>
+  <div class="page-sub">Paste a TikTok video link, find the video, and transcribe what's said.</div>
+  <div id="errorMsg" class="error-msg"></div>
+  <div class="bar">
+    <input id="vtLink" placeholder="Paste a TikTok video link…" autocomplete="off" onkeydown="if(event.key==='Enter')findVideo()" onpaste="setTimeout(findVideo,50)">
+    <button class="btn btn-primary" id="findBtn" onclick="findVideo()">Find video</button>
+  </div>
+  <div id="vtLoading" class="state-msg" style="display:none;padding:30px 0"><span class="spinner"></span> Finding the video…</div>
+  <div class="vcard" id="vtCard">
+    <img id="vtThumb" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
+    <div>
+      <div class="vcreator" id="vtCreator"></div>
+      <div class="vcaption" id="vtCaption"></div>
+      <div class="vstats" id="vtStats"></div>
+      <div class="vacts"><button class="btn btn-primary" id="trBtn" onclick="transcribe()">Transcribe</button><a class="btn" id="vtWatch" target="_blank" rel="noopener">Watch</a></div>
+    </div>
+  </div>
+  <div class="tbox" id="tBox">
+    <div class="tlabel">Transcript</div>
+    <div id="tLoading" class="state-msg" style="display:none;padding:24px 0"><span class="spinner"></span> Transcribing — this takes 10–30 seconds…</div>
+    <div class="ttext" id="tText"></div>
+    <div class="vacts" id="tActs" style="display:none"><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('tText').textContent);this.textContent='✓ Copied'">Copy</button></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js?v=415"></script>
+<script src="layout.js?v=409"></script>
+<script>
+const WORKER = 'https://take24-scout.kortnycall5.workers.dev';
+let VIDEO = null, VIDEO_URL = '';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => { n = Number(n) || 0; return n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n); };
+function err(m){ const e=document.getElementById('errorMsg'); e.textContent=m||''; e.style.display=m?'block':'none'; }
+db.auth.getSession().then(({data:{session}}) => { if (!session) location.href = 'auth.html'; });
+
+function thumbOf(v){
+  const first = o => { const l = o?.url_list || o?.urlList; return Array.isArray(l) ? (l.find(u => u && !/\.heic/i.test(u)) || l[0]) : null; };
+  const vid = v?.video || {};
+  return [v?.cover_image_url, v?.thumbnail_url, first(vid.origin_cover), first(vid.cover), first(vid.dynamic_cover), v?.cover, first(v?.cover)].find(u => u && typeof u === 'string' && !/\.heic/i.test(u)) || '';
+}
+
+async function findVideo(){
+  const raw = document.getElementById('vtLink').value.trim(); if (!raw) return;
+  if (!/tiktok\.com/i.test(raw)) { err('That doesn\'t look like a TikTok link.'); return; }
+  err(''); VIDEO = null; VIDEO_URL = '';
+  document.getElementById('vtCard').style.display = 'none'; document.getElementById('tBox').style.display = 'none';
+  document.getElementById('vtLoading').style.display = 'block'; const b = document.getElementById('findBtn'); b.disabled = true;
+  const url = /\/video\//i.test(raw) ? raw.split('?')[0] : raw;   // short vm./vt. links are sent as-is
+  try {
+    const r = await fetch(`${WORKER}/?endpoint=v2/tiktok/video&url=${encodeURIComponent(url)}`); const d = await r.json().catch(() => ({}));
+    const v = d?.aweme_detail || d?.video || d?.data || d;
+    if (!r.ok || !v || !(v.aweme_id || v.item_id || v.id || v.desc || v.author)) throw new Error('not found');
+    VIDEO = v; const id = v.aweme_id || v.item_id || v.id || '', who = v.author?.unique_id || v.author?.nickname || '';
+    VIDEO_URL = /\/video\//i.test(url) ? url : (id && who ? `https://www.tiktok.com/@${who}/video/${id}` : url);
+    document.getElementById('vtThumb').src = thumbOf(v); document.getElementById('vtThumb').style.visibility = '';
+    document.getElementById('vtCreator').textContent = who ? '@' + who : 'TikTok video';
+    document.getElementById('vtCaption').textContent = v.desc || v.description || v.caption || '';
+    const st = v.statistics || v.stats || {};
+    document.getElementById('vtStats').textContent = [st.play_count ?? v.play_count, st.digg_count ?? v.digg_count].some(x => x != null) ? `▶ ${fmt(st.play_count ?? v.play_count)} views · ♥ ${fmt(st.digg_count ?? v.digg_count)}` : '';
+    document.getElementById('vtWatch').href = VIDEO_URL;
+    const t = document.getElementById('trBtn'); t.disabled = false; t.textContent = 'Transcribe';
+    document.getElementById('vtCard').style.display = 'grid';
+  } catch (e) { err('Couldn\'t find that video. Check the link and try again.'); }
+  finally { document.getElementById('vtLoading').style.display = 'none'; b.disabled = false; }
+}
+
+function clean(raw){
+  return String(raw).split('\n').filter(l => { const t = l.trim(); return t && t !== 'WEBVTT' && !/^\d+$/.test(t) && !/^\d{2}:\d{2}:\d{2}[.,]\d{3}\s*-->/.test(t) && !/^(NOTE|STYLE|REGION)/.test(t); })
+    .join(' ').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+}
+async function transcribe(){
+  if (!VIDEO_URL) return; const b = document.getElementById('trBtn'); b.disabled = true; b.textContent = 'Transcribing…';
+  document.getElementById('tBox').style.display = 'block'; document.getElementById('tLoading').style.display = 'block';
+  document.getElementById('tText').textContent = ''; document.getElementById('tActs').style.display = 'none';
+  try {
+    const r = await fetch(`${WORKER}/?endpoint=${encodeURIComponent('tiktok/video/transcript')}&url=${encodeURIComponent(VIDEO_URL)}`); const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d?.message || `Transcript failed (${r.status})`);
+    const t = clean(d?.transcript || d?.text || d?.captions || d?.content || '');
+    document.getElementById('tText').textContent = t || 'No speech found in this video — it might be music-only or b-roll.';
+    if (t) document.getElementById('tActs').style.display = 'flex';
+    b.textContent = '✓ Transcribed';
+  } catch (e) { document.getElementById('tText').textContent = 'Transcription failed: ' + e.message + '. Try again in a moment.'; b.disabled = false; b.textContent = 'Transcribe'; }
+  finally { document.getElementById('tLoading').style.display = 'none'; }
+}
+const q = new URLSearchParams(location.search).get('url'); if (q) { document.getElementById('vtLink').value = q; findVideo(); }
+</script>
+</body>
+</html>

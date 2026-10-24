@@ -382,7 +382,7 @@ body{overflow-x:hidden;}
   </div>
 </div>
 
-<script src="layout.js?v=408"></script>
+<script src="layout.js?v=409"></script>
 <script>
 let _user = null;
 let ALL_PRODUCTS = [], ALL_HOOKS = [], ALL_SCRIPTS = [];
@@ -776,7 +776,7 @@ function scriptScoutUrl(card, take=null) {
   if(card?.id) params.set('cardId', card.id);
   if(targetTake?.id) params.set('takeId', targetTake.id);
   if(targetTake?.queueId) params.set('queueId', targetTake.queueId);
-  return 'script-scout.html?' + params.toString();
+  return 'video-transcribe.html';
 }
 function normalizeInspirationLinks(value){
   if(Array.isArray(value)) return value.map(normalizeUrl).filter(Boolean);
